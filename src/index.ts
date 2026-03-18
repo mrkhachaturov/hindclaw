@@ -269,7 +269,7 @@ function extractSenderIdFromText(text: string): string | undefined {
 
 // ── Plugin config reader ────────────────────────────────────────────────
 function getPluginConfig(api: MoltbotPluginAPI): PluginConfig {
-  const config = api.config.plugins?.entries?.['hindsight-openclaw']?.config || {};
+  const config = api.config.plugins?.entries?.['hindsight-openclaw-pro']?.config || {};
   return {
     embedPort: config.embedPort || 0,
     daemonIdleTimeout: config.daemonIdleTimeout !== undefined ? config.daemonIdleTimeout : 0,
