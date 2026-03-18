@@ -356,6 +356,12 @@ export default function (api: MoltbotPluginAPI) {
     }
 
     // Initialize in background (non-blocking)
+    // Guard: if initPromise already exists (gateway loads plugin multiple times
+    // during startup/hot-reload), reuse existing initialization to prevent
+    // multiple daemon starts racing for the same pg0 port
+    if (initPromise) {
+      debug('[Hindsight] Initialization already in progress, reusing existing promise');
+    } else {
     initPromise = (async () => {
       try {
         if (usingExternalApi && externalApi.apiUrl) {
@@ -395,6 +401,7 @@ export default function (api: MoltbotPluginAPI) {
     })();
 
     initPromise.catch(() => {}); // suppress unhandled rejection
+    } // end of initPromise guard
 
     // Register service for lifecycle management
     api.registerService({

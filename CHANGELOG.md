@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-03-18
+
+### Fixed
+- Guard `initPromise` against re-entry — gateway loads plugin 2-3 times during startup/hot-reload, causing multiple daemon starts racing for the same pg0 port and crashing
+
 ## [1.0.0] - 2026-03-18
 
 ### Fixed
