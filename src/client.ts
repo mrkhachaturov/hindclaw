@@ -213,6 +213,11 @@ export class HindsightClient {
       return ['uv', 'run', '--directory', this.embedPackagePath, 'hindsight-embed'];
     }
     const embedPackage = this.embedVersion ? `hindsight-embed@${this.embedVersion}` : 'hindsight-embed@latest';
+    // Inject claude-agent-sdk when using claude-code provider (uvx runs in isolated venv)
+    const provider = process.env.HINDSIGHT_API_LLM_PROVIDER;
+    if (provider === 'claude-code') {
+      return ['uvx', '--with', 'claude-agent-sdk', embedPackage];
+    }
     return ['uvx', embedPackage];
   }
 

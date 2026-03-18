@@ -48,6 +48,10 @@ export class HindsightEmbedManager {
     } else {
       // PyPI package: uvx hindsight-embed@version
       const embedPackage = this.embedVersion ? `hindsight-embed@${this.embedVersion}` : 'hindsight-embed@latest';
+      // Inject claude-agent-sdk when using claude-code provider (uvx runs in isolated venv)
+      if (this.llmProvider === 'claude-code') {
+        return ['uvx', '--with', 'claude-agent-sdk', embedPackage];
+      }
       return ['uvx', embedPackage];
     }
   }
