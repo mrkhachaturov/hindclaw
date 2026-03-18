@@ -1,4 +1,4 @@
-// Moltbot plugin API types (minimal subset needed for this plugin)
+// ── OpenClaw Plugin SDK types (minimal subset) ──────────────────────
 
 export interface PluginPromptHookResult {
   prependContext?: string;
@@ -8,9 +8,7 @@ export interface PluginPromptHookResult {
 export interface MoltbotPluginAPI {
   config: MoltbotConfig;
   registerService(config: ServiceConfig): void;
-  // OpenClaw hook handler signature: (event, ctx?) where ctx contains channel/sender info
   on(event: string, handler: (event: any, ctx?: any) => void | Promise<void | PluginPromptHookResult>): void;
-  // Add more as needed
 }
 
 export interface MoltbotConfig {
@@ -42,50 +40,245 @@ export interface PluginHookAgentContext {
   senderId?: string;
 }
 
-export interface PluginConfig {
-  bankMission?: string;
-  embedPort?: number;
-  daemonIdleTimeout?: number; // Seconds before daemon shuts down (0 = never)
-  embedVersion?: string; // hindsight-embed version (default: "latest")
-  embedPackagePath?: string; // Local path to hindsight package (e.g. '/path/to/hindsight')
-  llmProvider?: string; // LLM provider override (e.g. 'openai', 'anthropic', 'gemini', 'groq', 'ollama')
-  llmModel?: string; // LLM model override (e.g. 'gpt-4o-mini', 'claude-3-5-haiku-20241022')
-  llmApiKeyEnv?: string; // Env var name holding the API key (e.g. 'MY_CUSTOM_KEY')
-  apiPort?: number; // Port for openclaw profile daemon (default: 9077)
-  hindsightApiUrl?: string; // External Hindsight API URL (skips local daemon when set)
-  hindsightApiToken?: string; // API token for external Hindsight API authentication
-  dynamicBankId?: boolean; // Enable per-channel memory banks (default: true)
-  bankIdPrefix?: string; // Prefix for bank IDs (e.g. 'prod' -> 'prod-slack-C123')
-  excludeProviders?: string[]; // Message providers to exclude from recall/retain (e.g. ['telegram', 'discord'])
-  autoRecall?: boolean; // Auto-recall memories on every prompt (default: true). Set to false when agent has its own recall tool.
-  dynamicBankGranularity?: Array<'agent' | 'provider' | 'channel' | 'user'>; // Fields for bank ID derivation. Default: ['agent', 'channel', 'user']
-  autoRetain?: boolean; // Default: true
-  retainRoles?: Array<'user' | 'assistant' | 'system' | 'tool'>; // Roles to include in retained transcript. Default: ['user', 'assistant']
-  recallBudget?: 'low' | 'mid' | 'high'; // Recall effort. Default: 'mid'
-  recallMaxTokens?: number; // Max tokens for recall response. Default: 1024
-  recallTypes?: Array<'world' | 'experience' | 'observation'>; // Memory types to recall. Default: ['world', 'experience']
-  recallRoles?: Array<'user' | 'assistant' | 'system' | 'tool'>; // Roles to include when composing contextual recall query. Default: ['user', 'assistant']
-  retainEveryNTurns?: number; // Retain every Nth turn (1 = every turn, default: 1). Values > 1 enable chunked retention.
-  retainOverlapTurns?: number; // Extra prior turns included when chunked retention fires (default: 0). Window = retainEveryNTurns + retainOverlapTurns.
-  recallTopK?: number; // Max number of memories to inject. Default: unlimited
-  recallContextTurns?: number; // Number of user turns to include in recall query context. Default: 1 (latest only)
-  recallMaxQueryChars?: number; // Max chars for composed recall query. Default: 800
-  recallPromptPreamble?: string; // Prompt preamble placed above recalled memories. Default: built-in guidance text.
-  debug?: boolean; // Enable debug logging (default: false)
-}
-
 export interface ServiceConfig {
   id: string;
   start(): Promise<void>;
   stop(): Promise<void>;
 }
 
-// Hindsight API types
+// ── Plugin Configuration ─────────────────────────────────────────────
+
+export interface AgentEntry {
+  bankConfig: string;
+}
+
+export interface PluginConfig {
+  // Infrastructure (per-agent overridable)
+  hindsightApiUrl?: string;
+  hindsightApiToken?: string;
+
+  // Daemon (global only)
+  apiPort?: number;
+  embedPort?: number;
+  embedVersion?: string;
+  embedPackagePath?: string;
+  daemonIdleTimeout?: number;
+
+  // Routing (per-agent overridable)
+  dynamicBankGranularity?: Array<'agent' | 'provider' | 'channel' | 'user'>;
+  dynamicBankId?: boolean;
+  bankIdPrefix?: string;
+
+  // Behavioral (per-agent overridable)
+  llmProvider?: string;
+  llmModel?: string;
+  llmApiKeyEnv?: string;
+  autoRecall?: boolean;
+  autoRetain?: boolean;
+  recallBudget?: 'low' | 'mid' | 'high';
+  recallMaxTokens?: number;
+  recallTypes?: Array<'world' | 'experience' | 'observation'>;
+  recallRoles?: Array<'user' | 'assistant' | 'system' | 'tool'>;
+  recallTopK?: number;
+  recallContextTurns?: number;
+  recallMaxQueryChars?: number;
+  recallPromptPreamble?: string;
+  retainRoles?: Array<'user' | 'assistant' | 'system' | 'tool'>;
+  retainEveryNTurns?: number;
+  retainOverlapTurns?: number;
+  excludeProviders?: string[];
+  debug?: boolean;
+
+  // Agent map
+  agents?: Record<string, AgentEntry>;
+
+  // Bootstrap bank configs directory
+  bootstrap?: string;
+}
+
+// ── Bank Config File (template) ──────────────────────────────────────
+
+export interface BankConfigDirective {
+  name: string;
+  content: string;
+}
+
+export interface EntityLabelValue {
+  value: string;
+  description: string;
+}
+
+export interface EntityLabel {
+  key: string;
+  description: string;
+  type: 'value' | 'multi-values' | 'text';
+  tag?: boolean;
+  optional?: boolean;
+  values?: EntityLabelValue[];
+}
+
+export interface RecallFromEntry {
+  bankId: string;
+  budget?: 'low' | 'mid' | 'high';
+  maxTokens?: number;
+  types?: Array<'world' | 'experience' | 'observation'>;
+  tagGroups?: TagGroup[];
+}
+
+export interface BankConfig {
+  // Infrastructure overrides (per-agent)
+  hindsightApiUrl?: string;
+  hindsightApiToken?: string;
+
+  // Behavioral overrides
+  llmProvider?: string;
+  llmModel?: string;
+  llmApiKeyEnv?: string;
+  autoRecall?: boolean;
+  autoRetain?: boolean;
+  recallBudget?: 'low' | 'mid' | 'high';
+  recallMaxTokens?: number;
+  recallTypes?: Array<'world' | 'experience' | 'observation'>;
+  recallRoles?: Array<'user' | 'assistant' | 'system' | 'tool'>;
+  recallTopK?: number;
+  recallContextTurns?: number;
+  recallMaxQueryChars?: number;
+  recallPromptPreamble?: string;
+  retainRoles?: Array<'user' | 'assistant' | 'system' | 'tool'>;
+  retainEveryNTurns?: number;
+  retainOverlapTurns?: number;
+  excludeProviders?: string[];
+  dynamicBankGranularity?: Array<'agent' | 'provider' | 'channel' | 'user'>;
+  dynamicBankId?: boolean;
+  bankIdPrefix?: string;
+  debug?: boolean;
+
+  // Server-side (agent-only)
+  retain_mission?: string;
+  observations_mission?: string;
+  reflect_mission?: string;
+  retain_extraction_mode?: string;
+  disposition_skepticism?: number;
+  disposition_literalism?: number;
+  disposition_empathy?: number;
+  entity_labels?: EntityLabel[];
+  directives?: BankConfigDirective[];
+
+  // Tag injection (agent-only)
+  retainTags?: string[];
+  retainContext?: Record<string, unknown>;
+  retainObservationScopes?: string[];
+  recallTags?: string[];
+  recallTagsMatch?: 'any' | 'all';
+
+  // Multi-bank (agent-only)
+  recallFrom?: RecallFromEntry[];
+
+  // Session start (agent-only)
+  sessionStartModels?: SessionStartModelConfig[];
+
+  // Reflect (agent-only)
+  reflectOnRecall?: boolean;
+  reflectBudget?: 'low' | 'mid' | 'high';
+  reflectMaxTokens?: number;
+}
+
+// ── Resolved Config (after merge) ────────────────────────────────────
+
+export interface ServerConfig {
+  retain_mission?: string;
+  observations_mission?: string;
+  reflect_mission?: string;
+  retain_extraction_mode?: string;
+  disposition_skepticism?: number;
+  disposition_literalism?: number;
+  disposition_empathy?: number;
+  entity_labels?: EntityLabel[];
+  directives?: BankConfigDirective[];
+}
+
+export interface ResolvedConfig {
+  // Infrastructure
+  hindsightApiUrl?: string;
+  hindsightApiToken?: string;
+
+  // Daemon
+  apiPort?: number;
+  embedPort?: number;
+  embedVersion?: string;
+  embedPackagePath?: string;
+  daemonIdleTimeout?: number;
+
+  // Routing
+  dynamicBankGranularity?: Array<'agent' | 'provider' | 'channel' | 'user'>;
+  dynamicBankId?: boolean;
+  bankIdPrefix?: string;
+
+  // Behavioral
+  llmProvider?: string;
+  llmModel?: string;
+  llmApiKeyEnv?: string;
+  autoRecall?: boolean;
+  autoRetain?: boolean;
+  recallBudget?: 'low' | 'mid' | 'high';
+  recallMaxTokens?: number;
+  recallTypes?: Array<'world' | 'experience' | 'observation'>;
+  recallRoles?: Array<'user' | 'assistant' | 'system' | 'tool'>;
+  recallTopK?: number;
+  recallContextTurns?: number;
+  recallMaxQueryChars?: number;
+  recallPromptPreamble?: string;
+  retainRoles?: Array<'user' | 'assistant' | 'system' | 'tool'>;
+  retainEveryNTurns?: number;
+  retainOverlapTurns?: number;
+  excludeProviders?: string[];
+  debug?: boolean;
+
+  // Tag injection
+  retainTags?: string[];
+  retainContext?: Record<string, unknown>;
+  retainObservationScopes?: string[];
+  recallTags?: string[];
+  recallTagsMatch?: 'any' | 'all';
+
+  // Merged internal fields
+  _serverConfig?: ServerConfig;
+  _recallFrom?: RecallFromEntry[];
+  _sessionStartModels?: SessionStartModelConfig[];
+  _reflectOnRecall?: boolean;
+  _reflectBudget?: 'low' | 'mid' | 'high';
+  _reflectMaxTokens?: number;
+}
+
+// ── Session Start ────────────────────────────────────────────────────
+
+export type SessionStartModelConfig =
+  | { type: 'mental_model'; bankId: string; modelId: string; label: string; roles?: string[] }
+  | { type: 'recall'; bankId: string; query: string; label: string; maxTokens?: number; roles?: string[] };
+
+// ── Hindsight API Types ──────────────────────────────────────────────
+
+// Tag groups for compound filtering
+export type TagGroup =
+  | { tags: string[]; match: 'any' | 'all' }
+  | { and: TagGroup[] }
+  | { or: TagGroup[] }
+  | { not: TagGroup };
+
+export interface RetainItem {
+  content: string;
+  timestamp?: string;
+  context?: string;
+  metadata?: Record<string, unknown>;
+  document_id?: string;
+  entities?: string[];
+  tags?: string[];
+  observation_scopes?: string[];
+}
 
 export interface RetainRequest {
-  content: string;
-  document_id?: string;
-  metadata?: Record<string, unknown>;
+  items: RetainItem[];
+  async?: boolean;
 }
 
 export interface RetainResponse {
@@ -96,16 +289,13 @@ export interface RetainResponse {
 
 export interface RecallRequest {
   query: string;
-  max_tokens?: number;
-  budget?: 'low' | 'mid' | 'high';
   types?: Array<'world' | 'experience' | 'observation'>;
-}
-
-export interface RecallResponse {
-  results: MemoryResult[];
-  entities: Record<string, unknown> | null;
-  trace: unknown | null;
-  chunks: unknown | null;
+  budget?: 'low' | 'mid' | 'high';
+  max_tokens?: number;
+  query_timestamp?: string;
+  trace?: boolean;
+  tag_groups?: TagGroup[];
+  include?: string[];
 }
 
 export interface MemoryResult {
@@ -123,6 +313,73 @@ export interface MemoryResult {
   tags: string[];
 }
 
+export interface RecallResponse {
+  results: MemoryResult[];
+  entities: Record<string, unknown> | null;
+  trace: unknown | null;
+  chunks: unknown | null;
+}
+
+export interface ReflectRequest {
+  query: string;
+  budget?: 'low' | 'mid' | 'high';
+  max_tokens?: number;
+  response_schema?: Record<string, unknown>;
+  tag_groups?: TagGroup[];
+  include?: string[];
+}
+
+export interface ReflectResponse {
+  text: string;
+  structured_output?: unknown;
+  based_on?: string[];
+  usage?: { prompt_tokens: number; completion_tokens: number };
+}
+
+// Full API entity (with server-assigned fields)
+export interface Directive {
+  id: string;
+  bank_id: string;
+  name: string;
+  content: string;
+  priority: number;
+  is_active: boolean;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateDirectiveRequest {
+  name: string;
+  content: string;
+  priority?: number;
+  is_active?: boolean;
+  tags?: string[];
+}
+
+export interface MentalModel {
+  id: string;
+  bank_id: string;
+  name: string;
+  source_query: string;
+  content: string;
+  trigger: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BankProfile {
+  bank_id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface BankConfigResponse {
+  config: Record<string, unknown>;
+  overrides: Record<string, unknown>;
+}
+
+// Legacy compat — kept for existing callers
 export interface CreateBankRequest {
   name: string;
   background_context?: string;
