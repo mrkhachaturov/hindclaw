@@ -57,6 +57,13 @@ export class HindsightEmbedManager {
   }
 
   async start(): Promise<void> {
+    // Skip if daemon is already running (prevents duplicate starts when gateway
+    // loads the plugin multiple times during startup/hot-reload)
+    if (await this.checkHealth()) {
+      console.log(`[Hindsight] Daemon already running on port ${this.port}, skipping start`);
+      return;
+    }
+
     console.log(`[Hindsight] Starting hindsight-embed daemon...`);
 
     // Build environment variables using standard HINDSIGHT_API_LLM_* variables
