@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   stripMemoryTags,
+  stripMetadataEnvelopes,
+  sliceLastTurnsByUserBoundary,
+  extractRecallQuery,
+  composeRecallQuery,
+  truncateRecallQuery,
   formatMemories,
   prepareRetentionTranscript,
   deriveBankId,
@@ -14,6 +19,26 @@ import type { MemoryResult } from './types.js';
 describe('index re-exports', () => {
   it('re-exports stripMemoryTags', () => {
     expect(typeof stripMemoryTags).toBe('function');
+  });
+
+  it('re-exports stripMetadataEnvelopes', () => {
+    expect(typeof stripMetadataEnvelopes).toBe('function');
+  });
+
+  it('re-exports sliceLastTurnsByUserBoundary', () => {
+    expect(typeof sliceLastTurnsByUserBoundary).toBe('function');
+  });
+
+  it('re-exports extractRecallQuery', () => {
+    expect(typeof extractRecallQuery).toBe('function');
+  });
+
+  it('re-exports composeRecallQuery', () => {
+    expect(typeof composeRecallQuery).toBe('function');
+  });
+
+  it('re-exports truncateRecallQuery', () => {
+    expect(typeof truncateRecallQuery).toBe('function');
   });
 
   it('re-exports formatMemories', () => {
@@ -94,20 +119,21 @@ describe('formatMemories', () => {
 
 // ---------------------------------------------------------------------------
 // prepareRetentionTranscript (via re-export from hooks/retain)
-// Note: The new signature is (messages, retainRoles) instead of (messages, pluginConfig)
+// Returns { transcript, messageCount } | null with native [role: X] format
 // ---------------------------------------------------------------------------
 
 describe('prepareRetentionTranscript', () => {
-  it('filters messages by role', () => {
+  it('filters messages by role and uses native format', () => {
     const messages = [
       { role: 'user', content: 'Hello' },
       { role: 'assistant', content: 'Hi there' },
       { role: 'system', content: 'System context' },
     ];
     const result = prepareRetentionTranscript(messages, ['user', 'assistant']);
-    expect(result).toContain('user: Hello');
-    expect(result).toContain('assistant: Hi there');
-    expect(result).not.toContain('System context');
+    expect(result).not.toBeNull();
+    expect(result!.transcript).toContain('[role: user]\nHello\n[user:end]');
+    expect(result!.transcript).toContain('[role: assistant]\nHi there\n[assistant:end]');
+    expect(result!.transcript).not.toContain('System context');
   });
 
   it('strips memory tags from content', () => {
@@ -116,14 +142,15 @@ describe('prepareRetentionTranscript', () => {
       { role: 'assistant', content: '<hindsight_memories>\nUser prefers dark mode\n</hindsight_memories>\nHere is how to enable dark mode.' },
     ];
     const result = prepareRetentionTranscript(messages, ['user', 'assistant']);
-    expect(result).not.toContain('<hindsight_memories>');
-    expect(result).not.toContain('User prefers dark mode');
-    expect(result).toContain('Here is how to enable dark mode.');
+    expect(result).not.toBeNull();
+    expect(result!.transcript).not.toContain('<hindsight_memories>');
+    expect(result!.transcript).not.toContain('User prefers dark mode');
+    expect(result!.transcript).toContain('Here is how to enable dark mode.');
   });
 
-  it('returns empty string for empty messages', () => {
+  it('returns null for empty messages', () => {
     const result = prepareRetentionTranscript([], ['user', 'assistant']);
-    expect(result).toBe('');
+    expect(result).toBeNull();
   });
 
   it('skips messages whose content becomes empty after tag stripping', () => {
@@ -132,11 +159,11 @@ describe('prepareRetentionTranscript', () => {
       { role: 'assistant', content: '<hindsight_memories>\nonly tags\n</hindsight_memories>' },
       { role: 'assistant', content: 'Actual response' },
     ];
-    const result = prepareRetentionTranscript(messages, ['user', 'assistant']);
-    expect(result).toContain('user: Real message');
-    expect(result).toContain('assistant: Actual response');
+    const result = prepareRetentionTranscript(messages, ['user', 'assistant'], true);
+    expect(result).not.toBeNull();
+    expect(result!.transcript).toContain('Real message');
+    expect(result!.transcript).toContain('Actual response');
     // The middle message should be skipped (entirely tags)
-    const lines = result.split('\n').filter(l => l.startsWith('assistant:'));
-    expect(lines).toHaveLength(1);
+    expect(result!.messageCount).toBe(2);
   });
 });

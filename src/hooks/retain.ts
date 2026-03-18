@@ -1,31 +1,118 @@
 import type { HindsightClient } from '../client.js';
 import type { ResolvedConfig, PluginConfig, PluginHookAgentContext } from '../types.js';
+import { debug } from '../debug.js';
 import { deriveBankId } from '../derive-bank-id.js';
+import { stripMemoryTags, stripMetadataEnvelopes, sliceLastTurnsByUserBoundary } from '../utils.js';
 
-// Regex to strip <hindsight_memories>...</hindsight_memories> blocks
-const MEMORY_TAG_RE = /<hindsight_memories>[\s\S]*?<\/hindsight_memories>/g;
-// Regex to strip <hindsight_context>...</hindsight_context> blocks
-const CONTEXT_TAG_RE = /<hindsight_context>[\s\S]*?<\/hindsight_context>/g;
+// Re-export for backward compatibility
+export { stripMemoryTags } from '../utils.js';
 
-export function stripMemoryTags(text: string): string {
-  return text.replace(MEMORY_TAG_RE, '').replace(CONTEXT_TAG_RE, '').trim();
+// ── Module-level state for chunked retention (C2/C5) ────────────────
+// Track turns per session for retainEveryNTurns support.
+// Ported from native index.ts line 34.
+const turnCountBySession = new Map<string, number>();
+const MAX_TRACKED_SESSIONS = 10_000;
+
+/**
+ * Extract text content from message content (handles string and Array<{type:'text', text:string}>).
+ * Ported from native index.ts lines 1334-1342.
+ */
+function extractTextContent(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .filter((block: any) => block.type === 'text')
+      .map((block: any) => block.text)
+      .join('\n');
+  }
+  return '';
 }
 
+/**
+ * Prepare a retention transcript from messages.
+ * Ported from native index.ts lines 1292-1359.
+ *
+ * Key differences from our old implementation:
+ * - Finds last user message index and retains only from there (unless retainFullWindow)
+ * - Uses `[role: user]\ncontent\n[user:end]` format (not `user: content`)
+ * - Calls stripMemoryTags() AND stripMetadataEnvelopes() on each message
+ * - Returns `{ transcript, messageCount } | null`
+ * - Rejects transcripts < 10 chars
+ */
 export function prepareRetentionTranscript(
-  messages: Array<{ role: string; content: string }>,
+  messages: any[],
   retainRoles: string[],
-): string {
-  return messages
-    .filter(m => retainRoles.includes(m.role) && m.content?.trim())
-    .map(m => `${m.role}: ${stripMemoryTags(m.content)}`)
-    .filter(line => {
-      // Skip lines where content was entirely stripped tags (only "role: " prefix remains)
-      const colonIdx = line.indexOf(': ');
-      return colonIdx !== -1 && line.slice(colonIdx + 2).trim().length > 0;
+  retainFullWindow = false,
+): { transcript: string; messageCount: number } | null {
+  if (!messages || messages.length === 0) {
+    return null;
+  }
+
+  let targetMessages: any[];
+  if (retainFullWindow) {
+    // Chunked retention: retain the full sliding window (already sliced by caller)
+    targetMessages = messages;
+  } else {
+    // Default: retain only the last turn (user message + assistant responses)
+    let lastUserIdx = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') {
+        lastUserIdx = i;
+        break;
+      }
+    }
+    if (lastUserIdx === -1) {
+      return null; // No user message found in turn
+    }
+    targetMessages = messages.slice(lastUserIdx);
+  }
+
+  // Role filtering
+  const allowedRoles = new Set(retainRoles);
+  const filteredMessages = targetMessages.filter((m: any) => allowedRoles.has(m.role));
+
+  if (filteredMessages.length === 0) {
+    return null;
+  }
+
+  // Format messages into a transcript using native format: [role: X]\ncontent\n[X:end]
+  const transcriptParts = filteredMessages
+    .map((msg: any) => {
+      const role = msg.role || 'unknown';
+      let content = '';
+
+      // Handle different content formats (string AND Array<{type:'text', text:string}>)
+      if (typeof msg.content === 'string') {
+        content = msg.content;
+      } else if (Array.isArray(msg.content)) {
+        content = msg.content
+          .filter((block: any) => block.type === 'text')
+          .map((block: any) => block.text)
+          .join('\n');
+      }
+
+      // Strip plugin-injected memory tags and metadata envelopes to prevent feedback loop
+      content = stripMemoryTags(content);
+      content = stripMetadataEnvelopes(content);
+
+      return content.trim() ? `[role: ${role}]\n${content}\n[${role}:end]` : null;
     })
-    .join('\n');
+    .filter(Boolean);
+
+  const transcript = transcriptParts.join('\n\n');
+
+  if (!transcript.trim() || transcript.length < 10) {
+    return null; // Transcript too short
+  }
+
+  return { transcript, messageCount: transcriptParts.length };
 }
 
+/**
+ * Handle the retain hook — supports chunked retention with turn counting.
+ *
+ * Ported from native index.ts lines 1162-1279.
+ */
 export async function handleRetain(
   event: any,
   ctx: PluginHookAgentContext | undefined,
@@ -33,17 +120,64 @@ export async function handleRetain(
   client: HindsightClient,
   pluginConfig: PluginConfig,
 ): Promise<void> {
-  if (agentConfig.autoRetain === false) return;
+  const bankId = deriveBankId(ctx, pluginConfig);
+  debug(`[Hindsight Hook] agent_end triggered - bank: ${bankId}`);
 
-  const messages = event?.messages ?? event?.context?.sessionEntry?.messages ?? [];
-  if (!messages.length) return;
+  if (agentConfig.autoRetain === false) {
+    debug('[Hindsight Hook] autoRetain is disabled, skipping retention');
+    return;
+  }
+
+  const allMessages = event?.context?.sessionEntry?.messages ?? event?.messages ?? [];
+  if (!allMessages.length) {
+    debug('[Hindsight Hook] No messages in event, skipping retention');
+    return;
+  }
 
   const retainRoles = agentConfig.retainRoles ?? ['user', 'assistant'];
-  const transcript = prepareRetentionTranscript(messages, retainRoles);
-  if (!transcript.trim()) return;
 
-  const bankId = deriveBankId(ctx, pluginConfig);
+  // ── Chunked retention (C2/C5) ──────────────────────────────────────
+  // Skip non-Nth turns and use a sliding window when firing.
+  // Ported from native index.ts lines 1200-1231.
+  const retainEveryN = agentConfig.retainEveryNTurns ?? pluginConfig.retainEveryNTurns ?? 1;
+  let messagesToRetain = allMessages;
+  let retainFullWindow = false;
+
+  if (retainEveryN > 1) {
+    const sessionTrackingKey = `${bankId}:${ctx?.sessionKey || 'session'}`;
+    const turnCount = (turnCountBySession.get(sessionTrackingKey) || 0) + 1;
+    turnCountBySession.set(sessionTrackingKey, turnCount);
+    if (turnCountBySession.size > MAX_TRACKED_SESSIONS) {
+      const oldestKey = turnCountBySession.keys().next().value;
+      if (oldestKey) {
+        turnCountBySession.delete(oldestKey);
+      }
+    }
+
+    if (turnCount % retainEveryN !== 0) {
+      const nextRetainAt = Math.ceil(turnCount / retainEveryN) * retainEveryN;
+      debug(`[Hindsight Hook] Turn ${turnCount}/${retainEveryN}, skipping retain (next at turn ${nextRetainAt})`);
+      return; // Skip non-Nth turn
+    }
+
+    // Sliding window in turns: N turns + configured overlap turns.
+    const overlapTurns = agentConfig.retainOverlapTurns ?? pluginConfig.retainOverlapTurns ?? 0;
+    const windowTurns = retainEveryN + overlapTurns;
+    messagesToRetain = sliceLastTurnsByUserBoundary(allMessages, windowTurns);
+    retainFullWindow = true;
+    debug(`[Hindsight Hook] Turn ${turnCount}: chunked retain firing (window: ${windowTurns} turns, ${messagesToRetain.length} messages)`);
+  }
+
+  const retention = prepareRetentionTranscript(messagesToRetain, retainRoles, retainFullWindow);
+  if (!retention) {
+    debug('[Hindsight Hook] No messages to retain (filtered/short/no-user)');
+    return;
+  }
+
+  const { transcript, messageCount } = retention;
   const documentId = `session-${ctx?.sessionKey ?? 'unknown'}-${Date.now()}`;
+
+  debug(`[Hindsight] Retaining to bank ${bankId}, document: ${documentId}, chars: ${transcript.length}\n---\n${transcript.substring(0, 500)}${transcript.length > 500 ? '\n...(truncated)' : ''}\n---`);
 
   await client.retain(bankId, {
     items: [{
@@ -51,7 +185,7 @@ export async function handleRetain(
       document_id: documentId,
       metadata: {
         retained_at: new Date().toISOString(),
-        message_count: String(messages.length),
+        message_count: String(messageCount),
         channel_type: ctx?.messageProvider ?? '',
         channel_id: ctx?.channelId ?? '',
         sender_id: ctx?.senderId ?? '',
@@ -62,4 +196,6 @@ export async function handleRetain(
     }],
     async: true,
   });
+
+  debug(`[Hindsight] Retained ${messageCount} messages to bank ${bankId} for session ${documentId}`);
 }

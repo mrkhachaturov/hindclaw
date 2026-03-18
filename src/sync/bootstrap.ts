@@ -14,10 +14,16 @@ const CONFIG_FIELDS = [
   'entity_labels',
 ] as const;
 
+/**
+ * Bootstrap a bank with config from file. If the bank config file doesn't
+ * specify a retain_mission, use the default bankMission from plugin config
+ * (I2-I3: automatic bank mission for unconfigured banks).
+ */
 export async function bootstrapBank(
   bankId: string,
   bankConfig: BankConfig,
   client: HindsightClient,
+  defaultBankMission?: string,
 ): Promise<{ applied: boolean; error?: string }> {
   // Skip if already bootstrapped in this process
   if (bootstrappedBanks.has(bankId)) {
@@ -35,6 +41,9 @@ export async function bootstrapBank(
       return { applied: false };
     }
 
+    // Ensure bank exists in database before applying config/directives
+    await client.ensureBank(bankId);
+
     // Bank is empty — apply config from file
     const configUpdates: Record<string, unknown> = {};
 
@@ -43,6 +52,11 @@ export async function bootstrapBank(
       if (value !== undefined) {
         configUpdates[field] = value;
       }
+    }
+
+    // I2-I3: If no retain_mission in bank config file, use default bankMission from plugin config
+    if (!configUpdates.retain_mission && defaultBankMission) {
+      configUpdates.retain_mission = defaultBankMission;
     }
 
     if (Object.keys(configUpdates).length > 0) {

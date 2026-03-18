@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { resolveRecallFilter, interleaveResults, handleRecall } from './recall.js';
+import { resolveRecallFilter, interleaveResults, handleRecall, extractRecallQuery, composeRecallQuery, truncateRecallQuery } from './recall.js';
 import type { ResolvedConfig, MemoryResult, PluginConfig, PluginHookAgentContext, RecallResponse, ReflectResponse } from '../types.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -56,6 +56,126 @@ const baseCtx: PluginHookAgentContext = {
   channelId: 'chan-1',
   senderId: 'user-1',
 };
+
+// ── extractRecallQuery (C1) ──────────────────────────────────────────
+
+describe('extractRecallQuery', () => {
+  it('prefers rawMessage over prompt', () => {
+    expect(extractRecallQuery('hello world', 'fallback prompt')).toBe('hello world');
+  });
+
+  it('falls back to prompt when rawMessage is too short', () => {
+    expect(extractRecallQuery('hi', 'a longer prompt query')).toBe('a longer prompt query');
+  });
+
+  it('returns null when both are too short', () => {
+    expect(extractRecallQuery('hi', 'abc')).toBeNull();
+  });
+
+  it('strips metadata envelopes from rawMessage', () => {
+    const raw = 'Sender (untrusted metadata):\n```json\n{"id":"u1"}\n```\nActual question here';
+    expect(extractRecallQuery(raw, undefined)).toBe('Actual question here');
+  });
+
+  it('strips System: lines from prompt', () => {
+    const prompt = 'System: event happened\n\nWhat should I do about this?';
+    expect(extractRecallQuery(undefined, prompt)).toBe('What should I do about this?');
+  });
+
+  it('strips session abort hint from prompt', () => {
+    const prompt = 'Note: The previous agent run was aborted due to timeout.\n\nContinue the task';
+    expect(extractRecallQuery(undefined, prompt)).toBe('Continue the task');
+  });
+
+  it('extracts content after [Channel] envelope header', () => {
+    const prompt = '[Telegram Group Chat] tell me about the project';
+    expect(extractRecallQuery(undefined, prompt)).toBe('tell me about the project');
+  });
+
+  it('strips trailing [from: SenderName] metadata', () => {
+    const prompt = '[Telegram] What is the status\n[from: John]';
+    expect(extractRecallQuery(undefined, prompt)).toBe('What is the status');
+  });
+
+  it('rejects metadata-only messages', () => {
+    expect(extractRecallQuery('conversation info (untrusted metadata)...', undefined)).toBeNull();
+    expect(extractRecallQuery('System: something happened', undefined)).toBeNull();
+  });
+
+  it('returns null for undefined inputs', () => {
+    expect(extractRecallQuery(undefined, undefined)).toBeNull();
+  });
+});
+
+// ── composeRecallQuery (C1) ──────────────────────────────────────────
+
+describe('composeRecallQuery', () => {
+  it('returns latest query when recallContextTurns is 1', () => {
+    expect(composeRecallQuery('hello', [{ role: 'user', content: 'old' }], 1)).toBe('hello');
+  });
+
+  it('composes multi-turn query from session messages', () => {
+    const messages = [
+      { role: 'user', content: 'first question' },
+      { role: 'assistant', content: 'first answer' },
+      { role: 'user', content: 'second question' },
+    ];
+    const result = composeRecallQuery('second question', messages, 2);
+    expect(result).toContain('Prior context:');
+    expect(result).toContain('user: first question');
+    expect(result).toContain('assistant: first answer');
+    expect(result).toContain('second question');
+  });
+
+  it('skips context messages matching the latest query', () => {
+    const messages = [
+      { role: 'user', content: 'the same query' },
+    ];
+    const result = composeRecallQuery('the same query', messages, 2);
+    expect(result).toBe('the same query');
+  });
+
+  it('filters by recallRoles', () => {
+    const messages = [
+      { role: 'user', content: 'user msg' },
+      { role: 'system', content: 'system msg' },
+      { role: 'assistant', content: 'asst msg' },
+    ];
+    const result = composeRecallQuery('latest', messages, 5, ['user']);
+    expect(result).toContain('user: user msg');
+    expect(result).not.toContain('system msg');
+    expect(result).not.toContain('asst msg');
+  });
+
+  it('returns latest when no messages', () => {
+    expect(composeRecallQuery('hello', undefined, 3)).toBe('hello');
+    expect(composeRecallQuery('hello', [], 3)).toBe('hello');
+  });
+});
+
+// ── truncateRecallQuery (C1) ─────────────────────────────────────────
+
+describe('truncateRecallQuery', () => {
+  it('returns query unchanged when under maxChars', () => {
+    expect(truncateRecallQuery('short query', 'short query', 100)).toBe('short query');
+  });
+
+  it('returns latest-only when no prior context and over limit', () => {
+    const long = 'a'.repeat(200);
+    expect(truncateRecallQuery(long, 'latest', 50)).toBe('latest');
+  });
+
+  it('drops oldest context lines first to preserve latest', () => {
+    const query = 'Prior context:\n\nuser: old line\nassistant: older line\n\nlatest question';
+    const result = truncateRecallQuery(query, 'latest question', 60);
+    expect(result).toContain('latest question');
+  });
+
+  it('returns query unchanged when maxChars is 0', () => {
+    const query = 'any query';
+    expect(truncateRecallQuery(query, 'any query', 0)).toBe('any query');
+  });
+});
 
 // ── resolveRecallFilter ──────────────────────────────────────────────
 
@@ -140,6 +260,22 @@ describe('handleRecall', () => {
     expect(result).toContain('Hello world');
   });
 
+  it('wraps output in <hindsight_memories> tags (I4)', async () => {
+    const mem = makeMemory('m1', 'Hello world');
+    mockClient.recall.mockResolvedValue({ results: [mem], entities: null, trace: null, chunks: null });
+
+    const result = await handleRecall(
+      { rawMessage: 'tell me about X' },
+      baseCtx,
+      baseAgentConfig,
+      mockClient,
+      basePluginConfig,
+    );
+
+    expect(result).toMatch(/^<hindsight_memories>\n/);
+    expect(result).toMatch(/<\/hindsight_memories>$/);
+  });
+
   it('calls recall on multiple banks in parallel', async () => {
     const memA = makeMemory('a1', 'Memory from A');
     const memB = makeMemory('b1', 'Memory from B');
@@ -188,9 +324,13 @@ describe('handleRecall', () => {
       basePluginConfig,
     );
 
-    // Interleaved order: a1, b1, a2
+    // Interleaved order: a1, b1, a2 (wrapped in <hindsight_memories> tags)
     expect(result).toBeDefined();
-    const lines = result!.split('\n\n').filter(l => l.startsWith('- '));
+    expect(result).toMatch(/^<hindsight_memories>\n/);
+    expect(result).toMatch(/<\/hindsight_memories>$/);
+    // Extract just the memory lines from inside the tags
+    const inner = result!.replace(/<\/?hindsight_memories>/g, '').trim();
+    const lines = inner.split('\n\n').filter(l => l.startsWith('- '));
     expect(lines).toEqual(['- A1 [world]', '- B1 [world]', '- A2 [world]']);
   });
 
@@ -217,6 +357,7 @@ describe('handleRecall', () => {
     expect(mockClient.reflect).toHaveBeenCalledOnce();
     expect(mockClient.recall).not.toHaveBeenCalled();
     expect(result).toContain('Reflected insight about the topic');
+    expect(result).toMatch(/^<hindsight_memories>\n/);
   });
 
   it('passes tag_groups from resolveRecallFilter', async () => {
@@ -306,5 +447,46 @@ describe('handleRecall', () => {
 
     expect(result).toContain('From surviving bank');
     expect(result).not.toContain('Bank A');
+  });
+
+  it('strips metadata from rawMessage before querying (C1)', async () => {
+    mockClient.recall.mockResolvedValue({ results: [makeMemory('m1', 'result')], entities: null, trace: null, chunks: null });
+
+    await handleRecall(
+      { rawMessage: 'Sender (untrusted metadata):\n```json\n{"id":"u1"}\n```\nWhat is the weather?' },
+      baseCtx,
+      baseAgentConfig,
+      mockClient,
+      basePluginConfig,
+    );
+
+    const [, request] = mockClient.recall.mock.calls[0];
+    expect(request.query).toBe('What is the weather?');
+    expect(request.query).not.toContain('untrusted metadata');
+  });
+
+  it('uses multi-turn context when recallContextTurns > 1 (C1)', async () => {
+    mockClient.recall.mockResolvedValue({ results: [makeMemory('m1', 'result')], entities: null, trace: null, chunks: null });
+
+    const config: ResolvedConfig = {
+      ...baseAgentConfig,
+      recallContextTurns: 3,
+    };
+
+    const event = {
+      rawMessage: 'what about that?',
+      messages: [
+        { role: 'user', content: 'tell me about dogs' },
+        { role: 'assistant', content: 'Dogs are great pets.' },
+        { role: 'user', content: 'what about that?' },
+      ],
+    };
+
+    await handleRecall(event, baseCtx, config, mockClient, basePluginConfig);
+
+    const [, request] = mockClient.recall.mock.calls[0];
+    expect(request.query).toContain('Prior context:');
+    expect(request.query).toContain('tell me about dogs');
+    expect(request.query).toContain('what about that?');
   });
 });

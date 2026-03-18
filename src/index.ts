@@ -8,7 +8,9 @@ import { HindsightEmbedManager } from './embed-manager.js';
 import { HindsightClient, type HindsightClientOptions } from './client.js';
 import { resolveAgentConfig, loadBankConfigFiles } from './config.js';
 import { handleRecall } from './hooks/recall.js';
-import { handleRetain, stripMemoryTags, prepareRetentionTranscript } from './hooks/retain.js';
+import { handleRetain } from './hooks/retain.js';
+import { stripMemoryTags } from './utils.js';
+import { prepareRetentionTranscript } from './hooks/retain.js';
 import { handleSessionStart } from './hooks/session-start.js';
 import { deriveBankId } from './derive-bank-id.js';
 import { formatMemories } from './format.js';
@@ -18,15 +20,14 @@ import { fileURLToPath } from 'url';
 import { homedir } from 'os';
 
 // ── Re-exports for backward compatibility ───────────────────────────────
-export { stripMemoryTags, prepareRetentionTranscript } from './hooks/retain.js';
+export { stripMemoryTags, stripMetadataEnvelopes, sliceLastTurnsByUserBoundary } from './utils.js';
+export { extractRecallQuery, composeRecallQuery, truncateRecallQuery } from './utils.js';
+export { prepareRetentionTranscript } from './hooks/retain.js';
 export { deriveBankId } from './derive-bank-id.js';
 export { formatMemories } from './format.js';
 
 // ── Debug logging ───────────────────────────────────────────────────────
-let debugEnabled = false;
-const debug = (...args: unknown[]) => {
-  if (debugEnabled) console.log(...args);
-};
+import { debug, setDebugEnabled } from './debug.js';
 
 // ── Module-level state ──────────────────────────────────────────────────
 let embedManager: HindsightEmbedManager | null = null;
@@ -254,8 +255,8 @@ if (typeof global !== 'undefined') {
 }
 
 // ── Helper: extract sender ID from OpenClaw metadata blocks ─────────────
-function extractSenderIdFromText(text: string): string | undefined {
-  if (!text) return undefined;
+function extractSenderIdFromText(text: unknown): string | undefined {
+  if (!text || typeof text !== 'string') return undefined;
   const metaBlockRe = /[\w\s]+\(untrusted metadata\)[^\n]*\n```json\n([\s\S]*?)\n```/gi;
   let match: RegExpExecArray | null;
   while ((match = metaBlockRe.exec(text)) !== null) {
@@ -272,6 +273,7 @@ function extractSenderIdFromText(text: string): string | undefined {
 function getPluginConfig(api: MoltbotPluginAPI): PluginConfig {
   const config = api.config.plugins?.entries?.['hindsight-openclaw-pro']?.config || {};
   return {
+    bankMission: config.bankMission,
     embedPort: config.embedPort || 0,
     daemonIdleTimeout: config.daemonIdleTimeout !== undefined ? config.daemonIdleTimeout : 0,
     embedVersion: config.embedVersion || 'latest',
@@ -299,6 +301,8 @@ function getPluginConfig(api: MoltbotPluginAPI): PluginConfig {
     recallPromptPreamble: typeof config.recallPromptPreamble === 'string' && config.recallPromptPreamble.trim().length > 0
       ? config.recallPromptPreamble
       : undefined,
+    retainEveryNTurns: typeof config.retainEveryNTurns === 'number' && config.retainEveryNTurns >= 1 ? config.retainEveryNTurns : 1,
+    retainOverlapTurns: typeof config.retainOverlapTurns === 'number' && config.retainOverlapTurns >= 0 ? config.retainOverlapTurns : 0,
     debug: config.debug ?? false,
     agents: config.agents,
     bootstrap: config.bootstrap,
@@ -322,7 +326,7 @@ export default function (api: MoltbotPluginAPI) {
     debug('[Hindsight] Plugin loading...');
 
     const pluginConfig = getPluginConfig(api);
-    debugEnabled = pluginConfig.debug ?? false;
+    setDebugEnabled(pluginConfig.debug ?? false);
     currentPluginConfig = pluginConfig;
 
     // Load bank config files for configured agents
@@ -389,8 +393,13 @@ export default function (api: MoltbotPluginAPI) {
         }
 
         // Bootstrap bank configs in background (non-blocking)
-        if (client && bankConfigs.size > 0 && client.httpMode) {
-          runBootstrap(client, pluginConfig, bankConfigs).catch(err => {
+        // Bootstrap needs HTTP mode — create a temporary HTTP client for it
+        const bootstrapApiUrl = usingExternalApi ? null : `http://127.0.0.1:${apiPort}`;
+        const bootstrapClient = bootstrapApiUrl
+          ? new HindsightClient({ ...clientOptions!, apiUrl: bootstrapApiUrl })
+          : client;
+        if (bootstrapClient && bankConfigs.size > 0 && bootstrapClient.httpMode) {
+          runBootstrap(bootstrapClient, pluginConfig, bankConfigs).catch(err => {
             console.warn('[Hindsight] Bootstrap error:', err instanceof Error ? err.message : err);
           });
         }
@@ -603,7 +612,7 @@ async function runBootstrap(
   for (const [agentId, bankConfig] of bankConfigs) {
     const bankId = deriveBankId({ agentId } as PluginHookAgentContext, pluginConfig);
     try {
-      const result = await bootstrapBank(bankId, bankConfig, client);
+      const result = await bootstrapBank(bankId, bankConfig, client, pluginConfig.bankMission);
       if (result.applied) {
         debug(`[Hindsight] Bootstrapped bank ${bankId} for agent ${agentId}`);
       } else if (result.error) {

@@ -75,10 +75,29 @@ export class HindsightClient {
 
   async recall(bankId: string, request: RecallRequest, timeoutMs?: number): Promise<RecallResponse> {
     if (this.httpMode) {
+      // Defense-in-depth: truncate query to stay under API's 500-token limit
+      const MAX_QUERY_CHARS = 800;
+      const query = request.query.length > MAX_QUERY_CHARS
+        ? (console.warn(`[Hindsight] Truncating recall query from ${request.query.length} to ${MAX_QUERY_CHARS} chars`),
+           request.query.substring(0, MAX_QUERY_CHARS))
+        : request.query;
+      const body: Record<string, unknown> = {
+        query,
+        max_tokens: request.max_tokens || 1024,
+      };
+      if (request.budget) {
+        body.budget = request.budget;
+      }
+      if (request.types) {
+        body.types = request.types;
+      }
+      if (request.tag_groups) {
+        body.tag_groups = request.tag_groups;
+      }
       return this.httpRequest<RecallResponse>(
         'POST',
         `${this.bankUrl(bankId)}/memories/recall`,
-        request,
+        body,
         timeoutMs ?? RECALL_TIMEOUT_MS,
       );
     }
@@ -107,6 +126,11 @@ export class HindsightClient {
     return this.httpRequest<BankConfigResponse>('DELETE', `${this.bankUrl(bankId)}/config`);
   }
 
+  async ensureBank(bankId: string): Promise<void> {
+    this.requireHttpMode('ensureBank');
+    await this.httpRequest('PUT', `${this.bankUrl(bankId)}`, {});
+  }
+
   // ── Directives ───────────────────────────────────────────────────
 
   async listDirectives(bankId: string): Promise<Directive[]> {
@@ -132,9 +156,9 @@ export class HindsightClient {
 
   // ── Mental models ────────────────────────────────────────────────
 
-  async getMentalModel(bankId: string, modelId: string): Promise<MentalModel> {
+  async getMentalModel(bankId: string, modelId: string, timeoutMs?: number): Promise<MentalModel> {
     this.requireHttpMode('getMentalModel');
-    return this.httpRequest<MentalModel>('GET', `${this.bankUrl(bankId)}/mental-models/${encodeURIComponent(modelId)}`);
+    return this.httpRequest<MentalModel>('GET', `${this.bankUrl(bankId)}/mental-models/${encodeURIComponent(modelId)}`, undefined, timeoutMs);
   }
 
   async listMentalModels(bankId: string): Promise<MentalModel[]> {

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { stripMemoryTags, prepareRetentionTranscript, handleRetain } from './retain.js';
+import { stripMemoryTags } from '../utils.js';
+import { prepareRetentionTranscript, handleRetain } from './retain.js';
 import type { HindsightClient } from '../client.js';
 import type { ResolvedConfig, PluginConfig, PluginHookAgentContext } from '../types.js';
 
@@ -11,14 +12,19 @@ describe('stripMemoryTags', () => {
     expect(stripMemoryTags(input)).toBe('Hello  world');
   });
 
+  it('removes relevant_memories blocks (C4)', () => {
+    const input = 'Before <relevant_memories>some memories</relevant_memories> after';
+    expect(stripMemoryTags(input)).toBe('Before  after');
+  });
+
   it('removes hindsight_context blocks', () => {
     const input = 'Before <hindsight_context>some context</hindsight_context> after';
     expect(stripMemoryTags(input)).toBe('Before  after');
   });
 
-  it('removes both blocks when both present', () => {
-    const input = '<hindsight_memories>mem</hindsight_memories> text <hindsight_context>ctx</hindsight_context>';
-    expect(stripMemoryTags(input)).toBe('text');
+  it('removes all three tag types when present', () => {
+    const input = '<hindsight_memories>mem</hindsight_memories> text <hindsight_context>ctx</hindsight_context> more <relevant_memories>rel</relevant_memories>';
+    expect(stripMemoryTags(input)).toBe(' text  more ');
   });
 
   it('handles multiline blocks', () => {
@@ -41,15 +47,47 @@ describe('prepareRetentionTranscript', () => {
     { role: 'tool', content: 'Tool result' },
   ];
 
-  it('filters by retainRoles and formats with role prefix', () => {
-    const transcript = prepareRetentionTranscript(messages, ['user', 'assistant']);
-    expect(transcript).toBe('user: Hello agent\nassistant: Hi there');
+  it('returns native format [role: X]\\ncontent\\n[X:end]', () => {
+    const result = prepareRetentionTranscript(messages, ['user', 'assistant']);
+    expect(result).not.toBeNull();
+    expect(result!.transcript).toContain('[role: user]\nHello agent\n[user:end]');
+    expect(result!.transcript).toContain('[role: assistant]\nHi there\n[assistant:end]');
+    expect(result!.messageCount).toBe(2);
+  });
+
+  it('retains only from last user message by default', () => {
+    const msgs = [
+      { role: 'user', content: 'First question' },
+      { role: 'assistant', content: 'First answer' },
+      { role: 'user', content: 'Second question' },
+      { role: 'assistant', content: 'Second answer' },
+    ];
+    const result = prepareRetentionTranscript(msgs, ['user', 'assistant']);
+    expect(result).not.toBeNull();
+    expect(result!.transcript).not.toContain('First question');
+    expect(result!.transcript).toContain('Second question');
+    expect(result!.transcript).toContain('Second answer');
+  });
+
+  it('retains full window when retainFullWindow is true', () => {
+    const msgs = [
+      { role: 'user', content: 'First question' },
+      { role: 'assistant', content: 'First answer' },
+      { role: 'user', content: 'Second question' },
+      { role: 'assistant', content: 'Second answer' },
+    ];
+    const result = prepareRetentionTranscript(msgs, ['user', 'assistant'], true);
+    expect(result).not.toBeNull();
+    expect(result!.transcript).toContain('First question');
+    expect(result!.transcript).toContain('Second answer');
+    expect(result!.messageCount).toBe(4);
   });
 
   it('includes system and tool roles when specified', () => {
-    const transcript = prepareRetentionTranscript(messages, ['user', 'assistant', 'system', 'tool']);
-    expect(transcript).toContain('system: System prompt');
-    expect(transcript).toContain('tool: Tool result');
+    const result = prepareRetentionTranscript(messages, ['user', 'assistant', 'system', 'tool']);
+    expect(result).not.toBeNull();
+    expect(result!.transcript).toContain('[role: system]\nSystem prompt\n[system:end]');
+    expect(result!.transcript).toContain('[role: tool]\nTool result\n[tool:end]');
   });
 
   it('strips hindsight_memories tags from content', () => {
@@ -57,9 +95,21 @@ describe('prepareRetentionTranscript', () => {
       { role: 'user', content: 'Question <hindsight_memories>leaked</hindsight_memories>' },
       { role: 'assistant', content: 'Answer' },
     ];
-    const transcript = prepareRetentionTranscript(msgs, ['user', 'assistant']);
-    expect(transcript).not.toContain('<hindsight_memories>');
-    expect(transcript).toContain('user: Question');
+    const result = prepareRetentionTranscript(msgs, ['user', 'assistant']);
+    expect(result).not.toBeNull();
+    expect(result!.transcript).not.toContain('<hindsight_memories>');
+    expect(result!.transcript).toContain('Question');
+  });
+
+  it('strips metadata envelopes from content', () => {
+    const msgs = [
+      { role: 'user', content: 'Sender (untrusted metadata):\n```json\n{"id":"u1"}\n```\nActual message' },
+      { role: 'assistant', content: 'Response' },
+    ];
+    const result = prepareRetentionTranscript(msgs, ['user', 'assistant']);
+    expect(result).not.toBeNull();
+    expect(result!.transcript).not.toContain('untrusted metadata');
+    expect(result!.transcript).toContain('Actual message');
   });
 
   it('skips messages with empty content after stripping', () => {
@@ -67,13 +117,48 @@ describe('prepareRetentionTranscript', () => {
       { role: 'user', content: '<hindsight_memories>only tags</hindsight_memories>' },
       { role: 'assistant', content: 'Response' },
     ];
-    const transcript = prepareRetentionTranscript(msgs, ['user', 'assistant']);
-    expect(transcript).toBe('assistant: Response');
+    // With last-user-idx logic, user message is the start, but it becomes empty.
+    // The transcript should only contain the assistant response.
+    const result = prepareRetentionTranscript(msgs, ['user', 'assistant']);
+    expect(result).not.toBeNull();
+    expect(result!.transcript).toContain('[role: assistant]');
+    expect(result!.messageCount).toBe(1);
   });
 
-  it('returns empty string when no messages match roles', () => {
-    const transcript = prepareRetentionTranscript(messages, ['tool']);
-    expect(transcript).toBe('tool: Tool result');
+  it('returns null when no user message found (non-fullWindow)', () => {
+    const msgs = [
+      { role: 'system', content: 'System only' },
+      { role: 'assistant', content: 'Response' },
+    ];
+    const result = prepareRetentionTranscript(msgs, ['user', 'assistant']);
+    expect(result).toBeNull();
+  });
+
+  it('returns null when transcript is too short (< 10 chars)', () => {
+    const msgs = [
+      { role: 'user', content: 'Hi' },
+    ];
+    // After wrapping: [role: user]\nHi\n[user:end] = 24 chars, so this should pass
+    const result = prepareRetentionTranscript(msgs, ['user']);
+    expect(result).not.toBeNull();
+
+    // But very short content after stripping...
+    const msgs2 = [
+      { role: 'user', content: '<hindsight_memories>lots of stuff</hindsight_memories>ab' },
+    ];
+    // "ab" is too short for the trim check (content) but [role: user]\nab\n[user:end] = 22 chars >= 10
+    const result2 = prepareRetentionTranscript(msgs2, ['user']);
+    expect(result2).not.toBeNull();
+  });
+
+  it('handles Array<{type:"text", text:string}> content format', () => {
+    const msgs = [
+      { role: 'user', content: [{ type: 'text', text: 'Hello from array' }] },
+      { role: 'assistant', content: 'Reply' },
+    ];
+    const result = prepareRetentionTranscript(msgs, ['user', 'assistant']);
+    expect(result).not.toBeNull();
+    expect(result!.transcript).toContain('Hello from array');
   });
 });
 
@@ -100,7 +185,7 @@ describe('handleRetain', () => {
 
   const makeEvent = (messages: Array<{ role: string; content: string }>) => ({ messages });
 
-  it('calls client.retain with items[] format', async () => {
+  it('calls client.retain with items[] format and native transcript format', async () => {
     const event = makeEvent([
       { role: 'user', content: 'Hello' },
       { role: 'assistant', content: 'World' },
@@ -113,13 +198,13 @@ describe('handleRetain', () => {
     const [bankId, request] = mockRetain.mock.calls[0];
     expect(typeof bankId).toBe('string');
     expect(request.items).toHaveLength(1);
-    expect(request.items[0].content).toContain('user: Hello');
-    expect(request.items[0].content).toContain('assistant: World');
+    expect(request.items[0].content).toContain('[role: user]\nHello\n[user:end]');
+    expect(request.items[0].content).toContain('[role: assistant]\nWorld\n[assistant:end]');
     expect(request.async).toBe(true);
   });
 
   it('includes tags, context, and observation_scopes from agentConfig', async () => {
-    const event = makeEvent([{ role: 'user', content: 'Hi' }]);
+    const event = makeEvent([{ role: 'user', content: 'Hi there friend' }]);
     const agentConfig: ResolvedConfig = {
       retainTags: ['health', 'daily'],
       retainContext: { project: 'astromech', env: 'prod' },
@@ -135,7 +220,7 @@ describe('handleRetain', () => {
   });
 
   it('includes metadata with retained_at, message_count, channel_type, channel_id, sender_id', async () => {
-    const event = makeEvent([{ role: 'user', content: 'Test' }]);
+    const event = makeEvent([{ role: 'user', content: 'Test message here' }]);
     const agentConfig: ResolvedConfig = {};
 
     await handleRetain(event, ctx, agentConfig, client, pluginConfig);
@@ -150,7 +235,7 @@ describe('handleRetain', () => {
   });
 
   it('includes document_id with session key prefix', async () => {
-    const event = makeEvent([{ role: 'user', content: 'Test' }]);
+    const event = makeEvent([{ role: 'user', content: 'Test message here' }]);
     const agentConfig: ResolvedConfig = {};
 
     await handleRetain(event, ctx, agentConfig, client, pluginConfig);
@@ -186,7 +271,7 @@ describe('handleRetain', () => {
     expect(mockRetain).not.toHaveBeenCalled();
   });
 
-  it('skips when transcript is empty after role filtering', async () => {
+  it('skips when no user message found after role filtering', async () => {
     const event = makeEvent([
       { role: 'system', content: 'System only' },
     ]);

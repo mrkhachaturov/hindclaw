@@ -96,7 +96,7 @@ describe('handleSessionStart', () => {
     expect(result).toBe(
       '<hindsight_context>\n## Communication Style\nYou are methodical and prefer lists.\n</hindsight_context>'
     );
-    expect(mockClient.getMentalModel).toHaveBeenCalledWith('bank-a', 'model-1');
+    expect(mockClient.getMentalModel).toHaveBeenCalledWith('bank-a', 'model-1', expect.any(Number));
   });
 
   it('loads recall results and formats as bullet list with label', async () => {
@@ -118,7 +118,7 @@ describe('handleSessionStart', () => {
       query: 'user preferences',
       max_tokens: 256,
       budget: 'low',
-    });
+    }, expect.any(Number));
   });
 
   it('assembles multiple models into one hindsight_context block', async () => {
@@ -207,6 +207,6 @@ describe('handleSessionStart', () => {
       query: 'notes',
       max_tokens: 512,
       budget: 'low',
-    });
+    }, expect.any(Number));
   });
 });

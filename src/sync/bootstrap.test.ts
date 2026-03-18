@@ -10,12 +10,14 @@ function makeClient(overrides: Partial<{
   updateBankConfig: ReturnType<typeof vi.fn>;
   createDirective: ReturnType<typeof vi.fn>;
   listDirectives: ReturnType<typeof vi.fn>;
+  ensureBank: ReturnType<typeof vi.fn>;
 }> = {}): HindsightClient {
   return {
     getBankConfig: vi.fn().mockResolvedValue({ overrides: {} }),
     updateBankConfig: vi.fn().mockResolvedValue({}),
     createDirective: vi.fn().mockResolvedValue({}),
     listDirectives: vi.fn().mockResolvedValue([]),
+    ensureBank: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   } as unknown as HindsightClient;
 }
@@ -168,8 +170,8 @@ describe('bootstrapBank', () => {
     expect(payload).not.toHaveProperty('observations_mission');
   });
 
-  // 9. No updateBankConfig call when config has no known fields
-  it('skips updateBankConfig when no config fields are set', async () => {
+  // 9. No updateBankConfig call when config has no known fields and no default mission
+  it('skips updateBankConfig when no config fields are set and no default mission', async () => {
     const client = makeClient({
       getBankConfig: vi.fn().mockResolvedValue({ overrides: {} }),
     });
@@ -179,5 +181,57 @@ describe('bootstrapBank', () => {
 
     expect(result.applied).toBe(true);
     expect(client.updateBankConfig).not.toHaveBeenCalled();
+  });
+
+  // 10. Uses defaultBankMission when retain_mission is not in bank config (I2-I3)
+  it('uses defaultBankMission when retain_mission is not set', async () => {
+    const client = makeClient({
+      getBankConfig: vi.fn().mockResolvedValue({ overrides: {} }),
+    });
+    const config: BankConfig = {
+      disposition_empathy: 0.8,
+      directives: [],
+    };
+
+    const result = await bootstrapBank('test-bank', config, client, 'Default AI mission');
+
+    expect(result.applied).toBe(true);
+    expect(client.updateBankConfig).toHaveBeenCalledWith('test-bank', expect.objectContaining({
+      retain_mission: 'Default AI mission',
+      disposition_empathy: 0.8,
+    }));
+  });
+
+  // 11. Does NOT override explicit retain_mission with defaultBankMission
+  it('does not override explicit retain_mission with defaultBankMission', async () => {
+    const client = makeClient({
+      getBankConfig: vi.fn().mockResolvedValue({ overrides: {} }),
+    });
+    const config: BankConfig = {
+      retain_mission: 'Explicit bank mission',
+      directives: [],
+    };
+
+    const result = await bootstrapBank('test-bank', config, client, 'Default AI mission');
+
+    expect(result.applied).toBe(true);
+    expect(client.updateBankConfig).toHaveBeenCalledWith('test-bank', expect.objectContaining({
+      retain_mission: 'Explicit bank mission',
+    }));
+  });
+
+  // 12. Uses defaultBankMission even when no other config fields exist
+  it('applies defaultBankMission when config has no known fields', async () => {
+    const client = makeClient({
+      getBankConfig: vi.fn().mockResolvedValue({ overrides: {} }),
+    });
+    const config: BankConfig = { directives: [] };
+
+    const result = await bootstrapBank('test-bank', config, client, 'Default mission');
+
+    expect(result.applied).toBe(true);
+    expect(client.updateBankConfig).toHaveBeenCalledWith('test-bank', {
+      retain_mission: 'Default mission',
+    });
   });
 });

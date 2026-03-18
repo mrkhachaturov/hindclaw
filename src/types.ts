@@ -57,6 +57,9 @@ export interface PluginConfig {
   hindsightApiUrl?: string;
   hindsightApiToken?: string;
 
+  // Bank mission (I2-I3: automatic bank mission for unconfigured banks)
+  bankMission?: string;
+
   // Daemon (global only)
   apiPort?: number;
   embedPort?: number;
