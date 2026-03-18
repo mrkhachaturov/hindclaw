@@ -268,7 +268,7 @@ export type TagGroup =
 export interface RetainItem {
   content: string;
   timestamp?: string;
-  context?: string;
+  context?: string | Record<string, unknown>;
   metadata?: Record<string, unknown>;
   document_id?: string;
   entities?: string[];
