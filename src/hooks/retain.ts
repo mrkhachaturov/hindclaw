@@ -13,6 +13,11 @@ export { stripMemoryTags } from '../utils.js';
 const turnCountBySession = new Map<string, number>();
 const MAX_TRACKED_SESSIONS = 10_000;
 
+/** Clear module-level state. Called by service.stop() to prevent stale data after reinit. */
+export function resetRetainState(): void {
+  turnCountBySession.clear();
+}
+
 /**
  * Extract text content from message content (handles string and Array<{type:'text', text:string}>).
  * Ported from native index.ts lines 1334-1342.

@@ -1,5 +1,6 @@
 import type { HindsightClient } from '../client.js';
 import type { BankConfig } from '../types.js';
+import { debug } from '../debug.js';
 
 // ── Plan types ───────────────────────────────────────────────────────
 
@@ -47,8 +48,15 @@ export async function planBank(
   client: HindsightClient,
 ): Promise<BankPlan> {
   // 1. Get current server config
-  const serverConfig = await client.getBankConfig(bankId);
-  const serverOverrides = serverConfig.overrides ?? {};
+  debug(`[Hindsight] Plan: fetching config for bank ${bankId}...`);
+  let serverOverrides: Record<string, unknown> = {};
+  try {
+    const serverConfig = await client.getBankConfig(bankId);
+    serverOverrides = serverConfig.overrides ?? {};
+  } catch (error) {
+    console.warn(`[Hindsight] Plan: failed to fetch config for bank ${bankId}:`, error instanceof Error ? error.message : error);
+    // Treat as empty — all file fields will appear as 'add'
+  }
 
   // 2. Diff config fields
   const configChanges: ConfigChange[] = [];

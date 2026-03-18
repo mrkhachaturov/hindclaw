@@ -1,4 +1,5 @@
 import type { PluginHookAgentContext, PluginConfig } from './types.js';
+import { debug } from './debug.js';
 
 // Default bank name (fallback when channel context not available)
 const DEFAULT_BANK_NAME = 'openclaw';
@@ -47,6 +48,11 @@ export function deriveBankId(ctx: PluginHookAgentContext | undefined, pluginConf
 
   // Parse sessionKey as fallback when direct context fields are missing
   const sessionParsed = ctx?.sessionKey ? parseSessionKey(ctx.sessionKey) : {};
+
+  // Warn when 'user' is in active fields but senderId is missing
+  if (fields.includes('user') && ctx && !ctx.senderId) {
+    debug('[Hindsight] senderId not available in context — bank ID will use "anonymous". Ensure your OpenClaw provider passes senderId.');
+  }
 
   const fieldMap: Record<string, string> = {
     agent: ctx?.agentId || sessionParsed.agentId || 'default',

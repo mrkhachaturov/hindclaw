@@ -21,7 +21,6 @@ const execFileAsync = promisify(execFile);
 
 const MAX_BUFFER = 5 * 1024 * 1024; // 5 MB — large transcripts can exceed default 1 MB
 const DEFAULT_TIMEOUT_MS = 15_000;
-const RECALL_TIMEOUT_MS = 10_000;
 
 /** Strip null bytes from strings — Node 22 rejects them in execFile() args */
 const sanitize = (s: string) => s.replace(/\0/g, '');
@@ -98,7 +97,7 @@ export class HindsightClient {
         'POST',
         `${this.bankUrl(bankId)}/memories/recall`,
         body,
-        timeoutMs ?? RECALL_TIMEOUT_MS,
+        timeoutMs ?? DEFAULT_TIMEOUT_MS,
       );
     }
     return this.recallSubprocess(bankId, request, timeoutMs);

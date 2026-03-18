@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-03-18
+
+### Fixed
+- **CRITICAL**: `loadBankConfigFiles` no longer crashes all agents on missing/malformed bank config file — skips with warning instead
+- **CRITICAL**: `service.stop()` now clears stale state (`senderIdBySession`, `turnCountBySession`, `inflightRecalls`, `bootstrappedBanks`) preventing misattributed memory and wrong chunked retention timing after reinit
+- `service.start()` now logs errors instead of silently swallowing init and health check failures
+- Recall outer catch upgraded from `console.warn` to `console.error` for generic errors (matches vendor)
+- HTTP recall timeout changed from 10s to 15s (matches vendor `DEFAULT_TIMEOUT_MS`)
+- `bankMission` now falls back to vendor default mission string when not configured
+- `planBank` catches `getBankConfig` failure gracefully instead of propagating opaque error
+- Missing `bankConfig` property on agent entry no longer crashes config loader
+
+### Added
+- 20+ debug logging calls across startup, init, bootstrap, plan, config resolution, and bank ID derivation (matching vendor diagnostic coverage)
+- `senderId not available` debug warning in `deriveBankId()` for diagnosing "anonymous" bank segments
+
+### Changed
+- `bootstrap` type corrected from `string` to `boolean` in TypeScript definitions
+- `recallTagsMatch` and `TagGroup.match` extended with `any_strict` and `all_strict` variants
+- `retainContext` type corrected from `Record<string, unknown>` to `string`
+- `retainObservationScopes` type corrected to `string | string[][]`
+- `_serverConfig` type widened to `ServerConfig | null` (removes unsafe cast)
+
 ## [1.0.1] - 2026-03-18
 
 ### Fixed

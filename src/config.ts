@@ -8,6 +8,7 @@ import type {
   ServerConfig,
   AgentEntry,
 } from './types.js';
+import { debug } from './debug.js';
 
 // ── Field classification sets ─────────────────────────────────────────
 
@@ -58,9 +59,10 @@ export function resolveAgentConfig(
   const bankConfig = bankConfigs.get(agentId);
 
   if (!bankConfig) {
+    debug(`[Hindsight] No bank config for agent "${agentId}" — using plugin defaults`);
     return {
       ...pluginDefaults,
-      _serverConfig: null as unknown as ServerConfig,
+      _serverConfig: null,
     } as ResolvedConfig;
   }
 
@@ -82,7 +84,7 @@ export function resolveAgentConfig(
   const merged: ResolvedConfig = {
     ...pluginDefaults,
     ...overrides,
-    _serverConfig: hasServerFields ? (serverConfig as ServerConfig) : null as unknown as ServerConfig,
+    _serverConfig: hasServerFields ? (serverConfig as ServerConfig) : null,
   };
 
   // Hoist extracted fields
@@ -120,12 +122,22 @@ export function loadBankConfigFiles(
   const result = new Map<string, BankConfig>();
 
   for (const [agentId, entry] of Object.entries(agents)) {
+    if (!entry?.bankConfig) {
+      console.warn(`[Hindsight] Agent "${agentId}" has no bankConfig path — skipping`);
+      continue;
+    }
+
     const filePath = entry.bankConfig.startsWith('/')
       ? entry.bankConfig
       : join(basePath, entry.bankConfig);
 
-    const content = readFileSync(filePath, 'utf-8');
-    result.set(agentId, parseBankConfigFile(content));
+    try {
+      const content = readFileSync(filePath, 'utf-8');
+      result.set(agentId, parseBankConfigFile(content));
+      debug(`[Hindsight] Loaded bank config for agent "${agentId}" from ${filePath}`);
+    } catch (error) {
+      console.warn(`[Hindsight] Failed to load bank config for agent "${agentId}" from ${filePath}:`, error instanceof Error ? error.message : error);
+    }
   }
 
   return result;

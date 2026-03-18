@@ -35,6 +35,11 @@ const RECALL_TIMEOUT_MS = 10_000;
 // Ported from native index.ts lines 31-33.
 const inflightRecalls = new Map<string, Promise<RecallResponse>>();
 
+/** Clear module-level state. Called by service.stop() to prevent stale data after reinit. */
+export function resetRecallState(): void {
+  inflightRecalls.clear();
+}
+
 /**
  * Convert agent-level recallTags + recallTagsMatch into a tag_groups filter.
  */

@@ -1,5 +1,6 @@
 import type { HindsightClient } from '../client.js';
 import type { BankConfig } from '../types.js';
+import { debug } from '../debug.js';
 
 const bootstrappedBanks = new Set<string>();
 
@@ -27,21 +28,25 @@ export async function bootstrapBank(
 ): Promise<{ applied: boolean; error?: string }> {
   // Skip if already bootstrapped in this process
   if (bootstrappedBanks.has(bankId)) {
+    debug(`[Hindsight] Bootstrap: skipping ${bankId} (already bootstrapped this session)`);
     return { applied: false };
   }
 
   try {
     // Check if bank already has config
+    debug(`[Hindsight] Bootstrap: checking bank ${bankId} config...`);
     const serverConfig = await client.getBankConfig(bankId);
     const overrides = serverConfig.overrides ?? {};
 
     if (Object.keys(overrides).length > 0) {
       // Bank already configured — skip
+      debug(`[Hindsight] Bootstrap: bank ${bankId} already has ${Object.keys(overrides).length} overrides — skipping`);
       bootstrappedBanks.add(bankId);
       return { applied: false };
     }
 
     // Ensure bank exists in database before applying config/directives
+    debug(`[Hindsight] Bootstrap: ensuring bank ${bankId} exists...`);
     await client.ensureBank(bankId);
 
     // Bank is empty — apply config from file
@@ -60,11 +65,16 @@ export async function bootstrapBank(
     }
 
     if (Object.keys(configUpdates).length > 0) {
+      debug(`[Hindsight] Bootstrap: applying ${Object.keys(configUpdates).length} config fields to bank ${bankId}`);
       await client.updateBankConfig(bankId, configUpdates);
     }
 
     // Create directives
-    for (const directive of bankConfig.directives ?? []) {
+    const directives = bankConfig.directives ?? [];
+    if (directives.length > 0) {
+      debug(`[Hindsight] Bootstrap: creating ${directives.length} directives for bank ${bankId}`);
+    }
+    for (const directive of directives) {
       await client.createDirective(bankId, { name: directive.name, content: directive.content });
     }
 

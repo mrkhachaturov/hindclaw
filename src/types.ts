@@ -95,8 +95,8 @@ export interface PluginConfig {
   // Agent map
   agents?: Record<string, AgentEntry>;
 
-  // Bootstrap bank configs directory
-  bootstrap?: string;
+  // Bootstrap bank configs on first run if bank is empty
+  bootstrap?: boolean;
 }
 
 // ── Bank Config File (template) ──────────────────────────────────────
@@ -169,10 +169,10 @@ export interface BankConfig {
 
   // Tag injection (agent-only)
   retainTags?: string[];
-  retainContext?: Record<string, unknown>;
-  retainObservationScopes?: string[];
+  retainContext?: string;
+  retainObservationScopes?: string | string[][];
   recallTags?: string[];
-  recallTagsMatch?: 'any' | 'all';
+  recallTagsMatch?: 'any' | 'all' | 'any_strict' | 'all_strict';
 
   // Multi-bank (agent-only)
   recallFrom?: RecallFromEntry[];
@@ -239,13 +239,13 @@ export interface ResolvedConfig {
 
   // Tag injection
   retainTags?: string[];
-  retainContext?: Record<string, unknown>;
-  retainObservationScopes?: string[];
+  retainContext?: string;
+  retainObservationScopes?: string | string[][];
   recallTags?: string[];
-  recallTagsMatch?: 'any' | 'all';
+  recallTagsMatch?: 'any' | 'all' | 'any_strict' | 'all_strict';
 
   // Merged internal fields
-  _serverConfig?: ServerConfig;
+  _serverConfig?: ServerConfig | null;
   _recallFrom?: RecallFromEntry[];
   _sessionStartModels?: SessionStartModelConfig[];
   _reflectOnRecall?: boolean;
@@ -263,7 +263,7 @@ export type SessionStartModelConfig =
 
 // Tag groups for compound filtering
 export type TagGroup =
-  | { tags: string[]; match: 'any' | 'all' }
+  | { tags: string[]; match: 'any' | 'all' | 'any_strict' | 'all_strict' }
   | { and: TagGroup[] }
   | { or: TagGroup[] }
   | { not: TagGroup };
@@ -276,7 +276,7 @@ export interface RetainItem {
   document_id?: string;
   entities?: string[];
   tags?: string[];
-  observation_scopes?: string[];
+  observation_scopes?: string | string[][];
 }
 
 export interface RetainRequest {
