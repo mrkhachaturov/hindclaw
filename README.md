@@ -2,12 +2,17 @@
 
 > 🔌 Production-grade [Hindsight](https://vectorize.io/hindsight) memory plugin for [OpenClaw](https://openclaw.ai)
 >
-> Repository: `hindsight-astromech`
+> Repository: `hindsight-openclaw-pro`
 
 ![Plugin](https://img.shields.io/badge/plugin-memory-0f766e)
 ![OpenClaw](https://img.shields.io/badge/OpenClaw-compatible-1d4ed8)
 ![Node](https://img.shields.io/badge/node-%3E%3D22-c2410c)
 ![License](https://img.shields.io/badge/license-MIT-10b981)
+![Based on](https://img.shields.io/badge/based%20on-@vectorize--io/hindsight--openclaw-8b5cf6)
+
+> **Based on [`@vectorize-io/hindsight-openclaw`](https://github.com/vectorize-io/hindsight/tree/main/hindsight-integrations/openclaw)** (MIT, Copyright (c) 2025 Vectorize AI, Inc.)
+>
+> This project is a production-grade rewrite of the original Hindsight OpenClaw plugin by [Vectorize](https://vectorize.io). The upstream plugin provides the foundation — two-hook architecture (`before_prompt_build` for recall, `agent_end` for retain), bank ID derivation, daemon lifecycle management, and memory formatting. We extend it with per-agent bank configuration, multi-bank recall, session start context, reflect-on-recall, IaC bank management via CLI, and full Hindsight API coverage.
 
 Per-agent bank configuration via IaC template files, multi-bank recall, session start context injection, reflect-on-recall, and a Terraform-style CLI (`hoppro`) for managing bank configurations.
 
@@ -313,4 +318,6 @@ src/
 
 ## 📄 License
 
-MIT
+MIT — see [LICENSE](LICENSE)
+
+Based on [`@vectorize-io/hindsight-openclaw`](https://github.com/vectorize-io/hindsight) (MIT, Copyright (c) 2025 Vectorize AI, Inc.)
