@@ -67,8 +67,22 @@ graph TD
 
 ### 1️⃣ Install
 
+From npm registry:
+
 ```bash
 openclaw plugins install hindsight-openclaw-pro
+```
+
+Or install globally via npm:
+
+```bash
+npm install -g hindsight-openclaw-pro
+```
+
+Or from a local build:
+
+```bash
+openclaw plugins install /path/to/hindsight-openclaw-pro
 ```
 
 ### 2️⃣ Configure plugin
