@@ -106,7 +106,7 @@ export interface DiscoveryResult {
 /**
  * Plugin-level config loaded from .openclaw/hindsight/config.json5
  * Same fields as current PluginConfig minus agents mapping (auto-discovered).
- * Used by Plan C (hoppro init) — defined here for type completeness.
+ * Used by Plan C (hindclaw init) — defined here for type completeness.
  */
 export interface HindsightConfig {
   // Daemon

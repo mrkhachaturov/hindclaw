@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { runInit } from './init.js';
 
-const TEST_DIR = join(tmpdir(), `hoppro-init-test-${Date.now()}`);
+const TEST_DIR = join(tmpdir(), `hindclaw-init-test-${Date.now()}`);
 const OPENCLAW_DIR = join(TEST_DIR, '.openclaw');
 const HINDSIGHT_DIR = join(OPENCLAW_DIR, 'hindsight');
 
@@ -20,7 +20,7 @@ beforeEach(() => {
   writeJson5(join(OPENCLAW_DIR, 'openclaw.json'), {
     plugins: {
       entries: {
-        'hindsight-openclaw-pro': {
+        'hindclaw': {
           enabled: true,
           config: {
             dynamicBankGranularity: ['agent'],
@@ -58,7 +58,7 @@ afterEach(() => {
   rmSync(TEST_DIR, { recursive: true, force: true });
 });
 
-describe('hoppro init --from-existing', () => {
+describe('hindclaw init --from-existing', () => {
   it('creates hindsight directory structure', async () => {
     await runInit({ configPath: join(OPENCLAW_DIR, 'openclaw.json'), fromExisting: true });
     expect(existsSync(join(HINDSIGHT_DIR, 'config.json5'))).toBe(true);
@@ -158,7 +158,7 @@ describe('hoppro init --from-existing', () => {
   });
 });
 
-describe('hoppro init (fresh)', () => {
+describe('hindclaw init (fresh)', () => {
   it('creates empty structure with defaults', async () => {
     await runInit({ configPath: join(OPENCLAW_DIR, 'openclaw.json'), fromExisting: false });
     expect(existsSync(join(HINDSIGHT_DIR, 'config.json5'))).toBe(true);

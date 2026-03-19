@@ -1,10 +1,10 @@
-# 🧠 Hindsight OpenClaw Pro
+# 🧠 HindClaw
 
 > 🔌 Production-grade [Hindsight](https://vectorize.io/hindsight) memory plugin for [OpenClaw](https://openclaw.ai)
 >
-> Repository: `hindsight-openclaw-pro`
+> Repository: `hindclaw`
 
-[![npm](https://img.shields.io/npm/v/hindsight-openclaw-pro?style=flat-square&color=0f766e)](https://www.npmjs.com/package/hindsight-openclaw-pro)
+[![npm](https://img.shields.io/npm/v/hindclaw?style=flat-square&color=0f766e)](https://www.npmjs.com/package/hindclaw)
 ![Plugin](https://img.shields.io/badge/plugin-memory-0f766e?style=flat-square)
 ![OpenClaw](https://img.shields.io/badge/OpenClaw-compatible-1d4ed8?style=flat-square)
 ![Node](https://img.shields.io/badge/node-%3E%3D22-c2410c?style=flat-square)
@@ -16,12 +16,12 @@
 >
 > This project is a production-grade rewrite of the original Hindsight OpenClaw plugin by [Vectorize](https://vectorize.io). The upstream plugin provides the foundation — two-hook architecture (`before_prompt_build` for recall, `agent_end` for retain), bank ID derivation, daemon lifecycle management, and memory formatting. We extend it with per-agent bank configuration, multi-bank recall, session start context, reflect-on-recall, IaC bank management via CLI, and full Hindsight API coverage.
 
-Per-agent bank configuration via IaC template files, multi-bank recall, session start context injection, reflect-on-recall, and a Terraform-style CLI (`hoppro`) for managing bank configurations.
+Per-agent bank configuration via IaC template files, multi-bank recall, session start context injection, reflect-on-recall, and a Terraform-style CLI (`hindclaw`) for managing bank configurations.
 
 | | Feature | Description |
 |---|---------|-------------|
 | 📋 | Per-agent config | Each agent gets a bank config template file — missions, entity labels, directives, dispositions |
-| 🏗️ | Infrastructure as Code | `hoppro plan` / `apply` / `import` — Terraform-style bank management |
+| 🏗️ | Infrastructure as Code | `hindclaw plan` / `apply` / `import` — Terraform-style bank management |
 | 🎯 | Strategy-scoped memory | Named retain strategies routed per Telegram topic — different extraction rules per context |
 | 📂 | `$include` directives | Split large bank configs into modular files — entity labels, strategy definitions |
 | 🔀 | Multi-bank recall | `recallFrom` lets an agent query multiple banks per turn (Yoda pattern) |
@@ -30,7 +30,7 @@ Per-agent bank configuration via IaC template files, multi-bank recall, session 
 | 🚀 | Bootstrap | First-run auto-apply of bank config to empty banks |
 | 🏢 | Multi-server | Per-agent infrastructure overrides — private + shared Hindsight servers |
 | 🔐 | User-scoped access | Confluence-style permissions — users, groups, bank-level overrides |
-| 🛠️ | `hoppro init` | Bootstrap `.openclaw/hindsight/` directory with migration from v1.x |
+| 🛠️ | `hindclaw init` | Bootstrap `.openclaw/hindsight/` directory with migration from v1.x |
 
 > [!IMPORTANT]
 > This plugin replaces `@vectorize-io/hindsight-openclaw`.
@@ -42,12 +42,12 @@ Per-agent bank configuration via IaC template files, multi-bank recall, session 
 
 ```mermaid
 graph TD
-    GW["🌐 OpenClaw Gateway"] --> PLUGIN["🧠 hindsight-openclaw-pro"]
+    GW["🌐 OpenClaw Gateway"] --> PLUGIN["🧠 hindclaw"]
 
     PLUGIN --> CONFIG["📂 Config Loader<br/>$include resolution"]
     PLUGIN --> HOOKS["🪝 Hooks"]
     PLUGIN --> SYNC["🔄 Sync Engine"]
-    PLUGIN --> CLI["⚡ hoppro CLI"]
+    PLUGIN --> CLI["⚡ hindclaw CLI"]
 
     CONFIG --> BANKS["📋 Bank configs<br/>(JSON5 + modular files)"]
     CONFIG --> INDEX["🎯 _topicIndex<br/>topic → mode + strategy"]
@@ -105,7 +105,7 @@ graph LR
 
 ```json5
 {
-  // Named strategies — server-side extraction overrides (synced via hoppro)
+  // Named strategies — server-side extraction overrides (synced via hindclaw)
   "retain_strategies": {
     "deep-analysis": { "$include": "./agent/deep-analysis.json5" },
     "lightweight":   { "$include": "./agent/lightweight.json5" }
@@ -140,7 +140,7 @@ graph LR
 
 | Layer | What | Where |
 |-------|------|-------|
-| **Strategy definitions** | Extraction rules (mission, mode, entity labels) | `retain_strategies` → synced to Hindsight API via `hoppro apply` |
+| **Strategy definitions** | Extraction rules (mission, mode, entity labels) | `retain_strategies` → synced to Hindsight API via `hindclaw apply` |
 | **Memory routing** | Which strategy applies where + mode control | `memory` section → resolved at gateway startup, stays in plugin |
 | **`$include`** | Modular file references | Resolved at config load time, before anything else |
 
@@ -232,7 +232,7 @@ If Hindsight runs on a separate machine (e.g., office server shared by a team), 
 ### 2️⃣ Install the plugin
 
 ```bash
-openclaw plugins install hindsight-openclaw-pro
+openclaw plugins install hindclaw
 ```
 
 > [!NOTE]
@@ -247,7 +247,7 @@ Add to your `openclaw.json` (or a `$include`'d config file):
 {
   "plugins": {
     "entries": {
-      "hindsight-openclaw-pro": {
+      "hindclaw": {
         "enabled": true,
         "config": {
           // Local daemon mode — no hindsightApiUrl needed
@@ -276,7 +276,7 @@ Create a config file per agent. Example `.openclaw/banks/atlas.json5`:
 
 ```json5
 {
-  // Server-side — synced to Hindsight via hoppro
+  // Server-side — synced to Hindsight via hindclaw
   "retain_mission": "Extract strategic decisions, priorities, risks, opportunities.",
   "reflect_mission": "You are the strategic advisor. Challenge assumptions.",
   "disposition_skepticism": 4,
@@ -323,10 +323,10 @@ Create a config file per agent. Example `.openclaw/banks/atlas.json5`:
 
 ```bash
 # Preview what will be synced to Hindsight
-hoppro plan --all
+hindclaw plan --all
 
 # Apply (shows plan, asks for confirmation)
-hoppro apply --all
+hindclaw apply --all
 
 # Start the gateway
 openclaw gateway
@@ -334,7 +334,7 @@ openclaw gateway
 
 > [!TIP]
 > On first startup with `bootstrap: true`, the plugin auto-applies bank configs to empty banks.
-> After that, use `hoppro plan/apply` to manage changes.
+> After that, use `hindclaw plan/apply` to manage changes.
 
 ### 6️⃣ Hindsight UI (optional)
 
@@ -414,7 +414,7 @@ Resolution: `pluginDefaults → bankFile` — shallow merge, bank file wins.
 | `disposition_empathy` | 1–5 | 🔧 Server | Weight given to emotional content |
 | `entity_labels` | EntityLabel[] | 🔧 Server | Custom entity types for classification |
 | `directives` | `{name,content}[]` | 🔧 Server | Standing instructions for the bank |
-| `retain_strategies` | Record | 🔧 Server | Named extraction strategies (synced via `hoppro`) |
+| `retain_strategies` | Record | 🔧 Server | Named extraction strategies (synced via `hindclaw`) |
 | `retain_default_strategy` | string | 🔧 Server | Fallback strategy when no named strategy is passed |
 | `retain_chunk_size` | number | 🔧 Server | Text chunk size for processing |
 | `memory` | MemoryRouting | 🎯 Routing | Topic-based mode + strategy routing (plugin-side) |
@@ -448,27 +448,27 @@ Gateway
 
 ---
 
-## ⚡ CLI: hoppro
+## ⚡ CLI: hindclaw
 
-Terraform-style management of Hindsight bank configurations. Local bank config files are the source of truth — `hoppro` diffs them against the server and applies changes.
+Terraform-style management of Hindsight bank configurations. Local bank config files are the source of truth — `hindclaw` diffs them against the server and applies changes.
 
 ```bash
 # 📋 Preview changes (read-only, never modifies server)
-hoppro plan --all
-hoppro plan --agent r4p17
+hindclaw plan --all
+hindclaw plan --agent r4p17
 
 # ✅ Apply changes (shows plan first, asks for confirmation)
-hoppro apply --all
-hoppro apply --agent r4p17
-hoppro apply --agent r4p17 --auto-approve   # skip confirmation (CI)
+hindclaw apply --all
+hindclaw apply --agent r4p17
+hindclaw apply --agent r4p17 --auto-approve   # skip confirmation (CI)
 
 # 📥 Import server state to local file
-hoppro import --agent r4p17 --output ./banks/r4p17.json5
+hindclaw import --agent r4p17 --output ./banks/r4p17.json5
 
 # 🛠️ Bootstrap v2.0.0 directory structure
-hoppro init --from-existing           # migrate current config + banks
-hoppro init --from-existing --force   # overwrite existing
-hoppro init                           # fresh setup (empty templates)
+hindclaw init --from-existing           # migrate current config + banks
+hindclaw init --from-existing --force   # overwrite existing
+hindclaw init                           # fresh setup (empty templates)
 ```
 
 ### 📋 Plan Output
@@ -535,7 +535,7 @@ graph LR
 ## 🔄 Migration from @vectorize-io/hindsight-openclaw
 
 1. ❌ Remove `@vectorize-io/hindsight-openclaw`
-2. ✅ Install `hindsight-openclaw-pro`
+2. ✅ Install `hindclaw`
 3. 📋 Move `bankMission` → bank config file as `retain_mission`
 4. 📦 All other plugin-level options use the same names
 
@@ -584,8 +584,8 @@ src/
 │   ├── merge.ts          # 🔀 Group merge rules (Section 5)
 │   └── index.ts          # 📦 Barrel export
 ├── cli/
-│   ├── index.ts          # ⚡ hoppro CLI entry point
-│   └── init.ts           # 🛠️ hoppro init command
+│   ├── index.ts          # ⚡ hindclaw CLI entry point
+│   └── init.ts           # 🛠️ hindclaw init command
 ├── embed-manager.ts      # 🔧 Local daemon lifecycle
 ├── derive-bank-id.ts     # 🏷️ Bank ID derivation
 └── format.ts             # 📝 Memory formatting

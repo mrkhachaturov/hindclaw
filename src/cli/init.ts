@@ -26,7 +26,7 @@ export async function runInit(options: InitOptions): Promise<void> {
 
   // Safety check
   if (existsSync(hindsightDir) && !options.force) {
-    throw new Error(`[hoppro init] ${hindsightDir} already exists. Use --force to overwrite.`);
+    throw new Error(`[hindclaw init] ${hindsightDir} already exists. Use --force to overwrite.`);
   }
 
   // Read current config
@@ -45,7 +45,7 @@ export async function runInit(options: InitOptions): Promise<void> {
     }
   }
   writeJson5File(join(hindsightDir, 'config.json5'), config);
-  console.log('[hoppro init] Created config.json5');
+  console.log('[hindclaw init] Created config.json5');
 
   // Generate _default group
   writeJson5File(join(hindsightDir, 'groups', '_default.json5'), {
@@ -54,7 +54,7 @@ export async function runInit(options: InitOptions): Promise<void> {
     recall: true,    // safe default: current behavior (all users get full access)
     retain: true,
   });
-  console.log('[hoppro init] Created groups/_default.json5');
+  console.log('[hindclaw init] Created groups/_default.json5');
 
   // Generate templates
   writeJson5File(join(hindsightDir, 'groups', '_template.json5'), {
@@ -78,7 +78,7 @@ export async function runInit(options: InitOptions): Promise<void> {
       groups: { _default: { recall: false, retain: false } },
     },
   });
-  console.log('[hoppro init] Created template files');
+  console.log('[hindclaw init] Created template files');
 
   // Migrate existing bank configs if --from-existing
   if (options.fromExisting) {
@@ -91,7 +91,7 @@ export async function runInit(options: InitOptions): Promise<void> {
 
       const srcPath = join(openclawDir, bankConfigPath);
       if (!existsSync(srcPath)) {
-        console.warn(`[hoppro init] ⚠ Bank config not found: ${srcPath}`);
+        console.warn(`[hindclaw init] ⚠ Bank config not found: ${srcPath}`);
         continue;
       }
 
@@ -101,7 +101,7 @@ export async function runInit(options: InitOptions): Promise<void> {
       try {
         bankConfig = JSON5.parse(raw);
       } catch (err: any) {
-        console.warn(`[hoppro init] ⚠ Failed to parse ${srcPath}: ${err.message}`);
+        console.warn(`[hindclaw init] ⚠ Failed to parse ${srcPath}: ${err.message}`);
         continue;
       }
 
@@ -113,7 +113,7 @@ export async function runInit(options: InitOptions): Promise<void> {
           if (!modeStrategies) continue;
           if (mode !== 'full') {
             const names = Object.keys(modeStrategies).join(', ');
-            console.warn(`[hoppro init] ⚠ ${agentId}: strategies in "${mode}" mode dropped: ${names} (use permissions for access control)`);
+            console.warn(`[hindclaw init] ⚠ ${agentId}: strategies in "${mode}" mode dropped: ${names} (use permissions for access control)`);
             continue;
           }
           for (const [stratName, scope] of Object.entries(modeStrategies)) {
@@ -135,24 +135,24 @@ export async function runInit(options: InitOptions): Promise<void> {
 
       const destPath = join(hindsightDir, 'banks', `${agentId}.json5`);
       writeJson5File(destPath, bankConfig);
-      console.log(`[hoppro init] Migrated bank: ${agentId}`);
+      console.log(`[hindclaw init] Migrated bank: ${agentId}`);
 
       // Copy $include subdirectories if they exist
       const agentSubdir = join(banksDir, agentId);
       if (existsSync(agentSubdir)) {
         const destSubdir = join(hindsightDir, 'banks', agentId);
         copyDirRecursive(agentSubdir, destSubdir);
-        console.log(`[hoppro init] Copied $include fragments: banks/${agentId}/`);
+        console.log(`[hindclaw init] Copied $include fragments: banks/${agentId}/`);
       }
     }
   }
 
   if (options.fromExisting) {
-    console.warn('[hoppro init] ⚠ JSON5 comments are not preserved during migration. Review migrated bank files.');
+    console.warn('[hindclaw init] ⚠ JSON5 comments are not preserved during migration. Review migrated bank files.');
   }
 
-  console.log(`\n[hoppro init] ✓ Created ${hindsightDir}`);
-  console.log('[hoppro init] Next steps:');
+  console.log(`\n[hindclaw init] ✓ Created ${hindsightDir}`);
+  console.log('[hindclaw init] Next steps:');
   console.log('  1. Review migrated bank configs (comments may be lost)');
   console.log('  2. Create user profiles in hindsight/users/');
   console.log('  3. Create groups in hindsight/groups/');
@@ -164,7 +164,7 @@ export async function runInit(options: InitOptions): Promise<void> {
 function loadPluginConfigLocal(configPath: string): PluginConfig {
   const content = readFileSync(configPath, 'utf-8');
   const config = JSON5.parse(content);
-  return config?.plugins?.entries?.['hindsight-openclaw-pro']?.config ?? {};
+  return config?.plugins?.entries?.['hindclaw']?.config ?? {};
 }
 
 function writeJson5File(path: string, data: any): void {

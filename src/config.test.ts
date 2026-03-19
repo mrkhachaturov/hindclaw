@@ -225,7 +225,7 @@ describe('resolveIncludes', () => {
   let testDir: string;
 
   beforeEach(() => {
-    testDir = join(tmpdir(), `hoppro-test-${Date.now()}`);
+    testDir = join(tmpdir(), `hindclaw-test-${Date.now()}`);
     mkdirSync(testDir, { recursive: true });
   });
 

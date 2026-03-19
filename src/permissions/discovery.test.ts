@@ -10,7 +10,7 @@ import {
   validateDiscovery,
 } from './discovery.js';
 
-const TEST_DIR = join(tmpdir(), `hoppro-discovery-test-${Date.now()}`);
+const TEST_DIR = join(tmpdir(), `hindclaw-discovery-test-${Date.now()}`);
 
 function writeJson5(path: string, data: any) {
   writeFileSync(path, JSON.stringify(data, null, 2));

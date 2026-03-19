@@ -8,7 +8,7 @@ import {
 } from './index.js';
 import type { DiscoveryResult } from './types.js';
 
-const TEST_DIR = join(tmpdir(), `hoppro-integration-${Date.now()}`);
+const TEST_DIR = join(tmpdir(), `hindclaw-integration-${Date.now()}`);
 let discovery: DiscoveryResult;
 
 function writeJson5(path: string, data: any) {

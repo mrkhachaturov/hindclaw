@@ -1,8 +1,8 @@
-# CLAUDE.md — hindsight-openclaw-pro
+# CLAUDE.md — hindclaw
 
 ## Project
 
-Production-grade Hindsight memory plugin for OpenClaw. Replaces the upstream `@vectorize-io/hindsight-openclaw` with per-agent bank config templates, multi-bank recall, session start context, reflect, and IaC-style bank management via `hoppro` CLI.
+Production-grade Hindsight memory plugin for OpenClaw. Replaces the upstream `@vectorize-io/hindsight-openclaw` with per-agent bank config templates, multi-bank recall, session start context, reflect, and IaC-style bank management via `hindclaw` CLI.
 
 ## Stack
 
@@ -39,7 +39,7 @@ src/
 │   ├── import.ts         # Pull server state into local file
 │   └── bootstrap.ts      # First-run apply if bank is empty
 ├── cli/
-│   └── index.ts          # hoppro CLI entry point (plan/apply/import)
+│   └── index.ts          # hindclaw CLI entry point (plan/apply/import)
 ├── embed-manager.ts      # Local daemon lifecycle (kept from upstream)
 ├── derive-bank-id.ts     # Bank ID derivation from context
 └── format.ts             # Memory formatting for injection
@@ -50,7 +50,7 @@ src/
 - **Two-level config**: Plugin config (openclaw.json) has defaults. Bank config files (JSON5) override per-agent. Resolution: shallow merge, bank file wins.
 - **Stateless client**: Every client method takes `bankId` as first parameter. No instance-level bank state. Enables multi-bank operations.
 - **Server-side vs behavioral**: Bank config fields are split into server-side (applied to Hindsight API via sync) and behavioral (used by hooks at runtime). Field name convention: snake_case = server-side, camelCase = behavioral.
-- **Infrastructure as Code**: Bank config files are source of truth. `hoppro plan/apply` manages server state. Directives not in file get deleted.
+- **Infrastructure as Code**: Bank config files are source of truth. `hindclaw plan/apply` manages server state. Directives not in file get deleted.
 - **Bootstrap**: One-time apply on first run for empty banks. After that, managed via CLI.
 - **Graceful degradation**: All hooks catch errors and log warnings. Never crash the gateway.
 
@@ -99,12 +99,12 @@ Push a `v*` tag — GitHub Actions publishes to npm via OIDC trusted publisher.
 # 5. git push origin main --tags
 ```
 
-## CLI: hoppro
+## CLI: hindclaw
 
 ```bash
-hoppro plan --all              # diff local files vs server
-hoppro apply --agent r4p17     # apply changes
-hoppro import --agent r4p17 --output ./banks/r4p17.json5
+hindclaw plan --all              # diff local files vs server
+hindclaw apply --agent r4p17     # apply changes
+hindclaw import --agent r4p17 --output ./banks/r4p17.json5
 ```
 
 ## Upstream Reference

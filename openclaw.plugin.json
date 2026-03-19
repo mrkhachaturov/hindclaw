@@ -1,6 +1,6 @@
 {
-  "id": "hindsight-openclaw-pro",
-  "name": "Hindsight Memory Pro",
+  "id": "hindclaw",
+  "name": "HindClaw",
   "kind": "memory",
   "configSchema": {
     "type": "object",

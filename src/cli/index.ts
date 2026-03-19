@@ -51,7 +51,7 @@ function parseArgs(argv: string[]) {
 export function loadPluginConfig(configPath: string): PluginConfig {
   const content = readFileSync(configPath, 'utf-8');
   const config = JSON5.parse(content);
-  return config?.plugins?.entries?.['hindsight-openclaw-pro']?.config ?? {};
+  return config?.plugins?.entries?.['hindclaw']?.config ?? {};
 }
 
 function resolveApiUrl(pluginConfig: PluginConfig, flagOverride?: string): string {
@@ -352,10 +352,10 @@ async function main() {
 
   if (!command || !['plan', 'apply', 'import', 'init'].includes(command)) {
     console.log('Usage:');
-    console.log('  hoppro plan   [--agent <id> | --all] [--config <path>] [--api-url <url>]');
-    console.log('  hoppro apply  [--agent <id> | --all] [--config <path>] [--api-url <url>] [--auto-approve|-y]');
-    console.log('  hoppro import --agent <id> --output <path> [--config <path>] [--api-url <url>]');
-    console.log('  hoppro init   [--from-existing] [--force|-f] [--config <path>]');
+    console.log('  hindclaw plan   [--agent <id> | --all] [--config <path>] [--api-url <url>]');
+    console.log('  hindclaw apply  [--agent <id> | --all] [--config <path>] [--api-url <url>] [--auto-approve|-y]');
+    console.log('  hindclaw import --agent <id> --output <path> [--config <path>] [--api-url <url>]');
+    console.log('  hindclaw init   [--from-existing] [--force|-f] [--config <path>]');
     console.log('');
     console.log('Commands:');
     console.log('  plan     Preview changes (diff local vs server)');

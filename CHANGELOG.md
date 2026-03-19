@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `recallTagGroups` passed directly to Hindsight `tag_groups` API (AND/OR/NOT boolean logic)
   - `retainTags` injection from groups + auto-generated `user:<id>` tag
   - Multi-bank recall respects per-bank permissions for each target bank
-- **`hoppro init`** CLI command — bootstraps `.openclaw/hindsight/` directory structure
+- **`hindclaw init`** CLI command — bootstraps `.openclaw/hindsight/` directory structure
   - `--from-existing` migrates current inline config + bank files
   - `--force` overwrites existing directory
   - Generates `config.json5`, `_default` group, seed templates
@@ -52,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sync support for new fields in `bootstrap.ts` and `plan.ts` CONFIG_FIELDS
 
 ### Changed
-- **hoppro CLI** — Terraform-style plan output with structured diffs, color, and summary line
+- **hindclaw CLI** — Terraform-style plan output with structured diffs, color, and summary line
   - `plan` shows `+`/`-`/`~` per field with full values
   - `apply` shows plan first, asks "Do you want to perform these actions?" before applying
   - `--auto-approve` / `-y` flag to skip confirmation (CI/scripts)
@@ -95,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Bank config paths now resolve relative to OpenClaw state dir (`OPENCLAW_STATE_DIR` → `OPENCLAW_CONFIG_PATH` dirname → `~/.openclaw/`)
-- Plugin config reads from `hindsight-openclaw-pro` entry (was reading old `hindsight-openclaw` name)
+- Plugin config reads from `hindclaw` entry (was reading old `hindsight-openclaw` name)
 - Skip duplicate daemon start when gateway loads plugin multiple times during startup/hot-reload
 - Inject `claude-agent-sdk` into uvx when using `claude-code` LLM provider
 
@@ -117,16 +117,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Session start hook — load mental models at session start, inject as `<hindsight_context>`
 - Reflect on recall — use Hindsight reflect API instead of raw recall per agent
 - Bootstrap — first-run auto-apply of bank config to empty banks
-- `hoppro` CLI with Terraform-style commands:
-  - `hoppro plan` — diff local config files against Hindsight server state
-  - `hoppro apply` — apply changes (config fields + directives CRUD)
-  - `hoppro import` — pull server state into local file
+- `hindclaw` CLI with Terraform-style commands:
+  - `hindclaw plan` — diff local config files against Hindsight server state
+  - `hindclaw apply` — apply changes (config fields + directives CRUD)
+  - `hindclaw import` — pull server state into local file
 - Extracted hooks into separate modules (recall, retain, session-start)
 - Plugin manifest with new schema fields (bootstrap, agents, retainTags, recallTags, etc.)
 
 ### Changed
 - Rewritten from `@vectorize-io/hindsight-openclaw` (upstream reference, not a patch)
-- Plugin ID: `hindsight-openclaw-pro` (was `hindsight-openclaw`)
+- Plugin ID: `hindclaw` (was `hindsight-openclaw`)
 - `index.ts` reduced from 1389 lines to ~600 lines (hooks extracted)
 - Client is stateless per-call (removed `clientsByBankId` map, `setBankId`, `setBankMission`)
 - Retain uses native `items[]` batch format (not flat content wrapper)

@@ -216,7 +216,7 @@ export interface BankConfig {
   /** Topic-to-strategy routing (v2.0.0) */
   retain?: RetainRouting;
 
-  // Retain strategies (server-side, synced via hoppro)
+  // Retain strategies (server-side, synced via hindclaw)
   retain_strategies?: Record<string, Record<string, unknown>>;
   retain_default_strategy?: string;
   retain_chunk_size?: number;

@@ -1,9 +1,9 @@
 {
-  "name": "hindsight-openclaw-pro",
-  "version": "2.0.0",
-  "description": "Production-grade Hindsight memory plugin for OpenClaw — per-agent config, multi-bank recall, IaC bank management",
+  "name": "hindclaw",
+  "version": "0.1.0",
+  "description": "Hindsight memory plugin for OpenClaw — per-user access control, per-agent config, multi-bank recall, IaC bank management",
   "bin": {
-    "hoppro": "dist/cli/index.js"
+    "hindclaw": "dist/cli/index.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

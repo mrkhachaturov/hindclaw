@@ -280,7 +280,7 @@ function extractSenderIdFromText(text: unknown): string | undefined {
 const DEFAULT_BANK_MISSION = 'You are an AI assistant helping users across multiple communication channels (Telegram, Slack, Discord, etc.). Remember user preferences, instructions, and important context from conversations to provide personalized assistance.';
 
 function getPluginConfig(api: MoltbotPluginAPI): PluginConfig {
-  const config = api.config.plugins?.entries?.['hindsight-openclaw-pro']?.config || {};
+  const config = api.config.plugins?.entries?.['hindclaw']?.config || {};
   return {
     bankMission: config.bankMission || DEFAULT_BANK_MISSION,
     embedPort: config.embedPort || 0,
