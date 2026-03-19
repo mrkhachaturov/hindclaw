@@ -31,7 +31,7 @@ Server-side fields are synced to Hindsight via `hindclaw apply`. Routing and beh
 ## Example Bank Config
 
 ```json5
-// .openclaw/banks/atlas.json5
+// .openclaw/banks/agent-1.json5
 {
   // Server-side — synced to Hindsight
   "retain_mission": "Extract strategic decisions, cross-departmental patterns.",
@@ -39,15 +39,15 @@ Server-side fields are synced to Hindsight via `hindclaw apply`. Routing and beh
   "disposition_skepticism": 4,
   "disposition_literalism": 2,
   "disposition_empathy": 3,
-  "entity_labels": { "$include": "./atlas/entity-labels.json5" },
+  "entity_labels": { "$include": "./agent-1/entity-labels.json5" },
   "directives": [
     { "name": "cross_dept_honesty", "content": "Flag contradictions between departments explicitly." }
   ],
 
   // Named strategies — different extraction rules per context
   "retain_strategies": {
-    "deep-analysis": { "$include": "./atlas/deep-analysis.json5" },
-    "lightweight":   { "$include": "./atlas/lightweight.json5" }
+    "deep-analysis": { "$include": "./agent-1/deep-analysis.json5" },
+    "lightweight":   { "$include": "./agent-1/lightweight.json5" }
   },
 
   // Strategy routing — which topics use which strategies
@@ -59,7 +59,7 @@ Server-side fields are synced to Hindsight via `hindclaw apply`. Routing and beh
   },
 
   // Multi-bank recall
-  "recallFrom": ["atlas", "finance", "ops"],
+  "recallFrom": ["agent-1", "agent-2", "agent-3"],
   "recallBudget": "high",
   "recallMaxTokens": 2048
 }
@@ -115,17 +115,17 @@ Split large configs into manageable files. Resolved recursively, relative to the
 ```json5
 // Main bank config
 {
-  "entity_labels": { "$include": "./atlas/labels.json5" },
+  "entity_labels": { "$include": "./agent-1/labels.json5" },
   "retain_strategies": {
-    "detailed": { "$include": "./atlas/detailed-strategy.json5" }
+    "detailed": { "$include": "./agent-1/detailed-strategy.json5" }
   }
 }
 ```
 
 ```
 .openclaw/banks/
-├── atlas.json5                    <- main bank config
-├── atlas/
+├── agent-1.json5                  <- main bank config
+├── agent-1/
 │   ├── labels.json5               <- entity label definitions
 │   ├── detailed-strategy.json5    <- strategy: verbose + custom labels
 │   └── quick-strategy.json5       <- strategy: concise extraction

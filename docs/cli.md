@@ -10,13 +10,13 @@ Preview what will change without modifying the server.
 
 ```bash
 hindclaw plan --all              # all configured agents
-hindclaw plan --agent finance    # single agent
+hindclaw plan --agent agent-1    # single agent
 ```
 
 Output:
 
 ```
-# bank.finance (finance)
+# bank.agent-1 (agent-1)
 
   + retain_strategies
       + {
@@ -41,8 +41,8 @@ Show plan, ask for confirmation, apply changes.
 
 ```bash
 hindclaw apply --all
-hindclaw apply --agent finance
-hindclaw apply --agent finance --auto-approve   # skip confirmation (CI)
+hindclaw apply --agent agent-1
+hindclaw apply --agent agent-1 --auto-approve   # skip confirmation (CI)
 ```
 
 ### `hindclaw import`
@@ -50,7 +50,7 @@ hindclaw apply --agent finance --auto-approve   # skip confirmation (CI)
 Pull current server state into a local file.
 
 ```bash
-hindclaw import --agent finance --output ./banks/finance.json5
+hindclaw import --agent agent-1 --output ./banks/agent-1.json5
 ```
 
 ### `hindclaw init`

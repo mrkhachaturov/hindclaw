@@ -10,16 +10,16 @@ Access control uses a self-contained directory at `.openclaw/hindsight/`:
 .openclaw/hindsight/
 ├── config.json5           <- plugin settings
 ├── banks/
-│   ├── atlas.json5        <- bank config (file name = agent ID)
-│   ├── atlas/             <- $include fragments
+│   ├── agent-1.json5      <- bank config (file name = agent ID)
+│   ├── agent-1/           <- $include fragments
 │   └── ...
 ├── groups/
 │   ├── _default.json5     <- REQUIRED — anonymous/unknown users
-│   ├── executive.json5
-│   ├── staff.json5
+│   ├── group-1.json5
+│   ├── group-2.json5
 │   └── ...
 └── users/
-    ├── alice.json5        <- canonical ID = file name
+    ├── user-1.json5       <- canonical ID = file name
     └── ...
 ```
 
@@ -37,10 +37,10 @@ Enable by setting `configPath` in your plugin config:
 A user file defines identity only — who they are across channels. No permissions, no group membership.
 
 ```json5
-// users/alice.json5
+// users/user-1.json5
 {
   "displayName": "Alice",
-  "email": "alice@northwind.com",
+  "email": "alice@example.com",
   "channels": {
     "telegram": "123456",
     "slack": "U123456"
@@ -55,10 +55,10 @@ A group file defines who's in it and what permission defaults they get.
 ### Role Groups
 
 ```json5
-// groups/executive.json5
+// groups/group-1.json5
 {
   "displayName": "Executive",
-  "members": ["alice"],
+  "members": ["user-1"],
   "recall": true,
   "retain": true,
   "retainRoles": ["user", "assistant", "tool"],
@@ -71,10 +71,10 @@ A group file defines who's in it and what permission defaults they get.
 ```
 
 ```json5
-// groups/staff.json5
+// groups/group-2.json5
 {
   "displayName": "Staff",
-  "members": ["charlie"],
+  "members": ["user-3"],
   "recall": true,
   "retain": true,
   "retainRoles": ["assistant"],
@@ -93,10 +93,10 @@ A group file defines who's in it and what permission defaults they get.
 ### Department Groups
 
 ```json5
-// groups/sales.json5
+// groups/group-3.json5
 {
   "displayName": "Sales Team",
-  "members": ["bob", "charlie"],
+  "members": ["user-2", "user-3"],
   "recallTagGroups": [
     {"tags": ["department:sales"], "match": "any"}
   ],
@@ -158,12 +158,12 @@ Each bank can override group defaults — the most specific scope wins:
 {
   "permissions": {
     "groups": {
-      "executive": { "recall": true, "retain": true },
-      "dept-head": { "recall": true, "retain": false },
-      "_default":  { "recall": false, "retain": false }
+      "group-1":  { "recall": true, "retain": true },
+      "group-2":  { "recall": true, "retain": false },
+      "_default": { "recall": false, "retain": false }
     },
     "users": {
-      "bob": { "recallBudget": "high", "recallMaxTokens": 2048 }
+      "user-2": { "recallBudget": "high", "recallMaxTokens": 2048 }
     }
   }
 }
