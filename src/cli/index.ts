@@ -9,6 +9,7 @@ import { loadBankConfigFiles } from '../config.js';
 import { planBank, type BankPlan, type ConfigChange, type DirectiveChange } from '../sync/plan.js';
 import { applyBank } from '../sync/apply.js';
 import { importBank, formatBankConfigAsJson5 } from '../sync/import.js';
+import { runInit } from './init.js';
 import type { PluginConfig } from '../types.js';
 
 // ── Argument parsing ────────────────────────────────────────────────
@@ -35,6 +36,10 @@ function parseArgs(argv: string[]) {
       i++;
     } else if (args[i] === '--auto-approve' || args[i] === '-y') {
       flags.autoApprove = true;
+    } else if (args[i] === '--from-existing') {
+      flags.fromExisting = true;
+    } else if (args[i] === '--force' || args[i] === '-f') {
+      flags.force = true;
     }
   }
 
@@ -345,11 +350,18 @@ async function runImport(pluginConfig: PluginConfig, agentId: string, outputPath
 async function main() {
   const { command, flags } = parseArgs(process.argv);
 
-  if (!command || !['plan', 'apply', 'import'].includes(command)) {
+  if (!command || !['plan', 'apply', 'import', 'init'].includes(command)) {
     console.log('Usage:');
-    console.log('  hoppro plan  [--agent <id> | --all] [--config <path>] [--api-url <url>]');
-    console.log('  hoppro apply [--agent <id> | --all] [--config <path>] [--api-url <url>] [--auto-approve|-y]');
+    console.log('  hoppro plan   [--agent <id> | --all] [--config <path>] [--api-url <url>]');
+    console.log('  hoppro apply  [--agent <id> | --all] [--config <path>] [--api-url <url>] [--auto-approve|-y]');
     console.log('  hoppro import --agent <id> --output <path> [--config <path>] [--api-url <url>]');
+    console.log('  hoppro init   [--from-existing] [--force|-f] [--config <path>]');
+    console.log('');
+    console.log('Commands:');
+    console.log('  plan     Preview changes (diff local vs server)');
+    console.log('  apply    Apply changes to Hindsight server');
+    console.log('  import   Pull server state into local file');
+    console.log('  init     Bootstrap .openclaw/hindsight/ directory structure');
     process.exit(1);
   }
 
@@ -375,6 +387,9 @@ async function main() {
           process.exit(1);
         }
         await runImport(pluginConfig, flags.agent as string, flags.output as string, apiUrlOverride);
+        break;
+      case 'init':
+        await runInit({ configPath, fromExisting: !!flags.fromExisting, force: !!flags.force });
         break;
     }
   } catch (err) {
