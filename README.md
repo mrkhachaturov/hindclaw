@@ -199,29 +199,47 @@ Limits: max depth 10, circular reference detection, paths relative to containing
 
 ## ⚡ Quick Start
 
-### 1️⃣ Install
+### 1️⃣ Install Hindsight
 
-From npm registry:
+The plugin needs a Hindsight server. Two options:
+
+**Option A: Local daemon (recommended for single-server setups)**
+
+The plugin starts and manages the daemon automatically — no separate install needed. It uses [`hindsight-embed`](https://pypi.org/project/hindsight-embed/) under the hood.
+
+Requirements: Python 3.11+ and `uv` (or `pip`).
+
+```bash
+# Optional: pre-install hindsight-embed to verify it works
+uv tool install hindsight-embed
+hindsight-embed daemon start          # starts on port 9077
+hindsight-embed daemon status         # verify it's running
+```
+
+**Option B: Remote / shared server**
+
+If Hindsight runs on a separate machine (e.g., office server shared by a team), point the plugin to it:
+
+```json5
+{
+  "hindsightApiUrl": "https://hindsight.office.local",
+  "hindsightApiToken": "your-api-token"
+}
+```
+
+### 2️⃣ Install the plugin
 
 ```bash
 openclaw plugins install hindsight-openclaw-pro
 ```
 
-Or install globally via npm:
+> [!NOTE]
+> The installer registers the plugin and assigns it to the `memory` slot automatically.
+> If a previous memory plugin was installed, it will be replaced.
 
-```bash
-npm install -g hindsight-openclaw-pro
-```
+### 3️⃣ Configure plugin
 
-Or from a local build:
-
-```bash
-openclaw plugins install /path/to/hindsight-openclaw-pro
-```
-
-### 2️⃣ Configure plugin
-
-Add to `openclaw.json`:
+Add to your `openclaw.json` (or a `$include`'d config file):
 
 ```json5
 {
@@ -230,15 +248,18 @@ Add to `openclaw.json`:
       "hindsight-openclaw-pro": {
         "enabled": true,
         "config": {
-          "hindsightApiUrl": "https://hindsight.office.local",
-          "hindsightApiToken": "...",
+          // Local daemon mode — no hindsightApiUrl needed
+          // Remote mode — uncomment:
+          // "hindsightApiUrl": "https://hindsight.office.local",
+          // "hindsightApiToken": "...",
+
           "dynamicBankGranularity": ["agent"],
           "bootstrap": true,
 
           "agents": {
-            "yoda":  { "bankConfig": "./banks/yoda.json5" },
-            "r4p17": { "bankConfig": "./banks/r4p17.json5" },
-            "bb8":   { "bankConfig": "./banks/default.json5" }
+            "atlas":   { "bankConfig": "./banks/atlas.json5" },
+            "finance": { "bankConfig": "./banks/finance.json5" },
+            "health":  { "bankConfig": "./banks/health.json5" }
           }
         }
       }
@@ -247,42 +268,85 @@ Add to `openclaw.json`:
 }
 ```
 
-### 3️⃣ Create bank config
+### 4️⃣ Create bank configs
 
-Create `.openclaw/banks/yoda.json5`:
+Create a config file per agent. Example `.openclaw/banks/atlas.json5`:
 
 ```json5
 {
-  // Server-side config
+  // Server-side — synced to Hindsight via hoppro
   "retain_mission": "Extract strategic decisions, priorities, risks, opportunities.",
   "reflect_mission": "You are the strategic advisor. Challenge assumptions.",
   "disposition_skepticism": 4,
   "disposition_literalism": 2,
   "disposition_empathy": 3,
-  "entity_labels": [...],
+  "entity_labels": [
+    { "name": "department", "description": "Which department this relates to", "values": ["engineering", "finance", "marketing"] }
+  ],
   "directives": [
-    { "name": "cross_department_honesty", "content": "Flag contradictions explicitly." }
+    { "name": "cross_dept_honesty", "content": "Flag contradictions between departments explicitly." }
   ],
 
-  // Multi-bank recall
-  "recallFrom": ["yoda", "r4p17", "bb9e", "bb8"],
-  "recallBudget": "high",
-  "recallMaxTokens": 2048,
+  // Named strategies (optional) — different extraction rules per context
+  "retain_strategies": {
+    "deep-analysis": {
+      "retain_extraction_mode": "verbose",
+      "retain_mission": "Extract every decision, risk, and opportunity in full detail."
+    },
+    "lightweight": {
+      "retain_extraction_mode": "concise",
+      "retain_mission": "Only keep hard facts — dates, numbers, action items."
+    }
+  },
 
-  // Session start context
-  "sessionStartModels": [
-    { "type": "mental_model", "bankId": "yoda", "modelId": "strategic-position", "label": "Strategic Position" }
-  ]
+  // Memory routing (optional) — map strategies to conversation topics
+  "memory": {
+    "default": "full",
+    "full": {
+      "deep-analysis": { "topics": ["12345"] },
+      "lightweight":   { "topics": ["67890"] }
+    },
+    "recall": {},
+    "disabled": {}
+  },
+
+  // Multi-bank recall (optional) — read from multiple agents' memories
+  "recallFrom": ["atlas", "finance", "health"],
+  "recallBudget": "high",
+  "recallMaxTokens": 2048
 }
 ```
 
-### 4️⃣ Apply & start
+### 5️⃣ Apply configs & start
 
 ```bash
-hoppro plan --all   # preview changes
-hoppro apply --all  # apply to Hindsight server
-openclaw gateway    # start with memory
+# Preview what will be synced to Hindsight
+hoppro plan --all
+
+# Apply (shows plan, asks for confirmation)
+hoppro apply --all
+
+# Start the gateway
+openclaw gateway
 ```
+
+> [!TIP]
+> On first startup with `bootstrap: true`, the plugin auto-applies bank configs to empty banks.
+> After that, use `hoppro plan/apply` to manage changes.
+
+### 6️⃣ Hindsight UI (optional)
+
+View memory banks, strategies, and stored memories in the browser:
+
+```bash
+# Start the control plane UI (default: http://localhost:9999)
+hindsight-embed -p <profile-name> ui
+
+# Or as a systemd service (recommended for servers):
+# ExecStart=hindsight-embed -p <profile-name> ui
+```
+
+Open `http://localhost:9999` — select a bank from the dropdown to explore memories, configuration, and strategies.
 
 ---
 
