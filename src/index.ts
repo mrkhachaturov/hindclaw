@@ -313,6 +313,7 @@ function getPluginConfig(api: MoltbotPluginAPI): PluginConfig {
     retainEveryNTurns: typeof config.retainEveryNTurns === 'number' && config.retainEveryNTurns >= 1 ? config.retainEveryNTurns : 1,
     retainOverlapTurns: typeof config.retainOverlapTurns === 'number' && config.retainOverlapTurns >= 0 ? config.retainOverlapTurns : 0,
     debug: config.debug ?? false,
+    configPath: config.configPath,
     agents: config.agents,
     bootstrap: config.bootstrap,
   };

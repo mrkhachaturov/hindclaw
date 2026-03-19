@@ -648,6 +648,18 @@ describe('handleRecall — permission-aware', () => {
     expect(request.max_tokens).toBe(2048);
   });
 
+  it('recallTagGroups: null sends no tag_groups to API (no filter)', async () => {
+    mockClient.recall.mockResolvedValue({ results: [makeMemory('m1', 'fact')], entities: null, trace: null, chunks: null });
+    // executive group has recallTagGroups: null (default in makeDiscovery) = no filter
+    // bank also has recallTags that should NOT override null
+    const discovery = makeDiscovery();
+    const agentConfig: ResolvedConfig = { ...baseAgentConfig, recallTags: ['source:telegram'], recallTagsMatch: 'any' };
+    const ctx: PluginHookAgentContext = { ...baseCtx, senderId: '123456', messageProvider: 'telegram' };
+    await handleRecall({ rawMessage: 'test query here' }, ctx, agentConfig, mockClient, basePluginConfig, discovery);
+    const [, request] = mockClient.recall.mock.calls[0];
+    expect(request.tag_groups).toBeUndefined();  // null = no filter, not the v1.x recallTags
+  });
+
   it('falls back to v1.x behavior when discovery is null', async () => {
     mockClient.recall.mockResolvedValue({ results: [makeMemory('m1', 'fact')], entities: null, trace: null, chunks: null });
     await handleRecall({ rawMessage: 'test query here' }, baseCtx, baseAgentConfig, mockClient, basePluginConfig, null);

@@ -150,7 +150,7 @@ export async function handleRetain(
     }
   }
 
-  if (agentConfig.autoRetain === false && !discovery) {
+  if (agentConfig.autoRetain === false) {
     debug('[Hindsight Hook] autoRetain is disabled, skipping retention');
     return;
   }

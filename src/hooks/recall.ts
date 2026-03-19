@@ -153,8 +153,10 @@ export async function handleRecall(
   const recallFrom = agentConfig._recallFrom;
 
   // 5. Build common recall params (permissions override agentConfig)
-  const tagGroups = permissions?.recallTagGroups
-    ?? resolveRecallFilter(agentConfig);  // v1.x fallback
+  // Note: null means "no filter" — must NOT fall through to v1.x via ??
+  const tagGroups = permissions
+    ? permissions.recallTagGroups   // null = no filter (intentional)
+    : resolveRecallFilter(agentConfig);  // v1.x fallback
   const budget = permissions?.recallBudget ?? agentConfig.recallBudget;
   const maxTokens = permissions?.recallMaxTokens ?? agentConfig.recallMaxTokens;
   const types = agentConfig.recallTypes;
@@ -168,7 +170,7 @@ export async function handleRecall(
         query,
         budget: agentConfig._reflectBudget ?? budget,
         max_tokens: agentConfig._reflectMaxTokens ?? maxTokens,
-        tag_groups: tagGroups.length > 0 ? tagGroups : undefined,
+        tag_groups: tagGroups && tagGroups.length > 0 ? tagGroups : undefined,
       });
       if (!response.text) {
         debug('[Hindsight] Reflect returned empty text, skipping memory injection');
@@ -209,7 +211,10 @@ export async function handleRecall(
           budget: bank.budget ?? budget,
           max_tokens: bank.maxTokens ?? maxTokens,
           types: bank.types ?? types,
-          tag_groups: (bank.tagGroups ?? tagGroups).length > 0 ? (bank.tagGroups ?? tagGroups) : undefined,
+          // When discovery is active, tagGroups comes from permissions (null = no filter → undefined)
+          tag_groups: discovery
+            ? (tagGroups && tagGroups.length > 0 ? tagGroups : undefined)
+            : ((bank.tagGroups ?? tagGroups ?? []).length > 0 ? (bank.tagGroups ?? tagGroups ?? []) : undefined),
         },
       );
       if (!response.results?.length) {
@@ -243,7 +248,7 @@ export async function handleRecall(
   const sid = ctx?.senderId ?? 'unknown';
   const channelKey = `${provider}:${sid}`;
 
-  type BankRecallEntry = { bankId: string; tagGroups: TagGroup[] | null; budget?: string; maxTokens?: number; types?: any };
+  type BankRecallEntry = { bankId: string; tagGroups: TagGroup[] | null; budget?: 'low' | 'mid' | 'high'; maxTokens?: number; types?: any };
   const permittedBanks: BankRecallEntry[] = [];
 
   for (const bank of banks) {
@@ -284,7 +289,7 @@ export async function handleRecall(
         bank.bankId,
         {
           query,
-          budget: bank.budget as any,
+          budget: bank.budget,
           max_tokens: bank.maxTokens,
           types: bank.types,
           tag_groups: bank.tagGroups?.length ? bank.tagGroups : undefined,
