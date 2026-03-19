@@ -4,11 +4,13 @@
 >
 > Repository: `hindsight-openclaw-pro`
 
-![Plugin](https://img.shields.io/badge/plugin-memory-0f766e)
-![OpenClaw](https://img.shields.io/badge/OpenClaw-compatible-1d4ed8)
-![Node](https://img.shields.io/badge/node-%3E%3D22-c2410c)
-![License](https://img.shields.io/badge/license-MIT-10b981)
-![Based on](https://img.shields.io/badge/based%20on-@vectorize--io/hindsight--openclaw-8b5cf6)
+[![npm](https://img.shields.io/npm/v/hindsight-openclaw-pro?style=flat-square&color=0f766e)](https://www.npmjs.com/package/hindsight-openclaw-pro)
+![Plugin](https://img.shields.io/badge/plugin-memory-0f766e?style=flat-square)
+![OpenClaw](https://img.shields.io/badge/OpenClaw-compatible-1d4ed8?style=flat-square)
+![Node](https://img.shields.io/badge/node-%3E%3D22-c2410c?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-229%20passing-10b981?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)
+![Based on](https://img.shields.io/badge/based%20on-@vectorize--io/hindsight--openclaw-8b5cf6?style=flat-square)
 
 > **Based on [`@vectorize-io/hindsight-openclaw`](https://github.com/vectorize-io/hindsight/tree/main/hindsight-integrations/openclaw)** (MIT, Copyright (c) 2025 Vectorize AI, Inc.)
 >
