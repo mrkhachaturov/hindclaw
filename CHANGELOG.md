@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-03-19
+
+### Added
+- **Strategy-scoped memory** — named retain strategies routed per Telegram topic via `memory` section in bank config
+  - Three modes: `full` (retain + recall with named strategy), `recall` (read-only), `disabled` (no memory)
+  - `default` key sets fallback mode for unmapped conversations
+  - `_topicIndex` reverse lookup built at startup for O(1) routing
+- **`$include` directives** — modular bank config files with recursive file resolution
+  - `{ "$include": "./path.json5" }` replaced inline with parsed file contents
+  - Max depth 10, circular reference detection, paths relative to containing file
+- **`extractTopicId()`** in `utils.ts` — extracts topic ID from DM and group forum session keys
+- New bank config fields: `retain_strategies`, `retain_default_strategy`, `retain_chunk_size`, `memory`
+- Sync support for new fields in `bootstrap.ts` and `plan.ts` CONFIG_FIELDS
+
+### Changed
+- **hoppro CLI** — Terraform-style plan output with structured diffs, color, and summary line
+  - `plan` shows `+`/`-`/`~` per field with full values
+  - `apply` shows plan first, asks "Do you want to perform these actions?" before applying
+  - `--auto-approve` / `-y` flag to skip confirmation (CI/scripts)
+  - `--api-url` flag for explicit API URL override
+  - Config path resolution: `--config` flag → `OPENCLAW_CONFIG_PATH` env → `.openclaw/openclaw.json`
+  - Bank config paths resolved relative to config file directory (not cwd)
+  - Key-order-insensitive comparison (eliminates false positives from JSON key ordering)
+- `topicStrategies` removed from `AgentEntry` — replaced by `memory` section in `BankConfig`
+- `extractTopicId` moved from `retain.ts` to `utils.ts` (shared by both hooks)
+
 ## [1.0.2] - 2026-03-18
 
 ### Fixed

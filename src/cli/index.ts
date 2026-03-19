@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
 import { readFileSync, writeFileSync } from 'fs';
+import { createInterface } from 'readline';
 import JSON5 from 'json5';
 import { HindsightClient } from '../client.js';
 import { loadBankConfigFiles } from '../config.js';
-import { planBank } from '../sync/plan.js';
+import { planBank, type BankPlan, type ConfigChange, type DirectiveChange } from '../sync/plan.js';
 import { applyBank } from '../sync/apply.js';
 import { importBank, formatBankConfigAsJson5 } from '../sync/import.js';
 import type { PluginConfig } from '../types.js';
+
+// ── Argument parsing ────────────────────────────────────────────────
 
 function parseArgs(argv: string[]) {
   const args = argv.slice(2);
@@ -27,84 +30,281 @@ function parseArgs(argv: string[]) {
     } else if (args[i] === '--config' && args[i + 1]) {
       flags.config = args[i + 1];
       i++;
+    } else if (args[i] === '--api-url' && args[i + 1]) {
+      flags.apiUrl = args[i + 1];
+      i++;
+    } else if (args[i] === '--auto-approve' || args[i] === '-y') {
+      flags.autoApprove = true;
     }
   }
 
   return { command, flags };
 }
 
+// ── Config loading ──────────────────────────────────────────────────
+
 function loadPluginConfig(configPath: string): PluginConfig {
   const content = readFileSync(configPath, 'utf-8');
   const config = JSON5.parse(content);
-  // Navigate to plugin config
   return config?.plugins?.entries?.['hindsight-openclaw-pro']?.config ?? {};
 }
 
-function createClient(pluginConfig: PluginConfig): HindsightClient {
+function resolveApiUrl(pluginConfig: PluginConfig, flagOverride?: string): string {
+  if (flagOverride) return flagOverride;
+  if (pluginConfig.hindsightApiUrl) return pluginConfig.hindsightApiUrl;
+  const port = pluginConfig.apiPort || 9077;
+  return `http://127.0.0.1:${port}`;
+}
+
+function createClient(pluginConfig: PluginConfig, apiUrlOverride?: string): HindsightClient {
   return new HindsightClient({
-    apiUrl: pluginConfig.hindsightApiUrl,
+    apiUrl: resolveApiUrl(pluginConfig, apiUrlOverride),
     apiToken: pluginConfig.hindsightApiToken,
   });
 }
 
-async function runPlan(pluginConfig: PluginConfig, agentId?: string) {
-  const client = createClient(pluginConfig);
-  const agents = pluginConfig.agents ?? {};
-  const configDir = resolve(process.cwd(), '.openclaw');
-  const bankConfigs = loadBankConfigFiles(agents, configDir);
+// ── Plan formatter (terraform-style) ────────────────────────────────
 
-  const targetAgents = agentId ? [agentId] : Object.keys(agents);
-  let totalChanges = 0;
+const isTTY = process.stdout.isTTY ?? false;
+const c = {
+  green:  (s: string) => isTTY ? `\x1b[32m${s}\x1b[0m` : s,
+  red:    (s: string) => isTTY ? `\x1b[31m${s}\x1b[0m` : s,
+  yellow: (s: string) => isTTY ? `\x1b[33m${s}\x1b[0m` : s,
+  cyan:   (s: string) => isTTY ? `\x1b[36m${s}\x1b[0m` : s,
+  dim:    (s: string) => isTTY ? `\x1b[2m${s}\x1b[0m` : s,
+  bold:   (s: string) => isTTY ? `\x1b[1m${s}\x1b[0m` : s,
+};
 
-  for (const id of targetAgents) {
-    const bankConfig = bankConfigs.get(id);
-    if (!bankConfig) { console.log(`⚠ ${id}: no bank config found`); continue; }
+function formatInline(v: unknown): string {
+  if (v === undefined || v === null) return c.dim('(null)');
+  if (typeof v === 'string') return `"${v}"`;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  if (Array.isArray(v)) return `[${v.length} items]`;
+  if (typeof v === 'object') return `{ ${Object.keys(v).join(', ')} }`;
+  return String(v);
+}
 
-    // Use agent ID as bank ID for plan (simplified — full derivation needs context)
-    const bankId = id;
-    const plan = await planBank(id, bankId, bankConfig, client);
+function formatBlock(v: unknown, prefix: string, indent: number): string[] {
+  const json = JSON.stringify(v, null, 2);
+  const pad = ' '.repeat(indent);
+  return json.split('\n').map(line => `${pad}${prefix} ${line}`);
+}
 
-    if (!plan.hasChanges) {
-      console.log(`  ${id}: no changes`);
-      continue;
+function diffObject(oldVal: unknown, newVal: unknown, depth: number): string[] {
+  const lines: string[] = [];
+  const pad = ' '.repeat(depth);
+
+  // Both are plain objects — diff field by field
+  if (oldVal && newVal && typeof oldVal === 'object' && typeof newVal === 'object'
+      && !Array.isArray(oldVal) && !Array.isArray(newVal)) {
+    const oldObj = oldVal as Record<string, unknown>;
+    const newObj = newVal as Record<string, unknown>;
+    const allKeys = new Set([...Object.keys(oldObj), ...Object.keys(newObj)]);
+
+    for (const key of allKeys) {
+      const o = oldObj[key];
+      const n = newObj[key];
+      if (o === undefined) {
+        // Added key
+        lines.push(`${pad}  ${c.green('+')} ${c.green(key)} = ${c.green(formatInline(n))}`);
+      } else if (n === undefined) {
+        // Removed key
+        lines.push(`${pad}  ${c.red('-')} ${c.red(key)} = ${c.red(formatInline(o))}`);
+      } else if (JSON.stringify(o) !== JSON.stringify(n)) {
+        // Changed key — for simple values show inline, for complex recurse
+        if (typeof o !== 'object' || typeof n !== 'object' || o === null || n === null) {
+          lines.push(`${pad}  ${c.yellow('~')} ${key} = ${c.red(formatInline(o))} ${c.dim('→')} ${c.green(formatInline(n))}`);
+        } else {
+          lines.push(`${pad}  ${c.yellow('~')} ${key} {`);
+          lines.push(...diffObject(o, n, depth + 4));
+          lines.push(`${pad}    }`);
+        }
+      }
+      // unchanged keys: skip (terraform hides them too)
     }
+    return lines;
+  }
 
-    totalChanges++;
-    console.log(`\nBank: ${id} (${bankId})`);
-    for (const c of plan.configChanges) {
-      const symbol = c.action === 'add' ? '+' : c.action === 'change' ? '~' : '-';
-      console.log(`  ${symbol} ${c.field} (${c.action})`);
+  // Fallback: show old → new as blocks
+  lines.push(...formatBlock(oldVal, c.red('-'), depth + 2));
+  lines.push(...formatBlock(newVal, c.green('+'), depth + 2));
+  return lines;
+}
+
+function printConfigChange(change: ConfigChange): string[] {
+  const lines: string[] = [];
+
+  if (change.action === 'add') {
+    lines.push(`  ${c.green('+')} ${c.bold(change.field)}`);
+    if (typeof change.newValue === 'string') {
+      lines.push(`      ${c.green('= ' + formatInline(change.newValue))}`);
+    } else if (typeof change.newValue === 'number' || typeof change.newValue === 'boolean') {
+      lines.push(`      ${c.green('= ' + String(change.newValue))}`);
+    } else {
+      lines.push(...formatBlock(change.newValue, c.green('+'), 6));
     }
-    for (const d of plan.directiveChanges) {
-      const symbol = d.action === 'create' ? '+' : d.action === 'update' ? '~' : '-';
-      console.log(`  ${symbol} directive: ${d.name} (${d.action})`);
+  } else if (change.action === 'remove') {
+    lines.push(`  ${c.red('-')} ${c.bold(change.field)}`);
+    if (typeof change.oldValue === 'string') {
+      lines.push(`      ${c.red('= ' + formatInline(change.oldValue))}`);
+    } else {
+      lines.push(...formatBlock(change.oldValue, c.red('-'), 6));
+    }
+  } else {
+    // change
+    lines.push(`  ${c.yellow('~')} ${c.bold(change.field)}`);
+    if (typeof change.oldValue !== 'object' || typeof change.newValue !== 'object'
+        || change.oldValue === null || change.newValue === null) {
+      // Simple scalar change
+      lines.push(`      ${c.red(formatInline(change.oldValue))} ${c.dim('→')} ${c.green(formatInline(change.newValue))}`);
+    } else {
+      // Structured diff
+      lines.push(...diffObject(change.oldValue, change.newValue, 4));
     }
   }
 
-  console.log(`\n${targetAgents.length} banks checked, ${totalChanges} have changes.`);
+  return lines;
 }
 
-async function runApply(pluginConfig: PluginConfig, agentId?: string) {
-  const client = createClient(pluginConfig);
+function printDirectiveChange(change: DirectiveChange): string[] {
+  const lines: string[] = [];
+  if (change.action === 'create') {
+    lines.push(`  ${c.green('+')} ${c.bold('directive:')} ${change.name}`);
+    if (change.content) lines.push(`      ${c.green('= "' + truncate(change.content, 100) + '"')}`);
+  } else if (change.action === 'delete') {
+    lines.push(`  ${c.red('-')} ${c.bold('directive:')} ${change.name}`);
+  } else {
+    lines.push(`  ${c.yellow('~')} ${c.bold('directive:')} ${change.name}`);
+    if (change.content) lines.push(`      ${c.green('= "' + truncate(change.content, 100) + '"')}`);
+  }
+  return lines;
+}
+
+function truncate(s: string, max: number): string {
+  return s.length > max ? s.substring(0, max) + '...' : s;
+}
+
+function printPlan(plan: BankPlan): { adds: number; changes: number; removes: number } {
+  let adds = 0, changes = 0, removes = 0;
+
+  console.log(`\n${c.bold(`# bank.${plan.agentId}`)} (${plan.bankId})`);
+  console.log('');
+
+  for (const change of plan.configChanges) {
+    if (change.action === 'add') adds++;
+    else if (change.action === 'change') changes++;
+    else removes++;
+    for (const line of printConfigChange(change)) console.log(line);
+    console.log('');
+  }
+
+  for (const change of plan.directiveChanges) {
+    if (change.action === 'create') adds++;
+    else if (change.action === 'update') changes++;
+    else removes++;
+    for (const line of printDirectiveChange(change)) console.log(line);
+    console.log('');
+  }
+
+  return { adds, changes, removes };
+}
+
+function confirm(prompt: string): Promise<boolean> {
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise(resolve => {
+    rl.question(prompt, (answer) => {
+      rl.close();
+      resolve(answer.trim().toLowerCase() === 'yes');
+    });
+  });
+}
+
+function printSummary(adds: number, changes: number, removes: number): void {
+  const parts: string[] = [];
+  if (adds > 0) parts.push(c.green(`${adds} to add`));
+  if (changes > 0) parts.push(c.yellow(`${changes} to change`));
+  if (removes > 0) parts.push(c.red(`${removes} to destroy`));
+  console.log(`\nPlan: ${parts.join(', ')}.`);
+}
+
+// ── Commands ────────────────────────────────────────────────────────
+
+async function runPlan(pluginConfig: PluginConfig, configDir: string, agentId?: string, apiUrlOverride?: string) {
+  const client = createClient(pluginConfig, apiUrlOverride);
   const agents = pluginConfig.agents ?? {};
-  const configDir = resolve(process.cwd(), '.openclaw');
   const bankConfigs = loadBankConfigFiles(agents, configDir);
 
   const targetAgents = agentId ? [agentId] : Object.keys(agents);
-  let updated = 0;
+  let totalAdds = 0, totalChanges = 0, totalRemoves = 0;
 
   for (const id of targetAgents) {
     const bankConfig = bankConfigs.get(id);
-    if (!bankConfig) { console.log(`⚠ ${id}: no bank config found`); continue; }
+    if (!bankConfig) { console.log(`${c.yellow('⚠')} ${id}: no bank config found`); continue; }
 
-    const bankId = id;
-    const plan = await planBank(id, bankId, bankConfig, client);
+    const plan = await planBank(id, id, bankConfig, client);
 
-    if (!plan.hasChanges) {
-      console.log(`Skipping ${id} (no changes)`);
-      continue;
+    if (!plan.hasChanges) continue;
+
+    const { adds, changes, removes } = printPlan(plan);
+    totalAdds += adds;
+    totalChanges += changes;
+    totalRemoves += removes;
+  }
+
+  const total = totalAdds + totalChanges + totalRemoves;
+  if (total === 0) {
+    console.log(`\n${c.green('No changes.')} Infrastructure is up-to-date.`);
+  } else {
+    printSummary(totalAdds, totalChanges, totalRemoves);
+  }
+}
+
+async function runApply(pluginConfig: PluginConfig, configDir: string, agentId?: string, apiUrlOverride?: string, autoApprove = false) {
+  const client = createClient(pluginConfig, apiUrlOverride);
+  const agents = pluginConfig.agents ?? {};
+  const bankConfigs = loadBankConfigFiles(agents, configDir);
+
+  const targetAgents = agentId ? [agentId] : Object.keys(agents);
+
+  // Phase 1: Plan all banks
+  const plans: BankPlan[] = [];
+  let totalAdds = 0, totalChanges = 0, totalRemoves = 0;
+
+  for (const id of targetAgents) {
+    const bankConfig = bankConfigs.get(id);
+    if (!bankConfig) { console.log(`${c.yellow('⚠')} ${id}: no bank config found`); continue; }
+
+    const plan = await planBank(id, id, bankConfig, client);
+    if (!plan.hasChanges) continue;
+
+    const { adds, changes, removes } = printPlan(plan);
+    totalAdds += adds;
+    totalChanges += changes;
+    totalRemoves += removes;
+    plans.push(plan);
+  }
+
+  if (plans.length === 0) {
+    console.log(`\n${c.green('No changes.')} Infrastructure is up-to-date.`);
+    return;
+  }
+
+  // Phase 2: Summary + confirmation
+  printSummary(totalAdds, totalChanges, totalRemoves);
+
+  if (!autoApprove) {
+    console.log('');
+    const approved = await confirm(`Do you want to perform these actions? Only 'yes' will be accepted: `);
+    if (!approved) {
+      console.log('\nApply cancelled.');
+      return;
     }
+    console.log('');
+  }
 
+  // Phase 3: Apply
+  let updated = 0;
+  for (const plan of plans) {
     const result = await applyBank(plan, client);
     updated++;
 
@@ -114,21 +314,21 @@ async function runApply(pluginConfig: PluginConfig, agentId?: string) {
     if (result.directivesUpdated) parts.push(`${result.directivesUpdated} directive(s) updated`);
     if (result.directivesDeleted) parts.push(`${result.directivesDeleted} directive(s) deleted`);
 
-    console.log(`Applying ${id}... ✓ (${parts.join(', ')})`);
+    console.log(`${c.green('✓')} ${c.bold(plan.agentId)} applied (${parts.join(', ')})`);
 
     if (result.errors.length > 0) {
       for (const err of result.errors) {
-        console.error(`  ⚠ ${err}`);
+        console.error(`  ${c.red('✗')} ${err}`);
       }
     }
   }
 
-  console.log(`\nDone. ${updated} banks updated, ${targetAgents.length - updated} unchanged.`);
+  console.log(`\n${c.bold('Apply complete!')} ${updated} banks updated.`);
 }
 
-async function runImport(pluginConfig: PluginConfig, agentId: string, outputPath: string) {
-  const client = createClient(pluginConfig);
-  const bankId = agentId; // simplified
+async function runImport(pluginConfig: PluginConfig, agentId: string, outputPath: string, apiUrlOverride?: string) {
+  const client = createClient(pluginConfig, apiUrlOverride);
+  const bankId = agentId;
 
   const result = await importBank(bankId, client);
   const content = formatBankConfigAsJson5(result.bankConfig);
@@ -136,42 +336,49 @@ async function runImport(pluginConfig: PluginConfig, agentId: string, outputPath
   const fullPath = resolve(process.cwd(), outputPath);
   writeFileSync(fullPath, content, 'utf-8');
 
-  console.log(`Imported bank ${bankId} → ${outputPath}`);
+  console.log(`${c.green('✓')} Imported bank ${c.bold(bankId)} → ${outputPath}`);
   console.log(`  ${result.stats.configFields} config fields, ${result.stats.directives} directives`);
 }
+
+// ── Main ────────────────────────────────────────────────────────────
 
 async function main() {
   const { command, flags } = parseArgs(process.argv);
 
   if (!command || !['plan', 'apply', 'import'].includes(command)) {
     console.log('Usage:');
-    console.log('  hoppro plan [--agent <id> | --all] [--config <path>]');
-    console.log('  hoppro apply [--agent <id> | --all] [--config <path>]');
-    console.log('  hoppro import --agent <id> --output <path> [--config <path>]');
+    console.log('  hoppro plan  [--agent <id> | --all] [--config <path>] [--api-url <url>]');
+    console.log('  hoppro apply [--agent <id> | --all] [--config <path>] [--api-url <url>] [--auto-approve|-y]');
+    console.log('  hoppro import --agent <id> --output <path> [--config <path>] [--api-url <url>]');
     process.exit(1);
   }
 
-  const configPath = resolve(process.cwd(), (flags.config as string) ?? '.openclaw/openclaw.json');
+  const configPath = resolve(
+    process.cwd(),
+    (flags.config as string) ?? process.env.OPENCLAW_CONFIG_PATH ?? '.openclaw/openclaw.json',
+  );
   const pluginConfig = loadPluginConfig(configPath);
+  const configDir = dirname(configPath);
+  const apiUrlOverride = flags.apiUrl as string | undefined;
 
   try {
     switch (command) {
       case 'plan':
-        await runPlan(pluginConfig, flags.agent as string);
+        await runPlan(pluginConfig, configDir, flags.agent as string, apiUrlOverride);
         break;
       case 'apply':
-        await runApply(pluginConfig, flags.agent as string);
+        await runApply(pluginConfig, configDir, flags.agent as string, apiUrlOverride, !!flags.autoApprove);
         break;
       case 'import':
         if (!flags.agent || !flags.output) {
           console.error('import requires --agent and --output');
           process.exit(1);
         }
-        await runImport(pluginConfig, flags.agent as string, flags.output as string);
+        await runImport(pluginConfig, flags.agent as string, flags.output as string, apiUrlOverride);
         break;
     }
   } catch (err) {
-    console.error(`Error: ${err}`);
+    console.error(`${c.red('Error:')} ${err}`);
     process.exit(1);
   }
 }

@@ -42,6 +42,20 @@ const CONFIG_FIELDS = [
   'retain_chunk_size',
 ] as const;
 
+/** Deep-sort object keys for stable comparison (eliminates key-order false positives) */
+function normalize(v: unknown): unknown {
+  if (v === null || v === undefined) return v;
+  if (Array.isArray(v)) return v.map(normalize);
+  if (typeof v === 'object') {
+    const sorted: Record<string, unknown> = {};
+    for (const k of Object.keys(v as Record<string, unknown>).sort()) {
+      sorted[k] = normalize((v as Record<string, unknown>)[k]);
+    }
+    return sorted;
+  }
+  return v;
+}
+
 // ── planBank ─────────────────────────────────────────────────────────
 
 export async function planBank(
@@ -72,7 +86,7 @@ export async function planBank(
     } else if (fileValue === undefined && serverValue !== undefined) {
       configChanges.push({ field, action: 'remove', oldValue: serverValue });
     } else if (fileValue !== undefined && serverValue !== undefined) {
-      if (JSON.stringify(fileValue) !== JSON.stringify(serverValue)) {
+      if (JSON.stringify(normalize(fileValue)) !== JSON.stringify(normalize(serverValue))) {
         configChanges.push({ field, action: 'change', oldValue: serverValue, newValue: fileValue });
       }
     }

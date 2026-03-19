@@ -20,6 +20,8 @@ Per-agent bank configuration via IaC template files, multi-bank recall, session 
 |---|---------|-------------|
 | 📋 | Per-agent config | Each agent gets a bank config template file — missions, entity labels, directives, dispositions |
 | 🏗️ | Infrastructure as Code | `hoppro plan` / `apply` / `import` — Terraform-style bank management |
+| 🎯 | Strategy-scoped memory | Named retain strategies routed per Telegram topic — different extraction rules per context |
+| 📂 | `$include` directives | Split large bank configs into modular files — entity labels, strategy definitions |
 | 🔀 | Multi-bank recall | `recallFrom` lets an agent query multiple banks per turn (Yoda pattern) |
 | 🧩 | Session start context | Mental models loaded at session start — no cold start problem |
 | 🪞 | Reflect on recall | Disposition-aware reasoning via Hindsight reflect API |
@@ -60,6 +62,99 @@ graph TD
     style HS_HOME fill:#8b5cf6,color:#fff,stroke:#8b5cf6
     style HS_OFFICE fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 ```
+
+---
+
+## 🎯 Strategy-Scoped Memory
+
+Route memory behavior per conversation context. Each Telegram topic (or future: channel) can use a different retain strategy with its own extraction rules, or disable memory entirely.
+
+### Memory Modes
+
+```mermaid
+graph LR
+    MSG["💬 Incoming message"] --> EXTRACT["Extract topic ID<br/>from session key"]
+    EXTRACT --> LOOKUP{"Topic in<br/>_topicIndex?"}
+    LOOKUP -->|yes| ENTRY["Get mode + strategy"]
+    LOOKUP -->|no| DEFAULT["Use default mode"]
+    ENTRY --> MODE{Mode?}
+    DEFAULT --> MODE
+    MODE -->|full| FULL["✅ Recall + Retain<br/>(with named strategy)"]
+    MODE -->|recall| RO["📖 Recall only<br/>(no retain)"]
+    MODE -->|disabled| OFF["🚫 No memory"]
+
+    style FULL fill:#10b981,color:#fff
+    style RO fill:#f59e0b,color:#fff
+    style OFF fill:#ef4444,color:#fff
+```
+
+### Configuration
+
+```json5
+{
+  // Named strategies — server-side extraction overrides (synced via hoppro)
+  "retain_strategies": {
+    "deep-analysis": { "$include": "./agent/deep-analysis.json5" },
+    "lightweight":   { "$include": "./agent/lightweight.json5" }
+  },
+
+  // Memory routing — plugin-side, maps strategies → scopes
+  "memory": {
+    "default": "full",          // unmapped conversations: full memory (bank defaults)
+    "full": {
+      "deep-analysis": {
+        "topics": ["12345"]     // strategic conversations → verbose extraction
+      },
+      "lightweight": {
+        "topics": ["67890"]     // daily updates → concise extraction
+      }
+    },
+    "recall": {
+      "readonly-strat": {
+        "topics": ["11111"]     // read-only — recalls memory, never writes
+      }
+    },
+    "disabled": {
+      "silent": {
+        "topics": ["99999"]     // no memory interaction at all
+      }
+    }
+  }
+}
+```
+
+### How It Works
+
+| Layer | What | Where |
+|-------|------|-------|
+| **Strategy definitions** | Extraction rules (mission, mode, entity labels) | `retain_strategies` → synced to Hindsight API via `hoppro apply` |
+| **Memory routing** | Which strategy applies where + mode control | `memory` section → resolved at gateway startup, stays in plugin |
+| **`$include`** | Modular file references | Resolved at config load time, before anything else |
+
+### `$include` Directives
+
+Split large configs into manageable files. Resolved recursively, relative to the containing file:
+
+```json5
+// Main bank config
+{
+  "entity_labels": { "$include": "./agent/labels.json5" },
+  "retain_strategies": {
+    "detailed": { "$include": "./agent/detailed-strategy.json5" }
+  }
+}
+```
+
+```
+.openclaw/banks/
+├── agent.json5                    ← main bank config
+├── agent/
+│   ├── labels.json5               ← entity label definitions
+│   ├── detailed-strategy.json5    ← strategy: verbose + custom labels
+│   └── quick-strategy.json5       ← strategy: concise extraction
+```
+
+Limits: max depth 10, circular reference detection, paths relative to containing file.
 
 ---
 
@@ -214,6 +309,10 @@ Resolution: `pluginDefaults → bankFile` — shallow merge, bank file wins.
 | `disposition_empathy` | 1–5 | 🔧 Server | Weight given to emotional content |
 | `entity_labels` | EntityLabel[] | 🔧 Server | Custom entity types for classification |
 | `directives` | `{name,content}[]` | 🔧 Server | Standing instructions for the bank |
+| `retain_strategies` | Record | 🔧 Server | Named extraction strategies (synced via `hoppro`) |
+| `retain_default_strategy` | string | 🔧 Server | Fallback strategy when no named strategy is passed |
+| `retain_chunk_size` | number | 🔧 Server | Text chunk size for processing |
+| `memory` | MemoryRouting | 🎯 Routing | Topic-based mode + strategy routing (plugin-side) |
 | `retainTags` | string[] | 🏷️ Tags | Tags added to all retained facts |
 | `retainContext` | string | 🏷️ Tags | Source label for retained facts |
 | `retainObservationScopes` | string \| string[][] | 🏷️ Tags | Observation consolidation scoping |
@@ -246,28 +345,77 @@ Gateway
 
 ## ⚡ CLI: hoppro
 
-Terraform-style management of Hindsight bank configurations.
+Terraform-style management of Hindsight bank configurations. Local bank config files are the source of truth — `hoppro` diffs them against the server and applies changes.
 
 ```bash
-# 📋 Preview changes
+# 📋 Preview changes (read-only, never modifies server)
 hoppro plan --all
 hoppro plan --agent r4p17
 
-# ✅ Apply changes
+# ✅ Apply changes (shows plan first, asks for confirmation)
 hoppro apply --all
 hoppro apply --agent r4p17
+hoppro apply --agent r4p17 --auto-approve   # skip confirmation (CI)
 
 # 📥 Import server state to local file
 hoppro import --agent r4p17 --output ./banks/r4p17.json5
 ```
 
+### Plan Output
+
+```
+# bank.r4p17 (r4p17)
+
+  + retain_strategies
+      + {
+      +   "detailed": {
+      +     "retain_extraction_mode": "verbose",
+      +     "retain_mission": "Extract financial metrics, margins, cashflow..."
+      +   },
+      +   "quick": {
+      +     "retain_extraction_mode": "concise"
+      +   }
+      + }
+
+  ~ retain_mission
+    "Extract financial data..." → "Extract financial metrics, P&L, cashflow..."
+
+  - old_directive
+    "Deprecated instruction that will be removed"
+
+Plan: 2 to add, 1 to change, 1 to destroy.
+```
+
+### Apply Flow
+
+```mermaid
+graph LR
+    PLAN["📋 Compute plan"] --> DIFF{"Changes?"}
+    DIFF -->|no| DONE["✅ Up-to-date"]
+    DIFF -->|yes| SHOW["Show diff"]
+    SHOW --> ASK{"Confirm?<br/>(--auto-approve skips)"}
+    ASK -->|yes| APPLY["Apply to server"]
+    ASK -->|no| CANCEL["❌ Cancelled"]
+    APPLY --> RESULT["✅ Applied"]
+
+    style DONE fill:#10b981,color:#fff
+    style RESULT fill:#10b981,color:#fff
+    style CANCEL fill:#ef4444,color:#fff
+```
+
 | Command | Description |
 |---------|-------------|
 | `plan` | Diff local bank config files against Hindsight server state |
-| `apply` | Apply changes shown by plan (config + directives) |
+| `apply` | Show plan, ask confirmation, apply changes (config + directives) |
 | `import` | Pull current server state into a local file |
 
-Options: `--agent <id>`, `--all`, `--config <path>` (default: `.openclaw/openclaw.json`)
+| Option | Description |
+|--------|-------------|
+| `--agent <id>` | Target a single agent |
+| `--all` | Target all configured agents |
+| `--config <path>` | Config file path (default: `OPENCLAW_CONFIG_PATH` or `.openclaw/openclaw.json`) |
+| `--api-url <url>` | Override Hindsight API URL |
+| `--auto-approve` / `-y` | Skip confirmation prompt (for CI/scripts) |
 
 ---
 
@@ -289,7 +437,7 @@ Options: `--agent <id>`, `--all`, `--config <path>` (default: `.openclaw/opencla
 ```bash
 npm install
 npm run build              # 🔧 compile TypeScript → dist/
-npm test                   # 🧪 unit tests (164 tests)
+npm test                   # 🧪 unit tests (229 tests)
 npm run test:integration   # 🔌 integration tests (requires Hindsight API)
 ```
 
@@ -305,7 +453,8 @@ src/
 ├── index.ts              # 🔌 Plugin entry: init + hook registration
 ├── client.ts             # 🌐 Stateless Hindsight HTTP client
 ├── types.ts              # 📝 Full type system
-├── config.ts             # ⚙️ Config resolver + bank file parser
+├── config.ts             # ⚙️ Config resolver + bank file parser + $include
+├── utils.ts              # 🔧 Shared utilities (extractTopicId, text processing)
 ├── hooks/
 │   ├── recall.ts         # 📥 Recall (single + multi-bank + reflect)
 │   ├── retain.ts         # 📤 Retain (tags, context, observation_scopes)
