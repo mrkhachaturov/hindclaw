@@ -43,7 +43,7 @@ function parseArgs(argv: string[]) {
 
 // ── Config loading ──────────────────────────────────────────────────
 
-function loadPluginConfig(configPath: string): PluginConfig {
+export function loadPluginConfig(configPath: string): PluginConfig {
   const content = readFileSync(configPath, 'utf-8');
   const config = JSON5.parse(content);
   return config?.plugins?.entries?.['hindsight-openclaw-pro']?.config ?? {};
