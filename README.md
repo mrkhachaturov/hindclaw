@@ -8,7 +8,7 @@
 ![Plugin](https://img.shields.io/badge/plugin-memory-0f766e?style=flat-square)
 ![OpenClaw](https://img.shields.io/badge/OpenClaw-compatible-1d4ed8?style=flat-square)
 ![Node](https://img.shields.io/badge/node-%3E%3D22-c2410c?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-229%20passing-10b981?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-311%20passing-10b981?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)
 ![Based on](https://img.shields.io/badge/based%20on-@vectorize--io/hindsight--openclaw-8b5cf6?style=flat-square)
 
@@ -29,6 +29,8 @@ Per-agent bank configuration via IaC template files, multi-bank recall, session 
 | 🪞 | Reflect on recall | Disposition-aware reasoning via Hindsight reflect API |
 | 🚀 | Bootstrap | First-run auto-apply of bank config to empty banks |
 | 🏢 | Multi-server | Per-agent infrastructure overrides — private + shared Hindsight servers |
+| 🔐 | User-scoped access | Confluence-style permissions — users, groups, bank-level overrides |
+| 🛠️ | `hoppro init` | Bootstrap `.openclaw/hindsight/` directory with migration from v1.x |
 
 > [!IMPORTANT]
 > This plugin replaces `@vectorize-io/hindsight-openclaw`.
@@ -462,6 +464,11 @@ hoppro apply --agent r4p17 --auto-approve   # skip confirmation (CI)
 
 # 📥 Import server state to local file
 hoppro import --agent r4p17 --output ./banks/r4p17.json5
+
+# 🛠️ Bootstrap v2.0.0 directory structure
+hoppro init --from-existing           # migrate current config + banks
+hoppro init --from-existing --force   # overwrite existing
+hoppro init                           # fresh setup (empty templates)
 ```
 
 ### 📋 Plan Output
@@ -511,6 +518,7 @@ graph LR
 | `plan` | Diff local bank config files against Hindsight server state |
 | `apply` | Show plan, ask confirmation, apply changes (config + directives) |
 | `import` | Pull current server state into a local file |
+| `init` | Bootstrap `.openclaw/hindsight/` directory (v2.0.0 config layout) |
 
 | Option | Description |
 |--------|-------------|
@@ -519,6 +527,8 @@ graph LR
 | `--config <path>` | Config file path (default: `OPENCLAW_CONFIG_PATH` or `.openclaw/openclaw.json`) |
 | `--api-url <url>` | Override Hindsight API URL |
 | `--auto-approve` / `-y` | Skip confirmation prompt (for CI/scripts) |
+| `--from-existing` | Migrate current inline config + bank files (init only) |
+| `--force` / `-f` | Overwrite existing hindsight directory (init only) |
 
 ---
 
@@ -540,7 +550,7 @@ graph LR
 ```bash
 npm install
 npm run build              # 🔧 compile TypeScript → dist/
-npm test                   # 🧪 unit tests (229 tests)
+npm test                   # 🧪 unit tests (311 tests)
 npm run test:integration   # 🔌 integration tests (requires Hindsight API)
 ```
 
@@ -567,8 +577,15 @@ src/
 │   ├── apply.ts          # ✅ Apply changes
 │   ├── import.ts         # 📥 Import server state
 │   └── bootstrap.ts      # 🚀 First-run apply
+├── permissions/
+│   ├── types.ts          # 🔐 User, Group, Permission types
+│   ├── discovery.ts      # 📂 Config directory scanner + index builder
+│   ├── resolver.ts       # 🔑 4-step permission resolution algorithm
+│   ├── merge.ts          # 🔀 Group merge rules (Section 5)
+│   └── index.ts          # 📦 Barrel export
 ├── cli/
-│   └── index.ts          # ⚡ hoppro CLI entry point
+│   ├── index.ts          # ⚡ hoppro CLI entry point
+│   └── init.ts           # 🛠️ hoppro init command
 ├── embed-manager.ts      # 🔧 Local daemon lifecycle
 ├── derive-bank-id.ts     # 🏷️ Bank ID derivation
 └── format.ts             # 📝 Memory formatting

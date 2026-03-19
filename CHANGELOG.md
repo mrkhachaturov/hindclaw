@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-03-19
+
+### Added
+- **User-scoped access control** — Confluence-style permission model with users, groups, and bank-level overrides
+  - Users: identity profiles with cross-channel mapping (`users/*.json5`)
+  - Groups: membership + permission defaults (`groups/*.json5`, `_default.json5` required)
+  - Bank permissions: per-bank group/user overrides (`permissions` section in bank configs)
+  - 4-step resolution algorithm: global groups → bank _default → bank groups → bank user
+  - Granular flags: `recall`, `retain`, `retainRoles`, `recallTagGroups`, `recallBudget`, `llmModel`, etc.
+  - `recallTagGroups` passed directly to Hindsight `tag_groups` API (AND/OR/NOT boolean logic)
+  - `retainTags` injection from groups + auto-generated `user:<id>` tag
+  - Multi-bank recall respects per-bank permissions for each target bank
+- **`hoppro init`** CLI command — bootstraps `.openclaw/hindsight/` directory structure
+  - `--from-existing` migrates current inline config + bank files
+  - `--force` overwrites existing directory
+  - Generates `config.json5`, `_default` group, seed templates
+- **Self-contained config directory** — everything in `.openclaw/hindsight/` (banks, groups, users, config)
+  - Auto-discovery by file name (no agents mapping needed)
+  - `configPath` in `plugins.json5` points to the directory
+
+### Changed
+- **`memory` → `retain`** — bank config section renamed (v1.1.0 `memory` format still supported as fallback)
+- **`retain.strategies`** replaces mode buckets — access control moved to `permissions`
+- Plugin config: `configPath` mode replaces inline `agents` mapping
+- Recall hook: uses `tag_groups` API parameter instead of flat `tags` when permissions are active
+
+### Deprecated
+- Inline `agents` mapping in `plugins.json5` (use `configPath` + auto-discovery)
+- `memory` section with mode buckets (use `retain.strategies` + `permissions`)
+
 ## [1.1.0] - 2026-03-19
 
 ### Added
