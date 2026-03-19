@@ -40,13 +40,20 @@ Per-agent bank configuration via IaC template files, multi-bank recall, session 
 graph TD
     GW["🌐 OpenClaw Gateway"] --> PLUGIN["🧠 hindsight-openclaw-pro"]
 
+    PLUGIN --> CONFIG["📂 Config Loader<br/>$include resolution"]
     PLUGIN --> HOOKS["🪝 Hooks"]
     PLUGIN --> SYNC["🔄 Sync Engine"]
     PLUGIN --> CLI["⚡ hoppro CLI"]
 
+    CONFIG --> BANKS["📋 Bank configs<br/>(JSON5 + modular files)"]
+    CONFIG --> INDEX["🎯 _topicIndex<br/>topic → mode + strategy"]
+
     HOOKS --> RECALL["📥 before_prompt_build<br/>recall / multi-bank / reflect"]
-    HOOKS --> RETAIN["📤 agent_end<br/>retain with tags + context"]
+    HOOKS --> RETAIN["📤 agent_end<br/>retain with strategy routing"]
     HOOKS --> SESSION["🎬 session_start<br/>mental models"]
+
+    INDEX -.->|mode check| RECALL
+    INDEX -.->|mode + strategy| RETAIN
 
     SYNC --> PLAN["📋 plan — diff file vs server"]
     SYNC --> APPLY["✅ apply — push changes"]
@@ -59,6 +66,8 @@ graph TD
     RETAIN --> HS_OFFICE
 
     style PLUGIN fill:#0f766e,color:#fff,stroke:#0f766e
+    style CONFIG fill:#c2410c,color:#fff,stroke:#c2410c
+    style INDEX fill:#c2410c,color:#fff,stroke:#c2410c
     style HS_HOME fill:#8b5cf6,color:#fff,stroke:#8b5cf6
     style HS_OFFICE fill:#1d4ed8,color:#fff,stroke:#1d4ed8
 ```
@@ -155,6 +164,34 @@ Split large configs into manageable files. Resolved recursively, relative to the
 ```
 
 Limits: max depth 10, circular reference detection, paths relative to containing file.
+
+### Example Scenarios
+
+**A founder's strategic advisor** — one agent, three conversation contexts:
+
+| Topic | Mode | Strategy | What happens |
+|-------|------|----------|--------------|
+| "Strategy" | `full` | `deep-analysis` | Every decision, risk, and opportunity is extracted with verbose detail and classified by department + decision type |
+| "Daily updates" | `full` | `lightweight` | Only hard facts kept — "invoice paid", "meeting moved to Thursday". No analysis overhead |
+| "Weekly review" | `recall` | — | Agent reads all memories to give a summary, but the review conversation itself isn't stored — avoids duplicate noise |
+| *(any other topic)* | `full` | *(bank defaults)* | Standard extraction with the agent's default mission |
+
+**A health agent with sensitive boundaries:**
+
+| Topic | Mode | Strategy | What happens |
+|-------|------|----------|--------------|
+| "Fitness log" | `full` | `training` | Extracts sets, reps, PRs, recovery scores — structured for trend analysis |
+| "Medical" | `recall` | — | Agent can reference past health data to answer questions, but medical conversations are never retained |
+| "Sleep" | `full` | `wellness` | Tracks sleep patterns, WHOOP scores, energy observations |
+| *(any other topic)* | `disabled` | — | Health agent has no memory outside designated topics — strict data boundaries |
+
+**A team assistant with access control:**
+
+| Topic | Mode | Strategy | What happens |
+|-------|------|----------|--------------|
+| "Engineering" | `full` | `technical` | Retains architecture decisions, bug reports, deployment notes |
+| "HR" | `recall` | — | Can look up policy docs and past decisions, but sensitive HR conversations stay ephemeral |
+| "Random" | `disabled` | — | Water cooler chat — no memory at all |
 
 ---
 
