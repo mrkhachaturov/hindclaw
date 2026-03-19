@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.0.0] - 2026-03-19
+## [0.1.0] - 2026-03-19
 
 ### Added
 - **User-scoped access control** — Confluence-style permission model with users, groups, and bank-level overrides

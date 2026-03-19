@@ -1,5 +1,5 @@
 /**
- * Shared utility functions ported from native hindsight-openclaw plugin.
+ * Shared utility functions ported from upstream @vectorize-io/hindsight-openclaw.
  * These MUST stay in sync with the upstream vendor implementation.
  */
 

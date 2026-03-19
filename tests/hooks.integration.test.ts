@@ -54,7 +54,7 @@ function createMockApi(pluginConfig: Partial<PluginConfig> = {}): MockApiHandle 
     config: {
       plugins: {
         entries: {
-          'hindsight-openclaw': { enabled: true, config: pluginConfig as PluginConfig },
+          'hindclaw': { enabled: true, config: pluginConfig as PluginConfig },
         },
       },
     },
