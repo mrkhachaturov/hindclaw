@@ -78,7 +78,7 @@ graph TD
 
 Route memory behavior per conversation context. Each Telegram topic (or future: channel) can use a different retain strategy with its own extraction rules, or disable memory entirely.
 
-### Memory Modes
+### 🔀 Memory Modes
 
 ```mermaid
 graph LR
@@ -97,7 +97,7 @@ graph LR
     style OFF fill:#ef4444,color:#fff
 ```
 
-### Configuration
+### ⚙️ Configuration
 
 ```json5
 {
@@ -132,7 +132,7 @@ graph LR
 }
 ```
 
-### How It Works
+### 🔧 How It Works
 
 | Layer | What | Where |
 |-------|------|-------|
@@ -140,7 +140,7 @@ graph LR
 | **Memory routing** | Which strategy applies where + mode control | `memory` section → resolved at gateway startup, stays in plugin |
 | **`$include`** | Modular file references | Resolved at config load time, before anything else |
 
-### `$include` Directives
+### 📂 `$include` Directives
 
 Split large configs into manageable files. Resolved recursively, relative to the containing file:
 
@@ -165,7 +165,7 @@ Split large configs into manageable files. Resolved recursively, relative to the
 
 Limits: max depth 10, circular reference detection, paths relative to containing file.
 
-### Example Scenarios
+### 💡 Example Scenarios
 
 **A founder's strategic advisor** — one agent, three conversation contexts:
 
@@ -398,7 +398,7 @@ hoppro apply --agent r4p17 --auto-approve   # skip confirmation (CI)
 hoppro import --agent r4p17 --output ./banks/r4p17.json5
 ```
 
-### Plan Output
+### 📋 Plan Output
 
 ```
 # bank.r4p17 (r4p17)
@@ -423,7 +423,7 @@ hoppro import --agent r4p17 --output ./banks/r4p17.json5
 Plan: 2 to add, 1 to change, 1 to destroy.
 ```
 
-### Apply Flow
+### ✅ Apply Flow
 
 ```mermaid
 graph LR
