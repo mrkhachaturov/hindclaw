@@ -128,6 +128,7 @@ export default function Home(): ReactNode {
       description="Production-grade Hindsight memory plugin for OpenClaw with per-agent bank configs, multi-bank recall, named strategies, server-side access control, and infrastructure-as-code.">
       <HomepageHeader />
       <main>
+        <ArchitectureSection />
         <section className={styles.features}>
           <div className="container">
             <Heading as="h2" className={styles.sectionTitle}>Features</Heading>
@@ -138,7 +139,6 @@ export default function Home(): ReactNode {
             </div>
           </div>
         </section>
-        <ArchitectureSection />
       </main>
     </Layout>
   );
