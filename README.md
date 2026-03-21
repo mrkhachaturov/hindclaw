@@ -3,17 +3,17 @@
 </p>
 
 <p align="center">
-  Production memory for OpenClaw agent fleets — per-user access control, cross-agent recall, and infrastructure-as-code bank management. Powered by Hindsight.
+  Self-hosted Hindsight management platform — multi-tenant access control, user/group permissions, client integrations, and infrastructure tooling for AI agent memory.
 </p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/hindclaw"><img src="https://img.shields.io/npm/v/hindclaw?style=flat-square&color=0f766e" alt="npm"></a>
+  <a href="https://pypi.org/project/hindclaw-extension/"><img src="https://img.shields.io/pypi/v/hindclaw-extension?style=flat-square&color=0f766e" alt="PyPI"></a>
   <img src="https://img.shields.io/badge/license-MIT-10b981?style=flat-square" alt="License">
-  <img src="https://img.shields.io/badge/node-%3E%3D22-c2410c?style=flat-square" alt="Node">
 </p>
 
 <p align="center">
-  <a href="docs/">Documentation</a> &middot;
+  <a href="https://hindclaw.pro">Documentation</a> &middot;
   <a href="https://hindsight.vectorize.io">Hindsight</a> &middot;
   <a href="https://openclaw.ai">OpenClaw</a>
 </p>
