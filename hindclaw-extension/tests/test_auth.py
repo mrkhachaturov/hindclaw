@@ -37,6 +37,7 @@ def test_decode_expired_jwt():
         decode_jwt(token)
 
 
+@pytest.mark.filterwarnings("ignore::jwt.warnings.InsecureKeyLengthWarning")
 def test_decode_wrong_secret():
     token = _make_jwt({"exp": int(time.time()) + 300}, secret="wrong")
     with pytest.raises(Exception, match="Signature verification failed"):
