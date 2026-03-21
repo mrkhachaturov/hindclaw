@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'hindclaw-docs/**'
-      - '.github/workflows/deploy-docs.yml'
+      - '.github/workflows/deploy-hindclaw-docs.yml'
   workflow_dispatch:
 
 permissions:
