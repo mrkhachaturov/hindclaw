@@ -31,7 +31,7 @@ function HomepageHeader() {
             </Link>
             <Link
               className={clsx('button button--lg', styles.heroSecondary)}
-              href="https://github.com/mrkhachaturov/hindsight-openclaw-pro">
+              href="https://github.com/mrkhachaturov/hindclaw">
               GitHub
             </Link>
           </div>

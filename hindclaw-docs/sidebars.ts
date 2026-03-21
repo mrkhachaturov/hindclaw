@@ -120,7 +120,7 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'link',
-          href: 'https://github.com/mrkhachaturov/hindsight-openclaw-pro',
+          href: 'https://github.com/mrkhachaturov/hindclaw',
           label: 'GitHub',
           customProps: { icon: 'si-github', iconAfter: 'lu-arrow-up-right' },
         },

@@ -160,11 +160,52 @@ export async function runInit(options: InitOptions): Promise<void> {
   console.log('  5. Update plugins.json5: configPath: "./hindsight"');
 }
 
-/** Load plugin config from openclaw.json (resolves $include via JSON5 parse) */
+/** Load plugin config from openclaw.json (resolves $include directives) */
 function loadPluginConfigLocal(configPath: string): PluginConfig {
-  const content = readFileSync(configPath, 'utf-8');
-  const config = JSON5.parse(content);
-  return config?.plugins?.entries?.['hindclaw']?.config ?? {};
+  const config = resolveIncludes(configPath);
+  return config?.plugins?.entries?.['hindclaw']?.config
+    ?? config?.plugins?.entries?.['hindclaw']?.config
+    ?? {};
+}
+
+/** Recursively resolve $include directives in a JSON5 config file */
+function resolveIncludes(filePath: string): any {
+  const content = readFileSync(filePath, 'utf-8');
+  const parsed = JSON5.parse(content);
+  return resolveIncludesInObject(parsed, dirname(filePath));
+}
+
+function resolveIncludesInObject(obj: any, baseDir: string): any {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(item => resolveIncludesInObject(item, baseDir));
+
+  // Check if this object is a $include reference
+  if (obj['$include'] && typeof obj['$include'] === 'string' && Object.keys(obj).length === 1) {
+    const includePath = join(baseDir, obj['$include']);
+    if (!existsSync(includePath)) {
+      console.warn(`[hindclaw init] ⚠ $include not found: ${includePath}`);
+      return {};
+    }
+    return resolveIncludes(includePath);
+  }
+
+  // Recurse into all values
+  const result: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (key === '$include' && typeof value === 'string') {
+      // Top-level $include (merge into parent)
+      const includePath = join(baseDir, value);
+      if (existsSync(includePath)) {
+        const included = resolveIncludes(includePath);
+        if (typeof included === 'object' && !Array.isArray(included)) {
+          Object.assign(result, included);
+        }
+      }
+    } else {
+      result[key] = resolveIncludesInObject(value, baseDir);
+    }
+  }
+  return result;
 }
 
 function writeJson5File(path: string, data: any): void {

@@ -8,8 +8,8 @@ title: Development
 ## Setup
 
 ```bash
-git clone git@github.com:mrkhachaturov/hindsight-openclaw-pro.git
-cd hindsight-openclaw-pro
+git clone git@github.com:mrkhachaturov/hindclaw.git
+cd hindclaw
 npm install
 npm run build    # TypeScript -> dist/
 npm test         # unit tests

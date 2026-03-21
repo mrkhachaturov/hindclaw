@@ -111,6 +111,73 @@ hindclaw import --agent r4p17 --output ./banks/r4p17.json5
 
 The original plugin source is at `3rdparty-src/for Memory/hindsight/hindsight-integrations/openclaw/src/`. Kept from upstream: LLM detection, external API detection, health checks, embed manager, derive-bank-id, format-memories. Rewritten: client, types, hooks, config, sync, CLI.
 
+## Python Style (hindclaw-extension)
+
+The `hindclaw-extension/` package is a Python extension for the Hindsight API server. Code must follow the upstream Hindsight Python conventions (studied from `hindsight-api-slim/`) so this extension can become an official Hindsight plugin.
+
+### Data modeling
+
+- **Pydantic `BaseModel`** for all structured data — never raw `dict` for fields passed between functions
+- All-optional fields use `T | None = None` — None means "not set by any source"
+- Use `model_copy()` to produce new instances, never mutate in place
+- Use `model_dump(exclude={...})` when converting to dict for iteration
+
+### Functions and docstrings
+
+- Google-style docstrings with `Args:`, `Returns:`, `Raises:` on all public functions
+- One-liner docstrings are acceptable only for trivial private helpers (`_parse_json`)
+
+```python
+async def get_user_by_channel(provider: str, sender_id: str) -> UserRecord | None:
+    """Resolve channel sender to user.
+
+    Args:
+        provider: Channel provider name (e.g., "telegram").
+        sender_id: Provider-specific sender identifier.
+
+    Returns:
+        UserRecord if found, None otherwise.
+    """
+```
+
+### Immutability — return new, don't mutate
+
+Per Nicolò (upstream maintainer): "the clean way is the extension returns new contents, not modifying the passed one." Overlay functions return new objects via `model_copy()` or `dataclasses.replace()`, never mutate the input.
+
+### Async and database
+
+- Async throughout — all DB functions are `async def`
+- Raw `asyncpg` for queries (not SQLAlchemy) — the extension manages its own pool
+- Lazy pool init via `asyncio.Lock` double-check pattern
+- DDL via `CREATE TABLE IF NOT EXISTS` wrapped in a transaction
+- Env vars read from `os.environ` directly, not from `self.config` (extension prefix isolation)
+
+### Testing
+
+- `pytest` + `pytest-asyncio` with `asyncio_mode = "strict"`
+- `autouse` fixtures for env var and module state cleanup (`monkeypatch.setenv`, yield-based reset)
+- Mock asyncpg — no real database needed for unit tests
+- Test utilities in `tests/helpers.py` (not conftest direct imports)
+
+### Type hints
+
+- Python 3.11+ union syntax: `str | None`, `list[str]`, not `Optional[str]` or `List[str]`
+- No `from __future__ import annotations` — use native syntax
+
+### Field sets
+
+Use tuple constants for shared field lists iterated across models:
+
+```python
+_PERMISSION_FIELDS = (
+    "recall", "retain", "retain_roles", "retain_tags", ...
+)
+```
+
+### Commit style
+
+Same as astromech — conventional commits: `feat(hindclaw-ext):`, `fix(hindclaw-ext):`, `test(hindclaw-ext):`
+
 ## Design Spec
 
 `docs/specs/2026-03-18-hindsight-astromech-v1-design.md` in the astromech repo.

@@ -32,7 +32,7 @@ dev = [
 
 [project.urls]
 Homepage = "https://hindclaw.pro"
-Repository = "https://github.com/mrkhachaturov/hindclaw-extension"
+Repository = "https://github.com/mrkhachaturov/hindclaw"
 Documentation = "https://hindclaw.pro/docs/extension"
 
 [tool.pytest.ini_options]

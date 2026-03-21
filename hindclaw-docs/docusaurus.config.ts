@@ -19,7 +19,7 @@ const config: Config = {
   baseUrl: '/',
 
   organizationName: 'mrkhachaturov',
-  projectName: 'hindsight-openclaw-pro',
+  projectName: 'hindclaw',
   trailingSlash: false,
 
   onBrokenLinks: 'throw',
@@ -63,7 +63,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl:
-            'https://github.com/mrkhachaturov/hindsight-openclaw-pro/tree/main/hindclaw-docs/',
+            'https://github.com/mrkhachaturov/hindclaw/tree/main/hindclaw-docs/',
         },
         blog: {
           showReadingTime: true,
@@ -72,7 +72,7 @@ const config: Config = {
             xslt: true,
           },
           editUrl:
-            'https://github.com/mrkhachaturov/hindsight-openclaw-pro/tree/main/hindclaw-docs/',
+            'https://github.com/mrkhachaturov/hindclaw/tree/main/hindclaw-docs/',
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
           onUntruncatedBlogPosts: 'warn',
@@ -120,7 +120,7 @@ const config: Config = {
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/mrkhachaturov/hindsight-openclaw-pro',
+          href: 'https://github.com/mrkhachaturov/hindclaw',
           label: 'GitHub',
           position: 'right',
         },
@@ -152,7 +152,7 @@ const config: Config = {
             },
             {
               label: 'GitHub Issues',
-              href: 'https://github.com/mrkhachaturov/hindsight-openclaw-pro/issues',
+              href: 'https://github.com/mrkhachaturov/hindclaw/issues',
             },
           ],
         },

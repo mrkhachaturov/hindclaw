@@ -26,7 +26,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/mrkhachaturov/hindsight-openclaw-pro.git"
+    "url": "git+ssh://git@github.com/mrkhachaturov/hindclaw.git"
   },
   "files": [
     "dist",

@@ -35,23 +35,27 @@ The official Hindsight plugin gives you auto-capture and auto-recall. HindClaw a
 - Strategies are orthogonal to permissions — a blocked user never reaches strategy resolution
 
 ```mermaid
-graph LR
-    MSG["💬 Message"] --> WHO{"🔐 WHO?"}
-    WHO --> PERM["👥 Permission resolution<br/>group → bank → user"]
-    PERM --> ACCESS{Access?}
-    ACCESS -->|blocked| STOP["🚫 No memory"]
-    ACCESS -->|allowed| HOW{"🎯 HOW?"}
-    HOW --> STRATEGY["📝 Strategy resolution<br/>topic → named strategy"]
-    STRATEGY --> RECALL["📥 Recall with filters"]
-    STRATEGY --> RETAIN["📤 Retain with strategy"]
+graph TD
+    MSG["💬 Message: user + bank + topic"] --> PERM["🔐 Resolve permissions<br/>for THIS user on THIS bank"]
+    MSG --> STRAT["🎯 Resolve strategy<br/>for THIS topic on THIS bank"]
+    PERM --> R{"recall?"}
+    PERM --> W{"retain?"}
+    R -->|true| RECALL["📥 Recall<br/>budget, tokens, tag filters<br/>from resolved permissions"]
+    R -->|false| NO_R["🚫 No recall"]
+    W -->|true| RETAIN["📤 Retain<br/>roles, tags, LLM model<br/>+ topic strategy"]
+    W -->|false| NO_W["🚫 No retain"]
+    STRAT --> RETAIN
 
     style MSG fill:#1d4ed8,color:#fff,stroke:#1d4ed8
     style PERM fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style STOP fill:#ef4444,color:#fff,stroke:#ef4444
-    style STRATEGY fill:#c2410c,color:#fff,stroke:#c2410c
+    style STRAT fill:#c2410c,color:#fff,stroke:#c2410c
     style RECALL fill:#10b981,color:#fff,stroke:#10b981
     style RETAIN fill:#10b981,color:#fff,stroke:#10b981
+    style NO_R fill:#ef4444,color:#fff,stroke:#ef4444
+    style NO_W fill:#f59e0b,color:#fff,stroke:#f59e0b
 ```
+
+Every combination of **(user × bank × topic)** can produce different behavior — different access flags, different LLM model, different recall budget, different extraction strategy.
 
 ---
 
@@ -101,7 +105,6 @@ config.json5 defaults → group → bank group → bank user
 | **user-2** (dept-head) | recall only, mid budget, filtered | recall + retain, high budget (user override) |
 | **user-3** (staff) | blocked (no entry → `_default`) | recall only, low budget, filtered |
 | **anonymous** | blocked | blocked |
-```
 
 ### 🔀 Cross-Agent Recall
 
@@ -439,7 +442,7 @@ Per-agent bank config files use `retain_mission` for the same purpose (server-si
 
 - [Hindsight](https://hindsight.vectorize.io) — the memory engine
 - [OpenClaw](https://openclaw.ai) — the agent framework
-- [GitHub](https://github.com/mrkhachaturov/hindsight-openclaw-pro)
+- [GitHub](https://github.com/mrkhachaturov/hindclaw)
 
 ## License
 

@@ -1,6 +1,6 @@
 """Permission resolver — 4-step algorithm + strategy cascade.
 
-Implements spec Section 7. Reference: build/hindsight-openclaw-pro/src/permissions/resolver.ts
+Implements spec Section 7. Reference: build/hindclaw/src/permissions/resolver.ts
 for the same algorithm in TypeScript (client-side, to be replaced by this server-side version).
 """
 
