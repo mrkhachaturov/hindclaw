@@ -106,6 +106,8 @@ async def resolve(
     retain_tags = list(merged.retain_tags or [])
     if not is_anonymous:
         retain_tags.append(f"user:{user_id}")
+    if agent:
+        retain_tags.append(f"agent:{agent}")
 
     return ResolvedPermissions(
         user_id=user_id,

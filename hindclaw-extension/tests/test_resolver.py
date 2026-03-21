@@ -146,3 +146,32 @@ async def test_no_bank_permissions_fallback():
         perms = await resolve(user_id="bob", bank_id="agent-beta")
         assert perms.recall is True  # from global group
         assert perms.retain is True  # from global group
+
+
+@pytest.mark.asyncio
+async def test_agent_tag_injected():
+    """Agent tag auto-injected from JWT agent claim."""
+    groups = [GroupRecord(id="motors", display_name="Motors", recall=True, retain=True)]
+    with (
+        patch("hindclaw_ext.resolver.db.get_default_group", return_value=GroupRecord(id="_default", display_name="Anon")),
+        patch("hindclaw_ext.resolver.db.get_user_groups", return_value=groups),
+        patch("hindclaw_ext.resolver.db.get_bank_permissions", return_value=[]),
+        patch("hindclaw_ext.resolver.db.resolve_strategy", return_value=None),
+    ):
+        perms = await resolve(user_id="charlie", bank_id="agent-gamma", agent="agent-gamma")
+        assert "agent:agent-gamma" in perms.retain_tags
+        assert "user:charlie" in perms.retain_tags
+
+
+@pytest.mark.asyncio
+async def test_no_agent_tag_without_agent_claim():
+    """No agent tag injected when agent parameter is not provided."""
+    groups = [GroupRecord(id="motors", display_name="Motors", recall=True, retain=True)]
+    with (
+        patch("hindclaw_ext.resolver.db.get_default_group", return_value=GroupRecord(id="_default", display_name="Anon")),
+        patch("hindclaw_ext.resolver.db.get_user_groups", return_value=groups),
+        patch("hindclaw_ext.resolver.db.get_bank_permissions", return_value=[]),
+        patch("hindclaw_ext.resolver.db.resolve_strategy", return_value=None),
+    ):
+        perms = await resolve(user_id="charlie", bank_id="agent-gamma")  # no agent
+        assert not any(t.startswith("agent:") for t in perms.retain_tags)
