@@ -1,22 +1,63 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { HindsightClient } from './client.js';
+import { HindsightClient, HindsightHttpError, generateJwt, type HindsightClientOptions } from './client.js';
+import type { PluginHookAgentContext } from './types.js';
 import type {
   RetainRequest,
   RecallRequest,
   ReflectRequest,
-  CreateDirectiveRequest,
 } from './types.js';
 
 const API_URL = 'https://hindsight.example.com';
-const API_TOKEN = 'test-token-123';
 const BANK_ID = 'yoda-main';
 
-function makeClient(opts?: Partial<{ apiUrl: string; apiToken: string }>) {
+function makeClient(opts?: Partial<HindsightClientOptions>) {
   return new HindsightClient({
     apiUrl: opts?.apiUrl ?? API_URL,
-    apiToken: opts?.apiToken ?? API_TOKEN,
+    ...opts,
   });
 }
+
+describe('generateJwt', () => {
+  const ctx: PluginHookAgentContext = {
+    agentId: 'agent-alpha',
+    messageProvider: 'telegram',
+    channelId: '500001',
+    senderId: '789012',
+  };
+  const secret = 'test-secret-key';
+  const clientId = 'test-client';
+
+  it('produces a valid 3-part JWT', () => {
+    const jwt = generateJwt(ctx, secret, clientId);
+    const parts = jwt.split('.');
+    expect(parts).toHaveLength(3);
+  });
+
+  it('contains correct claims', () => {
+    const jwt = generateJwt(ctx, secret, clientId);
+    const payload = JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString());
+    expect(payload.client_id).toBe('test-client');
+    expect(payload.sender).toBe('telegram:789012');
+    expect(payload.agent).toBe('agent-alpha');
+    expect(payload.channel).toBe('telegram');
+    expect(payload.topic).toBe('500001');
+    expect(payload.exp - payload.iat).toBe(300);
+  });
+
+  it('omits sender when senderId is missing', () => {
+    const noSender: PluginHookAgentContext = { agentId: 'agent-alpha', messageProvider: 'telegram' };
+    const jwt = generateJwt(noSender, secret, clientId);
+    const payload = JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString());
+    expect(payload.sender).toBeUndefined();
+  });
+
+  it('omits topic when channelId is missing', () => {
+    const noTopic: PluginHookAgentContext = { agentId: 'agent-alpha', messageProvider: 'telegram', senderId: '789012' };
+    const jwt = generateJwt(noTopic, secret, clientId);
+    const payload = JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString());
+    expect(payload.topic).toBeUndefined();
+  });
+});
 
 describe('HindsightClient', () => {
   let fetchSpy: ReturnType<typeof vi.fn>;
@@ -30,10 +71,33 @@ describe('HindsightClient', () => {
     vi.restoreAllMocks();
   });
 
+  // ── HindsightHttpError ─────────────────────────────────────────────
+
+  describe('HindsightHttpError', () => {
+    it('has status, message, and name', () => {
+      const err = new HindsightHttpError(403, 'Forbidden');
+      expect(err).toBeInstanceOf(Error);
+      expect(err).toBeInstanceOf(HindsightHttpError);
+      expect(err.status).toBe(403);
+      expect(err.message).toBe('Forbidden');
+      expect(err.name).toBe('HindsightHttpError');
+    });
+  });
+
+  describe('httpRequestRaw error handling', () => {
+    it('throws HindsightHttpError with status on non-ok response', async () => {
+      fetchSpy.mockResolvedValueOnce(new Response('access denied', { status: 403 }));
+      const client = makeClient();
+      const err = await client.retain(BANK_ID, { items: [{ content: 'x' }] }).catch(e => e);
+      expect(err).toBeInstanceOf(HindsightHttpError);
+      expect(err.status).toBe(403);
+    });
+  });
+
   // ── Constructor ────────────────────────────────────────────────────
 
   describe('constructor', () => {
-    it('creates instance with apiUrl and apiToken', () => {
+    it('creates instance with apiUrl', () => {
       const client = makeClient();
       expect(client).toBeInstanceOf(HindsightClient);
       expect(client.httpMode).toBe(true);
@@ -47,10 +111,10 @@ describe('HindsightClient', () => {
     it('strips trailing slash from apiUrl', () => {
       const client = new HindsightClient({ apiUrl: 'https://api.test.com/' });
       // Verify via a call
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ config: {}, overrides: {} })));
-      client.getBankConfig('b');
+      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ items: [] })));
+      client.listMentalModels('b');
       expect(fetchSpy).toHaveBeenCalledWith(
-        'https://api.test.com/v1/default/banks/b/config',
+        'https://api.test.com/v1/default/banks/b/mental-models',
         expect.anything(),
       );
     });
@@ -74,7 +138,6 @@ describe('HindsightClient', () => {
       const [url, opts] = fetchSpy.mock.calls[0];
       expect(url).toBe(`${API_URL}/v1/default/banks/${BANK_ID}/memories`);
       expect(opts.method).toBe('POST');
-      expect(opts.headers['Authorization']).toBe(`Bearer ${API_TOKEN}`);
       expect(opts.headers['Content-Type']).toBe('application/json');
       expect(JSON.parse(opts.body)).toEqual({ items: request.items, async: true });
       expect(result).toEqual(retainResp);
@@ -139,125 +202,6 @@ describe('HindsightClient', () => {
     });
   });
 
-  // ── getBankConfig ──────────────────────────────────────────────────
-
-  describe('getBankConfig', () => {
-    it('GETs /config', async () => {
-      const configResp = { config: { retain_mission: 'test' }, overrides: {} };
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(configResp)));
-
-      const result = await makeClient().getBankConfig(BANK_ID);
-
-      const [url, opts] = fetchSpy.mock.calls[0];
-      expect(url).toBe(`${API_URL}/v1/default/banks/${BANK_ID}/config`);
-      expect(opts.method).toBe('GET');
-      expect(opts.body).toBeUndefined();
-      expect(result).toEqual(configResp);
-    });
-  });
-
-  // ── updateBankConfig ───────────────────────────────────────────────
-
-  describe('updateBankConfig', () => {
-    it('PATCHes /config with updates wrapper', async () => {
-      const configResp = { config: { retain_mission: 'new' }, overrides: { retain_mission: 'new' } };
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(configResp)));
-
-      const updates = { retain_mission: 'new mission' };
-      const result = await makeClient().updateBankConfig(BANK_ID, updates);
-
-      const [url, opts] = fetchSpy.mock.calls[0];
-      expect(url).toBe(`${API_URL}/v1/default/banks/${BANK_ID}/config`);
-      expect(opts.method).toBe('PATCH');
-      expect(JSON.parse(opts.body)).toEqual({ updates });
-      expect(result).toEqual(configResp);
-    });
-  });
-
-  // ── resetBankConfig ────────────────────────────────────────────────
-
-  describe('resetBankConfig', () => {
-    it('DELETEs /config', async () => {
-      const configResp = { config: {}, overrides: {} };
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(configResp)));
-
-      const result = await makeClient().resetBankConfig(BANK_ID);
-
-      const [url, opts] = fetchSpy.mock.calls[0];
-      expect(url).toBe(`${API_URL}/v1/default/banks/${BANK_ID}/config`);
-      expect(opts.method).toBe('DELETE');
-      expect(opts.body).toBeUndefined();
-      expect(result).toEqual(configResp);
-    });
-  });
-
-  // ── listDirectives ─────────────────────────────────────────────────
-
-  describe('listDirectives', () => {
-    it('GETs /directives and unwraps items', async () => {
-      const directives = [
-        { id: 'd1', bank_id: BANK_ID, name: 'dir1', content: 'c', priority: 1, is_active: true, tags: [], created_at: '', updated_at: '' },
-      ];
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ items: directives })));
-
-      const result = await makeClient().listDirectives(BANK_ID);
-
-      const [url, opts] = fetchSpy.mock.calls[0];
-      expect(url).toBe(`${API_URL}/v1/default/banks/${BANK_ID}/directives`);
-      expect(opts.method).toBe('GET');
-      expect(result).toEqual(directives);
-    });
-  });
-
-  // ── createDirective ────────────────────────────────────────────────
-
-  describe('createDirective', () => {
-    it('POSTs to /directives', async () => {
-      const directive = { id: 'd1', bank_id: BANK_ID, name: 'test', content: 'do this', priority: 1, is_active: true, tags: [], created_at: '', updated_at: '' };
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(directive)));
-
-      const req: CreateDirectiveRequest = { name: 'test', content: 'do this' };
-      const result = await makeClient().createDirective(BANK_ID, req);
-
-      const [url, opts] = fetchSpy.mock.calls[0];
-      expect(url).toBe(`${API_URL}/v1/default/banks/${BANK_ID}/directives`);
-      expect(opts.method).toBe('POST');
-      expect(JSON.parse(opts.body)).toEqual(req);
-      expect(result).toEqual(directive);
-    });
-  });
-
-  // ── updateDirective ────────────────────────────────────────────────
-
-  describe('updateDirective', () => {
-    it('PATCHes /directives/{id}', async () => {
-      const directive = { id: 'd1', bank_id: BANK_ID, name: 'updated', content: 'new', priority: 1, is_active: true, tags: [], created_at: '', updated_at: '' };
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(directive)));
-
-      const result = await makeClient().updateDirective(BANK_ID, 'd1', { name: 'updated' });
-
-      const [url, opts] = fetchSpy.mock.calls[0];
-      expect(url).toBe(`${API_URL}/v1/default/banks/${BANK_ID}/directives/d1`);
-      expect(opts.method).toBe('PATCH');
-      expect(JSON.parse(opts.body)).toEqual({ name: 'updated' });
-      expect(result).toEqual(directive);
-    });
-  });
-
-  // ── deleteDirective ────────────────────────────────────────────────
-
-  describe('deleteDirective', () => {
-    it('DELETEs /directives/{id}', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(null, { status: 204 }));
-
-      await makeClient().deleteDirective(BANK_ID, 'd1');
-
-      const [url, opts] = fetchSpy.mock.calls[0];
-      expect(url).toBe(`${API_URL}/v1/default/banks/${BANK_ID}/directives/d1`);
-      expect(opts.method).toBe('DELETE');
-    });
-  });
-
   // ── getMentalModel ─────────────────────────────────────────────────
 
   describe('getMentalModel', () => {
@@ -292,42 +236,24 @@ describe('HindsightClient', () => {
     });
   });
 
-  // ── listTags ───────────────────────────────────────────────────────
-
-  describe('listTags', () => {
-    it('GETs /tags', async () => {
-      const tags = { important: 5, daily: 12 };
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(tags)));
-
-      const result = await makeClient().listTags(BANK_ID);
-
-      const [url, opts] = fetchSpy.mock.calls[0];
-      expect(url).toBe(`${API_URL}/v1/default/banks/${BANK_ID}/tags`);
-      expect(opts.method).toBe('GET');
-      expect(result).toEqual(tags);
-    });
-  });
-
   // ── Error handling ─────────────────────────────────────────────────
 
   describe('error handling', () => {
     it('throws on non-2xx response with status and body', async () => {
       fetchSpy.mockResolvedValueOnce(new Response('{"error":"not found"}', { status: 404 }));
 
-      await expect(makeClient().getBankConfig(BANK_ID)).rejects.toThrow(/HTTP 404.*not found/);
+      await expect(makeClient().recall(BANK_ID, { query: 'test' })).rejects.toThrow(/HTTP 404.*not found/);
     });
 
     it('throws on 500 with body text', async () => {
       fetchSpy.mockResolvedValueOnce(new Response('internal server error', { status: 500 }));
 
-      await expect(makeClient().listTags(BANK_ID)).rejects.toThrow('HTTP 500');
+      await expect(makeClient().retain(BANK_ID, { items: [{ content: 'x' }] })).rejects.toThrow('HTTP 500');
     });
 
     it('requires httpMode for API-only methods', async () => {
       const client = new HindsightClient({ llmModel: 'gpt-4' });
 
-      await expect(client.getBankConfig('b')).rejects.toThrow('requires HTTP mode');
-      await expect(client.listDirectives('b')).rejects.toThrow('requires HTTP mode');
       await expect(client.listMentalModels('b')).rejects.toThrow('requires HTTP mode');
       await expect(client.reflect('b', { query: 'q' })).rejects.toThrow('requires HTTP mode');
     });
@@ -337,34 +263,43 @@ describe('HindsightClient', () => {
 
   describe('URL encoding', () => {
     it('encodes bankId with special characters', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ config: {}, overrides: {} })));
+      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ items: [] })));
 
-      await makeClient().getBankConfig('bank/with spaces&special');
+      await makeClient().listMentalModels('bank/with spaces&special');
 
       const [url] = fetchSpy.mock.calls[0];
-      expect(url).toBe(`${API_URL}/v1/default/banks/bank%2Fwith%20spaces%26special/config`);
+      expect(url).toBe(`${API_URL}/v1/default/banks/bank%2Fwith%20spaces%26special/mental-models`);
     });
   });
 
-  // ── Authorization header ───────────────────────────────────────────
+  // ── JWT auth ─────────────────────────────────────────────────────────
 
-  describe('authorization', () => {
-    it('omits Authorization header when no apiToken', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ config: {}, overrides: {} })));
+  describe('JWT auth', () => {
+    it('sends JWT in Authorization header when ctx is provided', async () => {
+      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ results: [], entities: null, trace: null, chunks: null })));
+      const client = new HindsightClient({
+        apiUrl: API_URL,
+        jwtSecret: 'test-secret',
+        clientId: 'test-client',
+      });
+      const ctx: PluginHookAgentContext = {
+        agentId: 'agent-alpha',
+        messageProvider: 'telegram',
+        senderId: '789012',
+      };
+      await client.recall(BANK_ID, { query: 'test' }, undefined, ctx);
 
-      await new HindsightClient({ apiUrl: API_URL }).getBankConfig(BANK_ID);
+      const [, opts] = fetchSpy.mock.calls[0];
+      expect(opts.headers['Authorization']).toMatch(/^Bearer eyJ/);
+    });
+
+    it('sends no auth when jwtSecret is not set', async () => {
+      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ results: [], entities: null, trace: null, chunks: null })));
+      const client = new HindsightClient({ apiUrl: API_URL });
+      await client.recall(BANK_ID, { query: 'test' });
 
       const [, opts] = fetchSpy.mock.calls[0];
       expect(opts.headers['Authorization']).toBeUndefined();
-    });
-
-    it('includes Authorization header when apiToken provided', async () => {
-      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ config: {}, overrides: {} })));
-
-      await makeClient().getBankConfig(BANK_ID);
-
-      const [, opts] = fetchSpy.mock.calls[0];
-      expect(opts.headers['Authorization']).toBe(`Bearer ${API_TOKEN}`);
     });
   });
 });

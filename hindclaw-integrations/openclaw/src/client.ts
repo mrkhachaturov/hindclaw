@@ -3,7 +3,7 @@ import { promisify } from 'util';
 import { writeFile, mkdir, rm } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHmac } from 'crypto';
 import type {
   RetainRequest,
   RetainResponse,
@@ -11,10 +11,8 @@ import type {
   RecallResponse,
   ReflectRequest,
   ReflectResponse,
-  Directive,
-  CreateDirectiveRequest,
   MentalModel,
-  BankConfigResponse,
+  PluginHookAgentContext,
 } from './types.js';
 
 const execFileAsync = promisify(execFile);
@@ -33,17 +31,49 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').slice(0, 200) || 'content';
 }
 
+export function generateJwt(
+  ctx: PluginHookAgentContext,
+  jwtSecret: string,
+  clientId: string,
+): string {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    client_id: clientId,
+    sender: ctx.senderId ? `${ctx.messageProvider}:${ctx.senderId}` : undefined,
+    agent: ctx.agentId,
+    channel: ctx.messageProvider,
+    topic: ctx.channelId || undefined,
+    iat: now,
+    exp: now + 300,
+  };
+
+  const b64 = (obj: unknown) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+  const unsigned = `${b64(header)}.${b64(payload)}`;
+  const signature = createHmac('sha256', jwtSecret).update(unsigned).digest('base64url');
+  return `${unsigned}.${signature}`;
+}
+
+export class HindsightHttpError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = 'HindsightHttpError';
+  }
+}
+
 export interface HindsightClientOptions {
   llmModel?: string;
   embedVersion?: string;
   embedPackagePath?: string;
   apiUrl?: string;
-  apiToken?: string;
+  jwtSecret?: string;
+  clientId?: string;
 }
 
 export class HindsightClient {
   private apiUrl?: string;
-  private apiToken?: string;
+  private jwtSecret?: string;
+  private clientId: string;
   private llmModel?: string;
   private embedVersion: string;
   private embedPackagePath?: string;
@@ -53,7 +83,8 @@ export class HindsightClient {
     this.embedVersion = opts.embedVersion || 'latest';
     this.embedPackagePath = opts.embedPackagePath;
     this.apiUrl = opts.apiUrl?.replace(/\/$/, '');
-    this.apiToken = opts.apiToken;
+    this.jwtSecret = opts.jwtSecret;
+    this.clientId = opts.clientId || 'openclaw';
   }
 
   get httpMode(): boolean {
@@ -62,17 +93,17 @@ export class HindsightClient {
 
   // ── Core memory operations ───────────────────────────────────────
 
-  async retain(bankId: string, request: RetainRequest): Promise<RetainResponse> {
+  async retain(bankId: string, request: RetainRequest, ctx?: PluginHookAgentContext): Promise<RetainResponse> {
     if (this.httpMode) {
       return this.httpRequest<RetainResponse>('POST', `${this.bankUrl(bankId)}/memories`, {
         items: request.items,
         async: request.async ?? true,
-      });
+      }, undefined, ctx);
     }
     return this.retainSubprocess(bankId, request);
   }
 
-  async recall(bankId: string, request: RecallRequest, timeoutMs?: number): Promise<RecallResponse> {
+  async recall(bankId: string, request: RecallRequest, timeoutMs?: number, ctx?: PluginHookAgentContext): Promise<RecallResponse> {
     if (this.httpMode) {
       // Defense-in-depth: truncate query to stay under API's 500-token limit
       const MAX_QUERY_CHARS = 800;
@@ -98,79 +129,28 @@ export class HindsightClient {
         `${this.bankUrl(bankId)}/memories/recall`,
         body,
         timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        ctx,
       );
     }
     return this.recallSubprocess(bankId, request, timeoutMs);
   }
 
-  async reflect(bankId: string, request: ReflectRequest): Promise<ReflectResponse> {
+  async reflect(bankId: string, request: ReflectRequest, ctx?: PluginHookAgentContext): Promise<ReflectResponse> {
     this.requireHttpMode('reflect');
-    return this.httpRequest<ReflectResponse>('POST', `${this.bankUrl(bankId)}/reflect`, request);
-  }
-
-  // ── Bank config ──────────────────────────────────────────────────
-
-  async getBankConfig(bankId: string): Promise<BankConfigResponse> {
-    this.requireHttpMode('getBankConfig');
-    return this.httpRequest<BankConfigResponse>('GET', `${this.bankUrl(bankId)}/config`);
-  }
-
-  async updateBankConfig(bankId: string, updates: Record<string, unknown>): Promise<BankConfigResponse> {
-    this.requireHttpMode('updateBankConfig');
-    return this.httpRequest<BankConfigResponse>('PATCH', `${this.bankUrl(bankId)}/config`, { updates });
-  }
-
-  async resetBankConfig(bankId: string): Promise<BankConfigResponse> {
-    this.requireHttpMode('resetBankConfig');
-    return this.httpRequest<BankConfigResponse>('DELETE', `${this.bankUrl(bankId)}/config`);
-  }
-
-  async ensureBank(bankId: string): Promise<void> {
-    this.requireHttpMode('ensureBank');
-    await this.httpRequest('PUT', `${this.bankUrl(bankId)}`, {});
-  }
-
-  // ── Directives ───────────────────────────────────────────────────
-
-  async listDirectives(bankId: string): Promise<Directive[]> {
-    this.requireHttpMode('listDirectives');
-    const resp = await this.httpRequest<{ items: Directive[] }>('GET', `${this.bankUrl(bankId)}/directives`);
-    return resp.items;
-  }
-
-  async createDirective(bankId: string, directive: CreateDirectiveRequest): Promise<Directive> {
-    this.requireHttpMode('createDirective');
-    return this.httpRequest<Directive>('POST', `${this.bankUrl(bankId)}/directives`, directive);
-  }
-
-  async updateDirective(bankId: string, directiveId: string, update: Partial<CreateDirectiveRequest>): Promise<Directive> {
-    this.requireHttpMode('updateDirective');
-    return this.httpRequest<Directive>('PATCH', `${this.bankUrl(bankId)}/directives/${encodeURIComponent(directiveId)}`, update);
-  }
-
-  async deleteDirective(bankId: string, directiveId: string): Promise<void> {
-    this.requireHttpMode('deleteDirective');
-    await this.httpRequestRaw('DELETE', `${this.bankUrl(bankId)}/directives/${encodeURIComponent(directiveId)}`);
+    return this.httpRequest<ReflectResponse>('POST', `${this.bankUrl(bankId)}/reflect`, request, undefined, ctx);
   }
 
   // ── Mental models ────────────────────────────────────────────────
 
-  async getMentalModel(bankId: string, modelId: string, timeoutMs?: number): Promise<MentalModel> {
+  async getMentalModel(bankId: string, modelId: string, timeoutMs?: number, ctx?: PluginHookAgentContext): Promise<MentalModel> {
     this.requireHttpMode('getMentalModel');
-    return this.httpRequest<MentalModel>('GET', `${this.bankUrl(bankId)}/mental-models/${encodeURIComponent(modelId)}`, undefined, timeoutMs);
+    return this.httpRequest<MentalModel>('GET', `${this.bankUrl(bankId)}/mental-models/${encodeURIComponent(modelId)}`, undefined, timeoutMs, ctx);
   }
 
-  async listMentalModels(bankId: string): Promise<MentalModel[]> {
+  async listMentalModels(bankId: string, ctx?: PluginHookAgentContext): Promise<MentalModel[]> {
     this.requireHttpMode('listMentalModels');
-    const resp = await this.httpRequest<{ items: MentalModel[] }>('GET', `${this.bankUrl(bankId)}/mental-models`);
+    const resp = await this.httpRequest<{ items: MentalModel[] }>('GET', `${this.bankUrl(bankId)}/mental-models`, undefined, undefined, ctx);
     return resp.items;
-  }
-
-  // ── Tags ─────────────────────────────────────────────────────────
-
-  async listTags(bankId: string): Promise<Record<string, number>> {
-    this.requireHttpMode('listTags');
-    return this.httpRequest<Record<string, number>>('GET', `${this.bankUrl(bankId)}/tags`);
   }
 
   // ── Internal: URL + HTTP helpers ─────────────────────────────────
@@ -179,10 +159,10 @@ export class HindsightClient {
     return `${this.apiUrl}/v1/default/banks/${encodeURIComponent(bankId)}`;
   }
 
-  private httpHeaders(): Record<string, string> {
+  private httpHeaders(ctx?: PluginHookAgentContext): Record<string, string> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (this.apiToken) {
-      headers['Authorization'] = `Bearer ${this.apiToken}`;
+    if (this.jwtSecret && ctx) {
+      headers['Authorization'] = `Bearer ${generateJwt(ctx, this.jwtSecret, this.clientId)}`;
     }
     return headers;
   }
@@ -193,8 +173,8 @@ export class HindsightClient {
     }
   }
 
-  private async httpRequest<T>(method: string, url: string, body?: unknown, timeoutMs?: number): Promise<T> {
-    const res = await this.httpRequestRaw(method, url, body, timeoutMs);
+  private async httpRequest<T>(method: string, url: string, body?: unknown, timeoutMs?: number, ctx?: PluginHookAgentContext): Promise<T> {
+    const res = await this.httpRequestRaw(method, url, body, timeoutMs, ctx);
 
     // For 204 No Content, return undefined cast as T
     if (res.status === 204) {
@@ -204,10 +184,10 @@ export class HindsightClient {
     return res.json() as Promise<T>;
   }
 
-  private async httpRequestRaw(method: string, url: string, body?: unknown, timeoutMs?: number): Promise<Response> {
+  private async httpRequestRaw(method: string, url: string, body?: unknown, timeoutMs?: number, ctx?: PluginHookAgentContext): Promise<Response> {
     const opts: RequestInit = {
       method,
-      headers: this.httpHeaders(),
+      headers: this.httpHeaders(ctx),
       signal: AbortSignal.timeout(timeoutMs ?? DEFAULT_TIMEOUT_MS),
     };
 
@@ -219,7 +199,7 @@ export class HindsightClient {
 
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      throw new Error(`HTTP ${res.status}: ${text}`);
+      throw new HindsightHttpError(res.status, `HTTP ${res.status}: ${text}`);
     }
 
     return res;

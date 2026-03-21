@@ -18,7 +18,6 @@ describe('resolveAgentConfig', () => {
     const result = resolveAgentConfig('unknown', pluginDefaults, new Map());
     expect(result.recallBudget).toBe('mid');
     expect(result.hindsightApiUrl).toBe('https://default.server');
-    expect(result._serverConfig).toBeNull();
     expect(result._recallFrom).toBeUndefined();
     expect(result._sessionStartModels).toBeUndefined();
     expect(result._reflectOnRecall).toBeUndefined();
@@ -26,7 +25,6 @@ describe('resolveAgentConfig', () => {
 
   it('overrides behavioral fields from bank config', () => {
     const bankConfigs = new Map([['r4p17', {
-      retain_mission: 'Extract financial data',
       recallBudget: 'high' as const,
       recallMaxTokens: 2048,
     }]]);
@@ -34,25 +32,20 @@ describe('resolveAgentConfig', () => {
     expect(result.recallBudget).toBe('high');
     expect(result.recallMaxTokens).toBe(2048);
     expect(result.autoRecall).toBe(true); // inherited
-    expect(result._serverConfig).toEqual({ retain_mission: 'Extract financial data' });
   });
 
   it('overrides infrastructure fields from bank config', () => {
     const bankConfigs = new Map([['l337', {
-      retain_mission: 'Extract health data',
       hindsightApiUrl: 'https://home.server',
-      hindsightApiToken: 'home-token',
     }]]);
     const result = resolveAgentConfig('l337', pluginDefaults, bankConfigs);
     expect(result.hindsightApiUrl).toBe('https://home.server');
-    expect(result.hindsightApiToken).toBe('home-token');
     expect(result.recallBudget).toBe('mid'); // inherited
   });
 
   it('shallow merge — arrays fully replaced', () => {
     const defaults = { ...pluginDefaults, recallTypes: ['world', 'experience'] as Array<'world' | 'experience' | 'observation'> };
     const bankConfigs = new Map([['yoda', {
-      retain_mission: 'Strategic',
       recallTypes: ['observation'] as Array<'world' | 'experience' | 'observation'>,
     }]]);
     const result = resolveAgentConfig('yoda', defaults, bankConfigs);
@@ -61,7 +54,6 @@ describe('resolveAgentConfig', () => {
 
   it('extracts recallFrom', () => {
     const bankConfigs = new Map([['yoda', {
-      retain_mission: 'Strategic',
       recallFrom: [
         { bankId: 'yoda' },
         { bankId: 'r4p17' },
@@ -78,7 +70,6 @@ describe('resolveAgentConfig', () => {
 
   it('extracts sessionStartModels', () => {
     const bankConfigs = new Map([['k2s0', {
-      retain_mission: 'Tasks',
       sessionStartModels: [
         { type: 'mental_model' as const, bankId: 'k2s0', modelId: 'tasks', label: 'Tasks' }
       ],
@@ -89,7 +80,6 @@ describe('resolveAgentConfig', () => {
 
   it('extracts reflect fields', () => {
     const bankConfigs = new Map([['yoda', {
-      retain_mission: 'Strategic',
       reflectOnRecall: true,
       reflectBudget: 'high' as const,
       reflectMaxTokens: 512,
@@ -98,126 +88,6 @@ describe('resolveAgentConfig', () => {
     expect(result._reflectOnRecall).toBe(true);
     expect(result._reflectBudget).toBe('high');
     expect(result._reflectMaxTokens).toBe(512);
-  });
-
-  it('collects multiple server-side fields', () => {
-    const bankConfigs = new Map([['r4p17', {
-      retain_mission: 'Finance',
-      observations_mission: 'Trends',
-      reflect_mission: 'Analyst',
-      disposition_skepticism: 5,
-      disposition_literalism: 5,
-      disposition_empathy: 1,
-      entity_labels: [{ key: 'dept', description: 'Department', type: 'value' as const }],
-      directives: [{ name: 'rule1', content: 'Do this' }],
-    }]]);
-    const result = resolveAgentConfig('r4p17', pluginDefaults, bankConfigs);
-    expect(result._serverConfig).toEqual({
-      retain_mission: 'Finance',
-      observations_mission: 'Trends',
-      reflect_mission: 'Analyst',
-      disposition_skepticism: 5,
-      disposition_literalism: 5,
-      disposition_empathy: 1,
-      entity_labels: [{ key: 'dept', description: 'Department', type: 'value' }],
-      directives: [{ name: 'rule1', content: 'Do this' }],
-    });
-  });
-
-  it('builds _topicIndex and _defaultMode from memory section', () => {
-    const bankConfigs = new Map([['yoda', {
-      retain_mission: 'Strategic',
-      memory: {
-        default: 'full' as const,
-        full: {
-          'deep-analysis': { topics: ['280304'] },
-          'lightweight': { topics: ['280418'] },
-        },
-        recall: {
-          'no-write': { topics: ['999'] },
-        },
-        disabled: {
-          'silent': { topics: ['888'] },
-        },
-      },
-    }]]);
-    const result = resolveAgentConfig('yoda', pluginDefaults, bankConfigs);
-    expect(result._defaultMode).toBe('full');
-    expect(result._topicIndex).toBeDefined();
-    expect(result._topicIndex!.get('280304')).toEqual({ strategy: 'deep-analysis', mode: 'full' });
-    expect(result._topicIndex!.get('280418')).toEqual({ strategy: 'lightweight', mode: 'full' });
-    expect(result._topicIndex!.get('999')).toEqual({ strategy: 'no-write', mode: 'recall' });
-    expect(result._topicIndex!.get('888')).toEqual({ strategy: 'silent', mode: 'disabled' });
-  });
-
-  it('returns undefined _topicIndex and _defaultMode when no memory section', () => {
-    const bankConfigs = new Map([['r2d2', {
-      retain_mission: 'Maintenance',
-    }]]);
-    const result = resolveAgentConfig('r2d2', pluginDefaults, bankConfigs);
-    expect(result._topicIndex).toBeUndefined();
-    expect(result._defaultMode).toBeUndefined();
-  });
-
-  it('builds topicIndex from retain.strategies (v2.0.0 format)', () => {
-    const bankConfigs = new Map([['yoda', {
-      retain: {
-        strategies: {
-          'deep-analysis': { topics: ['280304'] },
-          'lightweight': { topics: ['280418'] },
-        },
-      },
-    }]]);
-    const result = resolveAgentConfig('yoda', pluginDefaults, bankConfigs);
-    expect(result._topicIndex?.get('280304')?.strategy).toBe('deep-analysis');
-    expect(result._topicIndex?.get('280304')?.mode).toBe('full');
-    expect(result._topicIndex?.get('280418')?.strategy).toBe('lightweight');
-    expect(result._defaultMode).toBe('full');
-  });
-
-  it('falls back to memory format (v1.1.0 compat)', () => {
-    const bankConfigs = new Map([['yoda', {
-      memory: {
-        default: 'full' as const,
-        full: { 'deep-analysis': { topics: ['280304'] } },
-      },
-    }]]);
-    const result = resolveAgentConfig('yoda', pluginDefaults, bankConfigs);
-    expect(result._topicIndex?.get('280304')?.strategy).toBe('deep-analysis');
-    expect(result._topicIndex?.get('280304')?.mode).toBe('full');
-  });
-
-  it('retain.strategies takes priority over memory', () => {
-    const bankConfigs = new Map([['yoda', {
-      retain: { strategies: { 'v2-strat': { topics: ['100'] } } },
-      memory: { default: 'full' as const, full: { 'v1-strat': { topics: ['100'] } } },
-    }]]);
-    const result = resolveAgentConfig('yoda', pluginDefaults, bankConfigs);
-    expect(result._topicIndex?.get('100')?.strategy).toBe('v2-strat');
-  });
-
-  it('extracts memory into EXTRACTED_FIELDS (does not leak into overrides)', () => {
-    const bankConfigs = new Map([['yoda', {
-      retain_mission: 'Strategic',
-      memory: { default: 'recall' as const },
-    }]]);
-    const result = resolveAgentConfig('yoda', pluginDefaults, bankConfigs);
-    expect((result as any).memory).toBeUndefined();
-    expect(result._defaultMode).toBe('recall');
-  });
-
-  it('extracts retain_strategies, retain_default_strategy, retain_chunk_size into _serverConfig', () => {
-    const bankConfigs = new Map([['yoda', {
-      retain_mission: 'Strategic',
-      retain_strategies: { 'deep': { retain_extraction_mode: 'verbose' } },
-      retain_default_strategy: 'deep',
-      retain_chunk_size: 3,
-    }]]);
-    const result = resolveAgentConfig('yoda', pluginDefaults, bankConfigs);
-    expect(result._serverConfig).toBeDefined();
-    expect(result._serverConfig!.retain_strategies).toEqual({ 'deep': { retain_extraction_mode: 'verbose' } });
-    expect(result._serverConfig!.retain_default_strategy).toBe('deep');
-    expect(result._serverConfig!.retain_chunk_size).toBe(3);
   });
 });
 
@@ -248,18 +118,18 @@ describe('resolveIncludes', () => {
     expect(result.config).toEqual({ strategy: { mode: 'verbose' } });
   });
 
-  it('resolves $include values in a record (retain_strategies pattern)', () => {
+  it('resolves $include values in a record', () => {
     writeFileSync(join(testDir, 'deep.json5'), '{ "retain_extraction_mode": "verbose" }');
     writeFileSync(join(testDir, 'light.json5'), '{ "retain_extraction_mode": "concise" }');
     const obj = {
-      retain_strategies: {
+      strategies: {
         'deep-analysis': { $include: './deep.json5' },
         'lightweight': { $include: './light.json5' },
       },
     };
     const result = resolveIncludes(obj, testDir);
-    expect(result.retain_strategies['deep-analysis']).toEqual({ retain_extraction_mode: 'verbose' });
-    expect(result.retain_strategies['lightweight']).toEqual({ retain_extraction_mode: 'concise' });
+    expect(result.strategies['deep-analysis']).toEqual({ retain_extraction_mode: 'verbose' });
+    expect(result.strategies['lightweight']).toEqual({ retain_extraction_mode: 'concise' });
   });
 
   it('throws on circular $include', () => {
@@ -302,11 +172,9 @@ describe('parseBankConfigFile', () => {
   it('parses JSON5 with comments and trailing commas', () => {
     const content = `{
       // This is a comment
-      "retain_mission": "test",
       "recallBudget": "high",
     }`;
     const result = parseBankConfigFile(content);
-    expect(result.retain_mission).toBe('test');
     expect(result.recallBudget).toBe('high');
   });
 

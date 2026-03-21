@@ -55,10 +55,8 @@ export interface AgentEntry {
 export interface PluginConfig {
   // Infrastructure (per-agent overridable)
   hindsightApiUrl?: string;
-  hindsightApiToken?: string;
-
-  // Bank mission (I2-I3: automatic bank mission for unconfigured banks)
-  bankMission?: string;
+  jwtSecret?: string;
+  clientId?: string;
 
   // Daemon (global only)
   apiPort?: number;
@@ -92,36 +90,11 @@ export interface PluginConfig {
   excludeProviders?: string[];
   debug?: boolean;
 
-  /** Path to .openclaw/hindsight/ directory (v2.0.0). If set, auto-discovers banks/groups/users. */
-  configPath?: string;
-
   // Agent map
   agents?: Record<string, AgentEntry>;
-
-  // Bootstrap bank configs on first run if bank is empty
-  bootstrap?: boolean;
 }
 
 // ── Bank Config File (template) ──────────────────────────────────────
-
-export interface BankConfigDirective {
-  name: string;
-  content: string;
-}
-
-export interface EntityLabelValue {
-  value: string;
-  description: string;
-}
-
-export interface EntityLabel {
-  key: string;
-  description: string;
-  type: 'value' | 'multi-values' | 'text';
-  tag?: boolean;
-  optional?: boolean;
-  values?: EntityLabelValue[];
-}
 
 export interface RecallFromEntry {
   bankId: string;
@@ -131,32 +104,9 @@ export interface RecallFromEntry {
   tagGroups?: TagGroup[];
 }
 
-export interface MemoryScope {
-  topics?: string[];
-  // Future: channels?: string[]; providers?: string[];
-}
-
-export interface MemoryRouting {
-  default: 'full' | 'recall' | 'disabled';
-  full?: Record<string, MemoryScope>;
-  recall?: Record<string, MemoryScope>;
-  disabled?: Record<string, MemoryScope>;
-}
-
-/** v2.0.0 retain strategy routing — flat strategy map, permissions handle access */
-export interface RetainRouting {
-  strategies?: Record<string, MemoryScope>;
-}
-
-export interface TopicIndexEntry {
-  strategy: string;
-  mode: 'full' | 'recall' | 'disabled';
-}
-
 export interface BankConfig {
   // Infrastructure overrides (per-agent)
   hindsightApiUrl?: string;
-  hindsightApiToken?: string;
 
   // Behavioral overrides
   llmProvider?: string;
@@ -181,23 +131,9 @@ export interface BankConfig {
   bankIdPrefix?: string;
   debug?: boolean;
 
-  // Server-side (agent-only)
-  retain_mission?: string;
-  observations_mission?: string;
-  reflect_mission?: string;
-  retain_extraction_mode?: string;
-  disposition_skepticism?: number;
-  disposition_literalism?: number;
-  disposition_empathy?: number;
-  entity_labels?: EntityLabel[];
-  directives?: BankConfigDirective[];
-
-  // Tag injection (agent-only)
-  retainTags?: string[];
+  // Retain context (plugin-side)
   retainContext?: string;
   retainObservationScopes?: string | string[][];
-  recallTags?: string[];
-  recallTagsMatch?: 'any' | 'all' | 'any_strict' | 'all_strict';
 
   // Multi-bank (agent-only)
   recallFrom?: RecallFromEntry[];
@@ -209,40 +145,13 @@ export interface BankConfig {
   reflectOnRecall?: boolean;
   reflectBudget?: 'low' | 'mid' | 'high';
   reflectMaxTokens?: number;
-
-  // Memory routing (plugin-side)
-  /** @deprecated Use retain.strategies instead */
-  memory?: MemoryRouting;
-  /** Topic-to-strategy routing (v2.0.0) */
-  retain?: RetainRouting;
-
-  // Retain strategies (server-side, synced via hindclaw)
-  retain_strategies?: Record<string, Record<string, unknown>>;
-  retain_default_strategy?: string;
-  retain_chunk_size?: number;
 }
 
 // ── Resolved Config (after merge) ────────────────────────────────────
 
-export interface ServerConfig {
-  retain_mission?: string;
-  observations_mission?: string;
-  reflect_mission?: string;
-  retain_extraction_mode?: string;
-  disposition_skepticism?: number;
-  disposition_literalism?: number;
-  disposition_empathy?: number;
-  entity_labels?: EntityLabel[];
-  directives?: BankConfigDirective[];
-  retain_strategies?: Record<string, Record<string, unknown>>;
-  retain_default_strategy?: string;
-  retain_chunk_size?: number;
-}
-
 export interface ResolvedConfig {
   // Infrastructure
   hindsightApiUrl?: string;
-  hindsightApiToken?: string;
 
   // Daemon
   apiPort?: number;
@@ -284,7 +193,7 @@ export interface ResolvedConfig {
   recallTagsMatch?: 'any' | 'all' | 'any_strict' | 'all_strict';
 
   // Merged internal fields
-  _serverConfig?: ServerConfig | null;
+  _serverConfig?: Record<string, unknown> | null;
   _recallFrom?: RecallFromEntry[];
   _sessionStartModels?: SessionStartModelConfig[];
   _reflectOnRecall?: boolean;
@@ -292,7 +201,7 @@ export interface ResolvedConfig {
   _reflectMaxTokens?: number;
 
   // Memory routing (resolved from bankConfig.memory)
-  _topicIndex?: Map<string, TopicIndexEntry>;
+  _topicIndex?: Map<string, { strategy: string; mode: 'full' | 'recall' | 'disabled' }>;
   _defaultMode?: 'full' | 'recall' | 'disabled';
 }
 
@@ -383,27 +292,6 @@ export interface ReflectResponse {
   usage?: { prompt_tokens: number; completion_tokens: number };
 }
 
-// Full API entity (with server-assigned fields)
-export interface Directive {
-  id: string;
-  bank_id: string;
-  name: string;
-  content: string;
-  priority: number;
-  is_active: boolean;
-  tags: string[];
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CreateDirectiveRequest {
-  name: string;
-  content: string;
-  priority?: number;
-  is_active?: boolean;
-  tags?: string[];
-}
-
 export interface MentalModel {
   id: string;
   bank_id: string;
@@ -421,19 +309,3 @@ export interface BankProfile {
   created_at: string;
 }
 
-export interface BankConfigResponse {
-  config: Record<string, unknown>;
-  overrides: Record<string, unknown>;
-}
-
-// Legacy compat — kept for existing callers
-export interface CreateBankRequest {
-  name: string;
-  background_context?: string;
-}
-
-export interface CreateBankResponse {
-  bank_id: string;
-  name: string;
-  created_at: string;
-}

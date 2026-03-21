@@ -5,27 +5,11 @@ import type {
   BankConfig,
   PluginConfig,
   ResolvedConfig,
-  ServerConfig,
   AgentEntry,
 } from './types.js';
 import { debug } from './debug.js';
 
 // ── Field classification sets ─────────────────────────────────────────
-
-const SERVER_SIDE_FIELDS = new Set<string>([
-  'retain_mission',
-  'observations_mission',
-  'reflect_mission',
-  'retain_extraction_mode',
-  'disposition_skepticism',
-  'disposition_literalism',
-  'disposition_empathy',
-  'entity_labels',
-  'directives',
-  'retain_strategies',
-  'retain_default_strategy',
-  'retain_chunk_size',
-]);
 
 const EXTRACTED_FIELDS = new Set<string>([
   'recallFrom',
@@ -33,8 +17,6 @@ const EXTRACTED_FIELDS = new Set<string>([
   'reflectOnRecall',
   'reflectBudget',
   'reflectMaxTokens',
-  'memory',
-  'retain',
 ]);
 
 // ── $include resolution ───────────────────────────────────────────────
@@ -92,14 +74,13 @@ export function parseBankConfigFile(content: string): BankConfig {
  *
  * Resolution order: pluginDefaults → bankFile (shallow merge, bank file wins).
  *
- * Server-side fields are extracted into _serverConfig.
  * Extracted behavioral fields (recallFrom, sessionStartModels, reflect*) are
  * hoisted to their underscore-prefixed counterparts.
  * Everything else is merged as behavioral/infrastructure overrides.
  */
 export function resolveAgentConfig(
   agentId: string,
-  pluginDefaults: Omit<PluginConfig, 'agents' | 'bootstrap'>,
+  pluginDefaults: Omit<PluginConfig, 'agents'>,
   bankConfigs: Map<string, BankConfig>,
 ): ResolvedConfig {
   const bankConfig = bankConfigs.get(agentId);
@@ -108,20 +89,14 @@ export function resolveAgentConfig(
     debug(`[Hindsight] No bank config for agent "${agentId}" — using plugin defaults`);
     return {
       ...pluginDefaults,
-      _serverConfig: null,
     } as ResolvedConfig;
   }
 
-  // Separate fields from bankConfig
-  const serverConfig: Partial<ServerConfig> = {};
+  // Separate extracted fields from behavioral overrides
   const overrides: Partial<BankConfig> = {};
-  let hasServerFields = false;
 
   for (const [key, value] of Object.entries(bankConfig)) {
-    if (SERVER_SIDE_FIELDS.has(key)) {
-      (serverConfig as Record<string, unknown>)[key] = value;
-      hasServerFields = true;
-    } else if (!EXTRACTED_FIELDS.has(key)) {
+    if (!EXTRACTED_FIELDS.has(key)) {
       (overrides as Record<string, unknown>)[key] = value;
     }
   }
@@ -130,7 +105,6 @@ export function resolveAgentConfig(
   const merged: ResolvedConfig = {
     ...pluginDefaults,
     ...overrides,
-    _serverConfig: hasServerFields ? (serverConfig as ServerConfig) : null,
   };
 
   // Hoist extracted fields
@@ -148,39 +122,6 @@ export function resolveAgentConfig(
   }
   if (bankConfig.reflectMaxTokens !== undefined) {
     merged._reflectMaxTokens = bankConfig.reflectMaxTokens;
-  }
-
-  // Hoist retain/memory routing → _topicIndex + _defaultMode
-  const retainRouting = bankConfig.retain?.strategies;
-  const memoryRouting = bankConfig.memory;
-  const topicIndex = new Map<string, { strategy: string; mode: 'full' | 'recall' | 'disabled' }>();
-
-  if (retainRouting) {
-    // v2.0.0: flat strategy map — permissions handle access, default mode is always 'full'
-    merged._defaultMode = 'full';
-    for (const [strategyName, scope] of Object.entries(retainRouting)) {
-      if (scope?.topics) {
-        for (const topicId of scope.topics) {
-          topicIndex.set(String(topicId), { strategy: strategyName, mode: 'full' });
-        }
-      }
-    }
-  } else if (memoryRouting) {
-    // v1.1.0 fallback: mode bucket format
-    merged._defaultMode = memoryRouting.default;
-    for (const mode of ['full', 'recall', 'disabled'] as const) {
-      const strategies = memoryRouting[mode];
-      if (!strategies) continue;
-      for (const [name, scopes] of Object.entries(strategies)) {
-        for (const topicId of scopes.topics ?? []) {
-          topicIndex.set(String(topicId), { strategy: name, mode });
-        }
-      }
-    }
-  }
-
-  if (topicIndex.size > 0) {
-    merged._topicIndex = topicIndex;
   }
 
   return merged;

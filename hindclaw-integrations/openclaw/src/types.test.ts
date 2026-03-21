@@ -1,12 +1,8 @@
-import { describe, it, expect, expectTypeOf } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import type {
   PluginConfig,
   AgentEntry,
   BankConfig,
-  BankConfigDirective,
-  EntityLabel,
-  EntityLabelValue,
-  ServerConfig,
   ResolvedConfig,
   SessionStartModelConfig,
   TagGroup,
@@ -18,18 +14,16 @@ import type {
   MemoryResult,
   ReflectRequest,
   ReflectResponse,
-  Directive,
-  CreateDirectiveRequest,
   MentalModel,
   BankProfile,
-  BankConfigResponse,
 } from './types.js';
 
 describe('types – compile-time checks', () => {
   it('PluginConfig with agents map', () => {
     const cfg: PluginConfig = {
       hindsightApiUrl: 'http://localhost:9077',
-      hindsightApiToken: 'tok_abc',
+      jwtSecret: 'my-secret',
+      clientId: 'openclaw',
       apiPort: 9077,
       embedPort: 9078,
       agents: {
@@ -77,42 +71,13 @@ describe('types – compile-time checks', () => {
     expect(cfg.recallBudget).toBe('mid');
   });
 
-  it('BankConfig with server-side fields', () => {
-    const bank: BankConfig = {
-      retain_mission: 'Remember everything about the user.',
-      observations_mission: 'Track habits and preferences.',
-      reflect_mission: 'Synthesise user goals.',
-      retain_extraction_mode: 'semantic',
-      disposition_skepticism: 0.5,
-      disposition_literalism: 0.7,
-      disposition_empathy: 0.9,
-      entity_labels: [
-        {
-          key: 'project',
-          description: 'Project name',
-          type: 'value',
-          tag: true,
-          values: [{ value: 'astromech', description: 'Main project' }],
-        },
-      ],
-      directives: [
-        { name: 'focus', content: 'Focus on actionable items.' },
-      ],
-    };
-    expect(bank.retain_mission).toBeDefined();
-    expect(bank.entity_labels![0].type).toBe('value');
-  });
-
   it('BankConfig with behavioral overrides', () => {
     const bank: BankConfig = {
       autoRecall: false,
       recallBudget: 'high',
       retainRoles: ['user'],
-      retainTags: ['important'],
-      retainContext: { source: 'telegram' },
+      retainContext: 'telegram context',
       retainObservationScopes: ['health', 'fitness'],
-      recallTags: ['important'],
-      recallTagsMatch: 'any',
       recallFrom: [{ bankId: 'shared-bank', budget: 'low' }],
     };
     expect(bank.autoRecall).toBe(false);
@@ -121,7 +86,6 @@ describe('types – compile-time checks', () => {
   it('BankConfig with infrastructure overrides', () => {
     const bank: BankConfig = {
       hindsightApiUrl: 'http://remote:9077',
-      hindsightApiToken: 'tok_xyz',
     };
     expect(bank.hindsightApiUrl).toBe('http://remote:9077');
   });
@@ -227,28 +191,6 @@ describe('types – compile-time checks', () => {
     expect(res.text).toBeDefined();
   });
 
-  it('Directive and CreateDirectiveRequest', () => {
-    const d: Directive = {
-      id: 'dir-1',
-      bank_id: 'yoda',
-      name: 'focus',
-      content: 'Focus on actionable items.',
-      priority: 1,
-      is_active: true,
-      tags: ['core'],
-      created_at: '2026-01-01T00:00:00Z',
-      updated_at: '2026-03-18T00:00:00Z',
-    };
-    const create: CreateDirectiveRequest = {
-      name: 'focus',
-      content: 'Focus on actionable items.',
-      priority: 1,
-      tags: ['core'],
-    };
-    expect(d.id).toBeDefined();
-    expect(create.name).toBe('focus');
-  });
-
   it('MentalModel shape', () => {
     const model: MentalModel = {
       id: 'mm-1',
@@ -272,14 +214,6 @@ describe('types – compile-time checks', () => {
     expect(profile.bank_id).toBeDefined();
   });
 
-  it('BankConfigResponse shape', () => {
-    const resp: BankConfigResponse = {
-      config: { retain_mission: 'Remember all' },
-      overrides: { disposition_skepticism: 0.3 },
-    };
-    expect(resp.config).toBeDefined();
-  });
-
   it('ResolvedConfig has merged fields', () => {
     const resolved: ResolvedConfig = {
       hindsightApiUrl: 'http://localhost:9077',
@@ -292,7 +226,6 @@ describe('types – compile-time checks', () => {
       dynamicBankGranularity: ['agent', 'channel'],
       _serverConfig: {
         retain_mission: 'Remember everything.',
-        directives: [{ name: 'f', content: 'c' }],
       },
       _recallFrom: [{ bankId: 'shared', budget: 'low' }],
       _sessionStartModels: [

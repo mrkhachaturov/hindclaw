@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { HindsightClient } from './client.js';
 
 describe('HindsightClient remote mode without LLM config', () => {
-  it('should initialize successfully with only apiUrl and apiToken', () => {
+  it('should initialize successfully with only apiUrl and jwtSecret', () => {
     const client = new HindsightClient({
       apiUrl: 'https://api.example.com',
-      apiToken: 'secret-token',
+      jwtSecret: 'test-secret',
     });
 
     expect(client).toBeDefined();
