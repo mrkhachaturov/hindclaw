@@ -1,7 +1,7 @@
 """Hindclaw database layer — connection pool, DDL, and queries.
 
 Connection pool is lazily initialized on first use via get_pool().
-Reads HINDSIGHT_API_DATABASE_URL from os.environ directly (not from extension config).
+Reads HINDCLAW_DATABASE_URL (preferred) or HINDSIGHT_API_DATABASE_URL from os.environ.
 DDL is executed on first pool creation via CREATE TABLE IF NOT EXISTS.
 
 See spec Section 3 (Shared State) and Section 4 (Database Schema).
@@ -129,9 +129,9 @@ async def get_pool() -> asyncpg.Pool:
     async with _pool_lock:
         if _pool is not None:
             return _pool
-        url = os.environ.get("HINDSIGHT_API_DATABASE_URL")
+        url = os.environ.get("HINDCLAW_DATABASE_URL") or os.environ.get("HINDSIGHT_API_DATABASE_URL")
         if not url:
-            raise RuntimeError("HINDSIGHT_API_DATABASE_URL environment variable is not set")
+            raise RuntimeError("HINDCLAW_DATABASE_URL or HINDSIGHT_API_DATABASE_URL environment variable must be set")
         _pool = await asyncpg.create_pool(url, min_size=2, max_size=10)
         # Run DDL in a transaction — all-or-nothing table creation
         async with _pool.acquire() as conn:
