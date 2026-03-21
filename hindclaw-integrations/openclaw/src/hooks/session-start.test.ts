@@ -1,25 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { handleSessionStart } from './session-start.js';
+import { HindsightHttpError } from '../client.js';
 import type { HindsightClient } from '../client.js';
-import type { ResolvedConfig, MentalModel, RecallResponse } from '../types.js';
+import type { ResolvedConfig, MentalModel, RecallResponse, PluginHookAgentContext } from '../types.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
 function makeClient() {
   return {
-    getMentalModel: vi.fn<(bankId: string, modelId: string) => Promise<MentalModel>>(),
-    recall: vi.fn<(bankId: string, request: any) => Promise<RecallResponse>>(),
+    getMentalModel: vi.fn<(bankId: string, modelId: string, timeoutMs?: number, ctx?: any) => Promise<MentalModel>>(),
+    recall: vi.fn<(bankId: string, request: any, timeoutMs?: number, ctx?: any) => Promise<RecallResponse>>(),
     // Stubs for unused client methods
     httpMode: true,
     retain: vi.fn(),
     reflect: vi.fn(),
-    getBankConfig: vi.fn(),
-    updateBankConfig: vi.fn(),
-    resetBankConfig: vi.fn(),
-    listDirectives: vi.fn(),
-    createDirective: vi.fn(),
-    updateDirective: vi.fn(),
-    deleteDirective: vi.fn(),
     listMentalModels: vi.fn(),
     listTags: vi.fn(),
   } as unknown as HindsightClient;
@@ -60,6 +54,12 @@ function makeRecallResponse(texts: string[]): RecallResponse {
   };
 }
 
+const baseCtx: PluginHookAgentContext = {
+  agentId: 'yoda',
+  channelId: 'chan-1',
+  senderId: 'user-1',
+};
+
 // ── Tests ────────────────────────────────────────────────────────────
 
 describe('handleSessionStart', () => {
@@ -71,13 +71,13 @@ describe('handleSessionStart', () => {
 
   it('returns undefined when no _sessionStartModels configured', async () => {
     const config: ResolvedConfig = {};
-    const result = await handleSessionStart(config, mockClient);
+    const result = await handleSessionStart(config, mockClient, baseCtx);
     expect(result).toBeUndefined();
   });
 
   it('returns undefined when _sessionStartModels is empty array', async () => {
     const config: ResolvedConfig = { _sessionStartModels: [] };
-    const result = await handleSessionStart(config, mockClient);
+    const result = await handleSessionStart(config, mockClient, baseCtx);
     expect(result).toBeUndefined();
   });
 
@@ -92,11 +92,11 @@ describe('handleSessionStart', () => {
       ],
     };
 
-    const result = await handleSessionStart(config, mockClient);
+    const result = await handleSessionStart(config, mockClient, baseCtx);
     expect(result).toBe(
       '<hindsight_context>\n## Communication Style\nYou are methodical and prefer lists.\n</hindsight_context>'
     );
-    expect(mockClient.getMentalModel).toHaveBeenCalledWith('bank-a', 'model-1', expect.any(Number));
+    expect(mockClient.getMentalModel).toHaveBeenCalledWith('bank-a', 'model-1', expect.any(Number), baseCtx);
   });
 
   it('loads recall results and formats as bullet list with label', async () => {
@@ -110,7 +110,7 @@ describe('handleSessionStart', () => {
       ],
     };
 
-    const result = await handleSessionStart(config, mockClient);
+    const result = await handleSessionStart(config, mockClient, baseCtx);
     expect(result).toBe(
       '<hindsight_context>\n## Preferences\n- Prefers dark mode\n- Uses vim keybindings\n</hindsight_context>'
     );
@@ -118,7 +118,7 @@ describe('handleSessionStart', () => {
       query: 'user preferences',
       max_tokens: 256,
       budget: 'low',
-    }, expect.any(Number));
+    }, expect.any(Number), baseCtx);
   });
 
   it('assembles multiple models into one hindsight_context block', async () => {
@@ -136,7 +136,7 @@ describe('handleSessionStart', () => {
       ],
     };
 
-    const result = await handleSessionStart(config, mockClient);
+    const result = await handleSessionStart(config, mockClient, baseCtx);
     expect(result).toBe(
       '<hindsight_context>\n## Style\nMethodical thinker.\n\n## Tech\n- Likes TypeScript\n</hindsight_context>'
     );
@@ -155,7 +155,7 @@ describe('handleSessionStart', () => {
       ],
     };
 
-    const result = await handleSessionStart(config, mockClient);
+    const result = await handleSessionStart(config, mockClient, baseCtx);
     expect(result).toBe(
       '<hindsight_context>\n## Work Habits\n- Dislikes meetings\n</hindsight_context>'
     );
@@ -172,7 +172,7 @@ describe('handleSessionStart', () => {
       ],
     };
 
-    const result = await handleSessionStart(config, mockClient);
+    const result = await handleSessionStart(config, mockClient, baseCtx);
     expect(result).toBeUndefined();
   });
 
@@ -187,7 +187,7 @@ describe('handleSessionStart', () => {
       ],
     };
 
-    const result = await handleSessionStart(config, mockClient);
+    const result = await handleSessionStart(config, mockClient, baseCtx);
     expect(result).toBeUndefined();
   });
 
@@ -202,11 +202,64 @@ describe('handleSessionStart', () => {
       ],
     };
 
-    await handleSessionStart(config, mockClient);
+    await handleSessionStart(config, mockClient, baseCtx);
     expect(mockClient.recall).toHaveBeenCalledWith('bank-b', {
       query: 'notes',
       max_tokens: 512,
       budget: 'low',
-    }, expect.any(Number));
+    }, expect.any(Number), baseCtx);
+  });
+
+  it('passes ctx to client methods', async () => {
+    (mockClient.getMentalModel as ReturnType<typeof vi.fn>).mockResolvedValue(
+      makeMentalModel('Test content')
+    );
+
+    const config: ResolvedConfig = {
+      _sessionStartModels: [
+        { type: 'mental_model', bankId: 'bank-a', modelId: 'model-1', label: 'Style' },
+      ],
+    };
+
+    await handleSessionStart(config, mockClient, baseCtx);
+    const callArgs = (mockClient.getMentalModel as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(callArgs[3]).toBe(baseCtx);
+  });
+
+  it('handles 403 gracefully without crashing', async () => {
+    (mockClient.getMentalModel as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new HindsightHttpError(403, 'Forbidden')
+    );
+    (mockClient.recall as ReturnType<typeof vi.fn>).mockResolvedValue(
+      makeRecallResponse(['Accessible note'])
+    );
+
+    const config: ResolvedConfig = {
+      _sessionStartModels: [
+        { type: 'mental_model', bankId: 'bank-a', modelId: 'model-1', label: 'Denied Model' },
+        { type: 'recall', bankId: 'bank-a', query: 'accessible', label: 'Accessible' },
+      ],
+    };
+
+    // Should not throw, and should return the accessible model
+    const result = await handleSessionStart(config, mockClient, baseCtx);
+    expect(result).toBe(
+      '<hindsight_context>\n## Accessible\n- Accessible note\n</hindsight_context>'
+    );
+  });
+
+  it('returns undefined when all models return 403', async () => {
+    (mockClient.getMentalModel as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new HindsightHttpError(403, 'Forbidden')
+    );
+
+    const config: ResolvedConfig = {
+      _sessionStartModels: [
+        { type: 'mental_model', bankId: 'bank-a', modelId: 'model-1', label: 'Style' },
+      ],
+    };
+
+    const result = await handleSessionStart(config, mockClient, baseCtx);
+    expect(result).toBeUndefined();
   });
 });

@@ -185,24 +185,16 @@ export interface ResolvedConfig {
   excludeProviders?: string[];
   debug?: boolean;
 
-  // Tag injection
-  retainTags?: string[];
+  // Retain content assembly (plugin-side)
   retainContext?: string;
   retainObservationScopes?: string | string[][];
-  recallTags?: string[];
-  recallTagsMatch?: 'any' | 'all' | 'any_strict' | 'all_strict';
 
   // Merged internal fields
-  _serverConfig?: Record<string, unknown> | null;
   _recallFrom?: RecallFromEntry[];
   _sessionStartModels?: SessionStartModelConfig[];
   _reflectOnRecall?: boolean;
   _reflectBudget?: 'low' | 'mid' | 'high';
   _reflectMaxTokens?: number;
-
-  // Memory routing (resolved from bankConfig.memory)
-  _topicIndex?: Map<string, { strategy: string; mode: 'full' | 'recall' | 'disabled' }>;
-  _defaultMode?: 'full' | 'recall' | 'disabled';
 }
 
 // ── Session Start ────────────────────────────────────────────────────

@@ -1,10 +1,9 @@
 import type { HindsightClient } from '../client.js';
+import { HindsightHttpError } from '../client.js';
 import type { ResolvedConfig, PluginConfig, PluginHookAgentContext } from '../types.js';
-import type { DiscoveryResult, ResolvedPermissions } from '../permissions/types.js';
-import { resolvePermissions } from '../permissions/resolver.js';
 import { debug } from '../debug.js';
 import { deriveBankId } from '../derive-bank-id.js';
-import { stripMemoryTags, stripMetadataEnvelopes, sliceLastTurnsByUserBoundary, extractTopicId } from '../utils.js';
+import { stripMemoryTags, stripMetadataEnvelopes, sliceLastTurnsByUserBoundary } from '../utils.js';
 
 // Re-export for backward compatibility
 export { stripMemoryTags } from '../utils.js';
@@ -126,29 +125,9 @@ export async function handleRetain(
   agentConfig: ResolvedConfig,
   client: HindsightClient,
   pluginConfig: PluginConfig,
-  discovery: DiscoveryResult | null = null,
 ): Promise<void> {
   const bankId = deriveBankId(ctx, pluginConfig);
   debug(`[Hindsight Hook] agent_end triggered - bank: ${bankId}`);
-
-  // ── Per-user permission resolution (v2.0.0) ──
-  let permissions: ResolvedPermissions | null = null;
-  if (discovery) {
-    const provider = ctx?.messageProvider ?? 'unknown';
-    const sid = ctx?.senderId ?? 'unknown';
-    const channelKey = `${provider}:${sid}`;
-    permissions = resolvePermissions(channelKey, bankId, discovery);
-
-    if (!permissions.retain) {
-      debug(`[Hindsight Hook] Retain: skipped (retain=false for ${permissions.displayName} on ${bankId})`);
-      return;
-    }
-
-    if (permissions.excludeProviders?.includes(ctx?.messageProvider ?? '')) {
-      debug(`[Hindsight Hook] Retain: provider "${ctx?.messageProvider}" excluded for ${permissions.displayName}`);
-      return;
-    }
-  }
 
   if (agentConfig.autoRetain === false) {
     debug('[Hindsight Hook] autoRetain is disabled, skipping retention');
@@ -161,12 +140,12 @@ export async function handleRetain(
     return;
   }
 
-  const retainRoles = permissions?.retainRoles ?? agentConfig.retainRoles ?? ['user', 'assistant'];
+  const retainRoles = agentConfig.retainRoles ?? ['user', 'assistant'];
 
   // ── Chunked retention (C2/C5) ──────────────────────────────────────
   // Skip non-Nth turns and use a sliding window when firing.
   // Ported from native index.ts lines 1200-1231.
-  const retainEveryN = permissions?.retainEveryNTurns ?? agentConfig.retainEveryNTurns ?? pluginConfig.retainEveryNTurns ?? 1;
+  const retainEveryN = agentConfig.retainEveryNTurns ?? pluginConfig.retainEveryNTurns ?? 1;
   let messagesToRetain = allMessages;
   let retainFullWindow = false;
 
@@ -204,51 +183,32 @@ export async function handleRetain(
   const { transcript, messageCount } = retention;
   const documentId = `session-${ctx?.sessionKey ?? 'unknown'}-${Date.now()}`;
 
-  // Resolve topic-based strategy (discovery or legacy _topicIndex)
-  const topicId = extractTopicId(ctx?.sessionKey);
-  let strategy: string | undefined;
+  debug(`[Hindsight] Retaining to bank ${bankId}, document: ${documentId}, chars: ${transcript.length}\n---\n${transcript.substring(0, 500)}${transcript.length > 500 ? '\n...(truncated)' : ''}\n---`);
 
-  if (discovery && topicId) {
-    strategy = discovery.strategyIndex.get(`${bankId}:${topicId}`);
-  } else {
-    const topicEntry = topicId ? agentConfig._topicIndex?.get(topicId) : undefined;
-    const effectiveMode = topicEntry?.mode ?? agentConfig._defaultMode ?? 'full';
-
-    if (effectiveMode === 'disabled' || effectiveMode === 'recall') {
-      debug(`[Hindsight Hook] Mode "${effectiveMode}" for topic ${topicId ?? 'default'} — skipping retain`);
+  try {
+    await client.retain(bankId, {
+      items: [{
+        content: transcript,
+        document_id: documentId,
+        metadata: {
+          retained_at: new Date().toISOString(),
+          message_count: String(messageCount),
+          channel_type: ctx?.messageProvider ?? '',
+          channel_id: ctx?.channelId ?? '',
+          sender_id: ctx?.senderId ?? '',
+        },
+        context: agentConfig.retainContext,
+        observation_scopes: agentConfig.retainObservationScopes,
+      }],
+      async: true,
+    }, ctx);
+  } catch (error) {
+    if (error instanceof HindsightHttpError && error.status === 403) {
+      debug(`[Hindsight] Retain denied for bank ${bankId}, skipping`);
       return;
     }
-    strategy = topicEntry?.strategy;
+    throw error;
   }
-  if (strategy) {
-    debug(`[Hindsight Hook] Topic ${topicId} → strategy "${strategy}"`);
-  }
-
-  debug(`[Hindsight] Retaining to bank ${bankId}, document: ${documentId}, chars: ${transcript.length}${strategy ? `, strategy: ${strategy}` : ''}\n---\n${transcript.substring(0, 500)}${transcript.length > 500 ? '\n...(truncated)' : ''}\n---`);
-
-  // Merge tags: permission-level (includes user: tag + group retainTags) + bank-level
-  const retainTags = permissions
-    ? [...new Set([...(permissions.retainTags ?? []), ...(agentConfig.retainTags ?? [])])]
-    : agentConfig.retainTags;
-
-  await client.retain(bankId, {
-    items: [{
-      content: transcript,
-      document_id: documentId,
-      metadata: {
-        retained_at: new Date().toISOString(),
-        message_count: String(messageCount),
-        channel_type: ctx?.messageProvider ?? '',
-        channel_id: ctx?.channelId ?? '',
-        sender_id: ctx?.senderId ?? '',
-      },
-      tags: retainTags,
-      context: agentConfig.retainContext,
-      observation_scopes: agentConfig.retainObservationScopes,
-      strategy,
-    }],
-    async: true,
-  });
 
   debug(`[Hindsight] Retained ${messageCount} messages to bank ${bankId} for session ${documentId}`);
 }

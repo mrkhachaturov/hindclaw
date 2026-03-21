@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { resolveRecallFilter, interleaveResults, handleRecall, extractRecallQuery, composeRecallQuery, truncateRecallQuery } from './recall.js';
+import { interleaveResults, handleRecall, extractRecallQuery, composeRecallQuery, truncateRecallQuery } from './recall.js';
+import { HindsightHttpError } from '../client.js';
 import type { ResolvedConfig, MemoryResult, PluginConfig, PluginHookAgentContext, RecallResponse, ReflectResponse } from '../types.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -23,18 +24,11 @@ function makeMemory(id: string, text: string, type = 'world'): MemoryResult {
 
 function makeClient() {
   return {
-    recall: vi.fn<(bankId: string, request: any, timeout?: number) => Promise<RecallResponse>>(),
-    reflect: vi.fn<(bankId: string, request: any) => Promise<ReflectResponse>>(),
+    recall: vi.fn<(bankId: string, request: any, timeout?: number, ctx?: any) => Promise<RecallResponse>>(),
+    reflect: vi.fn<(bankId: string, request: any, ctx?: any) => Promise<ReflectResponse>>(),
     // Stubs for unused client methods
     httpMode: true,
     retain: vi.fn(),
-    getBankConfig: vi.fn(),
-    updateBankConfig: vi.fn(),
-    resetBankConfig: vi.fn(),
-    listDirectives: vi.fn(),
-    createDirective: vi.fn(),
-    updateDirective: vi.fn(),
-    deleteDirective: vi.fn(),
     getMentalModel: vi.fn(),
     listMentalModels: vi.fn(),
     listTags: vi.fn(),
@@ -174,30 +168,6 @@ describe('truncateRecallQuery', () => {
   it('returns query unchanged when maxChars is 0', () => {
     const query = 'any query';
     expect(truncateRecallQuery(query, 'any query', 0)).toBe('any query');
-  });
-});
-
-// ── resolveRecallFilter ──────────────────────────────────────────────
-
-describe('resolveRecallFilter', () => {
-  it('returns empty array when no recallTags', () => {
-    const config: ResolvedConfig = { ...baseAgentConfig };
-    expect(resolveRecallFilter(config)).toEqual([]);
-  });
-
-  it('returns empty array when recallTags is empty', () => {
-    const config: ResolvedConfig = { ...baseAgentConfig, recallTags: [] };
-    expect(resolveRecallFilter(config)).toEqual([]);
-  });
-
-  it('converts recallTags to tag_groups leaf with default match=any', () => {
-    const config: ResolvedConfig = { ...baseAgentConfig, recallTags: ['personal', 'work'] };
-    expect(resolveRecallFilter(config)).toEqual([{ tags: ['personal', 'work'], match: 'any' }]);
-  });
-
-  it('uses recallTagsMatch from config', () => {
-    const config: ResolvedConfig = { ...baseAgentConfig, recallTags: ['a', 'b'], recallTagsMatch: 'all' };
-    expect(resolveRecallFilter(config)).toEqual([{ tags: ['a', 'b'], match: 'all' }]);
   });
 });
 
@@ -360,27 +330,6 @@ describe('handleRecall', () => {
     expect(result).toMatch(/^<hindsight_memories>\n/);
   });
 
-  it('passes tag_groups from resolveRecallFilter', async () => {
-    mockClient.recall.mockResolvedValue({ results: [makeMemory('m1', 'tagged')], entities: null, trace: null, chunks: null });
-
-    const config: ResolvedConfig = {
-      ...baseAgentConfig,
-      recallTags: ['health', 'fitness'],
-      recallTagsMatch: 'all',
-    };
-
-    await handleRecall(
-      { rawMessage: 'tag filtered query' },
-      baseCtx,
-      config,
-      mockClient,
-      basePluginConfig,
-    );
-
-    const [, request] = mockClient.recall.mock.calls[0];
-    expect(request.tag_groups).toEqual([{ tags: ['health', 'fitness'], match: 'all' }]);
-  });
-
   it('returns undefined when no results', async () => {
     mockClient.recall.mockResolvedValue({ results: [], entities: null, trace: null, chunks: null });
 
@@ -489,180 +438,131 @@ describe('handleRecall', () => {
     expect(request.query).toContain('tell me about dogs');
     expect(request.query).toContain('what about that?');
   });
-});
 
-// ── handleRecall — memory mode gating ───────────────────────────────
+  it('passes ctx to client.recall', async () => {
+    mockClient.recall.mockResolvedValue({ results: [makeMemory('m1', 'result')], entities: null, trace: null, chunks: null });
 
-describe('handleRecall — memory mode gating', () => {
-  it('skips recall when topic mode is "disabled"', async () => {
-    const client = makeClient();
-    const topicIndex = new Map([['12345', { strategy: 'silent', mode: 'disabled' as const }]]);
-    const agentConfig: ResolvedConfig = { ...baseAgentConfig, _topicIndex: topicIndex };
-    const ctxWithTopic: PluginHookAgentContext = {
-      ...baseCtx,
-      sessionKey: 'agent:yoda:main:thread:276243527:12345',
+    await handleRecall(
+      { rawMessage: 'tell me about X' },
+      baseCtx,
+      baseAgentConfig,
+      mockClient,
+      basePluginConfig,
+    );
+
+    // ctx is the 4th argument to client.recall (via recallWithDedup)
+    expect(mockClient.recall).toHaveBeenCalledOnce();
+    const callArgs = mockClient.recall.mock.calls[0];
+    expect(callArgs[3]).toBe(baseCtx);
+  });
+
+  it('passes ctx to client.reflect', async () => {
+    mockClient.reflect.mockResolvedValue({
+      text: 'Reflected insight',
+      based_on: ['m1'],
+    });
+
+    const config: ResolvedConfig = {
+      ...baseAgentConfig,
+      _reflectOnRecall: true,
     };
-    const event = { rawMessage: 'Hello there friend' };
 
-    const result = await handleRecall(event, ctxWithTopic, agentConfig, client as any, basePluginConfig);
+    await handleRecall(
+      { rawMessage: 'reflect on this' },
+      baseCtx,
+      config,
+      mockClient,
+      basePluginConfig,
+    );
 
-    expect(result).toBeUndefined();
-    expect(client.recall).not.toHaveBeenCalled();
-  });
-
-  it('proceeds with recall when topic mode is "recall"', async () => {
-    const client = makeClient();
-    client.recall.mockResolvedValue({ results: [makeMemory('m1', 'memory text')], entities: null, trace: null, chunks: null });
-    const topicIndex = new Map([['12345', { strategy: 'readonly', mode: 'recall' as const }]]);
-    const agentConfig: ResolvedConfig = { ...baseAgentConfig, _topicIndex: topicIndex };
-    const ctxWithTopic: PluginHookAgentContext = {
-      ...baseCtx,
-      sessionKey: 'agent:yoda:main:thread:276243527:12345',
-    };
-    const event = { rawMessage: 'What do you remember?' };
-
-    const result = await handleRecall(event, ctxWithTopic, agentConfig, client as any, basePluginConfig);
-
-    expect(client.recall).toHaveBeenCalled();
-    expect(result).toBeDefined();
-  });
-
-  it('proceeds with recall when topic mode is "full"', async () => {
-    const client = makeClient();
-    client.recall.mockResolvedValue({ results: [makeMemory('m1', 'memory text')], entities: null, trace: null, chunks: null });
-    const topicIndex = new Map([['280304', { strategy: 'deep-analysis', mode: 'full' as const }]]);
-    const agentConfig: ResolvedConfig = { ...baseAgentConfig, _topicIndex: topicIndex };
-    const ctxWithTopic: PluginHookAgentContext = {
-      ...baseCtx,
-      sessionKey: 'agent:yoda:main:thread:276243527:280304',
-    };
-    const event = { rawMessage: 'Recall something please' };
-
-    const result = await handleRecall(event, ctxWithTopic, agentConfig, client as any, basePluginConfig);
-
-    expect(client.recall).toHaveBeenCalled();
-    expect(result).toBeDefined();
-  });
-
-  it('skips recall when _defaultMode is "disabled" and no topic match', async () => {
-    const client = makeClient();
-    const agentConfig: ResolvedConfig = { ...baseAgentConfig, _defaultMode: 'disabled' as const };
-    const event = { rawMessage: 'Hello there friend' };
-
-    const result = await handleRecall(event, baseCtx, agentConfig, client as any, basePluginConfig);
-
-    expect(result).toBeUndefined();
-    expect(client.recall).not.toHaveBeenCalled();
-  });
-
-  it('proceeds when no memory section at all (backward compat)', async () => {
-    const client = makeClient();
-    client.recall.mockResolvedValue({ results: [makeMemory('m1', 'memory text')], entities: null, trace: null, chunks: null });
-    const agentConfig: ResolvedConfig = { ...baseAgentConfig };
-    const event = { rawMessage: 'Regular recall query' };
-
-    const result = await handleRecall(event, baseCtx, agentConfig, client as any, basePluginConfig);
-
-    expect(client.recall).toHaveBeenCalled();
-    expect(result).toBeDefined();
+    expect(mockClient.reflect).toHaveBeenCalledOnce();
+    const callArgs = mockClient.reflect.mock.calls[0];
+    expect(callArgs[2]).toBe(baseCtx);
   });
 });
 
-// ── handleRecall — permission-aware (v2.0.0) ─────────────────────────
+// ── handleRecall — 403 handling ──────────────────────────────────────
 
-import type { DiscoveryResult, GroupConfig, UserProfile } from '../permissions/types.js';
-
-function makeDiscovery(overrides?: Partial<DiscoveryResult>): DiscoveryResult {
-  const users = new Map<string, UserProfile>([
-    ['ruben', { displayName: 'Ruben', channels: { telegram: '123456' } }],
-  ]);
-  const groups = new Map<string, GroupConfig>([
-    ['_default', { displayName: 'Anonymous', members: [], recall: false, retain: false }],
-    ['executive', {
-      displayName: 'Executive', members: ['ruben'],
-      recall: true, retain: true, recallBudget: 'high' as const, recallMaxTokens: 2048,
-    }],
-  ]);
-  const channelIndex = new Map([['telegram:123456', 'ruben']]);
-  const membershipIndex = new Map([['ruben', ['executive']]]);
-  return {
-    banks: new Map([['yoda', {
-      bank_id: 'yoda',
-      permissions: {
-        groups: {
-          executive: { recall: true, retain: true },
-          _default: { recall: false, retain: false },
-        },
-      },
-    }]]),
-    groups, users, channelIndex, membershipIndex,
-    strategyIndex: new Map(),
-    ...overrides,
-  };
-}
-
-describe('handleRecall — permission-aware', () => {
+describe('handleRecall — 403 handling', () => {
   let mockClient: ReturnType<typeof makeClient>;
 
   beforeEach(() => {
     mockClient = makeClient();
   });
 
-  it('skips recall when permissions.recall is false', async () => {
-    const discovery = makeDiscovery();
-    // Unknown user → _default → recall: false
-    const ctx: PluginHookAgentContext = { ...baseCtx, senderId: '999999', messageProvider: 'telegram' };
+  it('returns undefined on 403 for single-bank recall', async () => {
+    mockClient.recall.mockRejectedValue(new HindsightHttpError(403, 'Forbidden'));
+
     const result = await handleRecall(
-      { rawMessage: 'tell me about stuff' }, ctx, baseAgentConfig, mockClient, basePluginConfig, discovery,
+      { rawMessage: 'tell me about X' },
+      baseCtx,
+      baseAgentConfig,
+      mockClient,
+      basePluginConfig,
     );
+
     expect(result).toBeUndefined();
-    expect(mockClient.recall).not.toHaveBeenCalled();
   });
 
-  it('passes recallTagGroups to API when permissions define them', async () => {
-    mockClient.recall.mockResolvedValue({ results: [makeMemory('m1', 'fact')], entities: null, trace: null, chunks: null });
-    const groups = new Map<string, GroupConfig>([
-      ['_default', { displayName: 'Anon', members: [], recall: false, retain: false }],
-      ['executive', {
-        displayName: 'Exec', members: ['ruben'], recall: true, retain: true,
-        recallTagGroups: [{ not: { tags: ['sensitivity:restricted'], match: 'any_strict' as const } }],
-      }],
-    ]);
-    const discovery = makeDiscovery({ groups });
-    const ctx: PluginHookAgentContext = { ...baseCtx, senderId: '123456', messageProvider: 'telegram' };
-    await handleRecall({ rawMessage: 'test query here' }, ctx, baseAgentConfig, mockClient, basePluginConfig, discovery);
-    expect(mockClient.recall).toHaveBeenCalledOnce();
-    const [, request] = mockClient.recall.mock.calls[0];
-    expect(request.tag_groups).toBeDefined();
-    expect(request.tag_groups).toHaveLength(1);
+  it('skips denied bank on 403 in multi-bank recall', async () => {
+    const mem = makeMemory('b1', 'From allowed bank');
+    mockClient.recall
+      .mockRejectedValueOnce(new HindsightHttpError(403, 'Forbidden'))
+      .mockResolvedValueOnce({ results: [mem], entities: null, trace: null, chunks: null });
+
+    const config: ResolvedConfig = {
+      ...baseAgentConfig,
+      _recallFrom: [{ bankId: 'bank-a' }, { bankId: 'bank-b' }],
+    };
+
+    const result = await handleRecall(
+      { rawMessage: 'multi bank 403 test' },
+      baseCtx,
+      config,
+      mockClient,
+      basePluginConfig,
+    );
+
+    expect(result).toContain('From allowed bank');
   });
 
-  it('uses permission budget/tokens over agentConfig', async () => {
-    mockClient.recall.mockResolvedValue({ results: [makeMemory('m1', 'fact')], entities: null, trace: null, chunks: null });
-    const discovery = makeDiscovery();
-    const agentConfig: ResolvedConfig = { ...baseAgentConfig, recallBudget: 'low' as const, recallMaxTokens: 512 };
-    const ctx: PluginHookAgentContext = { ...baseCtx, senderId: '123456', messageProvider: 'telegram' };
-    await handleRecall({ rawMessage: 'test query here' }, ctx, agentConfig, mockClient, basePluginConfig, discovery);
-    const [, request] = mockClient.recall.mock.calls[0];
-    expect(request.budget).toBe('high');
-    expect(request.max_tokens).toBe(2048);
+  it('returns undefined on 403 for reflect path', async () => {
+    mockClient.reflect.mockRejectedValue(new HindsightHttpError(403, 'Forbidden'));
+
+    const config: ResolvedConfig = {
+      ...baseAgentConfig,
+      _reflectOnRecall: true,
+    };
+
+    const result = await handleRecall(
+      { rawMessage: 'reflect on denied' },
+      baseCtx,
+      config,
+      mockClient,
+      basePluginConfig,
+    );
+
+    expect(result).toBeUndefined();
   });
 
-  it('recallTagGroups: null sends no tag_groups to API (no filter)', async () => {
-    mockClient.recall.mockResolvedValue({ results: [makeMemory('m1', 'fact')], entities: null, trace: null, chunks: null });
-    // executive group has recallTagGroups: null (default in makeDiscovery) = no filter
-    // bank also has recallTags that should NOT override null
-    const discovery = makeDiscovery();
-    const agentConfig: ResolvedConfig = { ...baseAgentConfig, recallTags: ['source:telegram'], recallTagsMatch: 'any' };
-    const ctx: PluginHookAgentContext = { ...baseCtx, senderId: '123456', messageProvider: 'telegram' };
-    await handleRecall({ rawMessage: 'test query here' }, ctx, agentConfig, mockClient, basePluginConfig, discovery);
-    const [, request] = mockClient.recall.mock.calls[0];
-    expect(request.tag_groups).toBeUndefined();  // null = no filter, not the v1.x recallTags
-  });
+  it('returns undefined when all banks return 403 in multi-bank', async () => {
+    mockClient.recall
+      .mockRejectedValueOnce(new HindsightHttpError(403, 'Forbidden'))
+      .mockRejectedValueOnce(new HindsightHttpError(403, 'Forbidden'));
 
-  it('falls back to v1.x behavior when discovery is null', async () => {
-    mockClient.recall.mockResolvedValue({ results: [makeMemory('m1', 'fact')], entities: null, trace: null, chunks: null });
-    await handleRecall({ rawMessage: 'test query here' }, baseCtx, baseAgentConfig, mockClient, basePluginConfig, null);
-    expect(mockClient.recall).toHaveBeenCalled();
+    const config: ResolvedConfig = {
+      ...baseAgentConfig,
+      _recallFrom: [{ bankId: 'bank-a' }, { bankId: 'bank-b' }],
+    };
+
+    const result = await handleRecall(
+      { rawMessage: 'all denied test' },
+      baseCtx,
+      config,
+      mockClient,
+      basePluginConfig,
+    );
+
+    expect(result).toBeUndefined();
   });
 });

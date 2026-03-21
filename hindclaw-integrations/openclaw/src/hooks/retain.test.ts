@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { stripMemoryTags } from '../utils.js';
 import { prepareRetentionTranscript, handleRetain } from './retain.js';
+import { HindsightHttpError } from '../client.js';
 import type { HindsightClient } from '../client.js';
 import type { ResolvedConfig, PluginConfig, PluginHookAgentContext } from '../types.js';
-import type { DiscoveryResult, GroupConfig, UserProfile } from '../permissions/types.js';
 
 // ── stripMemoryTags ───────────────────────────────────────────────────
 
@@ -204,10 +204,9 @@ describe('handleRetain', () => {
     expect(request.async).toBe(true);
   });
 
-  it('includes tags, context, and observation_scopes from agentConfig', async () => {
+  it('sends retainContext and retainObservationScopes from agentConfig', async () => {
     const event = makeEvent([{ role: 'user', content: 'Hi there friend' }]);
     const agentConfig: ResolvedConfig = {
-      retainTags: ['health', 'daily'],
       retainContext: { project: 'astromech', env: 'prod' },
       retainObservationScopes: ['fitness', 'sleep'],
     };
@@ -215,9 +214,28 @@ describe('handleRetain', () => {
     await handleRetain(event, ctx, agentConfig, client, pluginConfig);
 
     const [, request] = mockRetain.mock.calls[0];
-    expect(request.items[0].tags).toEqual(['health', 'daily']);
     expect(request.items[0].context).toEqual({ project: 'astromech', env: 'prod' });
     expect(request.items[0].observation_scopes).toEqual(['fitness', 'sleep']);
+  });
+
+  it('does not send tags in retain request', async () => {
+    const event = makeEvent([{ role: 'user', content: 'Hi there friend' }]);
+    const agentConfig: ResolvedConfig = {};
+
+    await handleRetain(event, ctx, agentConfig, client, pluginConfig);
+
+    const [, request] = mockRetain.mock.calls[0];
+    expect(request.items[0].tags).toBeUndefined();
+  });
+
+  it('does not send strategy in retain request', async () => {
+    const event = makeEvent([{ role: 'user', content: 'Hi there friend' }]);
+    const agentConfig: ResolvedConfig = {};
+
+    await handleRetain(event, ctx, agentConfig, client, pluginConfig);
+
+    const [, request] = mockRetain.mock.calls[0];
+    expect(request.items[0].strategy).toBeUndefined();
   });
 
   it('includes metadata with retained_at, message_count, channel_type, channel_id, sender_id', async () => {
@@ -300,167 +318,54 @@ describe('handleRetain', () => {
     expect(request.items[0].content).toContain('From session entry');
   });
 
-  it('skips retain when topic mode is "disabled"', async () => {
-    const event = makeEvent([{ role: 'user', content: 'Hello there friend' }]);
-    const topicIndex = new Map([['12345', { strategy: 'silent', mode: 'disabled' as const }]]);
-    const agentConfig: ResolvedConfig = { _topicIndex: topicIndex };
-    const ctxWithTopic: PluginHookAgentContext = {
-      ...ctx,
-      sessionKey: 'agent:yoda:main:thread:276243527:12345',
-    };
-
-    await handleRetain(event, ctxWithTopic, agentConfig, client, pluginConfig);
-
-    expect(mockRetain).not.toHaveBeenCalled();
-  });
-
-  it('skips retain when topic mode is "recall"', async () => {
-    const event = makeEvent([{ role: 'user', content: 'Hello there friend' }]);
-    const topicIndex = new Map([['12345', { strategy: 'readonly', mode: 'recall' as const }]]);
-    const agentConfig: ResolvedConfig = { _topicIndex: topicIndex };
-    const ctxWithTopic: PluginHookAgentContext = {
-      ...ctx,
-      sessionKey: 'agent:yoda:main:thread:276243527:12345',
-    };
-
-    await handleRetain(event, ctxWithTopic, agentConfig, client, pluginConfig);
-
-    expect(mockRetain).not.toHaveBeenCalled();
-  });
-
-  it('retains with strategy name when topic mode is "full"', async () => {
-    const event = makeEvent([{ role: 'user', content: 'Deep analysis topic' }]);
-    const topicIndex = new Map([['280304', { strategy: 'deep-analysis', mode: 'full' as const }]]);
-    const agentConfig: ResolvedConfig = { _topicIndex: topicIndex };
-    const ctxWithTopic: PluginHookAgentContext = {
-      ...ctx,
-      sessionKey: 'agent:yoda:main:thread:276243527:280304',
-    };
-
-    await handleRetain(event, ctxWithTopic, agentConfig, client, pluginConfig);
-
-    expect(mockRetain).toHaveBeenCalledOnce();
-    const [, request] = mockRetain.mock.calls[0];
-    expect(request.items[0].strategy).toBe('deep-analysis');
-  });
-
-  it('falls back to _defaultMode when topic not in index', async () => {
-    const event = makeEvent([{ role: 'user', content: 'Unknown topic msg' }]);
-    const topicIndex = new Map([['280304', { strategy: 'deep-analysis', mode: 'full' as const }]]);
-    const agentConfig: ResolvedConfig = { _topicIndex: topicIndex, _defaultMode: 'full' as const };
-    const ctxWithTopic: PluginHookAgentContext = {
-      ...ctx,
-      sessionKey: 'agent:yoda:main:thread:276243527:999999',
-    };
-
-    await handleRetain(event, ctxWithTopic, agentConfig, client, pluginConfig);
-
-    expect(mockRetain).toHaveBeenCalledOnce();
-    const [, request] = mockRetain.mock.calls[0];
-    expect(request.items[0].strategy).toBeUndefined();
-  });
-
-  it('skips retain when _defaultMode is "disabled" and no topic match', async () => {
-    const event = makeEvent([{ role: 'user', content: 'Hello there friend' }]);
-    const agentConfig: ResolvedConfig = { _defaultMode: 'disabled' as const };
-
-    await handleRetain(event, ctx, agentConfig, client, pluginConfig);
-
-    expect(mockRetain).not.toHaveBeenCalled();
-  });
-
-  it('proceeds with bank defaults when no memory section (backward compat)', async () => {
-    const event = makeEvent([{ role: 'user', content: 'Regular message here' }]);
+  it('passes ctx to client.retain', async () => {
+    const event = makeEvent([
+      { role: 'user', content: 'Hello there' },
+      { role: 'assistant', content: 'World' },
+    ]);
     const agentConfig: ResolvedConfig = {};
 
     await handleRetain(event, ctx, agentConfig, client, pluginConfig);
 
     expect(mockRetain).toHaveBeenCalledOnce();
-    const [, request] = mockRetain.mock.calls[0];
-    expect(request.items[0].strategy).toBeUndefined();
+    // ctx is the 3rd argument to client.retain
+    const callArgs = mockRetain.mock.calls[0];
+    expect(callArgs[2]).toBe(ctx);
   });
 });
 
-// ── handleRetain — permission-aware (v2.0.0) ─────────────────────────
+// ── handleRetain — 403 handling ──────────────────────────────────────
 
-function makeDiscovery(overrides?: Partial<DiscoveryResult>): DiscoveryResult {
-  const users = new Map<string, UserProfile>([
-    ['ruben', { displayName: 'Ruben', channels: { telegram: '123456' } }],
-    ['petya', { displayName: 'Petya', channels: { telegram: '345678' } }],
-  ]);
-  const groups = new Map<string, GroupConfig>([
-    ['_default', { displayName: 'Anonymous', members: [], recall: false, retain: false }],
-    ['executive', {
-      displayName: 'Executive', members: ['ruben'],
-      recall: true, retain: true,
-      retainRoles: ['user', 'assistant', 'tool'],
-      retainTags: ['role:executive'],
-    }],
-    ['staff', {
-      displayName: 'Staff', members: ['petya'],
-      recall: true, retain: true,
-      retainRoles: ['assistant'],
-      retainTags: ['role:staff'],
-    }],
-  ]);
-  const channelIndex = new Map([['telegram:123456', 'ruben'], ['telegram:345678', 'petya']]);
-  const membershipIndex = new Map([['ruben', ['executive']], ['petya', ['staff']]]);
-  return {
-    banks: new Map([['yoda', { bank_id: 'yoda' }]]),
-    groups, users, channelIndex, membershipIndex,
-    strategyIndex: new Map(),
-    ...overrides,
-  };
-}
+describe('handleRetain — 403 handling', () => {
+  it('returns early on 403 without throwing', async () => {
+    const mockRetain = vi.fn().mockRejectedValue(new HindsightHttpError(403, 'Forbidden'));
+    const client = { retain: mockRetain } as unknown as HindsightClient;
+    const ctx: PluginHookAgentContext = {
+      agentId: 'yoda',
+      sessionKey: 'test',
+      messageProvider: 'telegram',
+      channelId: 'c1',
+      senderId: 'user-1',
+    };
+    const event = { messages: [{ role: 'user', content: 'Hello there' }, { role: 'assistant', content: 'World' }] };
 
-describe('handleRetain — permission-aware', () => {
-  let mockRetain: ReturnType<typeof vi.fn>;
-  let client: HindsightClient;
-
-  beforeEach(() => {
-    mockRetain = vi.fn().mockResolvedValue({ message: 'ok', document_id: 'doc1', memory_unit_ids: [] });
-    client = { retain: mockRetain } as unknown as HindsightClient;
-  });
-
-  const makeEvent = (messages: Array<{ role: string; content: string }>) => ({ messages });
-
-  it('skips retain when permissions.retain is false', async () => {
-    const discovery = makeDiscovery();
-    const ctx: PluginHookAgentContext = { agentId: 'yoda', channelId: 'c1', senderId: '999999', messageProvider: 'telegram', sessionKey: 'test' };
-    const event = makeEvent([{ role: 'user', content: 'Hello there' }, { role: 'assistant', content: 'World' }]);
-    await handleRetain(event, ctx, {}, client, {}, discovery);
-    expect(mockRetain).not.toHaveBeenCalled();
-  });
-
-  it('uses permission retainRoles for transcript filtering', async () => {
-    const discovery = makeDiscovery();
-    // Petya (staff) has retainRoles: ["assistant"] — user messages should be excluded
-    const ctx: PluginHookAgentContext = { agentId: 'yoda', channelId: 'c1', senderId: '345678', messageProvider: 'telegram', sessionKey: 'test' };
-    const event = makeEvent([{ role: 'user', content: 'Dumb question' }, { role: 'assistant', content: 'Smart answer' }]);
-    await handleRetain(event, ctx, {}, client, {}, discovery);
+    // Should not throw
+    await handleRetain(event, ctx, {}, client, {});
     expect(mockRetain).toHaveBeenCalledOnce();
-    const [, request] = mockRetain.mock.calls[0];
-    expect(request.items[0].content).toContain('Smart answer');
-    expect(request.items[0].content).not.toContain('Dumb question');
   });
 
-  it('merges permission retainTags with bank retainTags', async () => {
-    const discovery = makeDiscovery();
-    const ctx: PluginHookAgentContext = { agentId: 'yoda', channelId: 'c1', senderId: '123456', messageProvider: 'telegram', sessionKey: 'test' };
-    const event = makeEvent([{ role: 'user', content: 'Hello there' }, { role: 'assistant', content: 'World' }]);
-    const agentConfig: ResolvedConfig = { retainTags: ['source:telegram'] };
-    await handleRetain(event, ctx, agentConfig, client, {}, discovery);
-    const [, request] = mockRetain.mock.calls[0];
-    const tags = request.items[0].tags;
-    expect(tags).toContain('role:executive');
-    expect(tags).toContain('user:ruben');
-    expect(tags).toContain('source:telegram');
-  });
+  it('rethrows non-403 errors', async () => {
+    const mockRetain = vi.fn().mockRejectedValue(new HindsightHttpError(500, 'Internal Server Error'));
+    const client = { retain: mockRetain } as unknown as HindsightClient;
+    const ctx: PluginHookAgentContext = {
+      agentId: 'yoda',
+      sessionKey: 'test',
+      messageProvider: 'telegram',
+      channelId: 'c1',
+      senderId: 'user-1',
+    };
+    const event = { messages: [{ role: 'user', content: 'Hello there' }, { role: 'assistant', content: 'World' }] };
 
-  it('falls back to v1.x behavior when discovery is null', async () => {
-    const ctx: PluginHookAgentContext = { agentId: 'yoda', channelId: 'c1', senderId: '123456', messageProvider: 'telegram', sessionKey: 'test' };
-    const event = makeEvent([{ role: 'user', content: 'Hello there' }, { role: 'assistant', content: 'World' }]);
-    await handleRetain(event, ctx, {}, client, {}, null);
-    expect(mockRetain).toHaveBeenCalled();
+    await expect(handleRetain(event, ctx, {}, client, {})).rejects.toThrow('Internal Server Error');
   });
 });

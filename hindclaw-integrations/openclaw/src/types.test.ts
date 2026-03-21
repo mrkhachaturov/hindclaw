@@ -224,9 +224,6 @@ describe('types – compile-time checks', () => {
       recallBudget: 'mid',
       dynamicBankId: true,
       dynamicBankGranularity: ['agent', 'channel'],
-      _serverConfig: {
-        retain_mission: 'Remember everything.',
-      },
       _recallFrom: [{ bankId: 'shared', budget: 'low' }],
       _sessionStartModels: [
         { type: 'mental_model', bankId: 'yoda', modelId: 'profile', label: 'Profile' },
@@ -235,7 +232,7 @@ describe('types – compile-time checks', () => {
       _reflectBudget: 'high',
       _reflectMaxTokens: 2048,
     };
-    expect(resolved._serverConfig).toBeDefined();
+    expect(resolved._recallFrom).toBeDefined();
   });
 
   it('RetainRequest with items array', () => {
