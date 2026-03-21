@@ -12,9 +12,9 @@ hindclaw/
 │   ├── hindclaw_ext/            #   TenantExtension, OperationValidatorExtension, HttpExtension
 │   └── tests/                   #   71 tests (pytest, mocked asyncpg)
 ├── hindclaw-integrations/
-│   └── openclaw/                # npm: hindclaw — OpenClaw plugin (TypeScript)
-│       ├── src/                 #   hooks (recall, retain, session-start), config, client, sync
-│       └── tests/               #   164 unit tests (vitest) + integration tests
+│   └── openclaw/                # npm: hindclaw-openclaw — OpenClaw plugin (TypeScript)
+│       ├── src/                 #   hooks (recall, retain, session-start), config, client
+│       └── tests/               #   176 unit tests (vitest) + integration tests
 ├── hindclaw-cli/src/            # CLI tool (TypeScript, being extracted)
 ├── hindclaw-docs/               # hindclaw.pro — Docusaurus documentation site
 ├── .github/workflows/           # publish-plugin.yml, publish-extension.yml, deploy-docs.yml
@@ -28,7 +28,7 @@ hindclaw/
 | Package | Language | Registry | Purpose |
 |---------|----------|----------|---------|
 | `hindclaw-extension` | Python | [PyPI](https://pypi.org/project/hindclaw-extension/) | Server-side access control extensions for Hindsight API |
-| `hindclaw` | TypeScript | [npm](https://www.npmjs.com/package/hindclaw) | OpenClaw integration plugin |
+| `hindclaw-openclaw` | TypeScript | [npm](https://www.npmjs.com/package/hindclaw-openclaw) | OpenClaw integration plugin |
 | `hindclaw-cli` | TypeScript | — | CLI for bank/permission management |
 
 ## Stack

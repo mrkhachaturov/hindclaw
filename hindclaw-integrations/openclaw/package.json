@@ -1,10 +1,7 @@
 {
-  "name": "hindclaw",
-  "version": "0.1.0",
-  "description": "Hindsight memory plugin for OpenClaw — per-user access control, per-agent config, multi-bank recall, IaC bank management",
-  "bin": {
-    "hindclaw": "dist/cli/index.js"
-  },
+  "name": "hindclaw-openclaw",
+  "version": "0.2.0",
+  "description": "Hindsight memory plugin for OpenClaw — JWT-authenticated, per-agent config, multi-bank recall",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
