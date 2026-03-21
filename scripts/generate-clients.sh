@@ -158,18 +158,155 @@ echo "Restoring maintained files..."
 [ -f "$TEMP_DIR/README.md" ] && mv "$TEMP_DIR/README.md" "$PYTHON_CLIENT_DIR/"
 rm -rf "$TEMP_DIR"
 
-# Patch rest.py for deferred aiohttp initialization if needed
+# Patch rest.py for deferred aiohttp initialization.
 # The generated code creates aiohttp.TCPConnector in __init__ which requires
-# a running event loop. See upstream generate-clients.sh lines 153-306.
+# a running event loop. Same patch as upstream generate-clients.sh.
+# Fix: move connector/session creation to a lazy _ensure_session() method.
 REST_FILE="$PYTHON_CLIENT_DIR/hindclaw_client_api/rest.py"
-if [ -f "$REST_FILE" ] && grep -q 'aiohttp.TCPConnector' "$REST_FILE"; then
-    echo "Checking if rest.py needs aiohttp deferred init patch..."
-    if grep -q 'def __init__.*configuration' "$REST_FILE" && ! grep -q '_ensure_session' "$REST_FILE"; then
-        echo "ERROR: rest.py needs aiohttp deferred init patch but auto-patching is not implemented."
-        echo "Apply the upstream pattern manually: build/hindsight/.upstream/scripts/generate-clients.sh lines 153-306"
-        echo "The fix: move aiohttp.TCPConnector creation from __init__ to a lazy _ensure_session() method."
-        exit 1
-    fi
+if [ -f "$REST_FILE" ] && grep -q 'aiohttp.TCPConnector' "$REST_FILE" && ! grep -q '_ensure_session' "$REST_FILE"; then
+    echo "Patching rest.py for deferred aiohttp initialization..."
+    python3 -c "
+import pathlib, sys
+
+rest = pathlib.Path('$REST_FILE')
+content = rest.read_text()
+
+# --- Patch 1: Replace __init__ with deferred init + _ensure_session + properties ---
+OLD_INIT = '''    def __init__(self, configuration) -> None:
+
+        # maxsize is number of requests to host that are allowed in parallel
+        maxsize = configuration.connection_pool_maxsize
+
+        ssl_context = ssl.create_default_context(
+            cafile=configuration.ssl_ca_cert
+        )
+        if configuration.cert_file:
+            ssl_context.load_cert_chain(
+                configuration.cert_file, keyfile=configuration.key_file
+            )
+
+        if not configuration.verify_ssl:
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+
+        connector = aiohttp.TCPConnector(
+            limit=maxsize,
+            ssl=ssl_context
+        )
+
+        self.proxy = configuration.proxy
+        self.proxy_headers = configuration.proxy_headers
+
+        # https pool manager
+        self.pool_manager = aiohttp.ClientSession(
+            connector=connector,
+            trust_env=True
+        )
+
+        retries = configuration.retries
+        self.retry_client: Optional[aiohttp_retry.RetryClient]
+        if retries is not None:
+            self.retry_client = aiohttp_retry.RetryClient(
+                client_session=self.pool_manager,
+                retry_options=aiohttp_retry.ExponentialRetry(
+                    attempts=retries,
+                    factor=2.0,
+                    start_timeout=0.1,
+                    max_timeout=120.0
+                )
+            )
+        else:
+            self.retry_client = None'''
+
+NEW_INIT = '''    def __init__(self, configuration) -> None:
+        # Store configuration for deferred initialization.
+        # aiohttp.TCPConnector requires a running event loop, so we defer
+        # creation until the first request (which runs in async context).
+        self._configuration = configuration
+        self._pool_manager: Optional[aiohttp.ClientSession] = None
+        self._retry_client: Optional[aiohttp_retry.RetryClient] = None
+
+        self.proxy = configuration.proxy
+        self.proxy_headers = configuration.proxy_headers
+
+    def _ensure_session(self) -> None:
+        \"\"\"Create aiohttp session lazily (must be called from async context).\"\"\"
+        if self._pool_manager is not None:
+            return
+
+        configuration = self._configuration
+        maxsize = configuration.connection_pool_maxsize
+
+        ssl_context = ssl.create_default_context(
+            cafile=configuration.ssl_ca_cert
+        )
+        if configuration.cert_file:
+            ssl_context.load_cert_chain(
+                configuration.cert_file, keyfile=configuration.key_file
+            )
+
+        if not configuration.verify_ssl:
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+
+        connector = aiohttp.TCPConnector(
+            limit=maxsize,
+            ssl=ssl_context
+        )
+
+        self._pool_manager = aiohttp.ClientSession(
+            connector=connector,
+            trust_env=True
+        )
+
+        retries = configuration.retries
+        if retries is not None:
+            self._retry_client = aiohttp_retry.RetryClient(
+                client_session=self._pool_manager,
+                retry_options=aiohttp_retry.ExponentialRetry(
+                    attempts=retries,
+                    factor=2.0,
+                    start_timeout=0.1,
+                    max_timeout=120.0
+                )
+            )
+
+    @property
+    def pool_manager(self) -> aiohttp.ClientSession:
+        \"\"\"Get the pool manager, initializing if needed.\"\"\"
+        self._ensure_session()
+        return self._pool_manager
+
+    @property
+    def retry_client(self) -> Optional[aiohttp_retry.RetryClient]:
+        \"\"\"Get the retry client, initializing if needed.\"\"\"
+        self._ensure_session()
+        return self._retry_client'''
+
+if OLD_INIT not in content:
+    print('WARNING: __init__ pattern not found in rest.py — generator output may have changed')
+    sys.exit(0)
+
+content = content.replace(OLD_INIT, NEW_INIT)
+
+# --- Patch 2: Replace close() with null-safe version ---
+OLD_CLOSE = '''    async def close(self):
+        await self.pool_manager.close()
+        if self.retry_client is not None:
+            await self.retry_client.close()'''
+
+NEW_CLOSE = '''    async def close(self):
+        if self._pool_manager is not None:
+            await self._pool_manager.close()
+        if self._retry_client is not None:
+            await self._retry_client.close()'''
+
+if OLD_CLOSE in content:
+    content = content.replace(OLD_CLOSE, NEW_CLOSE)
+
+rest.write_text(content)
+print('rest.py patched successfully')
+"
 fi
 
 echo "Python client generated at $PYTHON_CLIENT_DIR"
