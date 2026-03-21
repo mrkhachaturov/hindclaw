@@ -168,7 +168,7 @@ def test_create_group(client, admin_headers, mock_db_pool):
 
 
 def test_get_group(client, admin_headers, mock_db_pool):
-    """GET /ext/hindclaw/groups/:id returns group with permission fields."""
+    """GET /ext/hindclaw/groups/:id returns group with all GroupResponse fields."""
     _, pool = mock_db_pool
     pool.fetchrow = AsyncMock(return_value={
         "id": "engineering", "display_name": "Engineering",
@@ -186,9 +186,10 @@ def test_get_group(client, admin_headers, mock_db_pool):
     assert data["id"] == "engineering"
     assert data["recall"] is True
     assert data["recall_budget"] == "low"
-    # Verify permission fields are present in response
-    assert "retain_tags" in data
+    # JSONB string parsed into Python list by _row_to_group
+    assert data["retain_tags"] == ["department:engineering"]
     assert "retain_strategy" in data
+    assert "retain_roles" in data
 
 
 def test_get_group_not_found(client, admin_headers, mock_db_pool):
@@ -381,9 +382,12 @@ def test_get_user(client, admin_headers, mock_db_pool):
 
 
 def test_update_user(client, admin_headers, mock_db_pool):
-    """PUT /ext/hindclaw/users/:id updates and returns user."""
+    """PUT /ext/hindclaw/users/:id updates and returns full user."""
     _, pool = mock_db_pool
     pool.execute = AsyncMock(return_value="UPDATE 1")
+    pool.fetchrow = AsyncMock(return_value={
+        "id": "alice", "display_name": "Alice K.", "email": "alice@example.com",
+    })
 
     resp = client.put(
         "/ext/hindclaw/users/alice",
@@ -392,12 +396,13 @@ def test_update_user(client, admin_headers, mock_db_pool):
     )
     assert resp.status_code == 200
     assert resp.json()["display_name"] == "Alice K."
+    assert resp.json()["email"] == "alice@example.com"
 
 
 def test_update_user_not_found(client, admin_headers, mock_db_pool):
     """PUT /ext/hindclaw/users/:id returns 404 if user doesn't exist."""
     _, pool = mock_db_pool
-    pool.execute = AsyncMock(return_value="UPDATE 0")
+    pool.fetchrow = AsyncMock(return_value=None)  # UPDATE RETURNING yields None
 
     resp = client.put(
         "/ext/hindclaw/users/nobody",
@@ -408,9 +413,18 @@ def test_update_user_not_found(client, admin_headers, mock_db_pool):
 
 
 def test_update_group(client, admin_headers, mock_db_pool):
-    """PUT /ext/hindclaw/groups/:id updates group."""
+    """PUT /ext/hindclaw/groups/:id updates group and returns full GroupResponse."""
     _, pool = mock_db_pool
     pool.execute = AsyncMock(return_value="UPDATE 1")
+    pool.fetchrow = AsyncMock(return_value={
+        "id": "engineering", "display_name": "Engineering",
+        "recall": True, "retain": False, "retain_roles": None,
+        "retain_tags": None, "retain_every_n_turns": None,
+        "recall_budget": None, "recall_max_tokens": None,
+        "recall_tag_groups": None, "llm_model": None,
+        "llm_provider": None, "exclude_providers": None,
+        "retain_strategy": None,
+    })
 
     resp = client.put(
         "/ext/hindclaw/groups/engineering",
@@ -419,6 +433,7 @@ def test_update_group(client, admin_headers, mock_db_pool):
     )
     assert resp.status_code == 200
     assert resp.json()["recall"] is True
+    assert "retain_strategy" in resp.json()
 
 
 def test_delete_group(client, admin_headers, mock_db_pool_with_tx):
@@ -502,15 +517,17 @@ def test_delete_strategy(client, admin_headers, mock_db_pool):
 
 
 def test_list_api_keys(client, admin_headers, mock_db_pool):
-    """GET /ext/hindclaw/users/:id/api-keys returns key list."""
+    """GET /ext/hindclaw/users/:id/api-keys returns keys with masked values."""
     _, pool = mock_db_pool
     pool.fetch = AsyncMock(return_value=[
-        {"id": "k1", "api_key": "hc_alice_xxx", "description": "test"},
+        {"id": "k1", "api_key": "hc_alice_xxxxxxxxxxxx", "description": "test"},
     ])
 
     resp = client.get("/ext/hindclaw/users/alice/api-keys", headers=admin_headers)
     assert resp.status_code == 200
-    assert resp.json()[0]["api_key"].startswith("hc_alice")
+    assert "api_key_prefix" in resp.json()[0]
+    assert resp.json()[0]["api_key_prefix"].startswith("hc_alice_")
+    assert "api_key" not in resp.json()[0]  # full key not exposed in list
 
 
 def test_delete_api_key(client, admin_headers, mock_db_pool):

@@ -22,13 +22,26 @@ from hindclaw_ext.auth import decode_jwt
 from hindclaw_ext.http_models import (
     AddChannelRequest,
     AddMemberRequest,
+    ApiKeyCreateResponse,
+    ApiKeyResponse,
     BankPermissionRequest,
+    BankPermissionResponse,
+    ChannelResponse,
     CreateApiKeyRequest,
     CreateGroupRequest,
     CreateUserRequest,
+    GroupMemberResponse,
+    GroupMembershipConfirmation,
+    GroupResponse,
+    GroupSummaryResponse,
+    ResolvedPermissionsResponse,
     StrategyRequest,
+    StrategyScopeResponse,
+    StrategyUpsertConfirmation,
     UpdateGroupRequest,
     UpdateUserRequest,
+    UpsertConfirmation,
+    UserResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -40,6 +53,9 @@ _PERMISSION_COLUMNS = (
     "recall_budget", "recall_max_tokens", "recall_tag_groups",
     "llm_model", "llm_provider", "exclude_providers", "retain_strategy",
 )
+
+# Number of characters to show when masking API keys in list responses.
+_API_KEY_MASK_LENGTH = 12
 
 # Subset of _PERMISSION_COLUMNS that are JSONB — derived, not maintained separately.
 _JSONB_FIELDS = frozenset(c for c in _PERMISSION_COLUMNS if c.endswith(("_roles", "_tags", "_groups", "_providers")))
@@ -58,6 +74,26 @@ def _serialize_jsonb(data: dict) -> dict:
     for field in _JSONB_FIELDS:
         if field in result and result[field] is not None:
             result[field] = json.dumps(result[field])
+    return result
+
+
+def _parse_jsonb_row(row) -> dict:
+    """Convert an asyncpg row to a dict with parsed JSONB fields.
+
+    asyncpg returns JSONB columns as strings — Pydantic response models
+    expect Python lists/dicts. Only fields in ``_JSONB_FIELDS`` are parsed;
+    all others are passed through unchanged.
+
+    Args:
+        row: asyncpg Record from any hindclaw table query.
+
+    Returns:
+        Dict suitable for response model construction.
+    """
+    result = dict(row)
+    for field in _JSONB_FIELDS:
+        if field in result and isinstance(result[field], str):
+            result[field] = json.loads(result[field])
     return result
 
 
@@ -153,13 +189,13 @@ class HindclawHttp(HttpExtension):
 
         # --- Users ---
 
-        @router.get("/users")
+        @router.get("/users", response_model=list[UserResponse])
         async def list_users():
             pool = await db.get_pool()
             rows = await pool.fetch("SELECT id, display_name, email FROM hindclaw_users ORDER BY id")
             return [{"id": r["id"], "display_name": r["display_name"], "email": r["email"]} for r in rows]
 
-        @router.post("/users", status_code=201)
+        @router.post("/users", status_code=201, response_model=UserResponse)
         async def create_user(req: CreateUserRequest):
             pool = await db.get_pool()
             try:
@@ -171,7 +207,7 @@ class HindclawHttp(HttpExtension):
                 raise HTTPException(409, f"User {req.id} already exists")
             return {"id": req.id, "display_name": req.display_name, "email": req.email}
 
-        @router.get("/users/{user_id}")
+        @router.get("/users/{user_id}", response_model=UserResponse)
         async def get_user(user_id: str):
             pool = await db.get_pool()
             row = await pool.fetchrow("SELECT id, display_name, email FROM hindclaw_users WHERE id = $1", user_id)
@@ -179,7 +215,7 @@ class HindclawHttp(HttpExtension):
                 raise HTTPException(404, f"User {user_id} not found")
             return {"id": row["id"], "display_name": row["display_name"], "email": row["email"]}
 
-        @router.put("/users/{user_id}")
+        @router.put("/users/{user_id}", response_model=UserResponse)
         async def update_user(user_id: str, req: UpdateUserRequest):
             pool = await db.get_pool()
             updates = req.model_dump(exclude_none=True)
@@ -188,13 +224,13 @@ class HindclawHttp(HttpExtension):
             # Column names come from Pydantic model field names (not user input) — safe
             set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates.keys()))
             set_clause += ", updated_at = NOW()"
-            result = await pool.execute(
-                f"UPDATE hindclaw_users SET {set_clause} WHERE id = $1",
+            row = await pool.fetchrow(
+                f"UPDATE hindclaw_users SET {set_clause} WHERE id = $1 RETURNING id, display_name, email",
                 user_id, *updates.values(),
             )
-            if result == "UPDATE 0":
+            if not row:
                 raise HTTPException(404, f"User {user_id} not found")
-            return {"id": user_id, **updates}
+            return row
 
         @router.delete("/users/{user_id}", status_code=204)
         async def delete_user(user_id: str):
@@ -215,7 +251,7 @@ class HindclawHttp(HttpExtension):
 
         # --- User Channels ---
 
-        @router.get("/users/{user_id}/channels")
+        @router.get("/users/{user_id}/channels", response_model=list[ChannelResponse])
         async def list_user_channels(user_id: str):
             pool = await db.get_pool()
             rows = await pool.fetch(
@@ -223,7 +259,7 @@ class HindclawHttp(HttpExtension):
             )
             return [{"provider": r["provider"], "sender_id": r["sender_id"]} for r in rows]
 
-        @router.post("/users/{user_id}/channels", status_code=201)
+        @router.post("/users/{user_id}/channels", status_code=201, response_model=ChannelResponse)
         async def add_user_channel(user_id: str, req: AddChannelRequest):
             pool = await db.get_pool()
             try:
@@ -245,13 +281,13 @@ class HindclawHttp(HttpExtension):
 
         # --- Groups ---
 
-        @router.get("/groups")
+        @router.get("/groups", response_model=list[GroupSummaryResponse])
         async def list_groups():
             pool = await db.get_pool()
             rows = await pool.fetch("SELECT id, display_name FROM hindclaw_groups ORDER BY id")
             return [{"id": r["id"], "display_name": r["display_name"]} for r in rows]
 
-        @router.post("/groups", status_code=201)
+        @router.post("/groups", status_code=201, response_model=GroupSummaryResponse)
         async def create_group(req: CreateGroupRequest):
             pool = await db.get_pool()
             data = _serialize_jsonb(req.model_dump())
@@ -268,7 +304,7 @@ class HindclawHttp(HttpExtension):
                 raise HTTPException(409, f"Group {req.id} already exists")
             return {"id": req.id, "display_name": req.display_name}
 
-        @router.get("/groups/{group_id}")
+        @router.get("/groups/{group_id}", response_model=GroupResponse)
         async def get_group(group_id: str):
             pool = await db.get_pool()
             row = await pool.fetchrow(
@@ -281,9 +317,9 @@ class HindclawHttp(HttpExtension):
             )
             if not row:
                 raise HTTPException(404, f"Group {group_id} not found")
-            return dict(row)
+            return _parse_jsonb_row(row)
 
-        @router.put("/groups/{group_id}")
+        @router.put("/groups/{group_id}", response_model=GroupResponse)
         async def update_group(group_id: str, req: UpdateGroupRequest):
             pool = await db.get_pool()
             updates = req.model_dump(exclude_none=True)
@@ -293,13 +329,14 @@ class HindclawHttp(HttpExtension):
             # Column names come from Pydantic model field names (not user input) — safe
             set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(serialized.keys()))
             set_clause += ", updated_at = NOW()"
-            result = await pool.execute(
-                f"UPDATE hindclaw_groups SET {set_clause} WHERE id = $1",
+            cols = "id, display_name, " + ", ".join(_PERMISSION_COLUMNS)
+            row = await pool.fetchrow(
+                f"UPDATE hindclaw_groups SET {set_clause} WHERE id = $1 RETURNING {cols}",
                 group_id, *serialized.values(),
             )
-            if result == "UPDATE 0":
+            if not row:
                 raise HTTPException(404, f"Group {group_id} not found")
-            return {"id": group_id, **req.model_dump(exclude_none=True)}
+            return _parse_jsonb_row(row)
 
         @router.delete("/groups/{group_id}", status_code=204)
         async def delete_group(group_id: str):
@@ -320,7 +357,7 @@ class HindclawHttp(HttpExtension):
 
         # --- Group Members ---
 
-        @router.get("/groups/{group_id}/members")
+        @router.get("/groups/{group_id}/members", response_model=list[GroupMemberResponse])
         async def list_group_members(group_id: str):
             pool = await db.get_pool()
             rows = await pool.fetch(
@@ -328,7 +365,7 @@ class HindclawHttp(HttpExtension):
             )
             return [{"user_id": r["user_id"]} for r in rows]
 
-        @router.post("/groups/{group_id}/members", status_code=201)
+        @router.post("/groups/{group_id}/members", status_code=201, response_model=GroupMembershipConfirmation)
         async def add_group_member(group_id: str, req: AddMemberRequest):
             pool = await db.get_pool()
             await pool.execute(
@@ -347,7 +384,7 @@ class HindclawHttp(HttpExtension):
 
         # --- Bank Permissions ---
 
-        @router.get("/banks/{bank_id}/permissions")
+        @router.get("/banks/{bank_id}/permissions", response_model=list[BankPermissionResponse])
         async def list_bank_permissions(bank_id: str):
             pool = await db.get_pool()
             rows = await pool.fetch(
@@ -359,9 +396,9 @@ class HindclawHttp(HttpExtension):
                    WHERE bank_id = $1 ORDER BY scope_type, scope_id""",
                 bank_id,
             )
-            return [dict(r) for r in rows]
+            return [_parse_jsonb_row(r) for r in rows]
 
-        @router.get("/banks/{bank_id}/permissions/{scope_type}/{scope_id}")
+        @router.get("/banks/{bank_id}/permissions/{scope_type}/{scope_id}", response_model=BankPermissionResponse)
         async def get_bank_permission(bank_id: str, scope_type: str, scope_id: str):
             pool = await db.get_pool()
             row = await pool.fetchrow(
@@ -375,13 +412,13 @@ class HindclawHttp(HttpExtension):
             )
             if not row:
                 raise HTTPException(404, "Permission not found")
-            return dict(row)
+            return _parse_jsonb_row(row)
 
-        @router.put("/banks/{bank_id}/permissions/groups/{group_id}")
+        @router.put("/banks/{bank_id}/permissions/groups/{group_id}", response_model=UpsertConfirmation)
         async def upsert_group_bank_permission(bank_id: str, group_id: str, req: BankPermissionRequest):
             return await _upsert_bank_permission(bank_id, "group", group_id, req)
 
-        @router.put("/banks/{bank_id}/permissions/users/{user_id}")
+        @router.put("/banks/{bank_id}/permissions/users/{user_id}", response_model=UpsertConfirmation)
         async def upsert_user_bank_permission(bank_id: str, user_id: str, req: BankPermissionRequest):
             return await _upsert_bank_permission(bank_id, "user", user_id, req)
 
@@ -395,7 +432,7 @@ class HindclawHttp(HttpExtension):
 
         # --- Strategy Scopes ---
 
-        @router.get("/banks/{bank_id}/strategies")
+        @router.get("/banks/{bank_id}/strategies", response_model=list[StrategyScopeResponse])
         async def list_strategies(bank_id: str):
             pool = await db.get_pool()
             rows = await pool.fetch(
@@ -406,7 +443,7 @@ class HindclawHttp(HttpExtension):
             )
             return [dict(r) for r in rows]
 
-        @router.put("/banks/{bank_id}/strategies/{scope_type}/{scope_value}")
+        @router.put("/banks/{bank_id}/strategies/{scope_type}/{scope_value}", response_model=StrategyUpsertConfirmation)
         async def upsert_strategy(bank_id: str, scope_type: str, scope_value: str, req: StrategyRequest):
             pool = await db.get_pool()
             await pool.execute(
@@ -427,16 +464,20 @@ class HindclawHttp(HttpExtension):
 
         # --- API Keys ---
 
-        @router.get("/users/{user_id}/api-keys")
+        @router.get("/users/{user_id}/api-keys", response_model=list[ApiKeyResponse])
         async def list_api_keys(user_id: str):
+            """List API keys for a user. Keys are masked after creation."""
             pool = await db.get_pool()
             rows = await pool.fetch(
                 "SELECT id, api_key, description FROM hindclaw_api_keys WHERE user_id = $1 ORDER BY id",
                 user_id,
             )
-            return [{"id": r["id"], "api_key": r["api_key"], "description": r["description"]} for r in rows]
+            return [
+                {"id": r["id"], "api_key_prefix": r["api_key"][:_API_KEY_MASK_LENGTH] + "...", "description": r["description"]}
+                for r in rows
+            ]
 
-        @router.post("/users/{user_id}/api-keys", status_code=201)
+        @router.post("/users/{user_id}/api-keys", status_code=201, response_model=ApiKeyCreateResponse)
         async def create_api_key(user_id: str, req: CreateApiKeyRequest):
             pool = await db.get_pool()
             key_id = secrets.token_hex(8)
@@ -457,7 +498,7 @@ class HindclawHttp(HttpExtension):
 
         # --- Debug ---
 
-        @router.get("/debug/resolve")
+        @router.get("/debug/resolve", response_model=ResolvedPermissionsResponse)
         async def debug_resolve(
             bank: str = Query(...),
             sender: str | None = Query(None),
