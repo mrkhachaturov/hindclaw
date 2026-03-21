@@ -35,8 +35,9 @@ hindclaw-clients/
 
 ## Regeneration
 
+From the hindclaw repo root:
+
 ```bash
-cd build/hindclaw
 python scripts/extract-openapi.py > hindclaw-clients/openapi.json
 bash scripts/generate-clients.sh
 ```
@@ -47,11 +48,13 @@ This is fully automated:
 - Python `rest.py` is auto-patched for deferred aiohttp initialization (same fix as upstream Hindsight)
 - Maintained files are preserved via temp dir backup/restore
 
+Prerequisites: Docker, Go 1.18+, Node.js + npm, `pip install -e hindclaw-extension/` + `hindsight-api-slim`
+
 ## When to Regenerate
 
 Regenerate after any change to:
-- Route decorators in `hindclaw_ext/http.py` (new endpoints, changed paths)
-- Response/request models in `hindclaw_ext/http_models.py` (new fields, new models)
+- Route decorators in `hindclaw-extension/hindclaw_ext/http.py` (new endpoints, changed paths)
+- Response/request models in `hindclaw-extension/hindclaw_ext/http_models.py` (new fields, new models)
 - `response_model=` annotations on route decorators
 
 No regeneration needed for:
@@ -66,10 +69,3 @@ No regeneration needed for:
 - **TypeScript package**: `@hindclaw/client`, uses `tsup` for CJS/ESM/DTS build
 - **API class name**: `DefaultApi` (Go: `DefaultAPI`) — all endpoints under one class since no tags are set
 - **Security scheme**: `HTTPBearer` — clients use configured Bearer token, not per-method auth params
-
-## Upstream Reference
-
-Our pipeline mirrors upstream Hindsight's client generation:
-- Upstream script: `build/hindsight/.upstream/scripts/generate-clients.sh`
-- Upstream Go client: `build/hindsight/.upstream/hindsight-clients/go/`
-- Upstream Python config: `build/hindsight/.upstream/hindsight-clients/python/`
