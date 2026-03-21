@@ -1,14 +1,12 @@
 """Tests for hindclaw_ext.auth — shared JWT parsing."""
-import os
 import time
-from unittest.mock import patch
 
 import jwt as pyjwt
 import pytest
 
 from hindclaw_ext.auth import decode_jwt
 
-TEST_SECRET = "test-secret-key-for-auth-tests"
+TEST_SECRET = "test-secret-key-for-auth-tests!!"
 
 
 def _make_jwt(claims: dict, secret: str = TEST_SECRET) -> str:

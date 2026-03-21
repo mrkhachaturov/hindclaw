@@ -1,7 +1,7 @@
 """Tests for hindclaw_ext.resolver — 4-step permission resolution."""
+from unittest.mock import patch
+
 import pytest
-import pytest_asyncio
-from unittest.mock import AsyncMock, patch
 
 from hindclaw_ext.models import GroupRecord, BankPermissionRecord, ResolvedPermissions
 from hindclaw_ext.resolver import resolve

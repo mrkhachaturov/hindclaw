@@ -141,7 +141,7 @@ async def get_pool() -> asyncpg.Pool:
         return _pool
 
 
-def _parse_json(val) -> list | dict | None:
+def _parse_json(val: str | list | dict | None) -> list | dict | None:
     """Parse JSONB value from asyncpg row.
 
     asyncpg may return JSONB columns as strings depending on driver version.
