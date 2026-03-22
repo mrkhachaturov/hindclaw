@@ -28,20 +28,6 @@ src/
 │   ├── recall.ts         # before_prompt_build (single + multi-bank + reflect)
 │   ├── retain.ts         # agent_end (tags, context, observation_scopes)
 │   └── session-start.ts  # session_start (mental models)
-├── sync/
-│   ├── plan.ts           # Diff engine: file vs server state
-│   ├── apply.ts          # Execute changeset against Hindsight API
-│   ├── import.ts         # Pull server state into local file
-│   └── bootstrap.ts      # First-run apply if bank is empty
-├── permissions/
-│   ├── types.ts          # User, Group, Permission types + validation
-│   ├── discovery.ts      # Config directory scanner + index builder
-│   ├── resolver.ts       # 4-step permission resolution algorithm
-│   ├── merge.ts          # Group merge rules
-│   └── index.ts          # Barrel export
-├── cli/
-│   ├── index.ts          # hindclaw CLI entry point
-│   └── init.ts           # hindclaw init command
 ├── embed-manager.ts      # Local daemon lifecycle
 ├── derive-bank-id.ts     # Bank ID derivation
 └── format.ts             # Memory formatting

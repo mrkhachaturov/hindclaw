@@ -54,7 +54,7 @@ The profile name `openclaw` matters -- hindclaw uses it to manage the daemon lif
 ## Step 2: Install the hindclaw plugin
 
 ```bash
-openclaw plugins install hindclaw
+openclaw plugins install hindclaw-openclaw
 ```
 
 This downloads the plugin from npm and registers it in your OpenClaw config.
