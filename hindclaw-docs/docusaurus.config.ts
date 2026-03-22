@@ -144,6 +144,10 @@ const config: Config = {
         { name: 'ChatGPT', url: 'https://chatgpt.com/?q={prompt}', icon: 'chatgpt' },
         { name: 'Claude', url: 'https://claude.ai/new?q={prompt}', icon: 'claude' },
       ],
+      skill: {
+        command: 'npx skills add https://github.com/mrkhachaturov/hindclaw --skill hindclaw-docs',
+        name: 'HindClaw docs',
+      },
     },
     image: 'img/hindclaw-social-card.png',
     colorMode: {
