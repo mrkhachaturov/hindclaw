@@ -4,7 +4,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'hindclaw',
-  tagline: 'Pro Hindsight plugin for OpenClaw',
+  tagline: 'Production memory infrastructure for AI agents',
   favicon: 'img/favicon.ico',
 
   future: {
