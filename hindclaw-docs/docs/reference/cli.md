@@ -109,5 +109,5 @@ These options are available on all commands.
 | `--auto-approve` | `-y` | Skip the confirmation prompt (applies to `apply` only). |
 
 :::note
-The CLI manages **bank configurations** only — missions, dispositions, entity labels, directives, and strategies. Users, groups, and permissions are managed via the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) or the REST API at `/ext/hindclaw/*`. See [Access Control](/guides/access-control) for details.
+The CLI manages **bank configurations** only — missions, dispositions, entity labels, directives, and strategies. Users, groups, and permissions are managed via the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) or the REST API at `/ext/hindclaw/*`. See [Access Control](../guides/access-control) for details.
 :::
