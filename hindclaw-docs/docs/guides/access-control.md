@@ -65,10 +65,10 @@ The extension accepts two token formats in the `Authorization` header:
 ```json
 {
   "client_id": "openclaw-prod",
-  "sender": "telegram:789012",
-  "agent": "yoda",
+  "sender": "telegram:123456",
+  "agent": "my-agent",
   "channel": "telegram",
-  "topic": "280304",
+  "topic": "99001",
   "iat": 1711000000,
   "exp": 1711000300
 }
@@ -103,10 +103,10 @@ sequenceDiagram
 
     C->>T: POST /v1/.../recall<br/>Authorization: Bearer <jwt>
     T->>T: Decode JWT, validate signature
-    T->>T: sender telegram:789012 -> DB lookup -> user "vagan"
-    T->>T: Set tenant_id = "vagan", store claims in contextvar
+    T->>T: sender telegram:123456 -> DB lookup -> user "alice"
+    T->>T: Set tenant_id = "alice", store claims in contextvar
     T->>V: Pass to validator
-    V->>V: Resolve permissions:<br/>vagan + bank yoda + groups + cascade
+    V->>V: Resolve permissions:<br/>alice + bank my-agent + groups + cascade
     V->>V: recall=true, tag_groups=[NOT restricted]
 
     alt Permitted
@@ -274,18 +274,18 @@ Client-enforced fields are still stored in the database and returned by the debu
 Each bank can override group defaults for specific groups or users. This is how the same user gets different behavior on different agents.
 
 ```hcl
-# On Yoda: staff can recall but not retain
-resource "hindclaw_bank_permission" "yoda_staff" {
-  bank_id    = "yoda"
+# On advisor bank: staff can recall but not retain
+resource "hindclaw_bank_permission" "advisor_staff" {
+  bank_id    = "advisor"
   scope_type = "group"
   scope_id   = hindclaw_group.staff.id
   recall     = true
   retain     = false
 }
 
-# On K2SO: Bob gets elevated recall
-resource "hindclaw_bank_permission" "k2so_bob" {
-  bank_id           = "k2so"
+# On ops-agent bank: Bob gets elevated recall
+resource "hindclaw_bank_permission" "ops_bob" {
+  bank_id           = "ops-agent"
   scope_type        = "user"
   scope_id          = hindclaw_user.bob.id
   recall_budget     = "high"
@@ -308,7 +308,7 @@ graph LR
     A["agent<br/>(bank default)"] --> B["channel<br/>(telegram, slack)"]
     B --> C["topic<br/>(topic ID)"]
     C --> D["group<br/>(dept-head, sales)"]
-    D --> E["user<br/>(vagan, alice)"]
+    D --> E["user<br/>(alice, bob)"]
 
     style A fill:#64748b,color:#fff,stroke:#64748b
     style B fill:#6366f1,color:#fff,stroke:#6366f1
@@ -320,40 +320,40 @@ graph LR
 Strategy scopes are managed per-bank via Terraform:
 
 ```hcl
-# Default strategy for all Yoda traffic
-resource "hindclaw_strategy_scope" "yoda_agent" {
-  bank_id     = "yoda"
+# Default strategy for all advisor traffic
+resource "hindclaw_strategy_scope" "advisor_agent" {
+  bank_id     = "advisor"
   scope_type  = "agent"
-  scope_value = "yoda"
+  scope_value = "advisor"
   strategy    = "general"
 }
 
 # Telegram channel gets a different strategy
-resource "hindclaw_strategy_scope" "yoda_telegram" {
-  bank_id     = "yoda"
+resource "hindclaw_strategy_scope" "advisor_telegram" {
+  bank_id     = "advisor"
   scope_type  = "channel"
   scope_value = "telegram"
   strategy    = "chat-extract"
 }
 
 # Specific topic gets a project-focused strategy
-resource "hindclaw_strategy_scope" "yoda_topic_280304" {
-  bank_id     = "yoda"
+resource "hindclaw_strategy_scope" "advisor_topic_99001" {
+  bank_id     = "advisor"
   scope_type  = "topic"
-  scope_value = "280304"
+  scope_value = "99001"
   strategy    = "project-alpha"
 }
 
 # A specific user always uses their personal strategy
-resource "hindclaw_strategy_scope" "yoda_vagan" {
-  bank_id     = "yoda"
+resource "hindclaw_strategy_scope" "advisor_alice" {
+  bank_id     = "advisor"
   scope_type  = "user"
-  scope_value = "vagan"
-  strategy    = "vagan-personal"
+  scope_value = "alice"
+  strategy    = "alice-personal"
 }
 ```
 
-The resolver picks the most specific matching scope. If user `vagan` sends a message in Telegram topic `280304` on bank `yoda`, the cascade checks (most specific first): user `vagan` > group membership > topic `280304` > channel `telegram` > agent `yoda`. The first match wins.
+The resolver picks the most specific matching scope. If user `alice` sends a message in Telegram topic `99001` on bank `advisor`, the cascade checks (most specific first): user `alice` > group membership > topic `99001` > channel `telegram` > agent `advisor`. The first match wins.
 
 ## The resolution algorithm
 
@@ -390,7 +390,7 @@ graph TD
 
 The steps in detail:
 
-1. **Resolve identity** -- The TenantExtension decodes the JWT and extracts `sender` (e.g., `telegram:789012`). It looks up the `hindclaw_user_channels` table to find the canonical user. If no match, the user is anonymous (`_anonymous`).
+1. **Resolve identity** -- The TenantExtension decodes the JWT and extracts `sender` (e.g., `telegram:123456`). It looks up the `hindclaw_user_channels` table to find the canonical user. If no match, the user is anonymous (`_anonymous`).
 
 2. **Merge global groups** -- Find all groups the user belongs to via `hindclaw_group_members`. Merge their permissions using the rules below. If the user is anonymous, only `_default` applies.
 
@@ -460,13 +460,13 @@ The debug endpoint resolves permissions for a given context without executing an
 
 ```json
 {
-  "user_id": "vagan",
+  "user_id": "alice",
   "is_anonymous": false,
-  "groups": ["dept-head", "motors"],
+  "groups": ["executives", "sales-team"],
   "recall": true,
   "retain": false,
   "retain_roles": ["user", "assistant"],
-  "retain_tags": ["role:dept-head", "department:motors", "user:vagan"],
+  "retain_tags": ["role:executive", "department:sales", "user:alice"],
   "retain_every_n_turns": 1,
   "retain_strategy": "project-alpha",
   "recall_budget": "mid",
@@ -478,15 +478,15 @@ The debug endpoint resolves permissions for a given context without executing an
   "llm_provider": null,
   "exclude_providers": [],
   "resolution_trace": {
-    "identity": "telegram:789012 -> vagan",
-    "global_groups": ["dept-head", "motors"],
+    "identity": "telegram:123456 -> alice",
+    "global_groups": ["executives", "sales-team"],
     "bank_overrides": {
-      "group:dept-head": {"retain": false},
-      "user:vagan": null
+      "group:executives": {"retain": false},
+      "user:alice": null
     },
     "strategy_cascade": {
       "matched_scope": "topic",
-      "matched_value": "280304",
+      "matched_value": "99001",
       "strategy": "project-alpha"
     }
   }
@@ -499,7 +499,7 @@ The `resolution_trace` section shows exactly how each step contributed to the fi
 
 Three users, two agents, different access:
 
-| | yoda (strategic) | k2so (operations) |
+| | advisor (strategic) | ops-agent (operations) |
 |---|---|---|
 | **alice** (executive) | recall + retain, high budget, no tag filter | recall + retain, high budget, no tag filter |
 | **bob** (staff, sales) | recall only (bank override), mid budget | recall + retain, high budget (user override) |
@@ -563,17 +563,17 @@ resource "hindclaw_group_membership" "bob_staff" {
 }
 
 # 5. Bank-level overrides
-# Yoda: staff cannot retain
-resource "hindclaw_bank_permission" "yoda_staff" {
-  bank_id    = "yoda"
+# advisor: staff cannot retain
+resource "hindclaw_bank_permission" "advisor_staff" {
+  bank_id    = "advisor"
   scope_type = "group"
   scope_id   = hindclaw_group.staff.id
   retain     = false
 }
 
-# K2SO: Bob gets elevated recall
-resource "hindclaw_bank_permission" "k2so_bob" {
-  bank_id           = "k2so"
+# ops-agent: Bob gets elevated recall
+resource "hindclaw_bank_permission" "ops_bob" {
+  bank_id           = "ops-agent"
   scope_type        = "user"
   scope_id          = hindclaw_user.bob.id
   recall_budget     = "high"

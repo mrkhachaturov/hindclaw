@@ -170,27 +170,21 @@ Once the extension is running, manage users, groups, and permissions via the [Te
 ## Step 5: Restart the gateway
 
 ```bash
-openclaw gateway
-```
-
-Or if you are running via systemd:
-
-```bash
-just restart
+openclaw restart
 ```
 
 Watch the logs for confirmation that hindclaw initialized:
 
 ```bash
-just logs
+openclaw logs
 ```
 
 You should see lines like:
 
 ```
 [Hindsight] Plugin initialized
-[Hindsight] Bootstrap: checking bank yoda config...
-[Hindsight] Bootstrap: applying 5 config fields to bank yoda
+[Hindsight] Bootstrap: checking bank my-agent config...
+[Hindsight] Bootstrap: applying 5 config fields to bank my-agent
 ```
 
 If you see errors about the daemon not running, verify that `hindsight-embed` is installed and the `openclaw` profile was configured correctly:

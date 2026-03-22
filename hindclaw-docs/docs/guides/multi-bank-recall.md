@@ -13,9 +13,9 @@ When an agent with `recallFrom` configured receives a message, it sends the same
 
 ```mermaid
 graph LR
-    Q["Agent recall query"] --> B1["bank: yoda"]
-    Q --> B2["bank: k2so"]
-    Q --> B3["bank: c3po"]
+    Q["Agent recall query"] --> B1["bank: my-agent"]
+    Q --> B2["bank: ops-agent"]
+    Q --> B3["bank: kb-agent"]
     B1 -->|recall: true| R1["results"]
     B2 -->|recall: true| R2["results"]
     B3 -->|recall: false| SKIP["skipped"]
@@ -42,9 +42,9 @@ Add `recallFrom` to the agent's config in the plugin config. Each entry specifie
 // In openclaw.json plugin config, agents section
 {
   "recallFrom": [
-    { "bankId": "yoda" },
-    { "bankId": "k2so", "budget": "low", "maxTokens": 512 },
-    { "bankId": "c3po", "budget": "low", "maxTokens": 512 }
+    { "bankId": "my-agent" },
+    { "bankId": "ops-agent", "budget": "low", "maxTokens": 512 },
+    { "bankId": "kb-agent", "budget": "low", "maxTokens": 512 }
   ],
   "recallBudget": "high",
   "recallMaxTokens": 2048
@@ -71,7 +71,7 @@ Fields not specified fall back to the agent's top-level `recallBudget` and `reca
 
 When access control is active, permissions are checked independently for each target bank. The requesting user must have `recall: true` on each bank they read from.
 
-If the current user has `recall: false` on bank `c3po` (resolved through the [permission resolution algorithm](./access-control.md#the-resolution-algorithm)), that bank is silently skipped. The agent still recalls from the remaining permitted banks.
+If the current user has `recall: false` on bank `kb-agent` (resolved through the [permission resolution algorithm](./access-control.md#the-resolution-algorithm)), that bank is silently skipped. The agent still recalls from the remaining permitted banks.
 
 This means cross-agent recall respects the same access control rules as single-bank recall. No unauthorized cross-reads.
 
@@ -101,9 +101,9 @@ A practical pattern is to give the agent's own bank a higher budget and secondar
 // In openclaw.json plugin config, agents section
 {
   "recallFrom": [
-    { "bankId": "yoda", "budget": "high", "maxTokens": 2048 },
-    { "bankId": "k2so", "budget": "low", "maxTokens": 256 },
-    { "bankId": "c3po", "budget": "low", "maxTokens": 256 }
+    { "bankId": "my-agent", "budget": "high", "maxTokens": 2048 },
+    { "bankId": "ops-agent", "budget": "low", "maxTokens": 256 },
+    { "bankId": "kb-agent", "budget": "low", "maxTokens": 256 }
   ]
 }
 ```
@@ -116,13 +116,13 @@ Concurrent recall requests for the same bank and query are deduplicated automati
 
 ## Practical example
 
-A CEO advisor agent (yoda) that draws from the operations agent (k2so) and the knowledge librarian (c3po):
+An advisor agent (`my-agent`) that draws from the operations agent (`ops-agent`) and the knowledge base agent (`kb-agent`):
 
 The bank's retain mission is managed via Terraform:
 
 ```hcl
-resource "hindclaw_bank_config" "yoda" {
-  bank_id = "yoda"
+resource "hindclaw_bank_config" "my_agent" {
+  bank_id = "my-agent"
   config = jsonencode({
     retain_mission = "Extract strategic decisions and cross-departmental patterns."
   })
@@ -132,16 +132,16 @@ resource "hindclaw_bank_config" "yoda" {
 And the multi-bank recall is configured in the plugin config:
 
 ```json5
-// In openclaw.json plugin config, agents section for yoda
+// In openclaw.json plugin config, agents section for my-agent
 {
   "recallFrom": [
-    { "bankId": "yoda" },
-    { "bankId": "k2so", "budget": "low", "maxTokens": 512 },
-    { "bankId": "c3po", "budget": "low", "maxTokens": 512 }
+    { "bankId": "my-agent" },
+    { "bankId": "ops-agent", "budget": "low", "maxTokens": 512 },
+    { "bankId": "kb-agent", "budget": "low", "maxTokens": 512 }
   ],
   "recallBudget": "high",
   "recallMaxTokens": 2048
 }
 ```
 
-When alice asks yoda "What did we decide about the office expansion?", yoda sends the query to all three banks in parallel, checks alice's permissions on each, interleaves the results, and injects them into the prompt. The response draws on yoda's strategic context, k2so's operational details, and c3po's documented knowledge.
+When a user asks the advisor "What did we decide about the office expansion?", the agent sends the query to all three banks in parallel, checks the user's permissions on each, interleaves the results, and injects them into the prompt. The response draws on the advisor's strategic context, the operations agent's details, and the knowledge base agent's documented knowledge.

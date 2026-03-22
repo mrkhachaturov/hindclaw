@@ -129,18 +129,18 @@ resource "hindclaw_group_membership" "bob_sales" {
 ### Bank-level permission overrides
 
 ```hcl
-# On Yoda: staff can recall but not retain
-resource "hindclaw_bank_permission" "yoda_staff" {
-  bank_id    = "yoda"
+# On advisor bank: staff can recall but not retain
+resource "hindclaw_bank_permission" "advisor_staff" {
+  bank_id    = "advisor"
   scope_type = "group"
   scope_id   = hindclaw_group.staff.id
   recall     = true
   retain     = false
 }
 
-# On K2SO: Bob gets elevated recall
-resource "hindclaw_bank_permission" "k2so_bob" {
-  bank_id           = "k2so"
+# On ops-agent bank: Bob gets elevated recall
+resource "hindclaw_bank_permission" "ops_bob" {
+  bank_id           = "ops-agent"
   scope_type        = "user"
   scope_id          = hindclaw_user.bob.id
   recall_budget     = "high"
