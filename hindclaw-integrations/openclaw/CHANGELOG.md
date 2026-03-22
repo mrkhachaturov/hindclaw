@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.0] - 2026-03-21
+## [0.1.0] - 2026-03-21
 
 ### Added
 - **JWT authentication** — per-request HMAC-SHA256 JWTs from OpenClaw hook context (replaces static API token)
