@@ -153,6 +153,47 @@ async def test_reflect_uses_recall_permission():
 
 
 @pytest.mark.asyncio
+async def test_internal_worker_reflect_bypasses_permissions():
+    """Internal worker reflect calls bypass user permission checks."""
+    validator = HindclawValidator({})
+    ctx = FakeReflectContext(tenant_id="_anonymous")
+
+    with patch("hindclaw_ext.validator.resolver.resolve") as resolve_mock:
+        result = await validator.validate_reflect(ctx)
+
+    assert result.allowed is True
+    resolve_mock.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_internal_worker_recall_bypasses_permissions():
+    """Internal worker recall calls bypass user permission checks."""
+    validator = HindclawValidator({})
+    ctx = FakeRecallContext(tenant_id="_anonymous")
+
+    with patch("hindclaw_ext.validator.resolver.resolve") as resolve_mock:
+        result = await validator.validate_recall(ctx)
+
+    assert result.allowed is True
+    resolve_mock.assert_not_called()
+    assert result.tag_groups is None
+
+
+@pytest.mark.asyncio
+async def test_internal_worker_retain_bypasses_permissions():
+    """Internal worker retain calls bypass user permission checks."""
+    validator = HindclawValidator({})
+    ctx = FakeRetainContext(tenant_id="_anonymous")
+
+    with patch("hindclaw_ext.validator.resolver.resolve") as resolve_mock:
+        result = await validator.validate_retain(ctx)
+
+    assert result.allowed is True
+    resolve_mock.assert_not_called()
+    assert result.contents is None
+
+
+@pytest.mark.asyncio
 async def test_recall_no_tag_groups():
     """Recall with no tag_groups returns accept (not accept_with)."""
     validator = HindclawValidator({})

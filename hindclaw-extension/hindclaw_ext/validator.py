@@ -48,6 +48,19 @@ class HindclawValidator(OperationValidatorExtension):
     See spec Section 6.
     """
 
+    def _is_internal_server_call(self, request_context) -> bool:
+        """Return True for trusted server-internal worker operations.
+
+        Internal background jobs (for example mental model refresh) do not come
+        through the HTTP auth path, so there is no Authorization token on the
+        request context and no JWT claims in the contextvar. These calls are
+        issued by the server itself and should bypass user permission checks.
+        """
+        api_key = getattr(request_context, "api_key", None)
+        tenant_id = getattr(request_context, "tenant_id", None)
+        claims = _jwt_claims.get({})
+        return not api_key and not claims and tenant_id in (None, "_anonymous")
+
     async def validate_recall(self, ctx: RecallContext) -> ValidationResult:
         """Validate a recall operation before execution.
 
@@ -60,6 +73,9 @@ class HindclawValidator(OperationValidatorExtension):
         Returns:
             ValidationResult — accept (with optional tag_groups) or reject.
         """
+        if self._is_internal_server_call(ctx.request_context):
+            return ValidationResult.accept()
+
         user_id = ctx.request_context.tenant_id
         claims = _jwt_claims.get({})
 
@@ -94,6 +110,9 @@ class HindclawValidator(OperationValidatorExtension):
         Returns:
             ValidationResult — accept_with(contents=enriched) or reject.
         """
+        if self._is_internal_server_call(ctx.request_context):
+            return ValidationResult.accept()
+
         user_id = ctx.request_context.tenant_id
         claims = _jwt_claims.get({})
 
@@ -132,6 +151,9 @@ class HindclawValidator(OperationValidatorExtension):
         Returns:
             ValidationResult — accept or reject.
         """
+        if self._is_internal_server_call(ctx.request_context):
+            return ValidationResult.accept()
+
         user_id = ctx.request_context.tenant_id
         perms = await resolver.resolve(user_id=user_id, bank_id=ctx.bank_id)
 
