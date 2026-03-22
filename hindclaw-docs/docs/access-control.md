@@ -1,6 +1,6 @@
 # Access Control
 
-Layered permission model: users belong to groups, groups define defaults, banks override per-group or per-user. All access control data lives in the Hindsight PostgreSQL database and is managed through the REST API at `/ext/hindclaw/*` or the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw).
+Layered permission model: users belong to groups, groups define defaults, banks override per-group or per-user. All access control data lives in the Hindsight PostgreSQL database and is managed through the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw).
 
 There are no config files for access control. See the [Access Control Guide](./guides/access-control) for a full walkthrough.
 
@@ -146,80 +146,6 @@ resource "hindclaw_bank_permission" "k2so_bob" {
   recall_budget     = "high"
   recall_max_tokens = 2048
 }
-```
-
-## Managing with the REST API
-
-The same operations are available via HTTP at `/ext/hindclaw/*`. All requests require an admin JWT or API key in the `Authorization` header.
-
-### Users and channel mappings
-
-```bash
-# Create user
-curl -X POST https://hindsight.home.local/ext/hindclaw/users \
-  -H "Authorization: Bearer $ADMIN_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"id": "alice", "display_name": "Alice", "email": "alice@example.com"}'
-
-# Add channel mapping
-curl -X POST https://hindsight.home.local/ext/hindclaw/users/alice/channels \
-  -H "Authorization: Bearer $ADMIN_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"provider": "telegram", "sender_id": "123456"}'
-```
-
-### Groups
-
-```bash
-# Create group with permissions
-curl -X POST https://hindsight.home.local/ext/hindclaw/groups \
-  -H "Authorization: Bearer $ADMIN_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "executives",
-    "display_name": "Executive",
-    "recall": true,
-    "retain": true,
-    "retain_roles": ["user", "assistant", "tool"],
-    "retain_tags": ["role:executive"],
-    "recall_budget": "high",
-    "recall_max_tokens": 2048,
-    "recall_tag_groups": null
-  }'
-
-# Add member
-curl -X POST https://hindsight.home.local/ext/hindclaw/groups/executives/members \
-  -H "Authorization: Bearer $ADMIN_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": "alice"}'
-```
-
-### Bank-level permission overrides
-
-```bash
-# Group override on a bank
-curl -X PUT https://hindsight.home.local/ext/hindclaw/banks/yoda/permissions/groups/staff \
-  -H "Authorization: Bearer $ADMIN_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"recall": true, "retain": false}'
-
-# User override on a bank
-curl -X PUT https://hindsight.home.local/ext/hindclaw/banks/k2so/permissions/users/bob \
-  -H "Authorization: Bearer $ADMIN_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"recall_budget": "high", "recall_max_tokens": 2048}'
-```
-
-### The _default group
-
-The `_default` group applies to unknown/anonymous senders. It is created automatically when the extension starts and blocks both recall and retain by default.
-
-```bash
-# Update _default to allow read-only anonymous access
-curl -X PUT https://hindsight.home.local/ext/hindclaw/groups/_default \
-  -H "Authorization: Bearer $ADMIN_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"recall": true, "retain": false}'
 ```
 
 ## Group Fields

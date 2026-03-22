@@ -47,10 +47,10 @@ Mental models differ from raw recall in that they are pre-computed summaries rat
 
 ## Configuration
 
-Add `sessionStartModels` to the agent's bank config:
+Add `sessionStartModels` to the agent's plugin config:
 
 ```json5
-// .openclaw/banks/yoda.json5
+// In openclaw.json plugin config, agents section for yoda
 {
   "sessionStartModels": [
     {

@@ -12,7 +12,7 @@ hindclaw is a production-grade [Hindsight](https://hindsight.vectorize.io) memor
 
 Every message resolves along two orthogonal axes:
 
-**WHO** -- permissions enforced server-side by the hindclaw-extension. Users, groups, and bank-level overrides are managed via the `/ext/hindclaw/*` REST API (not config files). Resolution follows 4 layers (global group defaults -> bank `_default` baseline -> bank group overlay -> bank user override) with 11 configurable fields at every layer: LLM model, token budget, extraction depth, tag visibility, retention frequency.
+**WHO** -- permissions enforced server-side by the hindclaw-extension. Users, groups, and bank-level overrides are managed via the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest). Resolution follows 4 layers (global group defaults -> bank `_default` baseline -> bank group overlay -> bank user override) with 11 configurable fields at every layer: LLM model, token budget, extraction depth, tag visibility, retention frequency.
 
 **HOW** -- strategy resolved per scope via a 5-level cascade (agent -> channel -> topic -> group -> user). Each scope routes to a named strategy with its own extraction mission, mode, and entity labels. Strategy resolution and tag enrichment happen server-side.
 
@@ -34,15 +34,15 @@ Permission resolution, tag injection, and strategy selection all happen server-s
 
 ## Core Features
 
-**Per-agent bank configs** -- each agent gets its own retain mission, entity labels, dispositions, and directives. Bank configs are declared in JSON5 files and synced via `hindclaw apply`. Users, groups, permissions, directives, and mental models are managed via the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) or the `/ext/hindclaw/*` REST API.
+**Per-agent bank configs** -- each agent gets its own retain mission, entity labels, dispositions, and directives. Bank configs, users, groups, permissions, directives, and mental models are managed via the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest).
 
 **Multi-bank recall** -- agents read from multiple banks in parallel. A strategic advisor recalls from finance, marketing, and ops banks simultaneously.
 
 **Named retain strategies** -- map conversation topics to extraction profiles. Strategic conversations get deep analysis, daily chats get lightweight extraction. Strategies can also be assigned per user group.
 
-**Access control** -- server-side via hindclaw-extension. Users belong to groups. Groups define defaults. Banks override per-group or per-user. Anonymous users blocked by default. Dual authentication: JWT for plugins acting on behalf of users, API keys for direct access (CLI, dashboards, personal tools). Users and groups are managed via the `/ext/hindclaw/*` REST API.
+**Access control** -- server-side via hindclaw-extension. Users belong to groups. Groups define defaults. Banks override per-group or per-user. Anonymous users blocked by default. JWT authentication for plugins acting on behalf of users. Users and groups are managed via the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest).
 
-**Infrastructure as Code** -- two complementary tools. The **hindclaw CLI** (`hindclaw plan/apply/import`) manages bank configs from JSON5 files with diff-and-apply semantics. The **[terraform-provider-hindclaw](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest)** manages the full stack -- users, groups, permissions, directives, mental models, and bank configs -- as standard Terraform resources. The Terraform provider is the recommended way to manage your complete Hindsight infrastructure.
+**Infrastructure as Code** -- the **[terraform-provider-hindclaw](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest)** manages the full stack -- users, groups, permissions, directives, mental models, and bank configs -- as standard Terraform resources. All Hindsight infrastructure is declared in `.tf` files and applied with `terraform apply`.
 
 **Session start context** -- mental models loaded before the first message. No cold start.
 
@@ -61,7 +61,6 @@ Skip the self-hosting and use [Hindsight Cloud](https://ui.hindsight.vectorize.i
 ## Next Steps
 
 - [Installation](./getting-started/installation) -- set up the plugin and (optionally) the server extension
-- [Bank Configuration](./guides/bank-configs) -- configure your first agent's memory
+- [Terraform Provider](./guides/terraform) -- manage bank configs, users, groups, and permissions as code
 - [Access Control](./guides/access-control) -- set up multi-user permissions via hindclaw-extension
-- [Terraform Provider](./guides/terraform) -- manage the full stack as code
 - [Configuration Reference](./reference/configuration) -- plugin and JWT configuration

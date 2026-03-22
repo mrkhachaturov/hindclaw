@@ -5,7 +5,7 @@ title: Verify Memory Works
 
 # Verify Memory Works
 
-After installing hindclaw and creating your first bank config, you need to confirm that memory operations are running end to end. This guide covers four checkpoints: gateway logs, a live message test, CLI recall, and the Hindsight UI.
+After installing hindclaw and configuring your banks (via Terraform), you need to confirm that memory operations are running end to end. This guide covers four checkpoints: gateway logs, a live message test, CLI recall, and the Hindsight UI.
 
 ## Checkpoint 1: Gateway logs
 
@@ -26,7 +26,7 @@ On startup, look for these `[Hindsight]` lines:
 
 This confirms:
 - The plugin loaded and connected to the Hindsight daemon (or remote server)
-- It found your bank config file
+- It found the bank configuration
 - It applied the config to the server (first run only -- subsequent starts will show "already has N overrides -- skipping")
 
 If you do not see `[Hindsight]` lines at all, the plugin may not be enabled. Check that your plugins config has `"enabled": true` and `"slots": { "memory": "hindclaw" }`.
@@ -68,13 +68,13 @@ hindsight-embed -p openclaw recall --bank my-agent "deployment schedule"
 
 You should see the extracted fact about the Friday deployment in the results. If you get no results, wait a bit longer -- extraction latency depends on the LLM provider and model.
 
-You can also check what the bank looks like on the server:
+You can also verify the bank configuration on the server using Terraform:
 
 ```bash
-hindclaw plan --agent my-agent
+terraform plan
 ```
 
-If the plan shows no changes, your local config and server state are in sync (which is what you want after a successful bootstrap).
+If the plan shows no changes, your Terraform state and server state are in sync (which is what you want after a successful apply).
 
 ## Checkpoint 4: Open the Hindsight UI
 
@@ -137,13 +137,13 @@ hindsight-embed -p openclaw status
 
 **Symptom:** Gateway starts, but you see "already has N overrides -- skipping" even though the bank is new.
 
-**Cause:** Bootstrap checks for any existing overrides on the server. If a previous run partially applied config, or if you manually configured the bank via the API, bootstrap considers it already set up.
+**Cause:** Bootstrap checks for any existing overrides on the server. If a previous run partially applied config, or if you manually configured the bank via the API or Terraform, bootstrap considers it already set up.
 
-**Fix:** Use the CLI to apply your config explicitly:
+**Fix:** Use Terraform to apply your config explicitly:
 
 ```bash
-hindclaw plan --agent my-agent     # see what differs
-hindclaw apply --agent my-agent    # apply the changes
+terraform plan    # see what differs
+terraform apply   # apply the changes
 ```
 
 ### No retain lines in logs
@@ -194,7 +194,7 @@ The recall step adds context before the LLM sees the prompt. The retain step cap
 
 Memory is working. From here you can:
 
-- Add more agents with their own bank configs in `.openclaw/banks/`
-- Set up [named retain strategies](/docs/guides/bank-configs#named-retain-strategies) to route different topics to different extraction rules
+- Add more agents with their own bank configs via the [Terraform provider](/docs/guides/terraform)
+- Set up named retain strategies to route different topics to different extraction rules
 - Configure [access control](/docs/guides/access-control) for multi-user deployments
 - Enable [cross-agent recall](/docs/guides/multi-bank-recall) so agents can read each other's memories

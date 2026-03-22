@@ -53,35 +53,36 @@ Set a default Hindsight server in the plugin config. All agents use this unless 
 
 ### Per-agent override
 
-Override the URL in a bank config file to point an agent at a different server:
+Override the URL in the plugin config's agent entry to point an agent at a different server:
 
 ```json5
-// .openclaw/banks/k2so.json5
+// In openclaw.json plugin config, agents section
 {
-  "hindsightApiUrl": "https://hindsight.office.local",
-  "hindsightApiToken": "office-token-here",
-
-  "retain_mission": "Extract operational decisions, task assignments, and deadlines."
+  "agents": {
+    "k2so": {
+      "hindsightApiUrl": "https://hindsight.office.local",
+      "hindsightApiToken": "office-token-here"
+    }
+  }
 }
 ```
+
+The bank's server-side settings (retain mission, entity labels, etc.) are managed via Terraform on the target server.
 
 ### Mixing local daemon and remote servers
 
 If some agents should use the local daemon (no URL override) and others should use a remote server, simply omit `hindsightApiUrl` for the local agents:
 
 ```json5
-// .openclaw/banks/r2d2.json5 -- uses local daemon (default)
+// In openclaw.json plugin config
 {
-  "retain_mission": "Track personal tasks and preferences."
-}
-```
-
-```json5
-// .openclaw/banks/k2so.json5 -- uses office server
-{
-  "hindsightApiUrl": "https://hindsight.office.local",
-  "hindsightApiToken": "office-token-here",
-  "retain_mission": "Track company operations."
+  "agents": {
+    "r2d2": {},                        // uses local daemon (default)
+    "k2so": {
+      "hindsightApiUrl": "https://hindsight.office.local",
+      "hindsightApiToken": "office-token-here"
+    }
+  }
 }
 ```
 
@@ -109,19 +110,15 @@ This keeps data physically separated. Personal conversations never leave the hom
 Use a local daemon for development agents while production agents connect to a stable remote server:
 
 ```json5
-// .openclaw/banks/dev-agent.json5
+// In openclaw.json plugin config
 {
-  // No hindsightApiUrl -- uses local daemon
-  "retain_mission": "Development testing."
-}
-```
-
-```json5
-// .openclaw/banks/prod-agent.json5
-{
-  "hindsightApiUrl": "https://hindsight.prod.internal",
-  "hindsightApiToken": "prod-token",
-  "retain_mission": "Production knowledge extraction."
+  "agents": {
+    "dev-agent": {},                        // uses local daemon
+    "prod-agent": {
+      "hindsightApiUrl": "https://hindsight.prod.internal",
+      "hindsightApiToken": "prod-token"
+    }
+  }
 }
 ```
 
@@ -130,18 +127,18 @@ Use a local daemon for development agents while production agents connect to a s
 In a shared gateway serving multiple organizations, each tenant's agents can point to their own Hindsight instance:
 
 ```json5
-// .openclaw/banks/tenant-a-agent.json5
+// In openclaw.json plugin config
 {
-  "hindsightApiUrl": "https://hindsight.tenant-a.local",
-  "hindsightApiToken": "tenant-a-token"
-}
-```
-
-```json5
-// .openclaw/banks/tenant-b-agent.json5
-{
-  "hindsightApiUrl": "https://hindsight.tenant-b.local",
-  "hindsightApiToken": "tenant-b-token"
+  "agents": {
+    "tenant-a-agent": {
+      "hindsightApiUrl": "https://hindsight.tenant-a.local",
+      "hindsightApiToken": "tenant-a-token"
+    },
+    "tenant-b-agent": {
+      "hindsightApiUrl": "https://hindsight.tenant-b.local",
+      "hindsightApiToken": "tenant-b-token"
+    }
+  }
 }
 ```
 
@@ -164,23 +161,32 @@ Tokens should be stored securely. If your gateway config supports environment va
 }
 ```
 
-## CLI with multi-server
+## Terraform with multi-server
 
-The `hindclaw` CLI resolves the correct server URL per-agent, so commands work transparently:
+When using Terraform to manage bank configs across multiple servers, use separate provider aliases:
 
-```bash
-# This hits the office server (resolved from k2so's bank config)
-hindclaw plan --agent k2so
+```hcl
+provider "hindclaw" {
+  alias   = "home"
+  api_url = "https://hindsight.home.local"
+  api_key = var.home_api_key
+}
 
-# This hits the home server (resolved from yoda's bank config)
-hindclaw plan --agent yoda
+provider "hindclaw" {
+  alias   = "office"
+  api_url = "https://hindsight.office.local"
+  api_key = var.office_api_key
+}
 
-# This hits each agent's respective server
-hindclaw plan --all
-```
+resource "hindclaw_bank_config" "yoda" {
+  provider = hindclaw.home
+  bank_id  = "yoda"
+  config   = jsonencode({ retain_mission = "Strategic decisions." })
+}
 
-You can also override the URL on the command line for one-off operations:
-
-```bash
-hindclaw plan --agent k2so --api-url https://hindsight.staging.local
+resource "hindclaw_bank_config" "k2so" {
+  provider = hindclaw.office
+  bank_id  = "k2so"
+  config   = jsonencode({ retain_mission = "Operational decisions." })
+}
 ```

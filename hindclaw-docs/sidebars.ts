@@ -21,12 +21,6 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
-          id: 'getting-started/first-bank',
-          label: 'First Bank Config',
-          customProps: { icon: 'lu-database' },
-        },
-        {
-          type: 'doc',
           id: 'getting-started/verify',
           label: 'Verify It Works',
           customProps: { icon: 'lu-check-circle' },
@@ -38,12 +32,6 @@ const sidebars: SidebarsConfig = {
       label: 'Guides',
       collapsible: false,
       items: [
-        {
-          type: 'doc',
-          id: 'guides/bank-configs',
-          label: 'Bank Configuration',
-          customProps: { icon: 'lu-settings' },
-        },
         {
           type: 'doc',
           id: 'guides/access-control',
@@ -92,12 +80,6 @@ const sidebars: SidebarsConfig = {
           id: 'reference/configuration',
           label: 'Configuration',
           customProps: { icon: 'lu-sliders' },
-        },
-        {
-          type: 'doc',
-          id: 'reference/bank-fields',
-          label: 'Bank Config Fields',
-          customProps: { icon: 'lu-file-text' },
         },
       ],
     },

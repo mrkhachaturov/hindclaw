@@ -7,7 +7,7 @@ title: Access Control
 
 hindclaw provides per-user memory permissions enforced server-side through the `hindclaw-extension` -- a set of Hindsight server extensions that authenticate requests, resolve permissions, and enrich operations via `accept_with()`. The same user can get different behavior on different agents, channels, and topics -- different access flags, different tag visibility, different retain strategies.
 
-All user, group, and permission data lives in the Hindsight PostgreSQL database and is managed through the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) or the HTTP API at `/ext/hindclaw/*`. The plugin itself is a thin adapter: it generates a JWT from the OpenClaw context and sends standard Hindsight API calls. It does not store or resolve permissions.
+All user, group, and permission data lives in the Hindsight PostgreSQL database and is managed through the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest). The plugin itself is a thin adapter: it generates a JWT from the OpenClaw context and sends standard Hindsight API calls. It does not store or resolve permissions.
 
 :::info Server-side only
 Permission resolution runs entirely on the Hindsight server via the `hindclaw-extension`. There is no client-side permission logic in the plugin. The plugin sends a JWT with sender context — the server resolves the user, checks group memberships, applies the permission cascade, and accepts or rejects the operation.
@@ -18,21 +18,20 @@ Permission resolution runs entirely on the Hindsight server via the `hindclaw-ex
 Three Hindsight extensions in one pip package, sharing the same database:
 
 ```
-Client (OpenClaw plugin / CLI / Dashboard)
+Client (OpenClaw plugin)
   |
-  |  Authorization: Bearer <jwt or api_key>
+  |  Authorization: Bearer <jwt>
   v
 Hindsight API Server
   |
   +-- HindclawTenant (TenantExtension)
   |     JWT -> sender -> user identity
-  |     API key -> user lookup
   |
   +-- HindclawValidator (OperationValidatorExtension)
   |     user -> groups -> permissions -> accept_with(enrichment)
   |
   +-- HindclawHttp (HttpExtension)
-  |     /ext/hindclaw/* CRUD API for users/groups/permissions
+  |     /ext/hindclaw/* CRUD endpoints (used by Terraform provider)
   |
   +-- Hindsight Core (retain/recall/reflect)
 ```
@@ -93,14 +92,6 @@ The plugin generates this JWT from the OpenClaw message context and signs it wit
 }
 ```
 
-**API key** (for direct access -- CLI, dashboard, Terraform, personal tools):
-
-```
-Authorization: Bearer hc_vagan_xxxxxxxxxxxx
-```
-
-API keys are plain strings stored in the `hindclaw_api_keys` table. Each key maps to a user -- the same permissions apply. No sender/agent/topic context is available, so the strategy cascade uses defaults only. API keys are long-lived and revocable.
-
 ### Request flow
 
 ```mermaid
@@ -128,72 +119,35 @@ sequenceDiagram
 
 ## Setting up users and channels
 
-Users are identity records that map platform-specific sender IDs to a canonical user. Create users and their channel mappings via the HTTP API.
+Users are identity records that map platform-specific sender IDs to a canonical user. Manage users and their channel mappings via Terraform.
 
 ### Create a user
 
-```bash
-curl -X POST https://hindsight.home.local/ext/hindclaw/users \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "alice",
-    "display_name": "Alice",
-    "email": "alice@example.com"
-  }'
+```hcl
+resource "hindclaw_user" "alice" {
+  id           = "alice"
+  display_name = "Alice"
+  email        = "alice@example.com"
+}
 ```
 
 ### Add channel mappings
 
 Channel mappings link platform sender IDs to the canonical user. When a message arrives from Telegram user `123456`, the extension resolves it to user `alice`.
 
-```bash
-# Map Telegram sender ID
-curl -X POST https://hindsight.home.local/ext/hindclaw/users/alice/channels \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "telegram",
-    "sender_id": "123456"
-  }'
+```hcl
+resource "hindclaw_user_channel" "alice_telegram" {
+  user_id          = hindclaw_user.alice.id
+  channel_provider = "telegram"
+  sender_id        = "123456"
+}
 
-# Map Slack sender ID
-curl -X POST https://hindsight.home.local/ext/hindclaw/users/alice/channels \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "slack",
-    "sender_id": "U123456"
-  }'
+resource "hindclaw_user_channel" "alice_slack" {
+  user_id          = hindclaw_user.alice.id
+  channel_provider = "slack"
+  sender_id        = "U123456"
+}
 ```
-
-### List and remove channels
-
-```bash
-# List all channel mappings for a user
-curl https://hindsight.home.local/ext/hindclaw/users/alice/channels \
-  -H "Authorization: Bearer $ADMIN_JWT"
-
-# Remove a channel mapping
-curl -X DELETE https://hindsight.home.local/ext/hindclaw/users/alice/channels/telegram/123456 \
-  -H "Authorization: Bearer $ADMIN_JWT"
-```
-
-### Generate API keys for direct access
-
-Users who access Hindsight directly (via CLI, personal tools, or dashboards) need API keys:
-
-```bash
-curl -X POST https://hindsight.home.local/ext/hindclaw/users/alice/api-keys \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "description": "Alice personal CLI"
-  }'
-# Returns: { "id": "key_abc123", "api_key": "hc_alice_xxxxxxxxxxxx", ... }
-```
-
-The returned `api_key` is used as a Bearer token. It grants the same permissions as the user it belongs to, without sender/agent/topic context.
 
 ## Creating groups with permissions
 
@@ -201,102 +155,90 @@ Groups define membership and permission defaults. There are two common patterns:
 
 ### Role groups
 
-```bash
+```hcl
 # Executive group -- full access, no tag filter
-curl -X POST https://hindsight.home.local/ext/hindclaw/groups \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "executives",
-    "display_name": "Executive",
-    "recall": true,
-    "retain": true,
-    "retain_roles": ["user", "assistant", "tool"],
-    "retain_tags": ["role:executive"],
-    "recall_budget": "high",
-    "recall_max_tokens": 2048,
-    "recall_tag_groups": null
-  }'
+resource "hindclaw_group" "executives" {
+  id                = "executives"
+  display_name      = "Executive"
+  recall            = true
+  retain            = true
+  retain_roles      = ["user", "assistant", "tool"]
+  retain_tags       = ["role:executive"]
+  recall_budget     = "high"
+  recall_max_tokens = 2048
+  recall_tag_groups = null  # no filter -- sees everything
+}
 
 # Staff group -- limited access, restricted content filtered
-curl -X POST https://hindsight.home.local/ext/hindclaw/groups \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "staff",
-    "display_name": "Staff",
-    "recall": true,
-    "retain": true,
-    "retain_roles": ["assistant"],
-    "retain_tags": ["role:staff"],
-    "retain_every_n_turns": 2,
-    "recall_budget": "low",
-    "recall_max_tokens": 512,
-    "recall_tag_groups": [
-      {"not": {"tags": ["sensitivity:restricted"], "match": "any_strict"}}
-    ],
-    "llm_provider": "openai",
-    "llm_model": "gpt-4o-mini"
-  }'
+resource "hindclaw_group" "staff" {
+  id                   = "staff"
+  display_name         = "Staff"
+  recall               = true
+  retain               = true
+  retain_roles         = ["assistant"]
+  retain_tags          = ["role:staff"]
+  retain_every_n_turns = 2
+  recall_budget        = "low"
+  recall_max_tokens    = 512
+  recall_tag_groups    = jsonencode([
+    { not = { tags = ["sensitivity:restricted"], match = "any_strict" } }
+  ])
+  llm_provider = "openai"
+  llm_model    = "gpt-4o-mini"
+}
 ```
 
-Key difference: executives see everything (`recall_tag_groups: null` means no filter), while staff are filtered -- they never see facts tagged `sensitivity:restricted`.
+Key difference: executives see everything (`recall_tag_groups = null` means no filter), while staff are filtered -- they never see facts tagged `sensitivity:restricted`.
 
 ### Department groups
 
 Department groups add contextual tags without changing access levels:
 
-```bash
-curl -X POST https://hindsight.home.local/ext/hindclaw/groups \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "sales-team",
-    "display_name": "Sales Team",
-    "recall_tag_groups": [
-      {"tags": ["department:sales"], "match": "any"}
-    ],
-    "retain_tags": ["department:sales"]
-  }'
+```hcl
+resource "hindclaw_group" "sales_team" {
+  id           = "sales-team"
+  display_name = "Sales Team"
+  recall_tag_groups = jsonencode([
+    { tags = ["department:sales"], match = "any" }
+  ])
+  retain_tags = ["department:sales"]
+}
 ```
 
 A user can belong to both a role group and a department group. The merge rules combine their permissions.
 
 ### Add members to groups
 
-```bash
-curl -X POST https://hindsight.home.local/ext/hindclaw/groups/executives/members \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": "alice"}'
+```hcl
+resource "hindclaw_group_membership" "alice_executives" {
+  group_id = hindclaw_group.executives.id
+  user_id  = hindclaw_user.alice.id
+}
 
-curl -X POST https://hindsight.home.local/ext/hindclaw/groups/staff/members \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": "bob"}'
+resource "hindclaw_group_membership" "bob_staff" {
+  group_id = hindclaw_group.staff.id
+  user_id  = hindclaw_user.bob.id
+}
 
-curl -X POST https://hindsight.home.local/ext/hindclaw/groups/sales-team/members \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": "bob"}'
+resource "hindclaw_group_membership" "bob_sales" {
+  group_id = hindclaw_group.sales_team.id
+  user_id  = hindclaw_user.bob.id
+}
 ```
 
 ### The _default fallback
 
 The `_default` group is required. It is created automatically when the extension starts. It applies to any sender not found in the channel mappings -- anonymous or unknown users.
 
-By default, `_default` blocks both recall and retain:
+By default, `_default` blocks both recall and retain. To allow read-only anonymous access, override it in Terraform:
 
-```bash
-# Update _default to allow read-only anonymous access
-curl -X PUT https://hindsight.home.local/ext/hindclaw/groups/_default \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "display_name": "Anonymous",
-    "recall": true,
-    "retain": false
-  }'
+```hcl
+resource "hindclaw_group" "default" {
+  id           = "_default"
+  display_name = "Anonymous"
+  recall       = true
+  retain       = false
+}
 ```
 
 ## Configurable fields
@@ -331,31 +273,24 @@ Client-enforced fields are still stored in the database and returned by the debu
 
 Each bank can override group defaults for specific groups or users. This is how the same user gets different behavior on different agents.
 
-```bash
+```hcl
 # On Yoda: staff can recall but not retain
-curl -X PUT https://hindsight.home.local/ext/hindclaw/banks/yoda/permissions/groups/staff \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "recall": true,
-    "retain": false
-  }'
+resource "hindclaw_bank_permission" "yoda_staff" {
+  bank_id    = "yoda"
+  scope_type = "group"
+  scope_id   = hindclaw_group.staff.id
+  recall     = true
+  retain     = false
+}
 
 # On K2SO: Bob gets elevated recall
-curl -X PUT https://hindsight.home.local/ext/hindclaw/banks/k2so/permissions/users/bob \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "recall_budget": "high",
-    "recall_max_tokens": 2048
-  }'
-```
-
-List all permission overrides for a bank:
-
-```bash
-curl https://hindsight.home.local/ext/hindclaw/banks/yoda/permissions \
-  -H "Authorization: Bearer $ADMIN_JWT"
+resource "hindclaw_bank_permission" "k2so_bob" {
+  bank_id           = "k2so"
+  scope_type        = "user"
+  scope_id          = hindclaw_user.bob.id
+  recall_budget     = "high"
+  recall_max_tokens = 2048
+}
 ```
 
 Banks without any permission overrides fall through to global group defaults.
@@ -382,32 +317,40 @@ graph LR
     style E fill:#c026d3,color:#fff,stroke:#c026d3
 ```
 
-Strategy scopes are managed per-bank:
+Strategy scopes are managed per-bank via Terraform:
 
-```bash
+```hcl
 # Default strategy for all Yoda traffic
-curl -X PUT https://hindsight.home.local/ext/hindclaw/banks/yoda/strategies/agent/yoda \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{"strategy": "general"}'
+resource "hindclaw_strategy_scope" "yoda_agent" {
+  bank_id     = "yoda"
+  scope_type  = "agent"
+  scope_value = "yoda"
+  strategy    = "general"
+}
 
 # Telegram channel gets a different strategy
-curl -X PUT https://hindsight.home.local/ext/hindclaw/banks/yoda/strategies/channel/telegram \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{"strategy": "chat-extract"}'
+resource "hindclaw_strategy_scope" "yoda_telegram" {
+  bank_id     = "yoda"
+  scope_type  = "channel"
+  scope_value = "telegram"
+  strategy    = "chat-extract"
+}
 
 # Specific topic gets a project-focused strategy
-curl -X PUT https://hindsight.home.local/ext/hindclaw/banks/yoda/strategies/topic/280304 \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{"strategy": "project-alpha"}'
+resource "hindclaw_strategy_scope" "yoda_topic_280304" {
+  bank_id     = "yoda"
+  scope_type  = "topic"
+  scope_value = "280304"
+  strategy    = "project-alpha"
+}
 
 # A specific user always uses their personal strategy
-curl -X PUT https://hindsight.home.local/ext/hindclaw/banks/yoda/strategies/user/vagan \
-  -H "Authorization: Bearer $ADMIN_JWT" \
-  -H "Content-Type: application/json" \
-  -d '{"strategy": "vagan-personal"}'
+resource "hindclaw_strategy_scope" "yoda_vagan" {
+  bank_id     = "yoda"
+  scope_type  = "user"
+  scope_value = "vagan"
+  strategy    = "vagan-personal"
+}
 ```
 
 The resolver picks the most specific matching scope. If user `vagan` sends a message in Telegram topic `280304` on bank `yoda`, the cascade checks (most specific first): user `vagan` > group membership > topic `280304` > channel `telegram` > agent `yoda`. The first match wins.
@@ -513,14 +456,7 @@ Filter examples:
 
 ## Debug endpoint
 
-The debug endpoint resolves permissions for a given context without executing an operation. Use it for troubleshooting access issues.
-
-```bash
-curl "https://hindsight.home.local/ext/hindclaw/debug/resolve?sender=telegram:789012&bank=yoda&topic=280304" \
-  -H "Authorization: Bearer $ADMIN_JWT"
-```
-
-Returns the full resolved permissions:
+The debug endpoint resolves permissions for a given context without executing an operation. It is available on the Hindsight server at `/ext/hindclaw/debug/resolve` and returns the full resolved permissions:
 
 ```json
 {
@@ -569,42 +505,78 @@ Three users, two agents, different access:
 | **bob** (staff, sales) | recall only (bank override), mid budget | recall + retain, high budget (user override) |
 | **anonymous** | blocked | blocked |
 
-This requires the following API calls:
+This requires the following Terraform resources:
 
-```bash
+```hcl
 # 1. Create users
-curl -X POST .../ext/hindclaw/users -d '{"id": "alice", "display_name": "Alice"}'
-curl -X POST .../ext/hindclaw/users -d '{"id": "bob", "display_name": "Bob"}'
+resource "hindclaw_user" "alice" {
+  id           = "alice"
+  display_name = "Alice"
+}
+
+resource "hindclaw_user" "bob" {
+  id           = "bob"
+  display_name = "Bob"
+}
 
 # 2. Map channels
-curl -X POST .../ext/hindclaw/users/alice/channels -d '{"provider": "telegram", "sender_id": "111111"}'
-curl -X POST .../ext/hindclaw/users/bob/channels -d '{"provider": "telegram", "sender_id": "222222"}'
+resource "hindclaw_user_channel" "alice_telegram" {
+  user_id          = hindclaw_user.alice.id
+  channel_provider = "telegram"
+  sender_id        = "111111"
+}
+
+resource "hindclaw_user_channel" "bob_telegram" {
+  user_id          = hindclaw_user.bob.id
+  channel_provider = "telegram"
+  sender_id        = "222222"
+}
 
 # 3. Create groups
-curl -X POST .../ext/hindclaw/groups -d '{
-  "id": "executives", "display_name": "Executive",
-  "recall": true, "retain": true, "recall_budget": "high",
-  "recall_tag_groups": null
-}'
-curl -X POST .../ext/hindclaw/groups -d '{
-  "id": "staff", "display_name": "Staff",
-  "recall": true, "retain": true, "recall_budget": "low",
-  "recall_max_tokens": 512
-}'
+resource "hindclaw_group" "executives" {
+  id               = "executives"
+  display_name     = "Executive"
+  recall           = true
+  retain           = true
+  recall_budget    = "high"
+  recall_tag_groups = null
+}
+
+resource "hindclaw_group" "staff" {
+  id               = "staff"
+  display_name     = "Staff"
+  recall           = true
+  retain           = true
+  recall_budget    = "low"
+  recall_max_tokens = 512
+}
 
 # 4. Add members
-curl -X POST .../ext/hindclaw/groups/executives/members -d '{"user_id": "alice"}'
-curl -X POST .../ext/hindclaw/groups/staff/members -d '{"user_id": "bob"}'
+resource "hindclaw_group_membership" "alice_executives" {
+  group_id = hindclaw_group.executives.id
+  user_id  = hindclaw_user.alice.id
+}
+
+resource "hindclaw_group_membership" "bob_staff" {
+  group_id = hindclaw_group.staff.id
+  user_id  = hindclaw_user.bob.id
+}
 
 # 5. Bank-level overrides
 # Yoda: staff cannot retain
-curl -X PUT .../ext/hindclaw/banks/yoda/permissions/groups/staff \
-  -d '{"retain": false}'
-# K2SO: Bob gets elevated recall
-curl -X PUT .../ext/hindclaw/banks/k2so/permissions/users/bob \
-  -d '{"recall_budget": "high", "recall_max_tokens": 2048}'
+resource "hindclaw_bank_permission" "yoda_staff" {
+  bank_id    = "yoda"
+  scope_type = "group"
+  scope_id   = hindclaw_group.staff.id
+  retain     = false
+}
 
-# 6. Verify
-curl ".../ext/hindclaw/debug/resolve?sender=telegram:222222&bank=yoda"
-# -> bob: recall=true, retain=false (bank override), recall_budget=low
+# K2SO: Bob gets elevated recall
+resource "hindclaw_bank_permission" "k2so_bob" {
+  bank_id           = "k2so"
+  scope_type        = "user"
+  scope_id          = hindclaw_user.bob.id
+  recall_budget     = "high"
+  recall_max_tokens = 2048
+}
 ```

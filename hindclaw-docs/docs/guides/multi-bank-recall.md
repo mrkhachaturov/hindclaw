@@ -36,10 +36,10 @@ graph LR
 
 ## Configuration
 
-Add `recallFrom` to the agent's bank config. Each entry specifies a bank ID and optional per-bank overrides:
+Add `recallFrom` to the agent's config in the plugin config. Each entry specifies a bank ID and optional per-bank overrides:
 
 ```json5
-// .openclaw/banks/yoda.json5
+// In openclaw.json plugin config, agents section
 {
   "recallFrom": [
     { "bankId": "yoda" },
@@ -98,6 +98,7 @@ Each bank in `recallFrom` makes its own recall request with its own budget and t
 A practical pattern is to give the agent's own bank a higher budget and secondary banks a lower one:
 
 ```json5
+// In openclaw.json plugin config, agents section
 {
   "recallFrom": [
     { "bankId": "yoda", "budget": "high", "maxTokens": 2048 },
@@ -117,11 +118,22 @@ Concurrent recall requests for the same bank and query are deduplicated automati
 
 A CEO advisor agent (yoda) that draws from the operations agent (k2so) and the knowledge librarian (c3po):
 
-```json5
-// .openclaw/banks/yoda.json5
-{
-  "retain_mission": "Extract strategic decisions and cross-departmental patterns.",
+The bank's retain mission is managed via Terraform:
 
+```hcl
+resource "hindclaw_bank_config" "yoda" {
+  bank_id = "yoda"
+  config = jsonencode({
+    retain_mission = "Extract strategic decisions and cross-departmental patterns."
+  })
+}
+```
+
+And the multi-bank recall is configured in the plugin config:
+
+```json5
+// In openclaw.json plugin config, agents section for yoda
+{
   "recallFrom": [
     { "bankId": "yoda" },
     { "bankId": "k2so", "budget": "low", "maxTokens": 512 },

@@ -5,31 +5,35 @@ title: Plugin Configuration
 
 # Plugin Configuration Reference
 
-HindClaw uses a two-level config system. Plugin-level defaults are set in `openclaw.json` (or its modular `$include` files). Per-agent overrides are set in bank config files (`banks/*.json5`).
+HindClaw uses a two-level config system. Plugin-level defaults are set in `openclaw.json` (or its modular `$include` files). Per-agent behavioral overrides are set in the `agents` map within the plugin config.
 
-**Resolution order:** plugin defaults -> bank config file (shallow merge, bank file wins).
+**Resolution order:** plugin defaults -> per-agent overrides (shallow merge, agent entry wins).
 
-With the hindclaw-extension installed on the server, most access control and enrichment is handled server-side. The plugin config is focused on infrastructure connection, behavioral defaults, and agent mapping. User/group management is done via the `/ext/hindclaw/*` REST API, not config files.
+Server-side bank configuration (retain missions, entity labels, dispositions, directives, strategies) is managed via the [Terraform provider](../guides/terraform). User/group management is also done via Terraform, not config files.
 
 ## Config Architecture
 
 ```
-openclaw.json (plugin config)          banks/agent-1.json5 (bank config)
-  Infrastructure                         Server-side (agent-only)
+openclaw.json (plugin config)          Terraform (server-side)
+  Infrastructure                         Bank config (per-agent)
     hindsightApiUrl, jwtSecret             retain_mission, entity_labels
                                            dispositions, directives
-  Daemon (global only)
-    apiPort, embedVersion                Infrastructure overrides
-    embedPackagePath, daemonIdleTimeout    hindsightApiUrl (different server)
-
-  Defaults (overridable per-agent)       Behavioral overrides (client-enforced)
-    llmProvider, llmModel                  recallBudget, recallMaxTokens
-    autoRecall, autoRetain, ...            retainEveryNTurns, excludeProviders
+  Daemon (global only)                     retain_strategies
+    apiPort, embedVersion
+    embedPackagePath, daemonIdleTimeout  Access control
+                                           users, groups, permissions
+  Defaults (overridable per-agent)         strategy scopes
+    llmProvider, llmModel
+    autoRecall, autoRetain, ...
     recallBudget, retainEveryNTurns
-                                         Multi-bank: recallFrom [...]
-  bootstrap: true|false                  Session start: sessionStartModels
-  Agent mapping                          Reflect: reflectOnRecall
-    agents: { id: { bankConfig } }
+
+  Per-agent behavioral overrides
+    agents: { id: { recallBudget,
+      recallMaxTokens, recallFrom,
+      sessionStartModels, reflectOnRecall,
+      hindsightApiUrl, ... } }
+
+  bootstrap: true|false
 ```
 
 ## Plugin Config Options
@@ -65,7 +69,7 @@ These options control the embedded `hindsight-embed` daemon. They cannot be over
 
 ### Behavioral Defaults
 
-These set the plugin-wide defaults. Any of them can be overridden in a bank config file.
+These set the plugin-wide defaults. Any of them can be overridden in a per-agent entry.
 
 | Option | Type | Default | Per-agent | Description |
 |--------|------|---------|-----------|-------------|
@@ -92,8 +96,8 @@ These set the plugin-wide defaults. Any of them can be overridden in a bank conf
 
 | Option | Type | Default | Per-agent | Description |
 |--------|------|---------|-----------|-------------|
-| `bootstrap` | `boolean` | `false` | no | Automatically apply bank configs on first run when the bank is empty on the server. After the initial bootstrap, use `hindclaw apply` to manage server state. |
-| `agents` | `Record<string, AgentEntry>` | `{}` | no | Per-agent bank config registration. Maps agent IDs to their bank config file paths. |
+| `bootstrap` | `boolean` | `false` | no | Automatically apply bank configuration on first run when the bank is empty on the server. After the initial bootstrap, use Terraform to manage server state. |
+| `agents` | `Record<string, AgentEntry>` | `{}` | no | Per-agent behavioral overrides. Maps agent IDs to their config overrides. |
 | `bankMission` | `string` | -- | no | Default bank mission applied automatically to unconfigured banks. |
 
 The `agents` map uses this structure:
@@ -101,9 +105,9 @@ The `agents` map uses this structure:
 ```json5
 {
   "agents": {
-    "yoda":  { "bankConfig": "./banks/yoda.json5" },
-    "r2d2":  { "bankConfig": "./banks/r2d2.json5" },
-    "c3po":  { "bankConfig": "./banks/c3po.json5" }
+    "yoda":  { "recallBudget": "high", "recallMaxTokens": 2048 },
+    "r2d2":  { "autoRetain": false },
+    "k2so":  { "hindsightApiUrl": "https://hindsight.office.local" }
   }
 }
 ```
@@ -136,16 +140,20 @@ For setups with multiple users, install the hindclaw-extension on the server (se
 
 The plugin generates short-lived JWTs (5 min TTL) for each request, embedding the sender identity, agent, channel, and topic. The server extension decodes the JWT, resolves the user, and enforces permissions.
 
-Users, groups, and permissions are managed via the `/ext/hindclaw/*` REST API on the server, not in config files.
+Users, groups, and permissions are managed via the [Terraform provider](../guides/terraform), not in config files.
 
 ### Per-agent server routing
 
-Different agents can connect to different servers. Set `hindsightApiUrl` in the bank config file:
+Different agents can connect to different servers. Set `hindsightApiUrl` in the per-agent entry:
 
 ```json5
-// In banks/agent-3.json5
+// In openclaw.json plugin config, agents section
 {
-  "hindsightApiUrl": "https://hindsight.office.local"
+  "agents": {
+    "agent-3": {
+      "hindsightApiUrl": "https://hindsight.office.local"
+    }
+  }
 }
 ```
 
@@ -164,10 +172,10 @@ Gateway (jwtSecret configured at plugin level)
 
 ## Cross-Agent Recall
 
-An agent can recall memories from other agents' banks by setting `recallFrom` in its bank config file. This is a bank config field, not a plugin config field.
+An agent can recall memories from other agents' banks by setting `recallFrom` in its per-agent config entry:
 
 ```json5
-// In banks/supervisor.json5
+// In openclaw.json plugin config, agents section
 {
   "recallFrom": [
     { "bankId": "agent-1" },
@@ -201,20 +209,10 @@ With the hindclaw-extension, most permission fields are enforced server-side via
 | `excludeProviders` | Provider filtering happens before the request reaches the server |
 | `llmModel`, `llmProvider` | Extraction model selection is server config, not a per-request override |
 
-These fields can still be set in plugin config or bank config files as behavioral overrides.
+These fields can still be set in the plugin config as behavioral overrides.
 
 ## User and Group Management
 
-When running with the hindclaw-extension, users, groups, permissions, and strategy scopes are managed via the `/ext/hindclaw/*` REST API on the Hindsight server -- not via config files. The plugin does not store or resolve any user/group/permission data.
+When running with the hindclaw-extension, users, groups, permissions, and strategy scopes are managed via the [Terraform provider](../guides/terraform) -- not via config files. The plugin does not store or resolve any user/group/permission data.
 
-Key API endpoints:
-
-- `GET/POST /ext/hindclaw/users` -- manage users
-- `POST /ext/hindclaw/users/:id/channels` -- map channel sender IDs to users
-- `GET/POST /ext/hindclaw/groups` -- manage groups and their default permissions
-- `PUT /ext/hindclaw/banks/:bank_id/permissions/groups/:group_id` -- bank-level group overrides
-- `PUT /ext/hindclaw/banks/:bank_id/permissions/users/:user_id` -- bank-level user overrides
-- `PUT /ext/hindclaw/banks/:bank_id/strategies/:scope_type/:scope_value` -- strategy scope overrides
-- `GET /ext/hindclaw/debug/resolve?sender=...&bank=...` -- troubleshoot resolved permissions
-
-See the [Access Control guide](../guides/access-control) for setup instructions.
+See the [Access Control guide](../guides/access-control) for setup instructions and the [Terraform guide](../guides/terraform) for resource definitions.

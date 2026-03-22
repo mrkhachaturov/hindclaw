@@ -35,11 +35,11 @@ src/
 
 ## Key Patterns
 
-**Two-level config.** Plugin defaults in `openclaw.json` + bank config file overrides. Shallow merge, bank file wins.
+**Two-level config.** Plugin defaults in `openclaw.json` + per-agent overrides. Shallow merge, agent entry wins.
 
 **Stateless client.** Every client method takes `bankId` as first parameter. No instance-level bank state. Enables multi-bank operations.
 
-**Server-side vs behavioral.** `snake_case` fields = server-side (synced to Hindsight via CLI). `camelCase` fields = behavioral (used by hooks at runtime).
+**Server-side vs behavioral.** `snake_case` fields = server-side (managed via Terraform). `camelCase` fields = behavioral (used by hooks at runtime).
 
 **Graceful degradation.** All hooks catch errors and log warnings. Never crash the gateway.
 

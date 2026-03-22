@@ -86,7 +86,7 @@ What each field does:
 
 - **`slots.memory`** -- tells OpenClaw that hindclaw occupies the memory slot (only one memory plugin can be active)
 - **`dynamicBankGranularity`** -- controls how bank IDs are derived from context. `["agent"]` means one bank per agent (recommended starting point). Other options include `["agent", "channel"]` or `["agent", "channel", "user"]` for finer granularity.
-- **`bootstrap`** -- when `true`, the plugin automatically applies bank config files to Hindsight on first run. This means you do not need to manually run `hindclaw apply` for initial setup.
+- **`bootstrap`** -- when `true`, the plugin automatically applies bank configuration to Hindsight on first run.
 
 ### Optional: external Hindsight server (single-user)
 
@@ -165,7 +165,7 @@ The extensions use the same PostgreSQL database as Hindsight core (`HINDSIGHT_AP
 
 After configuring the env vars, restart the Hindsight API server. You should see startup logs confirming the extensions loaded.
 
-Once the extension is running, manage users, groups, and permissions via the `/ext/hindclaw/*` REST API. See the [Access Control guide](../guides/access-control) and the [Configuration Reference](../reference/configuration) for details.
+Once the extension is running, manage users, groups, and permissions via the [Terraform provider](../guides/terraform). See the [Access Control guide](../guides/access-control) and the [Configuration Reference](../reference/configuration) for details.
 
 ## Step 5: Restart the gateway
 
@@ -201,6 +201,6 @@ hindsight-embed -p openclaw status
 
 ## Next steps
 
-Your gateway is running with hindclaw enabled, but it does not have any bank configurations yet. Agents will use default extraction behavior.
+Your gateway is running with hindclaw enabled. To configure how agents extract and organize memories, define bank configs via the [Terraform provider](../guides/terraform).
 
-Next: [Create your first bank config](./first-bank.md) to define how an agent should extract and organize memories.
+Next: [Verify memory is working](./verify.md) to confirm retain, recall, and the Hindsight UI.
