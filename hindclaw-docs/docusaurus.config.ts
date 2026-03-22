@@ -3,7 +3,7 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'hindclaw',
+  title: 'HindClaw',
   tagline: 'Production memory infrastructure for AI agents',
   favicon: 'img/favicon.ico',
 
@@ -62,6 +62,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
+          docItemComponent: '@theme/ApiItem',
           editUrl:
             'https://github.com/mrkhachaturov/hindclaw/tree/main/hindclaw-docs/',
         },
@@ -84,7 +85,45 @@ const config: Config = {
     ],
   ],
 
+  plugins: [
+    [
+      'docusaurus-plugin-openapi-docs',
+      {
+        id: 'api',
+        docsPluginId: 'classic',
+        config: {
+          hindclaw: {
+            specPath: 'static/openapi.json',
+            outputDir: 'docs/api',
+            sidebarOptions: {
+              groupPathsBy: 'tag',
+            },
+          },
+        },
+      },
+    ],
+    ['docusaurus-plugin-ask-ai', {
+      generateMarkdownFiles: true,
+    }],
+    function polyfillPathPlugin() {
+      return {
+        name: 'polyfill-path',
+        configureWebpack() {
+          return {
+            resolve: {
+              fallback: {
+                path: require.resolve('path-browserify'),
+              },
+            },
+          };
+        },
+      };
+    },
+  ],
+
   themes: [
+    'docusaurus-theme-ask-ai',
+    'docusaurus-theme-openapi-docs',
     '@docusaurus/theme-mermaid',
     [
       '@easyops-cn/docusaurus-search-local',
@@ -99,15 +138,22 @@ const config: Config = {
   ],
 
   themeConfig: {
+    askAi: {
+      position: 'breadcrumb',
+      providers: [
+        { name: 'ChatGPT', url: 'https://chatgpt.com/?q={prompt}', icon: 'chatgpt' },
+        { name: 'Claude', url: 'https://claude.ai/new?q={prompt}', icon: 'claude' },
+      ],
+    },
     image: 'img/hindclaw-social-card.png',
     colorMode: {
       defaultMode: 'dark',
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'hindclaw',
+      title: 'HindClaw',
       logo: {
-        alt: 'hindclaw Logo',
+        alt: 'HindClaw Logo',
         src: 'img/hindclaw-logo.png',
         style: {height: '32px'},
       },
@@ -117,6 +163,12 @@ const config: Config = {
           sidebarId: 'docsSidebar',
           position: 'left',
           label: 'Docs',
+        },
+        {
+          type: 'docSidebar',
+          sidebarId: 'apiSidebar',
+          position: 'left',
+          label: 'API',
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {

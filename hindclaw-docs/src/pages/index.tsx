@@ -1,8 +1,13 @@
 import type {ReactNode} from 'react';
+import type {IconType} from 'react-icons';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
+import {
+  LuShield, LuCode, LuDatabase, LuLayers, LuTags, LuGlobe,
+} from 'react-icons/lu';
+import {SiPython, SiTerraform} from 'react-icons/si';
 
 import styles from './index.module.css';
 
@@ -84,6 +89,7 @@ function Packages() {
         </p>
         <div className={styles.packageGrid}>
           <div className={styles.packageCard}>
+            <div className={styles.packageIcon}><SiPython size={32} /></div>
             <div className={styles.packageBadge}>
               <img src="https://img.shields.io/pypi/v/hindclaw-extension?style=flat-square&color=0f766e" alt="PyPI" />
             </div>
@@ -98,6 +104,7 @@ function Packages() {
           </div>
 
           <div className={styles.packageCard}>
+            <div className={styles.packageIcon}><SiTerraform size={32} /></div>
             <div className={styles.packageBadge}>
               <img src="https://img.shields.io/badge/terraform-registry-844FBA?style=flat-square" alt="Terraform" />
             </div>
@@ -112,6 +119,7 @@ function Packages() {
           </div>
 
           <div className={styles.packageCard}>
+            <div className={styles.packageIcon}><LuCode size={32} /></div>
             <div className={styles.packageBadge}>
               <img src="https://img.shields.io/npm/v/hindclaw-openclaw?style=flat-square&color=0f766e" alt="npm" />
             </div>
@@ -183,34 +191,40 @@ function Flow() {
 /*  Features                                                                  */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
-const features = [
+const features: {title: string; description: string; icon: IconType}[] = [
   {
     title: 'Server-Side Access Control',
+    icon: LuShield,
     description:
       'JWT auth, user/group permissions, tag-based recall filtering, and retain strategy enrichment — all enforced on the Hindsight server via three extensions.',
   },
   {
     title: 'Infrastructure as Code',
+    icon: LuCode,
     description:
       'Terraform provider for the full stack. Banks, configs, permissions, directives, mental models, entity labels — version-controlled and reviewable.',
   },
   {
     title: 'Per-Agent Memory Banks',
+    icon: LuDatabase,
     description:
       'Each agent gets its own bank with custom missions, entity labels, dispositions, and directives. 11 agents, 11 different memory behaviors.',
   },
   {
     title: 'Multi-Bank Recall',
+    icon: LuLayers,
     description:
       'Agents read from multiple banks in parallel. Permissions checked per-bank — no unauthorized cross-reads.',
   },
   {
     title: 'Named Retain Strategies',
+    icon: LuTags,
     description:
       'Route conversation topics to different extraction profiles. Strategic conversations get deep analysis, daily chats get lightweight extraction.',
   },
   {
     title: 'Entity Labels',
+    icon: LuGlobe,
     description:
       'Controlled vocabulary for consistent fact classification. Multilingual aliases, tag generation, and graph-traversable entities from a single definition.',
   },
@@ -225,6 +239,7 @@ function Features() {
           {features.map((f, i) => (
             <div key={i} className="col col--4">
               <div className={styles.featureCard}>
+                <div className={styles.featureIcon}><f.icon size={24} /></div>
                 <Heading as="h3" className={styles.featureTitle}>{f.title}</Heading>
                 <p className={styles.featureDescription}>{f.description}</p>
               </div>

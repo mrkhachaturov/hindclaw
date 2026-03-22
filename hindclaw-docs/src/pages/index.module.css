@@ -250,6 +250,20 @@
   opacity: 1;
 }
 
+.packageIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+  color: var(--ifm-color-emphasis-700);
+}
+
+[data-theme='dark'] .packageIcon {
+  color: #2dd4bf;
+  opacity: 0.5;
+}
+
 .packageBadge {
   margin-bottom: 1rem;
   min-height: 20px;
@@ -372,6 +386,19 @@
   border-color: rgba(15, 118, 110, 0.3);
   transform: translateY(-2px);
   box-shadow: 0 4px 20px rgba(15, 118, 110, 0.1);
+}
+
+.featureIcon {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  color: #0f766e;
+  opacity: 0.7;
+}
+
+[data-theme='dark'] .featureIcon {
+  color: #2dd4bf;
+  opacity: 0.6;
 }
 
 .featureTitle {

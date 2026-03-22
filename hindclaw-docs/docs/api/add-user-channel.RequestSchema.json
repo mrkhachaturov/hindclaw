@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"properties":{"provider":{"type":"string","title":"Provider"},"sender_id":{"type":"string","title":"Sender Id"}},"type":"object","required":["provider","sender_id"],"title":"AddChannelRequest"}}}}}
