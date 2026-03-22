@@ -289,12 +289,6 @@ export default function Home(): ReactNode {
         <Flow />
         <Features />
         <PoweredBy />
-        <div className={styles.signature}>
-          crafted during a mass production session by{' '}
-          <a href="https://github.com/mrkhachaturov">ruben</a>
-          {' '}&{' '}
-          <a href="https://claude.ai">claude</a>
-        </div>
       </main>
     </Layout>
   );
