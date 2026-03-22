@@ -236,7 +236,7 @@ const config: Config = {
     mermaid: {
       theme: {
         light: 'base',
-        dark: 'base',
+        dark: 'dark',
       },
       options: {
         themeVariables: {
@@ -253,8 +253,8 @@ const config: Config = {
           tertiaryTextColor: '#1A1A2E',
           // Lines and edges - teal
           lineColor: '#00BCD4',
-          // Text
-          textColor: '#1A1A2E',
+          // Text — light color for dark mode readability
+          textColor: '#e0e0e0',
           // Node specific - teal
           nodeBkg: '#00BCD4',
           nodeTextColor: '#ffffff',
@@ -267,6 +267,16 @@ const config: Config = {
           // Labels
           edgeLabelBackground: 'transparent',
           labelBackground: 'transparent',
+          // Sequence diagram — light labels on dark background
+          actorTextColor: '#ffffff',
+          signalTextColor: '#e0e0e0',
+          labelTextColor: '#e0e0e0',
+          loopTextColor: '#e0e0e0',
+          noteBkgColor: '#1a3a3a',
+          noteTextColor: '#e0e0e0',
+          noteBorderColor: '#00838F',
+          activationBorderColor: '#00BCD4',
+          sequenceNumberColor: '#ffffff',
           // Font - Inter to match body text
           fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         },
