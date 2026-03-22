@@ -99,7 +99,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/hindclaw-logo.png',
+    image: 'img/hindclaw-social-card.png',
     colorMode: {
       defaultMode: 'dark',
       respectPrefersColorScheme: true,

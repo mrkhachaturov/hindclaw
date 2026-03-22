@@ -2,34 +2,32 @@
  * hindclaw custom theme - Professional style with brand colors
  * Based on upstream Hindsight docs pattern, adapted for hindclaw branding.
  *
- * Brand colors:
- *   Teal/cyan primary: #00BCD4
- *   Deep teal:         #00838F
- *   Orange/rust accent: #E64A19
+ * Brand colors (from logo):
+ *   Primary teal:      #0f766e (dark) → #14b8a6 (mid) → #2dd4bf (light)
+ *   Accent copper:     #c2410c → #ea580c
  *   Dark background:   #1A1A2E
- *   Blue glow:         #0288D1
- *   Gradient:          #0288D1 (blue) -> #00BCD4 (teal)
+ *   Gradient:          #0f766e → #14b8a6
  */
 
 /* ===== Light mode variables ===== */
 :root {
   /* Primary gradient */
-  --hindclaw-gradient: linear-gradient(135deg, #0288D1 0%, #00BCD4 100%);
-  --hindclaw-gradient-start: #0288D1;
-  --hindclaw-gradient-end: #00BCD4;
-  --hindclaw-accent: #E64A19;
+  --hindclaw-gradient: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  --hindclaw-gradient-start: #0f766e;
+  --hindclaw-gradient-end: #14b8a6;
+  --hindclaw-accent: #c2410c;
 
   /* Infima primary colors */
-  --ifm-color-primary: #0288D1;
-  --ifm-color-primary-dark: #0277BD;
-  --ifm-color-primary-darker: #01579B;
-  --ifm-color-primary-darkest: #004C8C;
-  --ifm-color-primary-light: #039BE5;
-  --ifm-color-primary-lighter: #29B6F6;
-  --ifm-color-primary-lightest: #E1F5FE;
+  --ifm-color-primary: #0f766e;
+  --ifm-color-primary-dark: #0d6b64;
+  --ifm-color-primary-darker: #0b5e58;
+  --ifm-color-primary-darkest: #094e49;
+  --ifm-color-primary-light: #0d9488;
+  --ifm-color-primary-lighter: #14b8a6;
+  --ifm-color-primary-lightest: #ccfbf1;
 
   --ifm-code-font-size: 90%;
-  --docusaurus-highlighted-code-line-bg: rgba(2, 136, 209, 0.1);
+  --docusaurus-highlighted-code-line-bg: rgba(15, 118, 110, 0.1);
 
   /* Typography */
   --ifm-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -48,14 +46,14 @@
 
 /* ===== Dark mode variables ===== */
 [data-theme='dark'] {
-  --ifm-color-primary: #29B6F6;
-  --ifm-color-primary-dark: #039BE5;
-  --ifm-color-primary-darker: #0288D1;
-  --ifm-color-primary-darkest: #0277BD;
-  --ifm-color-primary-light: #4FC3F7;
-  --ifm-color-primary-lighter: #81D4FA;
-  --ifm-color-primary-lightest: rgba(41, 182, 246, 0.15);
-  --docusaurus-highlighted-code-line-bg: rgba(41, 182, 246, 0.15);
+  --ifm-color-primary: #2dd4bf;
+  --ifm-color-primary-dark: #14b8a6;
+  --ifm-color-primary-darker: #0d9488;
+  --ifm-color-primary-darkest: #0f766e;
+  --ifm-color-primary-light: #5eead4;
+  --ifm-color-primary-lighter: #99f6e4;
+  --ifm-color-primary-lightest: rgba(45, 212, 191, 0.15);
+  --docusaurus-highlighted-code-line-bg: rgba(45, 212, 191, 0.15);
 
   --ifm-background-color: #0D0D1A;
   --ifm-background-surface-color: #1A1A2E;
@@ -277,7 +275,7 @@
 }
 
 .button--primary:hover {
-  background: linear-gradient(135deg, #01579B 0%, #00838F 100%);
+  background: linear-gradient(135deg, #094e49 0%, #0d9488 100%);
   color: white;
 }
 
@@ -301,7 +299,7 @@
 }
 
 .menu__link--active {
-  background: linear-gradient(135deg, rgba(2, 136, 209, 0.1) 0%, rgba(0, 188, 212, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.1) 0%, rgba(0, 188, 212, 0.1) 100%);
 }
 
 .menu__link--active .menu__link {
@@ -312,7 +310,7 @@
 }
 
 [data-theme='dark'] .menu__link--active {
-  background: linear-gradient(135deg, rgba(2, 136, 209, 0.15) 0%, rgba(0, 188, 212, 0.15) 100%);
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.15) 0%, rgba(20, 184, 166, 0.15) 100%);
 }
 
 /* Non-collapsible category styling */
@@ -441,7 +439,7 @@ h1[class*="title"] {
   font-size: 2.25rem;
   font-weight: 800;
   margin-bottom: 1.25rem;
-  background-image: linear-gradient(90deg, #0288D1, #00BCD4) !important;
+  background-image: linear-gradient(90deg, #0f766e, #14b8a6) !important;
   background-size: 100% !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
@@ -483,13 +481,13 @@ article a:not(.button):not([class*="hash-link"]):not([class*="card"]):not([class
 }
 
 article a code {
-  -webkit-text-fill-color: #29B6F6 !important;
-  color: #29B6F6 !important;
+  -webkit-text-fill-color: #2dd4bf !important;
+  color: #2dd4bf !important;
 }
 
 article a:hover code {
-  -webkit-text-fill-color: #0288D1 !important;
-  color: #0288D1 !important;
+  -webkit-text-fill-color: #0f766e !important;
+  color: #0f766e !important;
 }
 
 article a:not(.button):not([class*="hash-link"]):hover {
@@ -503,7 +501,7 @@ article a:not(.button):not([class*="hash-link"]):hover {
   border-radius: 0.5rem !important;
   border-left: none !important;
   border: none !important;
-  background: rgba(2, 136, 209, 0.05) !important;
+  background: rgba(15, 118, 110, 0.05) !important;
   position: relative !important;
   overflow: hidden !important;
   padding-left: 1.25rem !important;
@@ -518,13 +516,13 @@ article a:not(.button):not([class*="hash-link"]):hover {
   top: 0 !important;
   bottom: 0 !important;
   width: 4px !important;
-  background: linear-gradient(180deg, #0288D1, #00BCD4) !important;
+  background: linear-gradient(180deg, #0f766e, #14b8a6) !important;
   border-radius: 0.5rem 0 0 0.5rem !important;
 }
 
 /* Admonition heading text - gradient */
 [class*="admonitionHeading_"] {
-  background-image: linear-gradient(90deg, #0288D1, #00BCD4) !important;
+  background-image: linear-gradient(90deg, #0f766e, #14b8a6) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -536,18 +534,18 @@ article a:not(.button):not([class*="hash-link"]):hover {
 /* Admonition icon */
 [class*="admonitionIcon_"] svg,
 [class*="admonitionIcon_"] svg path {
-  fill: #0288D1 !important;
+  fill: #0f766e !important;
 }
 
 /* Different admonition types */
 .alert--info[class*="admonition_"],
 .theme-admonition-info {
-  background: rgba(2, 136, 209, 0.05) !important;
+  background: rgba(15, 118, 110, 0.05) !important;
 }
 
 .alert--success[class*="admonition_"],
 .theme-admonition-tip {
-  background: rgba(0, 188, 212, 0.05) !important;
+  background: rgba(20, 184, 166, 0.05) !important;
 }
 
 .alert--warning[class*="admonition_"],
@@ -557,23 +555,23 @@ article a:not(.button):not([class*="hash-link"]):hover {
 
 .alert--warning[class*="admonition_"]::before,
 .theme-admonition-warning::before {
-  background: linear-gradient(180deg, #E64A19, #FF7043) !important;
+  background: linear-gradient(180deg, #c2410c, #ea580c) !important;
 }
 
 .alert--secondary[class*="admonition_"],
 .theme-admonition-note {
-  background: rgba(0, 131, 143, 0.05) !important;
+  background: rgba(15, 118, 110, 0.08) !important;
 }
 
 /* Dark mode admonitions */
 [data-theme='dark'] .theme-admonition,
 [data-theme='dark'] [class*="admonition_"] {
-  background: rgba(0, 188, 212, 0.08) !important;
+  background: rgba(20, 184, 166, 0.08) !important;
 }
 
 [data-theme='dark'] .theme-admonition::before,
 [data-theme='dark'] [class*="admonition_"]::before {
-  background: linear-gradient(180deg, #29B6F6, #4DD0E1) !important;
+  background: linear-gradient(180deg, #2dd4bf, #5eead4) !important;
 }
 
 /* ===== Tables - striped, clean borders ===== */
@@ -599,11 +597,11 @@ th {
 
 /* Striped rows */
 tbody tr:nth-child(even) {
-  background: rgba(2, 136, 209, 0.02);
+  background: rgba(15, 118, 110, 0.02);
 }
 
 [data-theme='dark'] tbody tr:nth-child(even) {
-  background: rgba(0, 188, 212, 0.04);
+  background: rgba(20, 184, 166, 0.04);
 }
 
 /* ===== Footer ===== */
@@ -649,8 +647,8 @@ svg[id^="mermaid"] .node circle,
 svg[id^="mermaid"] .node ellipse,
 svg[id^="mermaid"] .node polygon,
 svg[id^="mermaid"] .node path {
-  fill: #00BCD4 !important;
-  stroke: #00838F !important;
+  fill: #14b8a6 !important;
+  stroke: #0d6b64 !important;
 }
 
 /* Node text */
@@ -677,7 +675,7 @@ svg[id^="mermaid"] .node foreignObject p {
 .mermaid svg[id^="mermaid"] .flowchart-link,
 svg[id^="mermaid"] .edgePath .path,
 svg[id^="mermaid"] .flowchart-link {
-  stroke: #00BCD4 !important;
+  stroke: #14b8a6 !important;
 }
 
 /* Arrow heads */
@@ -687,8 +685,8 @@ svg[id^="mermaid"] .flowchart-link {
 svg[id^="mermaid"] .marker path,
 svg[id^="mermaid"] .arrowheadPath,
 svg[id^="mermaid"] marker path {
-  fill: #00BCD4 !important;
-  stroke: #00BCD4 !important;
+  fill: #14b8a6 !important;
+  stroke: #14b8a6 !important;
 }
 
 /* Edge labels */
@@ -720,8 +718,8 @@ svg[id^="mermaid"] .edgeLabel p {
 /* Cluster/subgraph boxes */
 .mermaid svg[id^="mermaid"] .cluster rect,
 svg[id^="mermaid"] .cluster rect {
-  fill: rgba(0, 188, 212, 0.08) !important;
-  stroke: #00BCD4 !important;
+  fill: rgba(20, 184, 166, 0.08) !important;
+  stroke: #14b8a6 !important;
   stroke-width: 2px !important;
 }
 
@@ -777,7 +775,7 @@ svg[id^="mermaid"] p {
 
 [data-theme='dark'] .mermaid svg[id^="mermaid"] .cluster rect,
 [data-theme='dark'] svg[id^="mermaid"] .cluster rect {
-  fill: rgba(0, 188, 212, 0.15) !important;
+  fill: rgba(20, 184, 166, 0.15) !important;
 }
 
 /* ===== List styling ===== */
@@ -811,7 +809,7 @@ article li {
   background: transparent !important;
   border: none !important;
   border-bottom: 1px solid transparent !important;
-  border-image: linear-gradient(90deg, #0288D1, #00BCD4) 1 !important;
+  border-image: linear-gradient(90deg, #0f766e, #14b8a6) 1 !important;
   border-radius: 0 !important;
   padding: 0.25rem 0 !important;
   color: var(--ifm-color-emphasis-600) !important;
@@ -866,7 +864,7 @@ article li {
 
 [class*="searchQueryInput"]:focus,
 [class*="searchBarContainer"] input[type="search"]:focus {
-  border-bottom: 1px solid #0288D1 !important;
+  border-bottom: 1px solid #0f766e !important;
 }
 
 [class*="searchInput"]::placeholder,
@@ -928,7 +926,7 @@ ul[class*="suggestion"] {
   font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   font-weight: 600 !important;
   font-size: 0.9375rem !important;
-  background: linear-gradient(90deg, #0288D1, #00BCD4) !important;
+  background: linear-gradient(90deg, #0f766e, #14b8a6) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -940,7 +938,7 @@ ul[class*="suggestion"] {
 [class*="suggestion"] mark,
 .search-result-match mark {
   background: transparent !important;
-  color: #0288D1 !important;
+  color: #0f766e !important;
   padding: 0 !important;
   border-radius: 0 !important;
   font-weight: 600 !important;
@@ -950,5 +948,5 @@ ul[class*="suggestion"] {
 [data-theme='dark'] [class*="searchResultItem"] mark,
 [data-theme='dark'] [class*="suggestion"] mark,
 [data-theme='dark'] .search-result-match mark {
-  color: #29B6F6 !important;
+  color: #2dd4bf !important;
 }

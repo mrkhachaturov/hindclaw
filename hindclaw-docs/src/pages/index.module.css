@@ -1,6 +1,6 @@
 /**
  * hindclaw landing page styles.
- * Crafted with care during a legendary 12-hour session.
+ * Brand colors from the logo: teal (#0f766e → #2dd4bf) + copper (#c2410c)
  */
 
 /* ─── Hero ─── */
@@ -31,7 +31,7 @@
   width: 220px;
   height: auto;
   margin-bottom: 2rem;
-  filter: drop-shadow(0 0 40px rgba(0, 188, 212, 0.3));
+  filter: drop-shadow(0 0 40px rgba(15, 118, 110, 0.4));
   animation: float 6s ease-in-out infinite;
 }
 
@@ -45,7 +45,7 @@
   font-weight: 800;
   line-height: 1.1;
   margin-bottom: 1rem;
-  background: linear-gradient(90deg, #29B6F6, #4DD0E1, #80DEEA);
+  background: linear-gradient(90deg, #14b8a6, #2dd4bf, #5eead4);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -61,14 +61,14 @@
 }
 
 .heroLink {
-  color: #4DD0E1 !important;
+  color: #2dd4bf !important;
   text-decoration: none;
-  border-bottom: 1px solid rgba(77, 208, 225, 0.3);
+  border-bottom: 1px solid rgba(45, 212, 191, 0.3);
   transition: border-color 0.2s;
 }
 
 .heroLink:hover {
-  border-color: #4DD0E1;
+  border-color: #2dd4bf;
 }
 
 .heroButtons {
@@ -79,7 +79,7 @@
 }
 
 .heroPrimary {
-  background: linear-gradient(135deg, #0288D1, #00BCD4) !important;
+  background: linear-gradient(135deg, #0f766e, #14b8a6) !important;
   border: none !important;
   color: #ffffff !important;
   font-weight: 600;
@@ -89,10 +89,10 @@
 }
 
 .heroPrimary:hover {
-  background: linear-gradient(135deg, #039BE5, #26C6DA) !important;
+  background: linear-gradient(135deg, #0d9488, #2dd4bf) !important;
   color: #ffffff !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(0, 188, 212, 0.3);
+  box-shadow: 0 4px 20px rgba(15, 118, 110, 0.35);
 }
 
 .heroSecondary {
@@ -127,12 +127,12 @@
 }
 
 .installPill:hover {
-  border-color: rgba(77, 208, 225, 0.3);
+  border-color: rgba(45, 212, 191, 0.3);
 }
 
 .installPill code {
   font-size: 0.8rem;
-  color: #4DD0E1;
+  color: #2dd4bf;
   background: none;
   border: none;
   padding: 0;
@@ -154,15 +154,15 @@
 }
 
 .heroCloud a {
-  color: #4DD0E1;
+  color: #2dd4bf;
   text-decoration: none;
-  border-bottom: 1px dashed rgba(77, 208, 225, 0.4);
+  border-bottom: 1px dashed rgba(45, 212, 191, 0.4);
   transition: all 0.2s;
 }
 
 .heroCloud a:hover {
-  color: #80DEEA;
-  border-color: #80DEEA;
+  color: #5eead4;
+  border-color: #5eead4;
 }
 
 .heroGlow {
@@ -172,7 +172,7 @@
   transform: translate(-50%, -50%);
   width: 800px;
   height: 800px;
-  background: radial-gradient(circle, rgba(0, 188, 212, 0.08) 0%, rgba(2, 136, 209, 0.04) 40%, transparent 70%);
+  background: radial-gradient(circle, rgba(15, 118, 110, 0.1) 0%, rgba(13, 148, 136, 0.05) 40%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -184,7 +184,7 @@
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 3rem;
-  background: linear-gradient(90deg, #0288D1, #00BCD4);
+  background: linear-gradient(90deg, #0f766e, #14b8a6);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -235,15 +235,15 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #0288D1, #00BCD4);
+  background: linear-gradient(90deg, #0f766e, #14b8a6);
   opacity: 0;
   transition: opacity 0.25s;
 }
 
 .packageCard:hover {
-  border-color: rgba(0, 188, 212, 0.3);
+  border-color: rgba(15, 118, 110, 0.3);
   transform: translateY(-3px);
-  box-shadow: 0 8px 30px rgba(0, 188, 212, 0.08);
+  box-shadow: 0 8px 30px rgba(15, 118, 110, 0.1);
 }
 
 .packageCard:hover::before {
@@ -267,7 +267,7 @@
 }
 
 [data-theme='dark'] .packageName {
-  color: #4DD0E1;
+  color: #2dd4bf;
 }
 
 .packageDesc {
@@ -288,8 +288,8 @@
 }
 
 .packageRegistry:hover {
-  color: #00BCD4;
-  border-color: #00BCD4;
+  color: #0f766e;
+  border-color: #0f766e;
 }
 
 /* ─── Flow ─── */
@@ -320,7 +320,7 @@
   right: -1rem;
   width: 2rem;
   height: 2px;
-  background: linear-gradient(90deg, rgba(0, 188, 212, 0.4), rgba(0, 188, 212, 0.1));
+  background: linear-gradient(90deg, rgba(15, 118, 110, 0.4), rgba(15, 118, 110, 0.1));
 }
 
 .flowNumber {
@@ -330,12 +330,12 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0288D1, #00BCD4);
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
   color: #ffffff;
   font-weight: 700;
   font-size: 1.25rem;
   margin-bottom: 1rem;
-  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.25);
+  box-shadow: 0 4px 15px rgba(15, 118, 110, 0.3);
 }
 
 .flowTitle {
@@ -369,20 +369,20 @@
 }
 
 .featureCard:hover {
-  border-color: rgba(0, 188, 212, 0.3);
+  border-color: rgba(15, 118, 110, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 188, 212, 0.08);
+  box-shadow: 0 4px 20px rgba(15, 118, 110, 0.1);
 }
 
 .featureTitle {
   font-size: 1.05rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
-  color: #00BCD4;
+  color: #0f766e;
 }
 
 [data-theme='dark'] .featureTitle {
-  background: linear-gradient(90deg, #29B6F6, #4DD0E1);
+  background: linear-gradient(90deg, #14b8a6, #2dd4bf);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -416,15 +416,24 @@
 }
 
 .poweredByText a {
-  color: #00BCD4;
+  color: #0f766e;
   text-decoration: none;
   font-weight: 600;
-  border-bottom: 1px solid rgba(0, 188, 212, 0.3);
+  border-bottom: 1px solid rgba(15, 118, 110, 0.3);
   transition: border-color 0.2s;
 }
 
+[data-theme='dark'] .poweredByText a {
+  color: #2dd4bf;
+  border-color: rgba(45, 212, 191, 0.3);
+}
+
 .poweredByText a:hover {
-  border-color: #00BCD4;
+  border-color: #0f766e;
+}
+
+[data-theme='dark'] .poweredByText a:hover {
+  border-color: #2dd4bf;
 }
 
 .poweredByButtons {
@@ -438,26 +447,6 @@
 .poweredBySeparator {
   color: var(--ifm-color-emphasis-400);
   font-size: 0.85rem;
-}
-
-/* ─── Signature ─── */
-
-.signature {
-  text-align: center;
-  padding: 2rem 0 3rem;
-  font-size: 0.75rem;
-  color: var(--ifm-color-emphasis-400);
-  letter-spacing: 0.02em;
-}
-
-.signature a {
-  color: var(--ifm-color-emphasis-500);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.signature a:hover {
-  color: #4DD0E1;
 }
 
 /* ─── Responsive ─── */
