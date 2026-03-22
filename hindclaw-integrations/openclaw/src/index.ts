@@ -156,6 +156,10 @@ function detectExternalApi(pluginConfig?: PluginConfig): {
   return { apiUrl };
 }
 
+function shouldUseEmbeddedHttp(pluginConfig: PluginConfig, externalApi: { apiUrl: string | null }): boolean {
+  return !externalApi.apiUrl && !!pluginConfig.embedPackagePath && !!pluginConfig.jwtSecret;
+}
+
 function buildClientOptions(
   llmConfig: { provider?: string; apiKey?: string; model?: string },
   pluginCfg: PluginConfig,
@@ -392,8 +396,10 @@ export default function (api: MoltbotPluginAPI) {
           );
           debug('[Hindsight] Starting embedded server...');
           await embedManager.start();
-          debug('[Hindsight] Creating HindsightClient (subprocess mode)...');
-          clientOptions = buildClientOptions(llmConfig, pluginConfig, { apiUrl: null });
+          const embeddedHttp = shouldUseEmbeddedHttp(pluginConfig, externalApi);
+          const embeddedApiUrl = embeddedHttp ? embedManager.getBaseUrl() : null;
+          debug(`[Hindsight] Creating HindsightClient (${embeddedHttp ? 'embedded HTTP mode' : 'subprocess mode'})...`);
+          clientOptions = buildClientOptions(llmConfig, pluginConfig, { apiUrl: embeddedApiUrl });
           client = new HindsightClient(clientOptions);
           isInitialized = true;
           debug('[Hindsight] Ready');
@@ -456,7 +462,9 @@ export default function (api: MoltbotPluginAPI) {
             const p = rc.apiPort || 9077;
             embedManager = new HindsightEmbedManager(p, lc.provider || '', lc.apiKey || '', lc.model, lc.baseUrl, rc.daemonIdleTimeout, rc.embedVersion, rc.embedPackagePath);
             await embedManager.start();
-            clientOptions = buildClientOptions(lc, rc, { apiUrl: null });
+            const embeddedHttp = shouldUseEmbeddedHttp(rc, ea);
+            const embeddedApiUrl = embeddedHttp ? embedManager.getBaseUrl() : null;
+            clientOptions = buildClientOptions(lc, rc, { apiUrl: embeddedApiUrl });
             client = new HindsightClient(clientOptions);
           }
           isInitialized = true;
