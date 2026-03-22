@@ -45,9 +45,7 @@ jobs:
           path: hindclaw-integrations/openclaw/CHANGELOG.md
 
       - name: Publish to npm
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
 
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
