@@ -95,12 +95,6 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
-          id: 'reference/cli',
-          label: 'CLI',
-          customProps: { icon: 'lu-terminal' },
-        },
-        {
-          type: 'doc',
           id: 'reference/bank-fields',
           label: 'Bank Config Fields',
           customProps: { icon: 'lu-file-text' },
