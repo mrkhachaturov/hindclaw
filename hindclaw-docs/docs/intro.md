@@ -34,7 +34,7 @@ Permission resolution, tag injection, and strategy selection all happen server-s
 
 ## Core Features
 
-**Per-agent bank configs** -- each agent gets its own retain mission, entity labels, dispositions, and directives. Configured via JSON5 files, synced to Hindsight via `hindclaw apply`.
+**Per-agent bank configs** -- each agent gets its own retain mission, entity labels, dispositions, and directives. Bank configs are declared in JSON5 files and synced via `hindclaw apply`. Users, groups, permissions, directives, and mental models are managed via the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) or the `/ext/hindclaw/*` REST API.
 
 **Multi-bank recall** -- agents read from multiple banks in parallel. A strategic advisor recalls from finance, marketing, and ops banks simultaneously.
 
@@ -42,7 +42,7 @@ Permission resolution, tag injection, and strategy selection all happen server-s
 
 **Access control** -- server-side via hindclaw-extension. Users belong to groups. Groups define defaults. Banks override per-group or per-user. Anonymous users blocked by default. Dual authentication: JWT for plugins acting on behalf of users, API keys for direct access (CLI, dashboards, personal tools). Users and groups are managed via the `/ext/hindclaw/*` REST API.
 
-**Infrastructure as Code** -- `hindclaw plan/apply/import`. Declare bank configs in JSON5 files, diff against server state, apply changes. Like Terraform for memory banks.
+**Infrastructure as Code** -- two complementary tools. The **hindclaw CLI** (`hindclaw plan/apply/import`) manages bank configs from JSON5 files with diff-and-apply semantics. The **[terraform-provider-hindclaw](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest)** manages the full stack -- users, groups, permissions, directives, mental models, and bank configs -- as standard Terraform resources. The Terraform provider is the recommended way to manage your complete Hindsight infrastructure.
 
 **Session start context** -- mental models loaded before the first message. No cold start.
 
@@ -54,9 +54,14 @@ Permission resolution, tag injection, and strategy selection all happen server-s
 
 [Hindsight](https://hindsight.vectorize.io) is a biomimetic memory system for AI agents with semantic, BM25, graph, and temporal retrieval. hindclaw is a client that maps OpenClaw concepts (agents, channels, topics, users) onto Hindsight capabilities (banks, strategies, tags, tag_groups).
 
+:::tip Looking for a managed solution?
+Skip the self-hosting and use [Hindsight Cloud](https://ui.hindsight.vectorize.io/signup) — managed memory infrastructure by [Vectorize](https://vectorize.io), the team behind Hindsight.
+:::
+
 ## Next Steps
 
 - [Installation](./getting-started/installation) -- set up the plugin and (optionally) the server extension
 - [Bank Configuration](./guides/bank-configs) -- configure your first agent's memory
 - [Access Control](./guides/access-control) -- set up multi-user permissions via hindclaw-extension
+- [Terraform Provider](./guides/terraform) -- manage the full stack as code
 - [Configuration Reference](./reference/configuration) -- plugin and JWT configuration

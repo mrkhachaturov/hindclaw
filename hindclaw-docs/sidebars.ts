@@ -52,6 +52,12 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'guides/terraform',
+          label: 'Terraform Provider',
+          customProps: { icon: 'lu-blocks' },
+        },
+        {
+          type: 'doc',
           id: 'guides/multi-bank-recall',
           label: 'Multi-Bank Recall',
           customProps: { icon: 'lu-layers' },

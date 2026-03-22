@@ -96,24 +96,6 @@ The generated file contains only server-side fields (missions, dispositions, ent
 
 ---
 
-### `hindclaw init`
-
-Bootstrap the `.openclaw/hindsight/` directory structure for access control configuration. Creates template files for banks, groups, and user permissions.
-
-**Syntax:**
-
-```bash
-hindclaw init
-hindclaw init --from-existing
-hindclaw init --from-existing --force
-```
-
-| Variant | Description |
-|---------|-------------|
-| `hindclaw init` | Fresh setup with empty template files. |
-| `hindclaw init --from-existing` | Migrate current inline plugin config and bank files into the new directory structure. |
-| `hindclaw init --from-existing --force` | Same as above, but overwrite any existing `.openclaw/hindsight/` directory. |
-
 ## Global Options
 
 These options are available on all commands.
@@ -125,5 +107,7 @@ These options are available on all commands.
 | `--config <path>` | | Path to the OpenClaw config file. Defaults to the `OPENCLAW_CONFIG_PATH` environment variable, or `.openclaw/openclaw.json`. |
 | `--api-url <url>` | | Override the Hindsight API URL for this invocation. Takes precedence over both plugin config and bank config. |
 | `--auto-approve` | `-y` | Skip the confirmation prompt (applies to `apply` only). |
-| `--from-existing` | | Migrate current config into the new directory structure (`init` only). |
-| `--force` | `-f` | Overwrite an existing hindsight directory (`init` only). |
+
+:::note
+The CLI manages **bank configurations** only — missions, dispositions, entity labels, directives, and strategies. Users, groups, and permissions are managed via the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) or the REST API at `/ext/hindclaw/*`. See [Access Control](/guides/access-control) for details.
+:::

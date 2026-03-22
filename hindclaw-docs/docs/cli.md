@@ -53,16 +53,6 @@ Pull current server state into a local file.
 hindclaw import --agent agent-1 --output ./banks/agent-1.json5
 ```
 
-### `hindclaw init`
-
-Bootstrap the `.openclaw/hindsight/` directory structure for access control.
-
-```bash
-hindclaw init                           # fresh setup (empty templates)
-hindclaw init --from-existing           # migrate current config + banks
-hindclaw init --from-existing --force   # overwrite existing
-```
-
 ## Options
 
 | Option | Description |
@@ -72,5 +62,7 @@ hindclaw init --from-existing --force   # overwrite existing
 | `--config <path>` | Config file path (default: `OPENCLAW_CONFIG_PATH` or `.openclaw/openclaw.json`) |
 | `--api-url <url>` | Override Hindsight API URL |
 | `--auto-approve` / `-y` | Skip confirmation prompt |
-| `--from-existing` | Migrate current inline config + bank files (`init` only) |
-| `--force` / `-f` | Overwrite existing hindsight directory (`init` only) |
+
+:::note
+The CLI manages **bank configurations** only (missions, dispositions, entity labels, directives, strategies). Users, groups, and permissions are managed via the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) or the REST API at `/ext/hindclaw/*`. See [Access Control](./access-control) for details.
+:::

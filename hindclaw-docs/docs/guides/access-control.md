@@ -7,7 +7,11 @@ title: Access Control
 
 hindclaw provides per-user memory permissions enforced server-side through the `hindclaw-extension` -- a set of Hindsight server extensions that authenticate requests, resolve permissions, and enrich operations via `accept_with()`. The same user can get different behavior on different agents, channels, and topics -- different access flags, different tag visibility, different retain strategies.
 
-All user, group, and permission data lives in the Hindsight PostgreSQL database and is managed through the HTTP API at `/ext/hindclaw/*`. The plugin itself is a thin adapter: it generates a JWT from the OpenClaw context and sends standard Hindsight API calls. It does not store or resolve permissions.
+All user, group, and permission data lives in the Hindsight PostgreSQL database and is managed through the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) or the HTTP API at `/ext/hindclaw/*`. The plugin itself is a thin adapter: it generates a JWT from the OpenClaw context and sends standard Hindsight API calls. It does not store or resolve permissions.
+
+:::info Server-side only
+Permission resolution runs entirely on the Hindsight server via the `hindclaw-extension`. There is no client-side permission logic in the plugin. The plugin sends a JWT with sender context — the server resolves the user, checks group memberships, applies the permission cascade, and accepts or rejects the operation.
+:::
 
 ## How it works
 

@@ -3,12 +3,13 @@
 </p>
 
 <p align="center">
-  Self-hosted Hindsight management platform — multi-tenant access control, user/group permissions, client integrations, and infrastructure tooling for AI agent memory.
+  Self-hosted Hindsight management platform — multi-tenant access control, user/group permissions, Terraform-managed infrastructure, and client integrations for AI agent memory.
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/hindclaw"><img src="https://img.shields.io/npm/v/hindclaw?style=flat-square&color=0f766e" alt="npm"></a>
+  <a href="https://www.npmjs.com/package/hindclaw-openclaw"><img src="https://img.shields.io/npm/v/hindclaw-openclaw?style=flat-square&color=0f766e" alt="npm"></a>
   <a href="https://pypi.org/project/hindclaw-extension/"><img src="https://img.shields.io/pypi/v/hindclaw-extension?style=flat-square&color=0f766e" alt="PyPI"></a>
+  <a href="https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest"><img src="https://img.shields.io/badge/terraform-registry-844FBA?style=flat-square" alt="Terraform"></a>
   <img src="https://img.shields.io/badge/license-MIT-10b981?style=flat-square" alt="License">
 </p>
 
@@ -24,263 +25,207 @@
 
 Built on [Hindsight](https://hindsight.vectorize.io) — the highest-scoring agent memory system on the [LongMemEval benchmark](https://vectorize.io/#:~:text=The%20New%20Leader%20in%20Agent%20Memory).
 
-The official Hindsight plugin gives you auto-capture and auto-recall. HindClaw adds what you need to run it in production — two orthogonal dimensions that combine per-message:
+The official Hindsight plugin gives you auto-capture and auto-recall. HindClaw adds what you need to run it in production with multiple users and agents:
 
-**WHO** (permissions) — resolved through 4 layers, each can override any field:
-- Global config defaults → group merge → bank group override → bank user override
-- Not just `recall: true/false` — LLM model, token budget, extraction depth, tag visibility, retention frequency. 11 configurable fields at every layer.
+- **Server-side access control** — permissions enforced by Hindsight extensions, not the client
+- **Infrastructure as Code** — Terraform provider for users, groups, banks, permissions, directives, mental models
+- **Zero-config plugin** — one install, auto-starts embed daemon with extensions loaded
 
-**HOW** (strategies) — resolved per topic:
-- Each conversation topic routes to a named strategy with its own extraction mission, mode, and entity labels
-- Strategies are orthogonal to permissions — a blocked user never reaches strategy resolution
+---
+
+## Architecture
+
+Three layers, each independent:
+
+```mermaid
+graph TB
+    subgraph client["Client Layer"]
+        OC["OpenClaw Gateway<br/>hindclaw-openclaw (npm)"]
+        MCP["MCP / REST clients"]
+        TF["Terraform Provider<br/>mrkhachaturov/hindclaw"]
+    end
+
+    subgraph server["Hindsight Server"]
+        API["Hindsight API"]
+        subgraph ext["hindclaw-extension (PyPI)"]
+            TE["HindclawTenant<br/>JWT + API key auth"]
+            VE["HindclawValidator<br/>permission enforcement"]
+            HE["HindclawHttp<br/>management REST API"]
+        end
+        API --- TE
+        API --- VE
+        API --- HE
+    end
+
+    subgraph infra["Infrastructure"]
+        PG["PostgreSQL / pg0"]
+    end
+
+    OC -->|JWT per message| API
+    MCP -->|JWT / API key| API
+    TF -->|JWT admin| HE
+    API --> PG
+
+    style OC fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+    style MCP fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+    style TF fill:#844FBA,color:#fff,stroke:#844FBA
+    style API fill:#0f766e,color:#fff,stroke:#0f766e
+    style TE fill:#8b5cf6,color:#fff,stroke:#8b5cf6
+    style VE fill:#8b5cf6,color:#fff,stroke:#8b5cf6
+    style HE fill:#8b5cf6,color:#fff,stroke:#8b5cf6
+    style PG fill:#c2410c,color:#fff,stroke:#c2410c
+```
+
+**Key principle:** Access control lives on the server. Clients just deliver context (sender, agent, topic) — the server decides what's allowed.
+
+---
+
+### Message Flow
+
+Every message follows the same path regardless of client:
 
 ```mermaid
 graph TD
-    MSG["💬 Message: user + bank + topic"] --> PERM["🔐 Resolve permissions<br/>for THIS user on THIS bank"]
-    MSG --> STRAT["🎯 Resolve strategy<br/>for THIS topic on THIS bank"]
-    PERM --> R{"recall?"}
-    PERM --> W{"retain?"}
-    R -->|true| RECALL["📥 Recall<br/>budget, tokens, tag filters<br/>from resolved permissions"]
-    R -->|false| NO_R["🚫 No recall"]
-    W -->|true| RETAIN["📤 Retain<br/>roles, tags, LLM model<br/>+ topic strategy"]
-    W -->|false| NO_W["🚫 No retain"]
-    STRAT --> RETAIN
+    MSG["Message from Telegram/Slack/MCP"] --> JWT["Client signs JWT<br/>sender, agent, topic"]
+    JWT --> TENANT["HindclawTenant<br/>resolves sender → user"]
+    TENANT --> VALIDATOR["HindclawValidator<br/>resolves permissions"]
+    VALIDATOR --> R{"recall?"}
+    VALIDATOR --> W{"retain?"}
+    R -->|allowed| RECALL["Recall<br/>budget, tokens, tag filters<br/>from resolved permissions"]
+    R -->|denied| NO_R["Skipped"]
+    W -->|allowed| RETAIN["Retain<br/>with tag/strategy enrichment"]
+    W -->|denied| NO_W["Skipped"]
 
     style MSG fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style PERM fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style STRAT fill:#c2410c,color:#fff,stroke:#c2410c
+    style JWT fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+    style TENANT fill:#8b5cf6,color:#fff,stroke:#8b5cf6
+    style VALIDATOR fill:#8b5cf6,color:#fff,stroke:#8b5cf6
     style RECALL fill:#10b981,color:#fff,stroke:#10b981
     style RETAIN fill:#10b981,color:#fff,stroke:#10b981
     style NO_R fill:#ef4444,color:#fff,stroke:#ef4444
     style NO_W fill:#f59e0b,color:#fff,stroke:#f59e0b
 ```
 
-Every combination of **(user × bank × topic)** can produce different behavior — different access flags, different LLM model, different recall budget, different extraction strategy.
-
----
-
-### 🔐 Per-User Access & Behavioral Overrides
-
-The same user gets different behavior on different agents. Every parameter is configurable per group, overridable per bank and per user.
+### Identity Resolution
 
 ```mermaid
-graph TD
-    MSG["💬 Message"] --> ID["🔍 Resolve identity"]
-    ID --> GROUPS["👥 Merge group permissions"]
-    GROUPS --> BANK{"🏦 Bank overrides?"}
-    BANK -->|group override| BG["⚙️ Bank group permissions"]
-    BANK -->|user override| BU["👤 Bank user permissions"]
-    BANK -->|none| GLOBAL["📋 Global defaults"]
-    BG --> RESOLVED["✅ Resolved permissions"]
-    BU --> RESOLVED
-    GLOBAL --> RESOLVED
-    RESOLVED --> TOPIC{"🎯 Topic?"}
-    TOPIC -->|mapped| STRATEGY["📝 Named strategy"]
-    TOPIC -->|unmapped| DEFAULT["📝 Bank defaults"]
+graph LR
+    SENDER["telegram:276243527"] --> LOOKUP["Channel mapping<br/>hindclaw_user_channel"]
+    LOOKUP --> USER["user: ceo@astrateam.net"]
+    USER --> GROUPS["Groups: default, executive"]
+    GROUPS --> PERMS["Permission cascade"]
+    PERMS --> RESOLVED["recall: true<br/>retain: true<br/>budget: high"]
 
-    style MSG fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style ID fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style GROUPS fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style BG fill:#c2410c,color:#fff,stroke:#c2410c
-    style BU fill:#c2410c,color:#fff,stroke:#c2410c
-    style GLOBAL fill:#c2410c,color:#fff,stroke:#c2410c
-    style RESOLVED fill:#0f766e,color:#fff,stroke:#0f766e
-    style STRATEGY fill:#10b981,color:#fff,stroke:#10b981
-    style DEFAULT fill:#f59e0b,color:#fff,stroke:#f59e0b
+    style SENDER fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+    style LOOKUP fill:#8b5cf6,color:#fff,stroke:#8b5cf6
+    style USER fill:#0f766e,color:#fff,stroke:#0f766e
+    style GROUPS fill:#0f766e,color:#fff,stroke:#0f766e
+    style PERMS fill:#c2410c,color:#fff,stroke:#c2410c
+    style RESOLVED fill:#10b981,color:#fff,stroke:#10b981
 ```
 
-**Override chain** (most specific wins):
+Unmapped senders resolve as `_anonymous` — denied by default unless the `_default` group grants access.
+
+### Permission Cascade
+
+Most specific wins. Every parameter is overridable at each level.
 
 ```
-config.json5 defaults → group → bank group → bank user
+Global defaults → Group merge → Bank group override → Bank user override
 ```
 
 **Configurable at every level:** `recall`, `retain`, `retainRoles`, `retainTags`, `retainEveryNTurns`, `recallBudget`, `recallMaxTokens`, `recallTagGroups`, `llmModel`, `llmProvider`, `excludeProviders`
 
 **Same user, different agents:**
 
-| | agent-1 (strategic) | agent-2 (financial) |
+| | yoda (strategic) | r4p17 (financial) |
 |---|---|---|
-| **user-1** (executive) | recall + retain, high budget, no filters | recall + retain, high budget, no filters |
-| **user-2** (dept-head) | recall only, mid budget, filtered | recall + retain, high budget (user override) |
-| **user-3** (staff) | blocked (no entry → `_default`) | recall only, low budget, filtered |
-| **anonymous** | blocked | blocked |
+| **executive** | recall + retain, high budget | recall + retain, high budget |
+| **staff** | recall only, filtered tags | recall + retain, low budget |
+| **anonymous** | denied | denied |
 
-### 🔀 Cross-Agent Recall
+---
 
-One agent queries multiple banks in parallel. Permissions checked per-bank.
+## Infrastructure as Code
 
-```mermaid
-graph LR
-    Q["🔍 agent-1 recall query"] --> B1["🏦 bank: agent-1"]
-    Q --> B2["🏦 bank: agent-2"]
-    Q --> B3["🏦 bank: agent-3"]
-    B1 -->|recall: true| R1["📥 results"]
-    B2 -->|recall: true| R2["📥 results"]
-    B3 -->|recall: false| SKIP["🚫 skipped"]
-    R1 --> MERGE["🔀 Merge + interleave"]
-    R2 --> MERGE
-    MERGE --> INJECT["💉 Inject into prompt"]
-
-    style Q fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style B1 fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style B2 fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style B3 fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style R1 fill:#10b981,color:#fff,stroke:#10b981
-    style R2 fill:#10b981,color:#fff,stroke:#10b981
-    style SKIP fill:#ef4444,color:#fff,stroke:#ef4444
-    style MERGE fill:#0f766e,color:#fff,stroke:#0f766e
-    style INJECT fill:#0f766e,color:#fff,stroke:#0f766e
-```
-
-### 🎯 Named Retain Strategies
-
-Different conversation topics routed to different extraction strategies.
+Manage everything with Terraform:
 
 ```mermaid
 graph LR
-    MSG["💬 Incoming message"] --> TOPIC{"🎯 Topic ID?"}
-    TOPIC -->|280304| DEEP["🔬 deep-analysis"]
-    TOPIC -->|280418| LIGHT["⚡ lightweight"]
-    TOPIC -->|other| DEFAULT["📋 bank default"]
-    DEEP --> RETAIN1["📝 Verbose extraction"]
-    LIGHT --> RETAIN2["📝 Concise extraction"]
-    DEFAULT --> RETAIN3["📝 Standard extraction"]
+    TF["terraform apply"] --> USERS["Users + channels"]
+    TF --> GROUPS["Groups + memberships"]
+    TF --> BANKS["Banks + configs"]
+    TF --> PERMS["Permissions"]
+    TF --> DIR["Directives"]
+    TF --> MM["Mental models"]
 
-    style MSG fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style DEEP fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style LIGHT fill:#f59e0b,color:#fff,stroke:#f59e0b
-    style DEFAULT fill:#c2410c,color:#fff,stroke:#c2410c
-    style RETAIN1 fill:#10b981,color:#fff,stroke:#10b981
-    style RETAIN2 fill:#10b981,color:#fff,stroke:#10b981
-    style RETAIN3 fill:#10b981,color:#fff,stroke:#10b981
+    style TF fill:#844FBA,color:#fff,stroke:#844FBA
+    style USERS fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+    style GROUPS fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+    style BANKS fill:#0f766e,color:#fff,stroke:#0f766e
+    style PERMS fill:#c2410c,color:#fff,stroke:#c2410c
+    style DIR fill:#8b5cf6,color:#fff,stroke:#8b5cf6
+    style MM fill:#8b5cf6,color:#fff,stroke:#8b5cf6
 ```
 
-### 🏗️ Infrastructure as Code
+```hcl
+resource "hindclaw_user" "alice" {
+  id           = "alice@company.com"
+  display_name = "Alice"
+  email        = "alice@company.com"
+}
 
-`hindclaw plan` shows what will change. `hindclaw apply` syncs it. Like Terraform for memory banks.
+resource "hindclaw_user_channel" "alice_telegram" {
+  user_id          = hindclaw_user.alice.id
+  channel_provider = "telegram"
+  sender_id        = "123456789"
+}
 
-```mermaid
-graph LR
-    FILE["📂 Bank config files"] --> PLAN["📋 hindclaw plan"]
-    PLAN --> DIFF{"🔍 Changes?"}
-    DIFF -->|none| OK["✅ Up to date"]
-    DIFF -->|yes| SHOW["📄 Show diff"]
-    SHOW --> APPLY["⚡ hindclaw apply"]
-    APPLY --> CONFIRM{"❓ Confirm?"}
-    CONFIRM -->|yes| SYNC["🚀 Sync to Hindsight"]
-    CONFIRM -->|no| CANCEL["❌ Cancelled"]
+resource "hindclaw_group" "staff" {
+  id           = "staff"
+  display_name = "Staff"
+  recall       = true
+  retain       = true
+  recall_budget = "mid"
+}
 
-    style FILE fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style PLAN fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style APPLY fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style OK fill:#10b981,color:#fff,stroke:#10b981
-    style SHOW fill:#f59e0b,color:#fff,stroke:#f59e0b
-    style SYNC fill:#10b981,color:#fff,stroke:#10b981
-    style CANCEL fill:#ef4444,color:#fff,stroke:#ef4444
+resource "hindclaw_bank" "assistant" {
+  bank_id = "assistant"
+  name    = "Assistant"
+  mission = "General purpose assistant"
+  disposition_skepticism = 3
+  disposition_empathy    = 4
+}
+
+resource "hindclaw_bank_permission" "staff_assistant" {
+  bank_id    = hindclaw_bank.assistant.bank_id
+  scope_type = "group"
+  scope_id   = hindclaw_group.staff.id
+  recall     = true
+  retain     = true
+}
+
+resource "hindclaw_directive" "no_pii" {
+  bank_id   = hindclaw_bank.assistant.bank_id
+  name      = "no_pii"
+  content   = "Never store personally identifiable information."
+  is_active = true
+}
 ```
 
-### 🧩 Session Start Context
-
-Mental models loaded before the first message — no cold start.
-
-```mermaid
-graph LR
-    START["🎬 Session starts"] --> LOAD["📦 Load mental models"]
-    LOAD --> M1["🧠 Project context"]
-    LOAD --> M2["👤 User preferences"]
-    M1 --> INJECT["💉 Inject into system prompt"]
-    M2 --> INJECT
-    INJECT --> READY["✅ Agent ready with full context"]
-    READY --> MSG1["💬 First user message"]
-
-    style START fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style LOAD fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style M1 fill:#c2410c,color:#fff,stroke:#c2410c
-    style M2 fill:#c2410c,color:#fff,stroke:#c2410c
-    style INJECT fill:#0f766e,color:#fff,stroke:#0f766e
-    style READY fill:#10b981,color:#fff,stroke:#10b981
-    style MSG1 fill:#10b981,color:#fff,stroke:#10b981
-```
-
-### 🪞 Reflect on Recall
-
-Instead of raw memory retrieval, the agent reasons over its memories.
-
-```mermaid
-graph LR
-    Q["💬 User question"] --> MODE{"🪞 Reflect enabled?"}
-    MODE -->|yes| REFLECT["🧠 Hindsight reflect API"]
-    MODE -->|no| RECALL["📥 Hindsight recall API"]
-    REFLECT --> REASON["💡 LLM reasons over memories"]
-    REASON --> ANSWER["✅ Grounded response"]
-    RECALL --> RAW["📋 Raw memory list"]
-    RAW --> ANSWER
-
-    style Q fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style REFLECT fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style RECALL fill:#c2410c,color:#fff,stroke:#c2410c
-    style REASON fill:#0f766e,color:#fff,stroke:#0f766e
-    style RAW fill:#f59e0b,color:#fff,stroke:#f59e0b
-    style ANSWER fill:#10b981,color:#fff,stroke:#10b981
-```
-
-### 🌐 Multi-Server Support
-
-Per-agent infrastructure routing — one gateway, multiple Hindsight servers.
-
-```mermaid
-graph LR
-    GW["🌐 Gateway"] --> A1["🤖 agent-1"]
-    GW --> A2["🤖 agent-2"]
-    GW --> A3["🤖 agent-3"]
-    GW --> A4["🤖 agent-4"]
-    A1 --> HOME["🏠 Home server"]
-    A2 --> HOME
-    A3 --> OFFICE["🏢 Office server"]
-    A4 --> LOCAL["💻 Local daemon"]
-
-    style GW fill:#0f766e,color:#fff,stroke:#0f766e
-    style A1 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style A2 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style A3 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style A4 fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style HOME fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style OFFICE fill:#c2410c,color:#fff,stroke:#c2410c
-    style LOCAL fill:#f59e0b,color:#fff,stroke:#f59e0b
-```
-
-### 🚀 Zero-Config Bootstrap
-
-Set `bootstrap: true` and start the gateway. Bank configs applied automatically on first run.
-
-```mermaid
-graph LR
-    START["🚀 Gateway starts"] --> CHECK{"🏦 Bank empty?"}
-    CHECK -->|yes| APPLY["⚙️ Auto-apply config"]
-    CHECK -->|no| SKIP["⏭️ Already configured"]
-    APPLY --> READY["✅ Bank ready"]
-    SKIP --> READY
-
-    style START fill:#1d4ed8,color:#fff,stroke:#1d4ed8
-    style APPLY fill:#8b5cf6,color:#fff,stroke:#8b5cf6
-    style SKIP fill:#f59e0b,color:#fff,stroke:#f59e0b
-    style READY fill:#10b981,color:#fff,stroke:#10b981
-```
+See the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) for full documentation.
 
 ---
 
 ## Quick Start
 
-### 1. Install
+### 1. Install the OpenClaw plugin
 
 ```bash
-openclaw plugins install hindclaw
+openclaw plugins install hindclaw-openclaw
 ```
 
 ### 2. Configure
-
-Add to your `openclaw.json` (or a `$include`'d config file):
 
 ```json5
 {
@@ -289,8 +234,8 @@ Add to your `openclaw.json` (or a `$include`'d config file):
       "hindclaw": {
         "enabled": true,
         "config": {
-          "dynamicBankGranularity": ["agent"],
-          "bootstrap": true
+          "jwtSecret": "your-secret-here",
+          "dynamicBankGranularity": ["agent"]
         }
       }
     }
@@ -304,112 +249,144 @@ Add to your `openclaw.json` (or a `$include`'d config file):
 openclaw gateway
 ```
 
-That's it — memories are captured and recalled automatically.
-The plugin starts a local Hindsight daemon on first run (requires Python 3.11+ and `uv`).
+The plugin auto-starts a Hindsight daemon with extensions loaded. No separate server setup needed.
 
-> For bank configs, access control, strategies, and multi-server setups, see the [full documentation](docs/).
+### 4. Manage with Terraform (optional)
+
+```bash
+terraform init
+terraform apply
+```
+
+Define users, groups, permissions, bank configs, directives, and mental models as code.
+
+---
+
+## Packages
+
+| Package | Registry | Purpose |
+|---------|----------|---------|
+| [`hindclaw-extension`](https://pypi.org/project/hindclaw-extension/) | PyPI | Server-side Hindsight extensions (auth, permissions, management API) |
+| [`hindclaw-openclaw`](https://www.npmjs.com/package/hindclaw-openclaw) | npm | OpenClaw gateway plugin (JWT signing, lifecycle hooks) |
+| [`terraform-provider-hindclaw`](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) | Terraform Registry | Infrastructure as Code for all resources |
+| Go client | `go get github.com/mrkhachaturov/hindclaw/hindclaw-clients/go` | Generated API client for the management API |
 
 ---
 
 ## Features
 
-### 📋 Bank Management
+### Server-Side Access Control
 
-Define agent memory banks as JSON5 files — missions, entity labels, directives, dispositions. All version-controlled.
+Three Hindsight extensions handle all access control on the server:
 
-```bash
-hindclaw plan --all     # preview changes
-hindclaw apply --all    # sync to Hindsight
-hindclaw import --agent agent-1 --output ./banks/agent-1.json5
-```
+- **HindclawTenant** — authenticates JWT and API key tokens, resolves sender identity to a known user via channel mappings
+- **HindclawValidator** — enforces recall/retain/reflect permissions per user per bank, injects tag filters and retain strategies via `accept_with()` enrichment
+- **HindclawHttp** — REST API at `/ext/hindclaw/` for managing users, groups, permissions, strategies, and API keys
 
-See [CLI Reference](docs/cli.md).
+### Entity Labels
 
-### 🔐 Access & Behavioral Control
+Controlled vocabulary for consistent fact classification. Labels produce both entities (graph traversal) and tags (filtering).
 
-Per-user memory behavior — access flags, LLM model, recall budget, token limits, tag visibility, retention depth. All configurable per group, overridable per bank and per user.
-
-```json5
-// groups/group-1.json5 — executive role
-{
-  "displayName": "Executive",
-  "members": ["user-1"],
-  "recall": true,
-  "retain": true,
-  "retainRoles": ["user", "assistant", "tool"],
-  "retainTags": ["role:executive"],
-  "recallBudget": "high",
-  "recallMaxTokens": 2048,
-  "recallTagGroups": null,  // no filter — sees everything
-  "llmModel": "claude-sonnet-4-5-20250929"
-}
-```
-
-```json5
-// groups/group-2.json5 — staff role
-{
-  "displayName": "Staff",
-  "members": ["user-2", "user-3"],
-  "recall": true,
-  "retain": true,
-  "retainRoles": ["assistant"],
-  "retainEveryNTurns": 2,
-  "recallBudget": "low",
-  "recallMaxTokens": 512,
-  "recallTagGroups": [
-    {"not": {"tags": ["sensitivity:restricted"], "match": "any_strict"}}
-  ],
-  "llmModel": "gpt-4o-mini"
-}
-```
-
-See [Access Control](docs/access-control.md).
-
-### 🎯 Named Strategies & Topic Routing
-
-Each conversation topic gets its own memory behavior — different extraction rules, or no memory at all. Strategies are defined server-side with their own mission, extraction mode, and entity labels. Topics route to strategies.
-
-| Mode | Recall | Retain | Use case |
-|------|--------|--------|----------|
-| `full` | yes | yes (with named strategy) | Strategic conversations — every detail extracted |
-| `recall` | yes | no | Read-only — agent reads memory but conversation isn't stored |
-| `disabled` | no | no | No memory at all — ephemeral conversations |
-
-```json5
-// In bank config
-{
-  // Server-side strategies (synced via hindclaw apply)
-  "retain_strategies": {
-    "deep-analysis": { "$include": "./agent-1/deep-analysis.json5" },
-    "lightweight":   { "$include": "./agent-1/lightweight.json5" }
+```hcl
+entity_labels = [
+  {
+    key         = "person"
+    description = "Known person. Use only these values."
+    type        = "multi-values"
+    tag         = true
+    values = [
+      { value = "alice", description = "Alice Smith (Алиса) — CEO" },
+      { value = "bob",   description = "Bob Jones — CTO" },
+    ]
   },
-
-  // Topic routing (plugin-side)
-  "retain": {
-    "strategies": {
-      "deep-analysis": { "topics": ["280304"] },  // strategy topic → verbose
-      "lightweight":   { "topics": ["280418"] }    // daily topic → concise
-    }
-  }
-}
+  {
+    key         = "scope"
+    description = "Visibility tier"
+    type        = "value"
+    tag         = true
+    values = [
+      { value = "public",     description = "Available to all" },
+      { value = "management", description = "Management only" },
+      { value = "owner",      description = "Owners only" },
+    ]
+  },
+]
 ```
 
-Configs stay modular with `$include` — split entity labels, strategies, and directives into separate files (max depth 10, circular detection).
+### Cross-Agent Recall
 
-See [Bank Configuration](docs/bank-config.md).
+One agent queries multiple banks in parallel. Permissions checked per-bank.
 
-### 🔀 Cross-Agent Recall
+```mermaid
+graph LR
+    Q["Agent recall query"] --> B1["bank: agent-1"]
+    Q --> B2["bank: agent-2"]
+    Q --> B3["bank: agent-3"]
+    B1 -->|allowed| R1["results"]
+    B2 -->|allowed| R2["results"]
+    B3 -->|denied| SKIP["skipped"]
+    R1 --> MERGE["Merge + inject"]
+    R2 --> MERGE
 
-An agent can recall from multiple banks. Permissions are checked per-bank — no unauthorized cross-reads.
-
-```json5
-{
-  "recallFrom": ["agent-1", "agent-2", "agent-3"],
-  "recallBudget": "high"
-}
+    style Q fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+    style B1 fill:#8b5cf6,color:#fff,stroke:#8b5cf6
+    style B2 fill:#8b5cf6,color:#fff,stroke:#8b5cf6
+    style B3 fill:#8b5cf6,color:#fff,stroke:#8b5cf6
+    style R1 fill:#10b981,color:#fff,stroke:#10b981
+    style R2 fill:#10b981,color:#fff,stroke:#10b981
+    style SKIP fill:#ef4444,color:#fff,stroke:#ef4444
+    style MERGE fill:#0f766e,color:#fff,stroke:#0f766e
 ```
 
-See [Configuration](docs/configuration.md).
+### Named Retain Strategies
+
+Different conversation topics routed to different extraction strategies:
+
+```mermaid
+graph LR
+    MSG["Incoming message"] --> TOPIC{"Topic ID?"}
+    TOPIC -->|280304| DEEP["deep-analysis"]
+    TOPIC -->|280418| LIGHT["lightweight"]
+    TOPIC -->|other| DEFAULT["bank default"]
+    DEEP --> RETAIN1["Verbose extraction"]
+    LIGHT --> RETAIN2["Concise extraction"]
+    DEFAULT --> RETAIN3["Standard extraction"]
+
+    style MSG fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+    style DEEP fill:#8b5cf6,color:#fff,stroke:#8b5cf6
+    style LIGHT fill:#f59e0b,color:#fff,stroke:#f59e0b
+    style DEFAULT fill:#c2410c,color:#fff,stroke:#c2410c
+    style RETAIN1 fill:#10b981,color:#fff,stroke:#10b981
+    style RETAIN2 fill:#10b981,color:#fff,stroke:#10b981
+    style RETAIN3 fill:#10b981,color:#fff,stroke:#10b981
+```
+
+### Zero-Config Embedded Mode
+
+When `jwtSecret` is set in plugin config, the plugin:
+
+1. Starts the Hindsight embed daemon
+2. Installs `hindclaw-extension` into the daemon's venv
+3. Configures all three extensions automatically
+4. Connects via HTTP with JWT auth
+
+No manual server setup, no profile editing, no separate daemon management.
+
+```mermaid
+graph LR
+    GW["Gateway starts"] --> PLUGIN["Plugin loads"]
+    PLUGIN --> DAEMON["Start embed daemon<br/>+ install hindclaw-extension"]
+    DAEMON --> CONFIG["Auto-configure<br/>JWT + extensions"]
+    CONFIG --> HTTP["Connect via HTTP + JWT"]
+    HTTP --> READY["Ready"]
+
+    style GW fill:#1d4ed8,color:#fff,stroke:#1d4ed8
+    style PLUGIN fill:#8b5cf6,color:#fff,stroke:#8b5cf6
+    style DAEMON fill:#0f766e,color:#fff,stroke:#0f766e
+    style CONFIG fill:#c2410c,color:#fff,stroke:#c2410c
+    style HTTP fill:#10b981,color:#fff,stroke:#10b981
+    style READY fill:#10b981,color:#fff,stroke:#10b981
+```
 
 ---
 
@@ -417,11 +394,10 @@ See [Configuration](docs/configuration.md).
 
 | Guide | Description |
 |-------|-------------|
-| [Configuration](docs/configuration.md) | Plugin config, behavioral defaults, per-agent overrides |
-| [Bank Configuration](docs/bank-config.md) | Missions, entity labels, strategies, `$include` directives |
-| [Access Control](docs/access-control.md) | Users, groups, permissions, resolution algorithm |
-| [CLI Reference](docs/cli.md) | `hindclaw plan`, `apply`, `import`, `init` |
-| [Development](docs/development.md) | Building, testing, contributing |
+| [hindclaw.pro](https://hindclaw.pro) | Full documentation site |
+| [Terraform Provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest/docs) | Provider docs on Terraform Registry |
+| [Extension API](hindclaw-extension/) | Server extension source and tests |
+| [Plugin Source](hindclaw-integrations/openclaw/) | OpenClaw plugin source and tests |
 
 ---
 
@@ -429,12 +405,10 @@ See [Configuration](docs/configuration.md).
 
 ```bash
 openclaw plugins remove @vectorize-io/hindsight-openclaw
-openclaw plugins install hindclaw
+openclaw plugins install hindclaw-openclaw
 ```
 
 Bank ID scheme is compatible — existing memories are preserved.
-All plugin-level options use the same names, including `bankMission`.
-Per-agent bank config files use `retain_mission` for the same purpose (server-side field name).
 
 ---
 

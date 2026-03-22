@@ -1,138 +1,246 @@
 # Access Control
 
-Layered permission model: users belong to groups, groups define defaults, banks override per-group or per-user.
+Layered permission model: users belong to groups, groups define defaults, banks override per-group or per-user. All access control data lives in the Hindsight PostgreSQL database and is managed through the REST API at `/ext/hindclaw/*` or the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw).
 
-## Directory Structure
+There are no config files for access control. See the [Access Control Guide](./guides/access-control) for a full walkthrough.
 
-Access control uses a self-contained directory at `.openclaw/hindsight/`:
+## Permission Model
 
 ```
-.openclaw/hindsight/
-├── config.json5           <- plugin settings
-├── banks/
-│   ├── agent-1.json5      <- bank config (file name = agent ID)
-│   ├── agent-1/           <- $include fragments
-│   └── ...
-├── groups/
-│   ├── _default.json5     <- REQUIRED — anonymous/unknown users
-│   ├── group-1.json5
-│   ├── group-2.json5
-│   └── ...
-└── users/
-    ├── user-1.json5       <- canonical ID = file name
-    └── ...
+Users
+  └── belong to Groups (via memberships)
+        └── Groups define permission defaults
+              └── Banks override per-group or per-user
 ```
 
-Enable by setting `configPath` in your plugin config:
+Resolution order (most specific wins):
 
-```json5
-"hindclaw": {
-  "enabled": true,
-  "configPath": "./hindsight"
-}
-```
+1. **Merge global groups** -- collect all user's groups, merge with rules below
+2. **Bank `_default` baseline** -- if bank has a `_default` permission entry, start there
+3. **Bank group overlay** -- merge bank-level group entries for this user's groups
+4. **Bank user override** -- apply per-user override if defined
 
-## Users
+Banks without permission overrides fall through to global group defaults.
 
-A user file defines identity only — who they are across channels. No permissions, no group membership.
+## Managing with Terraform
 
-```json5
-// users/user-1.json5
-{
-  "displayName": "Alice",
-  "email": "alice@example.com",
-  "channels": {
-    "telegram": "123456",
-    "slack": "U123456"
+The `mrkhachaturov/hindclaw` provider manages users, groups, memberships, and permissions as standard Terraform resources.
+
+### Provider configuration
+
+```hcl
+terraform {
+  required_providers {
+    hindclaw = {
+      source = "hindclaw.pro/mrkhachaturov/hindclaw"
+    }
   }
 }
-```
 
-## Groups
-
-A group file defines who's in it and what permission defaults they get.
-
-### Role Groups
-
-```json5
-// groups/group-1.json5
-{
-  "displayName": "Executive",
-  "members": ["user-1"],
-  "recall": true,
-  "retain": true,
-  "retainRoles": ["user", "assistant", "tool"],
-  "retainTags": ["role:executive"],
-  "recallBudget": "high",
-  "recallMaxTokens": 2048,
-  "recallTagGroups": null,              // no filter — sees everything
-  "llmModel": "claude-sonnet-4-5-20250929"
+provider "hindclaw" {
+  api_url = "https://hindsight.home.local"   # or HINDCLAW_API_URL
+  api_key = var.hindclaw_api_key             # or HINDCLAW_API_KEY
 }
 ```
 
-```json5
-// groups/group-2.json5
-{
-  "displayName": "Staff",
-  "members": ["user-3"],
-  "recall": true,
-  "retain": true,
-  "retainRoles": ["assistant"],
-  "retainTags": ["role:staff"],
-  "retainEveryNTurns": 2,
-  "recallBudget": "low",
-  "recallMaxTokens": 512,
-  "recallTagGroups": [
-    {"not": {"tags": ["sensitivity:confidential", "sensitivity:restricted"], "match": "any_strict"}}
-  ],
-  "llmProvider": "openai",
-  "llmModel": "gpt-4o-mini"
+### Users and channel mappings
+
+```hcl
+resource "hindclaw_user" "alice" {
+  id           = "alice"
+  display_name = "Alice"
+  email        = "alice@example.com"
+}
+
+resource "hindclaw_user_channel" "alice_telegram" {
+  user_id          = hindclaw_user.alice.id
+  channel_provider = "telegram"
+  sender_id        = "123456"
+}
+
+resource "hindclaw_user_channel" "alice_slack" {
+  user_id          = hindclaw_user.alice.id
+  channel_provider = "slack"
+  sender_id        = "U123456"
 }
 ```
 
-### Department Groups
+### Groups
 
-```json5
-// groups/group-3.json5
-{
-  "displayName": "Sales Team",
-  "members": ["user-2", "user-3"],
-  "recallTagGroups": [
-    {"tags": ["department:sales"], "match": "any"}
-  ],
-  "retainTags": ["department:sales"]
+```hcl
+resource "hindclaw_group" "executives" {
+  id               = "executives"
+  display_name     = "Executive"
+  recall           = true
+  retain           = true
+  retain_roles     = ["user", "assistant", "tool"]
+  retain_tags      = ["role:executive"]
+  recall_budget    = "high"
+  recall_max_tokens = 2048
+  recall_tag_groups = null   # no filter -- sees everything
+}
+
+resource "hindclaw_group" "staff" {
+  id                   = "staff"
+  display_name         = "Staff"
+  recall               = true
+  retain               = true
+  retain_roles         = ["assistant"]
+  retain_tags          = ["role:staff"]
+  retain_every_n_turns = 2
+  recall_budget        = "low"
+  recall_max_tokens    = 512
+  recall_tag_groups    = jsonencode([
+    { not = { tags = ["sensitivity:restricted"], match = "any_strict" } }
+  ])
+  llm_provider = "openai"
+  llm_model    = "gpt-4o-mini"
+}
+
+resource "hindclaw_group" "sales_team" {
+  id           = "sales-team"
+  display_name = "Sales Team"
+  recall_tag_groups = jsonencode([
+    { tags = ["department:sales"], match = "any" }
+  ])
+  retain_tags = ["department:sales"]
 }
 ```
 
-### Anonymous Fallback (required)
+### Memberships
 
-```json5
-// groups/_default.json5
-{
-  "displayName": "Anonymous",
-  "members": [],
-  "recall": false,
-  "retain": false
+```hcl
+resource "hindclaw_group_membership" "alice_executives" {
+  group_id = hindclaw_group.executives.id
+  user_id  = hindclaw_user.alice.id
 }
+
+resource "hindclaw_group_membership" "bob_staff" {
+  group_id = hindclaw_group.staff.id
+  user_id  = hindclaw_user.bob.id
+}
+
+resource "hindclaw_group_membership" "bob_sales" {
+  group_id = hindclaw_group.sales_team.id
+  user_id  = hindclaw_user.bob.id
+}
+```
+
+### Bank-level permission overrides
+
+```hcl
+# On Yoda: staff can recall but not retain
+resource "hindclaw_bank_permission" "yoda_staff" {
+  bank_id    = "yoda"
+  scope_type = "group"
+  scope_id   = hindclaw_group.staff.id
+  recall     = true
+  retain     = false
+}
+
+# On K2SO: Bob gets elevated recall
+resource "hindclaw_bank_permission" "k2so_bob" {
+  bank_id           = "k2so"
+  scope_type        = "user"
+  scope_id          = hindclaw_user.bob.id
+  recall_budget     = "high"
+  recall_max_tokens = 2048
+}
+```
+
+## Managing with the REST API
+
+The same operations are available via HTTP at `/ext/hindclaw/*`. All requests require an admin JWT or API key in the `Authorization` header.
+
+### Users and channel mappings
+
+```bash
+# Create user
+curl -X POST https://hindsight.home.local/ext/hindclaw/users \
+  -H "Authorization: Bearer $ADMIN_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"id": "alice", "display_name": "Alice", "email": "alice@example.com"}'
+
+# Add channel mapping
+curl -X POST https://hindsight.home.local/ext/hindclaw/users/alice/channels \
+  -H "Authorization: Bearer $ADMIN_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"provider": "telegram", "sender_id": "123456"}'
+```
+
+### Groups
+
+```bash
+# Create group with permissions
+curl -X POST https://hindsight.home.local/ext/hindclaw/groups \
+  -H "Authorization: Bearer $ADMIN_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "executives",
+    "display_name": "Executive",
+    "recall": true,
+    "retain": true,
+    "retain_roles": ["user", "assistant", "tool"],
+    "retain_tags": ["role:executive"],
+    "recall_budget": "high",
+    "recall_max_tokens": 2048,
+    "recall_tag_groups": null
+  }'
+
+# Add member
+curl -X POST https://hindsight.home.local/ext/hindclaw/groups/executives/members \
+  -H "Authorization: Bearer $ADMIN_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "alice"}'
+```
+
+### Bank-level permission overrides
+
+```bash
+# Group override on a bank
+curl -X PUT https://hindsight.home.local/ext/hindclaw/banks/yoda/permissions/groups/staff \
+  -H "Authorization: Bearer $ADMIN_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"recall": true, "retain": false}'
+
+# User override on a bank
+curl -X PUT https://hindsight.home.local/ext/hindclaw/banks/k2so/permissions/users/bob \
+  -H "Authorization: Bearer $ADMIN_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"recall_budget": "high", "recall_max_tokens": 2048}'
+```
+
+### The _default group
+
+The `_default` group applies to unknown/anonymous senders. It is created automatically when the extension starts and blocks both recall and retain by default.
+
+```bash
+# Update _default to allow read-only anonymous access
+curl -X PUT https://hindsight.home.local/ext/hindclaw/groups/_default \
+  -H "Authorization: Bearer $ADMIN_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"recall": true, "retain": false}'
 ```
 
 ## Group Fields
 
+Every field below can be set at the group level, and overridden at the bank level per-group or per-user.
+
 | Field | Type | Description |
 |-------|------|-------------|
-| `displayName` | string | Human-readable name |
-| `members` | string[] | Canonical user IDs (file names from `users/`) |
+| `display_name` | string | Human-readable name |
 | `recall` | boolean | Can read from memory |
 | `retain` | boolean | Can write to memory |
-| `retainRoles` | string[] | Message roles retained: `user`, `assistant`, `system`, `tool` |
-| `retainTags` | string[] | Tags added to all retained facts |
-| `retainEveryNTurns` | number | Retain every Nth turn |
-| `recallBudget` | string | Recall effort: `low`, `mid`, `high` |
-| `recallMaxTokens` | number | Max tokens injected per turn |
-| `recallTagGroups` | TagGroup[] or null | Tag filter for recall. `null` = no filter. |
-| `llmModel` | string | LLM model for extraction |
-| `llmProvider` | string | LLM provider for extraction |
-| `excludeProviders` | string[] | Skip these message providers |
+| `retain_roles` | string[] | Message roles retained: `user`, `assistant`, `system`, `tool` |
+| `retain_tags` | string[] | Tags added to all retained facts |
+| `retain_every_n_turns` | number | Retain every Nth turn |
+| `retain_strategy` | string | Named retain strategy (from cascade) |
+| `recall_budget` | string | Recall effort: `low`, `mid`, `high` |
+| `recall_max_tokens` | number | Max tokens injected per turn |
+| `recall_tag_groups` | TagGroup[] or null | Tag filter for recall. `null` = no filter. |
+| `llm_model` | string | LLM model for extraction |
+| `llm_provider` | string | LLM provider for extraction |
+| `exclude_providers` | string[] | Skip these message providers |
 
 ## Merge Rules (multiple groups)
 
@@ -141,59 +249,36 @@ When a user belongs to multiple groups:
 | Field | Rule |
 |-------|------|
 | `recall`, `retain` | Most permissive wins (`true > false`) |
-| `retainRoles`, `retainTags` | Unioned |
-| `recallBudget` | Most permissive (`high > mid > low`) |
-| `recallMaxTokens` | Highest value wins |
-| `recallTagGroups` | AND-ed together |
-| `llmModel`, `llmProvider` | Alphabetically first group that defines it wins |
-| `retainEveryNTurns` | Lowest value wins (most frequent) |
-| `excludeProviders` | Unioned (most restrictive) |
-
-## Bank-Level Permissions
-
-Each bank can override group defaults — the most specific scope wins:
-
-```json5
-// In bank config
-{
-  "permissions": {
-    "groups": {
-      "group-1":  { "recall": true, "retain": true },
-      "group-2":  { "recall": true, "retain": false },
-      "_default": { "recall": false, "retain": false }
-    },
-    "users": {
-      "user-2": { "recallBudget": "high", "recallMaxTokens": 2048 }
-    }
-  }
-}
-```
-
-## Resolution Algorithm
-
-Per-field, most specific scope wins:
-
-1. **Merge global groups** — collect all user's groups, merge with rules above
-2. **Bank `_default` baseline** — if bank has `permissions.groups._default`, start there
-3. **Bank group overlay** — merge bank-level group entries for this user's groups
-4. **Bank user override** — apply per-user override if defined
-
-Banks without `permissions` fall through to global group defaults (backward compatible).
+| `retain_roles`, `retain_tags` | Unioned |
+| `recall_budget` | Most permissive (`high > mid > low`) |
+| `recall_max_tokens` | Highest value wins |
+| `recall_tag_groups` | AND-ed together |
+| `llm_model`, `llm_provider` | Alphabetically first group that defines it wins |
+| `retain_every_n_turns` | Lowest value wins (most frequent) |
+| `exclude_providers` | Unioned (most restrictive) |
+| `retain_strategy` | From strategy cascade (separate resolution) |
 
 ## Tag-Based Filtering
 
-`recallTagGroups` uses Hindsight's `tag_groups` API for boolean filtering:
+`recall_tag_groups` uses Hindsight's `tag_groups` API for boolean filtering:
 
 ```json5
+// See everything (no filter)
+"recall_tag_groups": null
+
 // Exclude restricted content
-{"not": {"tags": ["sensitivity:restricted"], "match": "any_strict"}}
+"recall_tag_groups": [
+  {"not": {"tags": ["sensitivity:restricted"], "match": "any_strict"}}
+]
 
 // Include only department content (plus untagged)
-{"tags": ["department:sales"], "match": "any"}
+"recall_tag_groups": [
+  {"tags": ["department:sales"], "match": "any"}
+]
 ```
 
 Tags come from two sources:
-1. **Code-level** — `retainTags` from groups + auto `user:<id>` tag
-2. **LLM-extracted** — entity labels with `tag: true` in bank config
+1. **Extension-injected** -- `retain_tags` from groups plus automatic `user:<id>` tags, injected via `accept_with()` during retain
+2. **LLM-extracted** -- entity labels with `tag: true` in bank config
 
 Both merge into a single `tags` array on each fact.

@@ -147,8 +147,8 @@ const config: Config = {
           title: 'Community',
           items: [
             {
-              label: 'Discord (Hindsight)',
-              href: 'https://discord.gg/hindsight',
+              label: 'Slack (Hindsight)',
+              href: 'https://join.slack.com/t/hindsight-space/shared_invite/zt-3nhbm4w29-LeSJ5Ixi6j8PdiYOCPlOgg',
             },
             {
               label: 'GitHub Issues',
