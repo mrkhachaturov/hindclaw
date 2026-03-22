@@ -105,9 +105,9 @@ The `agents` map uses this structure:
 ```json5
 {
   "agents": {
-    "yoda":  { "recallBudget": "high", "recallMaxTokens": 2048 },
-    "r2d2":  { "autoRetain": false },
-    "k2so":  { "hindsightApiUrl": "https://hindsight.office.local" }
+    "my-agent":  { "recallBudget": "high", "recallMaxTokens": 2048 },
+    "agent-2":   { "autoRetain": false },
+    "ops-agent": { "hindsightApiUrl": "https://hindsight.office.local" }
   }
 }
 ```
@@ -163,11 +163,11 @@ Multi-server topology example:
 
 ```
 Gateway (jwtSecret configured at plugin level)
-  agent-1  (private)  -> hindsightApiUrl: "https://hindsight.home.local"
-  agent-2  (private)  -> hindsightApiUrl: "https://hindsight.home.local"
-  agent-3  (company)  -> hindsightApiUrl: "https://hindsight.office.local"
-  agent-4  (company)  -> hindsightApiUrl: "https://hindsight.office.local"
-  agent-5  (local)    -> no hindsightApiUrl (uses local daemon)
+  my-agent   (private)  -> hindsightApiUrl: "https://hindsight.home.local"
+  agent-2    (private)  -> hindsightApiUrl: "https://hindsight.home.local"
+  ops-agent  (company)  -> hindsightApiUrl: "https://hindsight.office.local"
+  agent-4    (company)  -> hindsightApiUrl: "https://hindsight.office.local"
+  agent-5    (local)    -> no hindsightApiUrl (uses local daemon)
 ```
 
 ## Cross-Agent Recall

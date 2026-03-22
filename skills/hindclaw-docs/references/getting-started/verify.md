@@ -12,7 +12,7 @@ After installing hindclaw and configuring your banks (via Terraform), you need t
 Start (or restart) the gateway and watch the logs:
 
 ```bash
-just restart && just logs-follow
+openclaw restart && openclaw logs --follow
 ```
 
 On startup, look for these `[Hindsight]` lines:

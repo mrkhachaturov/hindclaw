@@ -50,18 +50,18 @@ Mental models differ from raw recall in that they are pre-computed summaries rat
 Add `sessionStartModels` to the agent's plugin config:
 
 ```json5
-// In openclaw.json plugin config, agents section for yoda
+// In openclaw.json plugin config, agents section for my-agent
 {
   "sessionStartModels": [
     {
       "type": "mental_model",
-      "bankId": "yoda",
+      "bankId": "my-agent",
       "modelId": "project-context",
       "label": "Current Projects"
     },
     {
       "type": "mental_model",
-      "bankId": "yoda",
+      "bankId": "my-agent",
       "modelId": "user-preferences",
       "label": "User Preferences"
     }
@@ -78,7 +78,7 @@ There are two types of session start models:
 ```json5
 {
   "type": "mental_model",
-  "bankId": "yoda",
+  "bankId": "my-agent",
   "modelId": "project-context",
   "label": "Current Projects"
 }
@@ -89,7 +89,7 @@ There are two types of session start models:
 ```json5
 {
   "type": "recall",
-  "bankId": "yoda",
+  "bankId": "my-agent",
   "query": "What are the current active projects and priorities?",
   "label": "Active Projects",
   "maxTokens": 256
@@ -107,13 +107,13 @@ Models can reference any bank, not just the agent's own. This lets an agent star
   "sessionStartModels": [
     {
       "type": "mental_model",
-      "bankId": "yoda",
+      "bankId": "my-agent",
       "modelId": "strategic-context",
       "label": "Strategic Context"
     },
     {
       "type": "mental_model",
-      "bankId": "k2so",
+      "bankId": "ops-agent",
       "modelId": "ops-status",
       "label": "Operations Status"
     }

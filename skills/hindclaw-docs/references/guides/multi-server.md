@@ -59,7 +59,7 @@ Override the URL in the plugin config's agent entry to point an agent at a diffe
 // In openclaw.json plugin config, agents section
 {
   "agents": {
-    "k2so": {
+    "ops-agent": {
       "hindsightApiUrl": "https://hindsight.office.local",
       "hindsightApiToken": "office-token-here"
     }
@@ -77,8 +77,8 @@ If some agents should use the local daemon (no URL override) and others should u
 // In openclaw.json plugin config
 {
   "agents": {
-    "r2d2": {},                        // uses local daemon (default)
-    "k2so": {
+    "my-agent": {},                    // uses local daemon (default)
+    "ops-agent": {
       "hindsightApiUrl": "https://hindsight.office.local",
       "hindsightApiToken": "office-token-here"
     }
@@ -96,11 +96,11 @@ Keep personal memories on a home server and company memories on an office server
 
 ```
 Gateway
-├── yoda    (private)   --> https://hindsight.home.local
-├── r2d2    (private)   --> https://hindsight.home.local
-├── k2so    (company)   --> https://hindsight.office.local
-├── c3po    (company)   --> https://hindsight.office.local
-└── l3-37   (health)    --> local daemon (no URL)
+├── agent-1   (private)   --> https://hindsight.home.local
+├── agent-2   (private)   --> https://hindsight.home.local
+├── agent-3   (company)   --> https://hindsight.office.local
+├── agent-4   (company)   --> https://hindsight.office.local
+└── agent-5   (health)    --> local daemon (no URL)
 ```
 
 This keeps data physically separated. Personal conversations never leave the home network; company data stays on the office server.
@@ -178,15 +178,15 @@ provider "hindclaw" {
   api_key = var.office_api_key
 }
 
-resource "hindclaw_bank_config" "yoda" {
+resource "hindclaw_bank_config" "advisor" {
   provider = hindclaw.home
-  bank_id  = "yoda"
+  bank_id  = "advisor"
   config   = jsonencode({ retain_mission = "Strategic decisions." })
 }
 
-resource "hindclaw_bank_config" "k2so" {
+resource "hindclaw_bank_config" "ops_agent" {
   provider = hindclaw.office
-  bank_id  = "k2so"
+  bank_id  = "ops-agent"
   config   = jsonencode({ retain_mission = "Operational decisions." })
 }
 ```

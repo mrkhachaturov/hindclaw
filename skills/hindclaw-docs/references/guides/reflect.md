@@ -55,8 +55,8 @@ The reflect response is grounded in the same memories, but the reasoning happens
 The reflect mission defined on the bank (`reflect_mission`) guides how the server-side LLM reasons. Set it via the Terraform `hindclaw_bank_config` resource:
 
 ```hcl
-resource "hindclaw_bank_config" "yoda" {
-  bank_id = "yoda"
+resource "hindclaw_bank_config" "my_agent" {
+  bank_id = "my-agent"
   config = jsonencode({
     reflect_mission = "You are the strategic advisor. Reason critically over stored knowledge. Challenge assumptions, surface contradictions, and connect facts across time periods."
   })
@@ -77,8 +77,8 @@ Enable reflect in the agent's plugin config (behavioral fields) and set the refl
 
 ```hcl
 # Server-side: how the reflect LLM reasons
-resource "hindclaw_bank_config" "yoda" {
-  bank_id = "yoda"
+resource "hindclaw_bank_config" "my_agent" {
+  bank_id = "my-agent"
   config = jsonencode({
     reflect_mission = "You are the strategic advisor. Challenge assumptions and surface non-obvious connections."
   })
