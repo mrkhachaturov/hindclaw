@@ -393,6 +393,8 @@ export default function (api: MoltbotPluginAPI) {
             pluginConfig.daemonIdleTimeout,
             pluginConfig.embedVersion,
             pluginConfig.embedPackagePath,
+            pluginConfig.jwtSecret,
+            pluginConfig.clientId || 'openclaw',
           );
           debug('[Hindsight] Starting embedded server...');
           await embedManager.start();
@@ -460,7 +462,18 @@ export default function (api: MoltbotPluginAPI) {
             client = new HindsightClient(clientOptions);
           } else {
             const p = rc.apiPort || 9077;
-            embedManager = new HindsightEmbedManager(p, lc.provider || '', lc.apiKey || '', lc.model, lc.baseUrl, rc.daemonIdleTimeout, rc.embedVersion, rc.embedPackagePath);
+            embedManager = new HindsightEmbedManager(
+              p,
+              lc.provider || '',
+              lc.apiKey || '',
+              lc.model,
+              lc.baseUrl,
+              rc.daemonIdleTimeout,
+              rc.embedVersion,
+              rc.embedPackagePath,
+              rc.jwtSecret,
+              rc.clientId || 'openclaw',
+            );
             await embedManager.start();
             const embeddedHttp = shouldUseEmbeddedHttp(rc, ea);
             const embeddedApiUrl = embeddedHttp ? embedManager.getBaseUrl() : null;

@@ -1,4 +1,5 @@
 import { spawn, ChildProcess } from 'child_process';
+import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
 
@@ -14,6 +15,8 @@ export class HindsightEmbedManager {
   private daemonIdleTimeout: number;
   private embedVersion: string;
   private embedPackagePath?: string;
+  private jwtSecret?: string;
+  private clientId: string;
 
   constructor(
     port: number,
@@ -23,7 +26,9 @@ export class HindsightEmbedManager {
     llmBaseUrl?: string,
     daemonIdleTimeout: number = 0, // Default: never timeout
     embedVersion: string = 'latest', // Default: latest
-    embedPackagePath?: string // Local path to hindsight package
+    embedPackagePath?: string, // Local path to hindsight package
+    jwtSecret?: string,
+    clientId: string = 'openclaw',
   ) {
     // Use the configured port (default: 9077 from config)
     this.port = port;
@@ -36,24 +41,34 @@ export class HindsightEmbedManager {
     this.daemonIdleTimeout = daemonIdleTimeout;
     this.embedVersion = embedVersion || 'latest';
     this.embedPackagePath = embedPackagePath;
+    this.jwtSecret = jwtSecret;
+    this.clientId = clientId || 'openclaw';
   }
 
   /**
    * Get the command to run hindsight-embed (either local or from PyPI)
    */
   private getEmbedCommand(): string[] {
+    const extraPackages = this.getExtraEmbedPackages();
     if (this.embedPackagePath) {
       // Local package: uv run --directory <path> hindsight-embed
-      return ['uv', 'run', '--directory', this.embedPackagePath, 'hindsight-embed'];
+      return ['uv', 'run', '--directory', this.embedPackagePath, ...extraPackages.flatMap((pkg) => ['--with', pkg]), 'hindsight-embed'];
     } else {
       // PyPI package: uvx hindsight-embed@version
       const embedPackage = this.embedVersion ? `hindsight-embed@${this.embedVersion}` : 'hindsight-embed@latest';
-      // Inject claude-agent-sdk when using claude-code provider (uvx runs in isolated venv)
-      if (this.llmProvider === 'claude-code') {
-        return ['uvx', '--with', 'claude-agent-sdk', embedPackage];
-      }
-      return ['uvx', embedPackage];
+      return ['uvx', ...extraPackages.flatMap((pkg) => ['--with', pkg]), embedPackage];
     }
+  }
+
+  private getExtraEmbedPackages(): string[] {
+    const packages: string[] = [];
+    if (this.llmProvider === 'claude-code') {
+      packages.push('claude-agent-sdk');
+    }
+    if (this.jwtSecret) {
+      packages.push('hindclaw-extension');
+    }
+    return packages;
   }
 
   async start(): Promise<void> {
@@ -71,7 +86,7 @@ export class HindsightEmbedManager {
       ...process.env,
       HINDSIGHT_API_LLM_PROVIDER: this.llmProvider,
       HINDSIGHT_API_LLM_API_KEY: this.llmApiKey,
-      HINDSIGHT_EMBED_DAEMON_IDLE_TIMEOUT: this.daemonIdleTimeout.toString(),
+      HINDSIGHT_EMBED_DAEMON_IDLE_TIMEOUT: this.jwtSecret ? '0' : this.daemonIdleTimeout.toString(),
     };
 
     if (this.llmModel) {
@@ -87,6 +102,16 @@ export class HindsightEmbedManager {
     if (process.platform === 'darwin') {
       env['HINDSIGHT_API_EMBEDDINGS_LOCAL_FORCE_CPU'] = '1';
       env['HINDSIGHT_API_RERANKER_LOCAL_FORCE_CPU'] = '1';
+    }
+
+    if (this.jwtSecret) {
+      const pg0Port = await this.resolvePg0Port();
+      env['HINDSIGHT_API_TENANT_EXTENSION'] = 'hindclaw_ext:HindclawTenant';
+      env['HINDSIGHT_API_OPERATION_VALIDATOR_EXTENSION'] = 'hindclaw_ext:HindclawValidator';
+      env['HINDSIGHT_API_HTTP_EXTENSION'] = 'hindclaw_ext:HindclawHttp';
+      env['HINDCLAW_JWT_SECRET'] = this.jwtSecret;
+      env['HINDCLAW_ADMIN_CLIENTS'] = this.clientId;
+      env['HINDCLAW_DATABASE_URL'] = `postgresql://hindsight:hindsight@localhost:${pg0Port}/hindsight`;
     }
 
     // Configure "openclaw" profile using hindsight-embed configure (non-interactive)
@@ -240,6 +265,13 @@ export class HindsightEmbedManager {
       'HINDSIGHT_API_RERANKER_COHERE_MODEL',
       // Daemon
       'HINDSIGHT_EMBED_DAEMON_IDLE_TIMEOUT',
+      // Hindclaw extensions
+      'HINDSIGHT_API_TENANT_EXTENSION',
+      'HINDSIGHT_API_OPERATION_VALIDATOR_EXTENSION',
+      'HINDSIGHT_API_HTTP_EXTENSION',
+      'HINDCLAW_JWT_SECRET',
+      'HINDCLAW_ADMIN_CLIENTS',
+      'HINDCLAW_DATABASE_URL',
     ];
 
     for (const envVar of envVars) {
@@ -281,5 +313,21 @@ export class HindsightEmbedManager {
         reject(error);
       });
     });
+  }
+
+  private async resolvePg0Port(): Promise<number> {
+    const instancePath = join(homedir(), '.pg0', 'instances', 'hindsight-embed-openclaw', 'instance.json');
+
+    try {
+      const raw = await readFile(instancePath, 'utf8');
+      const parsed = JSON.parse(raw) as { port?: unknown };
+      if (typeof parsed.port === 'number' && Number.isFinite(parsed.port)) {
+        return parsed.port;
+      }
+    } catch {
+      // Fall back to the default local pg0 port when the instance metadata is unavailable.
+    }
+
+    return 5432;
   }
 }

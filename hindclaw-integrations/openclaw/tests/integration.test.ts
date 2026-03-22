@@ -196,6 +196,8 @@ describe('HindsightClient – Embed Mode (Subprocess)', () => {
       0, // never idle-timeout
       'latest',
       EMBED_PACKAGE_PATH,
+      undefined,
+      'openclaw',
     );
 
     await embedManager.start();
