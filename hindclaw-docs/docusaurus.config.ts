@@ -104,6 +104,7 @@ const config: Config = {
     ],
     ['docusaurus-plugin-ask-ai', {
       generateMarkdownFiles: true,
+      ignoreFiles: ['docs/api/**', 'blog/**'],
     }],
     function polyfillPathPlugin() {
       return {
