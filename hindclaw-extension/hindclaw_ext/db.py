@@ -105,6 +105,61 @@ CREATE TABLE IF NOT EXISTS hindclaw_strategy_scopes (
     UNIQUE (bank_id, scope_type, scope_value)
 );
 
+-- New tables for MinIO-style access model
+
+CREATE TABLE IF NOT EXISTS hindclaw_policies (
+    id           TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL,
+    document_json JSONB NOT NULL,
+    is_builtin   BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS hindclaw_policy_attachments (
+    policy_id      TEXT NOT NULL REFERENCES hindclaw_policies(id) ON DELETE CASCADE,
+    principal_type TEXT NOT NULL CHECK (principal_type IN ('user', 'group')),
+    principal_id   TEXT NOT NULL,
+    priority       INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (policy_id, principal_type, principal_id)
+);
+
+CREATE TABLE IF NOT EXISTS hindclaw_service_accounts (
+    id                TEXT PRIMARY KEY,
+    owner_user_id     TEXT NOT NULL REFERENCES hindclaw_users(id) ON DELETE CASCADE,
+    scoping_policy_id TEXT REFERENCES hindclaw_policies(id) ON DELETE SET NULL,
+    display_name      TEXT NOT NULL,
+    is_active         BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS hindclaw_service_account_keys (
+    id                 TEXT PRIMARY KEY,
+    service_account_id TEXT NOT NULL REFERENCES hindclaw_service_accounts(id) ON DELETE CASCADE,
+    api_key            TEXT UNIQUE NOT NULL,
+    description        TEXT,
+    created_at         TIMESTAMPTZ DEFAULT NOW(),
+    last_used_at       TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS hindclaw_bank_policies (
+    bank_id       TEXT PRIMARY KEY,
+    document_json JSONB NOT NULL,
+    created_at    TIMESTAMPTZ DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Add is_active to existing users table (idempotent)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'hindclaw_users' AND column_name = 'is_active'
+    ) THEN
+        ALTER TABLE hindclaw_users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE;
+    END IF;
+END $$;
+
 INSERT INTO hindclaw_groups (id, display_name, recall, retain)
 VALUES ('_default', 'Anonymous', false, false)
 ON CONFLICT DO NOTHING;

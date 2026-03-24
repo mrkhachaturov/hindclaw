@@ -148,3 +148,32 @@ async def test_resolve_strategy(mock_pool):
             user_id="alice",
         )
         assert strategy == "conversation"
+
+
+@pytest.mark.asyncio
+async def test_ddl_creates_new_tables():
+    """DDL creates policy, SA, and bank_policy tables."""
+    from hindclaw_ext import db
+
+    mock_conn = AsyncMock()
+    mock_conn.transaction = MagicMock(return_value=AsyncMock())
+
+    @asynccontextmanager
+    async def fake_acquire():
+        yield mock_conn
+
+    mock_pool = AsyncMock()
+    mock_pool.acquire = fake_acquire
+
+    with patch("asyncpg.create_pool", new_callable=AsyncMock, return_value=mock_pool):
+        await db.get_pool()
+
+    # Verify DDL was executed
+    ddl_call = mock_conn.execute.call_args[0][0]
+    assert "hindclaw_policies" in ddl_call
+    assert "hindclaw_policy_attachments" in ddl_call
+    assert "hindclaw_service_accounts" in ddl_call
+    assert "hindclaw_service_account_keys" in ddl_call
+    assert "hindclaw_bank_policies" in ddl_call
+    assert "scoping_policy_id" in ddl_call
+    assert "is_active" in ddl_call
