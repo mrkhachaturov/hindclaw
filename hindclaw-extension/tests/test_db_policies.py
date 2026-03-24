@@ -115,3 +115,83 @@ async def test_get_bank_policy_not_found():
     with patch.object(db_mod, "_pool", mock_pool):
         result = await db_mod.get_bank_policy("nonexistent")
     assert result is None
+
+
+@pytest.mark.asyncio
+async def test_create_policy():
+    import hindclaw_ext.db as db_mod
+    mock_pool = AsyncMock()
+    mock_pool.execute = AsyncMock()
+    with patch.object(db_mod, "_pool", mock_pool):
+        await db_mod.create_policy("fleet", "Fleet Access", {"version": "2026-03-24", "statements": []})
+    mock_pool.execute.assert_called_once()
+    call_args = mock_pool.execute.call_args[0]
+    assert "INSERT INTO hindclaw_policies" in call_args[0]
+
+@pytest.mark.asyncio
+async def test_delete_policy():
+    import hindclaw_ext.db as db_mod
+    mock_pool = AsyncMock()
+    mock_pool.execute = AsyncMock()
+    with patch.object(db_mod, "_pool", mock_pool):
+        await db_mod.delete_policy("fleet")
+    mock_pool.execute.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_create_policy_attachment():
+    import hindclaw_ext.db as db_mod
+    mock_pool = AsyncMock()
+    mock_pool.execute = AsyncMock()
+    with patch.object(db_mod, "_pool", mock_pool):
+        await db_mod.create_policy_attachment("fleet", "group", "default", priority=10)
+    mock_pool.execute.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_list_policy_attachments():
+    import hindclaw_ext.db as db_mod
+    mock_pool = AsyncMock()
+    mock_pool.fetch = AsyncMock(return_value=[
+        MockRecord({"policy_id": "fleet", "principal_type": "group", "principal_id": "default", "priority": 10}),
+    ])
+    with patch.object(db_mod, "_pool", mock_pool):
+        result = await db_mod.list_policy_attachments("fleet")
+    assert len(result) == 1
+
+@pytest.mark.asyncio
+async def test_create_service_account():
+    import hindclaw_ext.db as db_mod
+    mock_pool = AsyncMock()
+    mock_pool.execute = AsyncMock()
+    with patch.object(db_mod, "_pool", mock_pool):
+        await db_mod.create_service_account("ceo-claude", "ceo@astrateam.net", "CEO Claude")
+    mock_pool.execute.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_create_sa_key():
+    import hindclaw_ext.db as db_mod
+    mock_pool = AsyncMock()
+    mock_pool.execute = AsyncMock()
+    with patch.object(db_mod, "_pool", mock_pool):
+        await db_mod.create_sa_key("k1", "ceo-claude", "hc_sa_xxx", "Test key")
+    mock_pool.execute.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_upsert_bank_policy():
+    import hindclaw_ext.db as db_mod
+    mock_pool = AsyncMock()
+    mock_pool.execute = AsyncMock()
+    with patch.object(db_mod, "_pool", mock_pool):
+        await db_mod.upsert_bank_policy("yoda", {"version": "2026-03-24", "default_strategy": "yoda-default"})
+    mock_pool.execute.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_list_service_accounts():
+    import hindclaw_ext.db as db_mod
+    mock_pool = AsyncMock()
+    mock_pool.fetch = AsyncMock(return_value=[
+        MockRecord({"id": "ceo-claude", "owner_user_id": "ceo@astrateam.net", "display_name": "CEO Claude", "is_active": True, "scoping_policy_id": None}),
+    ])
+    with patch.object(db_mod, "_pool", mock_pool):
+        result = await db_mod.list_service_accounts()
+    assert len(result) == 1
+    assert result[0].id == "ceo-claude"

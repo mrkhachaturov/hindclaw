@@ -242,3 +242,134 @@ class ResolvedPermissionsResponse(BaseModel):
     llm_model: str | None
     llm_provider: str | None
     exclude_providers: list[str]
+
+
+# --- Policies ---
+
+
+class CreatePolicyRequest(BaseModel):
+    """Request to create an access policy."""
+
+    id: str
+    display_name: str
+    document: dict
+
+
+class UpdatePolicyRequest(BaseModel):
+    """Request to update an access policy."""
+
+    display_name: str | None = None
+    document: dict | None = None
+
+
+class PolicyResponse(BaseModel):
+    """Access policy resource."""
+
+    id: str
+    display_name: str
+    document: dict
+    is_builtin: bool
+
+
+# --- Policy Attachments ---
+
+
+class CreatePolicyAttachmentRequest(BaseModel):
+    """Request to attach a policy to a principal."""
+
+    policy_id: str
+    principal_type: str
+    principal_id: str
+    priority: int = 0
+
+
+class PolicyAttachmentResponse(BaseModel):
+    """Policy attachment resource."""
+
+    policy_id: str
+    principal_type: str
+    principal_id: str
+    priority: int
+
+
+# --- Service Accounts ---
+
+
+class CreateServiceAccountRequest(BaseModel):
+    """Request to create a service account."""
+
+    id: str
+    owner_user_id: str
+    display_name: str
+    scoping_policy_id: str | None = None
+
+
+class UpdateServiceAccountRequest(BaseModel):
+    """Request to update a service account."""
+
+    display_name: str | None = None
+    scoping_policy_id: str | None = None
+    is_active: bool | None = None
+
+
+class ServiceAccountResponse(BaseModel):
+    """Service account resource."""
+
+    id: str
+    owner_user_id: str
+    display_name: str
+    is_active: bool
+    scoping_policy_id: str | None
+
+
+# --- SA Keys ---
+
+
+class CreateSAKeyRequest(BaseModel):
+    """Request to create an SA API key."""
+
+    description: str | None = None
+
+
+class SAKeyResponse(BaseModel):
+    """SA API key in list view — key is masked."""
+
+    id: str
+    api_key_prefix: str
+    description: str | None
+
+
+class SAKeyCreateResponse(BaseModel):
+    """SA API key at creation time — full key shown once."""
+
+    id: str
+    api_key: str
+    description: str | None
+
+
+# --- Bank Policies ---
+
+
+class UpsertBankPolicyRequest(BaseModel):
+    """Request to create/update a bank policy."""
+
+    document: dict
+
+
+class BankPolicyResponse(BaseModel):
+    """Bank policy resource."""
+
+    bank_id: str
+    document: dict
+
+
+# --- Debug ---
+
+
+class DebugResolveResponse(BaseModel):
+    """Debug resolve response — effective access + bank policy."""
+
+    tenant_id: str
+    principal_type: str
+    access: dict
+    bank_policy: dict | None

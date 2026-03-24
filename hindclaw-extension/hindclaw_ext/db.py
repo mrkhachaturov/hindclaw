@@ -20,6 +20,7 @@ from hindclaw_ext.models import (
     BankPermissionRecord,
     BankPolicyRecord,
     GroupRecord,
+    PolicyAttachmentRecord,
     PolicyRecord,
     ServiceAccountKeyRecord,
     ServiceAccountRecord,
@@ -677,3 +678,167 @@ async def get_service_account(sa_id: str) -> ServiceAccountRecord | None:
         display_name=row["display_name"], is_active=row["is_active"],
         scoping_policy_id=row.get("scoping_policy_id"),
     )
+
+
+# --- CRUD functions (policies, attachments, service accounts, bank policies) ---
+
+
+async def create_policy(policy_id: str, display_name: str, document_json: dict) -> None:
+    """Create an access policy."""
+    pool = await get_pool()
+    await pool.execute(
+        "INSERT INTO hindclaw_policies (id, display_name, document_json) VALUES ($1, $2, $3::jsonb)",
+        policy_id, display_name, json.dumps(document_json),
+    )
+
+async def update_policy(policy_id: str, display_name: str | None, document_json: dict | None) -> bool:
+    """Update an access policy. Returns True if found."""
+    pool = await get_pool()
+    parts, params = [], [policy_id]
+    idx = 2
+    if display_name is not None:
+        parts.append(f"display_name = ${idx}")
+        params.append(display_name)
+        idx += 1
+    if document_json is not None:
+        parts.append(f"document_json = ${idx}::jsonb")
+        params.append(json.dumps(document_json))
+        idx += 1
+    if not parts:
+        return True
+    parts.append("updated_at = NOW()")
+    result = await pool.execute(
+        f"UPDATE hindclaw_policies SET {', '.join(parts)} WHERE id = $1 AND is_builtin = FALSE",
+        *params,
+    )
+    return result != "UPDATE 0"
+
+async def delete_policy(policy_id: str) -> None:
+    """Delete an access policy (not built-in)."""
+    pool = await get_pool()
+    await pool.execute("DELETE FROM hindclaw_policies WHERE id = $1 AND is_builtin = FALSE", policy_id)
+
+async def list_policies() -> list[PolicyRecord]:
+    """List all access policies."""
+    pool = await get_pool()
+    rows = await pool.fetch("SELECT id, display_name, document_json, is_builtin FROM hindclaw_policies ORDER BY id")
+    return [PolicyRecord(id=r["id"], display_name=r["display_name"], document_json=_parse_json(r["document_json"]), is_builtin=r["is_builtin"]) for r in rows]
+
+async def create_policy_attachment(policy_id: str, principal_type: str, principal_id: str, priority: int = 0) -> None:
+    """Attach a policy to a principal."""
+    pool = await get_pool()
+    await pool.execute(
+        """INSERT INTO hindclaw_policy_attachments (policy_id, principal_type, principal_id, priority)
+           VALUES ($1, $2, $3, $4) ON CONFLICT (policy_id, principal_type, principal_id) DO UPDATE SET priority = $4""",
+        policy_id, principal_type, principal_id, priority,
+    )
+
+async def delete_policy_attachment(policy_id: str, principal_type: str, principal_id: str) -> None:
+    """Remove a policy attachment."""
+    pool = await get_pool()
+    await pool.execute(
+        "DELETE FROM hindclaw_policy_attachments WHERE policy_id = $1 AND principal_type = $2 AND principal_id = $3",
+        policy_id, principal_type, principal_id,
+    )
+
+async def list_policy_attachments(policy_id: str) -> list[PolicyAttachmentRecord]:
+    """List all attachments for a policy."""
+    pool = await get_pool()
+    rows = await pool.fetch(
+        "SELECT policy_id, principal_type, principal_id, priority FROM hindclaw_policy_attachments WHERE policy_id = $1 ORDER BY principal_type, principal_id",
+        policy_id,
+    )
+    return [PolicyAttachmentRecord(policy_id=r["policy_id"], principal_type=r["principal_type"], principal_id=r["principal_id"], priority=r["priority"]) for r in rows]
+
+async def get_policy_attachment(policy_id: str, principal_type: str, principal_id: str) -> PolicyAttachmentRecord | None:
+    """Fetch a single policy attachment."""
+    pool = await get_pool()
+    row = await pool.fetchrow(
+        "SELECT policy_id, principal_type, principal_id, priority FROM hindclaw_policy_attachments WHERE policy_id = $1 AND principal_type = $2 AND principal_id = $3",
+        policy_id, principal_type, principal_id,
+    )
+    if row is None:
+        return None
+    return PolicyAttachmentRecord(policy_id=row["policy_id"], principal_type=row["principal_type"], principal_id=row["principal_id"], priority=row["priority"])
+
+async def create_service_account(sa_id: str, owner_user_id: str, display_name: str, scoping_policy_id: str | None = None) -> None:
+    """Create a service account."""
+    pool = await get_pool()
+    await pool.execute(
+        "INSERT INTO hindclaw_service_accounts (id, owner_user_id, display_name, scoping_policy_id) VALUES ($1, $2, $3, $4)",
+        sa_id, owner_user_id, display_name, scoping_policy_id,
+    )
+
+async def update_service_account(sa_id: str, *, display_name: str | None = None, scoping_policy_id: str | None = None, is_active: bool | None = None) -> bool:
+    """Update a service account. Returns True if found."""
+    pool = await get_pool()
+    parts, params = [], [sa_id]
+    idx = 2
+    if display_name is not None:
+        parts.append(f"display_name = ${idx}")
+        params.append(display_name)
+        idx += 1
+    if scoping_policy_id is not None:
+        parts.append(f"scoping_policy_id = ${idx}")
+        params.append(scoping_policy_id)
+        idx += 1
+    if is_active is not None:
+        parts.append(f"is_active = ${idx}")
+        params.append(is_active)
+        idx += 1
+    if not parts:
+        return True
+    result = await pool.execute(f"UPDATE hindclaw_service_accounts SET {', '.join(parts)} WHERE id = $1", *params)
+    return result != "UPDATE 0"
+
+async def delete_service_account(sa_id: str) -> None:
+    """Delete a service account (cascades to keys)."""
+    pool = await get_pool()
+    await pool.execute("DELETE FROM hindclaw_service_accounts WHERE id = $1", sa_id)
+
+async def list_service_accounts() -> list[ServiceAccountRecord]:
+    """List all service accounts."""
+    pool = await get_pool()
+    rows = await pool.fetch("SELECT id, owner_user_id, display_name, is_active, scoping_policy_id FROM hindclaw_service_accounts ORDER BY id")
+    return [ServiceAccountRecord(id=r["id"], owner_user_id=r["owner_user_id"], display_name=r["display_name"], is_active=r["is_active"], scoping_policy_id=r["scoping_policy_id"]) for r in rows]
+
+async def create_sa_key(key_id: str, sa_id: str, api_key: str, description: str | None = None) -> None:
+    """Create an API key for a service account."""
+    pool = await get_pool()
+    await pool.execute(
+        "INSERT INTO hindclaw_service_account_keys (id, service_account_id, api_key, description) VALUES ($1, $2, $3, $4)",
+        key_id, sa_id, api_key, description,
+    )
+
+async def delete_sa_key(key_id: str, sa_id: str) -> None:
+    """Delete an SA API key."""
+    pool = await get_pool()
+    await pool.execute("DELETE FROM hindclaw_service_account_keys WHERE id = $1 AND service_account_id = $2", key_id, sa_id)
+
+async def list_sa_keys(sa_id: str) -> list[ServiceAccountKeyRecord]:
+    """List API keys for a service account."""
+    pool = await get_pool()
+    rows = await pool.fetch("SELECT id, api_key, description FROM hindclaw_service_account_keys WHERE service_account_id = $1 ORDER BY id", sa_id)
+    return [ServiceAccountKeyRecord(id=r["id"], service_account_id=sa_id, api_key=r["api_key"], description=r["description"]) for r in rows]
+
+async def get_sa_key(key_id: str, sa_id: str) -> ServiceAccountKeyRecord | None:
+    """Fetch a single SA key."""
+    pool = await get_pool()
+    row = await pool.fetchrow("SELECT id, api_key, description FROM hindclaw_service_account_keys WHERE id = $1 AND service_account_id = $2", key_id, sa_id)
+    if row is None:
+        return None
+    return ServiceAccountKeyRecord(id=row["id"], service_account_id=sa_id, api_key=row["api_key"], description=row["description"])
+
+async def upsert_bank_policy(bank_id: str, document_json: dict) -> None:
+    """Create or update a bank policy."""
+    pool = await get_pool()
+    await pool.execute(
+        """INSERT INTO hindclaw_bank_policies (bank_id, document_json) VALUES ($1, $2::jsonb)
+           ON CONFLICT (bank_id) DO UPDATE SET document_json = $2::jsonb, updated_at = NOW()""",
+        bank_id, json.dumps(document_json),
+    )
+
+async def delete_bank_policy(bank_id: str) -> None:
+    """Delete a bank policy."""
+    pool = await get_pool()
+    await pool.execute("DELETE FROM hindclaw_bank_policies WHERE bank_id = $1", bank_id)

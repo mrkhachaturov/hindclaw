@@ -121,3 +121,57 @@ def test_resolved_permissions_response():
     assert resp.recall is True
     assert resp.retain_roles == ["assistant"]
     assert resp.recall_budget == "mid"
+
+
+def test_create_policy_request():
+    from hindclaw_ext.http_models import CreatePolicyRequest
+    req = CreatePolicyRequest(id="fleet-access", display_name="Fleet Access", document={"version": "2026-03-24", "statements": []})
+    assert req.id == "fleet-access"
+
+
+def test_policy_response():
+    from hindclaw_ext.http_models import PolicyResponse
+    r = PolicyResponse(id="fleet-access", display_name="Fleet Access", document={"version": "2026-03-24", "statements": []}, is_builtin=False)
+    assert r.is_builtin is False
+
+
+def test_create_policy_attachment_request():
+    from hindclaw_ext.http_models import CreatePolicyAttachmentRequest
+    req = CreatePolicyAttachmentRequest(policy_id="fleet-access", principal_type="group", principal_id="default", priority=10)
+    assert req.priority == 10
+
+
+def test_policy_attachment_response():
+    from hindclaw_ext.http_models import PolicyAttachmentResponse
+    r = PolicyAttachmentResponse(policy_id="fleet-access", principal_type="group", principal_id="default", priority=10)
+    assert r.principal_type == "group"
+
+
+def test_create_service_account_request():
+    from hindclaw_ext.http_models import CreateServiceAccountRequest
+    req = CreateServiceAccountRequest(id="ceo-claude", owner_user_id="ceo@astrateam.net", display_name="CEO Claude", scoping_policy_id="claude-readonly")
+    assert req.scoping_policy_id == "claude-readonly"
+
+
+def test_service_account_response():
+    from hindclaw_ext.http_models import ServiceAccountResponse
+    r = ServiceAccountResponse(id="ceo-claude", owner_user_id="ceo@astrateam.net", display_name="CEO Claude", is_active=True, scoping_policy_id=None)
+    assert r.is_active is True
+
+
+def test_sa_key_create_response():
+    from hindclaw_ext.http_models import SAKeyCreateResponse
+    r = SAKeyCreateResponse(id="k1", api_key="hc_sa_ceo_claude_xxx", description="test")
+    assert r.api_key.startswith("hc_sa_")
+
+
+def test_bank_policy_request():
+    from hindclaw_ext.http_models import UpsertBankPolicyRequest
+    req = UpsertBankPolicyRequest(document={"version": "2026-03-24", "default_strategy": "yoda-default"})
+    assert req.document["default_strategy"] == "yoda-default"
+
+
+def test_debug_resolve_response():
+    from hindclaw_ext.http_models import DebugResolveResponse
+    r = DebugResolveResponse(tenant_id="alice", principal_type="user", access={"allowed": True, "recall_budget": "high"}, bank_policy=None)
+    assert r.principal_type == "user"
