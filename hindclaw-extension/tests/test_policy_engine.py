@@ -340,3 +340,61 @@ def test_resolve_bank_strategy_none():
     doc = BankPolicyDocument(version="2026-03-24")
     result = resolve_bank_strategy(doc)
     assert result is None
+
+
+def test_full_evaluation_scenario():
+    """Full scenario: user in 2 groups, per-bank overrides, deny."""
+    from hindclaw_ext.models import AttachedPolicyRecord
+    from hindclaw_ext.policy_engine import evaluate_access
+
+    policies = [
+        # Group: default — baseline on all banks
+        AttachedPolicyRecord(
+            id="default-access", display_name="Default Access",
+            document_json={"version": "2026-03-24", "statements": [
+                {"effect": "allow", "actions": ["bank:recall", "bank:reflect", "bank:retain"], "banks": ["*"],
+                 "recall_budget": "mid", "recall_max_tokens": 1024, "retain_roles": ["user", "assistant"],
+                 "retain_every_n_turns": 1},
+            ]},
+            principal_type="group", principal_id="default", priority=0,
+        ),
+        # Group: executive — higher budget
+        AttachedPolicyRecord(
+            id="executive-upgrade", display_name="Executive Upgrade",
+            document_json={"version": "2026-03-24", "statements": [
+                {"effect": "allow", "actions": ["bank:recall"], "banks": ["*"],
+                 "recall_budget": "high", "recall_max_tokens": 2048},
+            ]},
+            principal_type="group", principal_id="executive", priority=10,
+        ),
+        # User: premium on yoda, deny on bb9e
+        AttachedPolicyRecord(
+            id="ceo-overrides", display_name="CEO Overrides",
+            document_json={"version": "2026-03-24", "statements": [
+                {"effect": "allow", "actions": ["bank:recall"], "banks": ["yoda"],
+                 "recall_max_tokens": 8192, "retain_strategy": "yoda-thorough"},
+                {"effect": "deny", "actions": ["bank:recall", "bank:retain"], "banks": ["bb9e"]},
+            ]},
+            principal_type="user", principal_id="ceo", priority=0,
+        ),
+    ]
+
+    # Recall on yoda: allowed, merged params
+    r = evaluate_access(policies, "bank:recall", "yoda")
+    assert r.allowed is True
+    assert r.recall_budget == "high"       # most permissive (executive)
+    assert r.recall_max_tokens == 8192     # highest (user override)
+    assert r.retain_strategy == "yoda-thorough"  # user > group
+
+    # Recall on bb9e: denied by user policy
+    r = evaluate_access(policies, "bank:recall", "bb9e")
+    assert r.allowed is False
+
+    # Retain on r2d2: allowed (no deny)
+    r = evaluate_access(policies, "bank:retain", "r2d2")
+    assert r.allowed is True
+    assert r.retain_roles == ["assistant", "user"]  # from default group
+
+    # Reflect on yoda: allowed (default group grants)
+    r = evaluate_access(policies, "bank:reflect", "yoda")
+    assert r.allowed is True
