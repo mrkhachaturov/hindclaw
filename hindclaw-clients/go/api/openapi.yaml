@@ -1336,6 +1336,7 @@ components:
       title: CreateServiceAccountRequest
     CreateUserRequest:
       example:
+        is_active: true
         id: id
         display_name: display_name
         email: email
@@ -1349,6 +1350,10 @@ components:
         email:
           nullable: true
           type: string
+        is_active:
+          default: true
+          title: Is Active
+          type: boolean
       required:
       - display_name
       - id
@@ -1588,6 +1593,7 @@ components:
       title: UpdateServiceAccountRequest
     UpdateUserRequest:
       example:
+        is_active: true
         display_name: display_name
         email: email
       properties:
@@ -1597,6 +1603,9 @@ components:
         email:
           nullable: true
           type: string
+        is_active:
+          nullable: true
+          type: boolean
       title: UpdateUserRequest
     UpsertBankPolicyRequest:
       description: Request to create/update a bank policy.
@@ -1614,6 +1623,7 @@ components:
     UserResponse:
       description: User resource returned by GET/POST/PUT endpoints.
       example:
+        is_active: true
         id: id
         display_name: display_name
         email: email
@@ -1627,6 +1637,10 @@ components:
         email:
           nullable: true
           type: string
+        is_active:
+          default: true
+          title: Is Active
+          type: boolean
       required:
       - display_name
       - id

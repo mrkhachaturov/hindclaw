@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
@@ -28,7 +28,8 @@ class UpdateUserRequest(BaseModel):
     """ # noqa: E501
     display_name: Optional[StrictStr] = None
     email: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["display_name", "email"]
+    is_active: Optional[StrictBool] = None
+    __properties: ClassVar[List[str]] = ["display_name", "email", "is_active"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -79,6 +80,11 @@ class UpdateUserRequest(BaseModel):
         if self.email is None and "email" in self.model_fields_set:
             _dict['email'] = None
 
+        # set to None if is_active (nullable) is None
+        # and model_fields_set contains the field
+        if self.is_active is None and "is_active" in self.model_fields_set:
+            _dict['is_active'] = None
+
         return _dict
 
     @classmethod
@@ -92,7 +98,8 @@ class UpdateUserRequest(BaseModel):
 
         _obj = cls.model_validate({
             "display_name": obj.get("display_name"),
-            "email": obj.get("email")
+            "email": obj.get("email"),
+            "is_active": obj.get("is_active")
         })
         return _obj
 

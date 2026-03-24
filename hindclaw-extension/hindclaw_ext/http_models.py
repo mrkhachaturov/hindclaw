@@ -9,11 +9,13 @@ class CreateUserRequest(BaseModel):
     id: str
     display_name: str
     email: str | None = None
+    is_active: bool = True
 
 
 class UpdateUserRequest(BaseModel):
     display_name: str | None = None
     email: str | None = None
+    is_active: bool | None = None
 
 
 # --- Channels ---
@@ -58,6 +60,7 @@ class UserResponse(BaseModel):
     id: str
     display_name: str
     email: str | None = None
+    is_active: bool = True
 
 
 class ChannelResponse(BaseModel):

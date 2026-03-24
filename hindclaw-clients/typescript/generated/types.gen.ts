@@ -224,6 +224,10 @@ export type CreateUserRequest = {
      * Email
      */
     email?: string | null;
+    /**
+     * Is Active
+     */
+    is_active?: boolean;
 };
 
 /**
@@ -458,6 +462,10 @@ export type UpdateUserRequest = {
      * Email
      */
     email?: string | null;
+    /**
+     * Is Active
+     */
+    is_active?: boolean | null;
 };
 
 /**
@@ -492,6 +500,10 @@ export type UserResponse = {
      * Email
      */
     email?: string | null;
+    /**
+     * Is Active
+     */
+    is_active?: boolean;
 };
 
 /**

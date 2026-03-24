@@ -14,7 +14,7 @@ from hindclaw_ext.http_models import (
 def test_user_response_fields():
     """UserResponse has exactly the public fields."""
     resp = UserResponse(id="alice", display_name="Alice", email="alice@example.com")
-    assert resp.model_dump() == {"id": "alice", "display_name": "Alice", "email": "alice@example.com"}
+    assert resp.model_dump() == {"id": "alice", "display_name": "Alice", "email": "alice@example.com", "is_active": True}
 
 
 def test_api_key_create_response_includes_full_key():

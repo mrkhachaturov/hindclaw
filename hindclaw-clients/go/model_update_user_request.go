@@ -21,6 +21,7 @@ var _ MappedNullable = &UpdateUserRequest{}
 type UpdateUserRequest struct {
 	DisplayName NullableString `json:"display_name,omitempty"`
 	Email NullableString `json:"email,omitempty"`
+	IsActive NullableBool `json:"is_active,omitempty"`
 }
 
 // NewUpdateUserRequest instantiates a new UpdateUserRequest object
@@ -124,6 +125,48 @@ func (o *UpdateUserRequest) UnsetEmail() {
 	o.Email.Unset()
 }
 
+// GetIsActive returns the IsActive field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *UpdateUserRequest) GetIsActive() bool {
+	if o == nil || IsNil(o.IsActive.Get()) {
+		var ret bool
+		return ret
+	}
+	return *o.IsActive.Get()
+}
+
+// GetIsActiveOk returns a tuple with the IsActive field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *UpdateUserRequest) GetIsActiveOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.IsActive.Get(), o.IsActive.IsSet()
+}
+
+// HasIsActive returns a boolean if a field has been set.
+func (o *UpdateUserRequest) HasIsActive() bool {
+	if o != nil && o.IsActive.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetIsActive gets a reference to the given NullableBool and assigns it to the IsActive field.
+func (o *UpdateUserRequest) SetIsActive(v bool) {
+	o.IsActive.Set(&v)
+}
+// SetIsActiveNil sets the value for IsActive to be an explicit nil
+func (o *UpdateUserRequest) SetIsActiveNil() {
+	o.IsActive.Set(nil)
+}
+
+// UnsetIsActive ensures that no value is present for IsActive, not even an explicit nil
+func (o *UpdateUserRequest) UnsetIsActive() {
+	o.IsActive.Unset()
+}
+
 func (o UpdateUserRequest) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -139,6 +182,9 @@ func (o UpdateUserRequest) ToMap() (map[string]interface{}, error) {
 	}
 	if o.Email.IsSet() {
 		toSerialize["email"] = o.Email.Get()
+	}
+	if o.IsActive.IsSet() {
+		toSerialize["is_active"] = o.IsActive.Get()
 	}
 	return toSerialize, nil
 }

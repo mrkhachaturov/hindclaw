@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
@@ -29,7 +29,8 @@ class CreateUserRequest(BaseModel):
     id: StrictStr
     display_name: StrictStr
     email: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["id", "display_name", "email"]
+    is_active: Optional[StrictBool] = True
+    __properties: ClassVar[List[str]] = ["id", "display_name", "email", "is_active"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -89,7 +90,8 @@ class CreateUserRequest(BaseModel):
         _obj = cls.model_validate({
             "id": obj.get("id"),
             "display_name": obj.get("display_name"),
-            "email": obj.get("email")
+            "email": obj.get("email"),
+            "is_active": obj.get("is_active") if obj.get("is_active") is not None else True
         })
         return _obj
 

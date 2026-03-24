@@ -24,6 +24,7 @@ type UserResponse struct {
 	Id string `json:"id"`
 	DisplayName string `json:"display_name"`
 	Email NullableString `json:"email,omitempty"`
+	IsActive *bool `json:"is_active,omitempty"`
 }
 
 type _UserResponse UserResponse
@@ -36,6 +37,8 @@ func NewUserResponse(id string, displayName string) *UserResponse {
 	this := UserResponse{}
 	this.Id = id
 	this.DisplayName = displayName
+	var isActive bool = true
+	this.IsActive = &isActive
 	return &this
 }
 
@@ -44,6 +47,8 @@ func NewUserResponse(id string, displayName string) *UserResponse {
 // but it doesn't guarantee that properties required by API are set
 func NewUserResponseWithDefaults() *UserResponse {
 	this := UserResponse{}
+	var isActive bool = true
+	this.IsActive = &isActive
 	return &this
 }
 
@@ -137,6 +142,38 @@ func (o *UserResponse) UnsetEmail() {
 	o.Email.Unset()
 }
 
+// GetIsActive returns the IsActive field value if set, zero value otherwise.
+func (o *UserResponse) GetIsActive() bool {
+	if o == nil || IsNil(o.IsActive) {
+		var ret bool
+		return ret
+	}
+	return *o.IsActive
+}
+
+// GetIsActiveOk returns a tuple with the IsActive field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *UserResponse) GetIsActiveOk() (*bool, bool) {
+	if o == nil || IsNil(o.IsActive) {
+		return nil, false
+	}
+	return o.IsActive, true
+}
+
+// HasIsActive returns a boolean if a field has been set.
+func (o *UserResponse) HasIsActive() bool {
+	if o != nil && !IsNil(o.IsActive) {
+		return true
+	}
+
+	return false
+}
+
+// SetIsActive gets a reference to the given bool and assigns it to the IsActive field.
+func (o *UserResponse) SetIsActive(v bool) {
+	o.IsActive = &v
+}
+
 func (o UserResponse) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -151,6 +188,9 @@ func (o UserResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["display_name"] = o.DisplayName
 	if o.Email.IsSet() {
 		toSerialize["email"] = o.Email.Get()
+	}
+	if !IsNil(o.IsActive) {
+		toSerialize["is_active"] = o.IsActive
 	}
 	return toSerialize, nil
 }

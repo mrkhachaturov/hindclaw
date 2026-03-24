@@ -32,8 +32,6 @@ def _make_admin_jwt(client_id: str = "app-prod") -> str:
 @pytest.fixture
 def app():
     """Create test app with HindclawHttp router, auth overridden to pass."""
-    from hindclaw_ext.http import _require_iam
-
     app = FastAPI()
 
     @app.exception_handler(AuthenticationError)
@@ -43,23 +41,17 @@ def app():
 
     ext = HindclawHttp({})
     memory = AsyncMock()
-    router = ext.get_router(memory)
 
-    # Override the IAM dependency so all existing CRUD tests pass without
-    # needing real policy evaluation — they test endpoint logic, not auth.
-    async def _fake_iam_dep():
-        return {"principal_type": "user", "user_id": "test-admin"}
-
-    for route in router.routes:
-        if hasattr(route, "dependencies"):
-            for i, dep in enumerate(route.dependencies):
-                route.dependencies[i] = Depends(_fake_iam_dep)
-
-    # Also override router-level dependencies
-    router.dependencies = [Depends(_fake_iam_dep)]
-
-    app.include_router(router, prefix="/ext")
-    return app
+    # Patch require_admin_for_action so all _require_iam closures short-circuit.
+    # CRUD tests test endpoint logic, not auth — auth is tested separately.
+    with patch(
+        "hindclaw_ext.http.require_admin_for_action",
+        new_callable=AsyncMock,
+        return_value={"principal_type": "user", "user_id": "test-admin"},
+    ):
+        router = ext.get_router(memory)
+        app.include_router(router, prefix="/ext")
+        yield app
 
 
 @pytest.fixture
@@ -161,7 +153,7 @@ def test_list_users(client, admin_headers, mock_db_pool):
     """GET /ext/hindclaw/users returns user list."""
     _, pool = mock_db_pool
     pool.fetch = AsyncMock(return_value=[
-        {"id": "alice", "display_name": "Alice", "email": "alice@example.com"},
+        {"id": "alice", "display_name": "Alice", "email": "alice@example.com", "is_active": True},
     ])
 
     resp = client.get("/ext/hindclaw/users", headers=admin_headers)
@@ -344,7 +336,7 @@ def test_update_user_empty_body(client, admin_headers, mock_db_pool):
 def test_get_user(client, admin_headers, mock_db_pool):
     """GET /ext/hindclaw/users/:id returns user."""
     _, pool = mock_db_pool
-    pool.fetchrow = AsyncMock(return_value={"id": "alice", "display_name": "Alice", "email": "alice@example.com"})
+    pool.fetchrow = AsyncMock(return_value={"id": "alice", "display_name": "Alice", "email": "alice@example.com", "is_active": True})
 
     resp = client.get("/ext/hindclaw/users/alice", headers=admin_headers)
     assert resp.status_code == 200
@@ -356,7 +348,7 @@ def test_update_user(client, admin_headers, mock_db_pool):
     _, pool = mock_db_pool
     pool.execute = AsyncMock(return_value="UPDATE 1")
     pool.fetchrow = AsyncMock(return_value={
-        "id": "alice", "display_name": "Alice K.", "email": "alice@example.com",
+        "id": "alice", "display_name": "Alice K.", "email": "alice@example.com", "is_active": True,
     })
 
     resp = client.put(
