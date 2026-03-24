@@ -23,6 +23,7 @@ from hindsight_api.extensions import (
 from hindclaw_ext import db
 from hindclaw_ext.policy_engine import (
     AccessResult,
+    apply_sa_scoping,
     evaluate_access,
     intersect_sa_policy,
     resolve_bank_strategy,
@@ -84,19 +85,9 @@ async def _resolve_sa_access(sa_id: str, action: str, bank_id: str) -> AccessRes
 
     # SA scoping intersection
     if sa.scoping_policy_id:
-        scoping_policy = await db.get_policy(sa.scoping_policy_id)
-        if scoping_policy:
-            from hindclaw_ext.models import AttachedPolicyRecord
-            scoping_attached = AttachedPolicyRecord(
-                id=scoping_policy.id, display_name=scoping_policy.display_name,
-                document_json=scoping_policy.document_json,
-                is_builtin=scoping_policy.is_builtin,
-                principal_type="user", principal_id=sa.id, priority=0,
-            )
-            scoping_access = evaluate_access([scoping_attached], action=action, bank_id=bank_id)
-            result = intersect_sa_policy(parent_access, scoping_access)
-            result.resolved_user_id = sa.owner_user_id
-            return result
+        result = await apply_sa_scoping(parent_access, sa.scoping_policy_id, sa.id, action, bank_id)
+        result.resolved_user_id = sa.owner_user_id
+        return result
 
     parent_access.resolved_user_id = sa.owner_user_id
     return parent_access

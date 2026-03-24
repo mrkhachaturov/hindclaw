@@ -19,7 +19,7 @@ from hindsight_api.extensions import AuthenticationError, HttpExtension
 
 from hindclaw_ext import db
 from hindclaw_ext.auth import decode_jwt
-from hindclaw_ext.policy_engine import AccessResult, evaluate_access, intersect_sa_policy
+from hindclaw_ext.policy_engine import AccessResult, apply_sa_scoping, evaluate_access, intersect_sa_policy
 from hindclaw_ext.http_models import (
     AddChannelRequest,
     AddMemberRequest,
@@ -198,20 +198,10 @@ async def require_admin_for_action(
         user_id = sa.owner_user_id
         parent_access = await _evaluate_iam_access(user_id, action)
         if sa.scoping_policy_id:
-            scoping_policy = await db.get_policy(sa.scoping_policy_id)
-            if scoping_policy:
-                from hindclaw_ext.models import AttachedPolicyRecord
-                scoping_attached = AttachedPolicyRecord(
-                    id=scoping_policy.id, display_name=scoping_policy.display_name,
-                    document_json=scoping_policy.document_json,
-                    is_builtin=scoping_policy.is_builtin,
-                    principal_type="user", principal_id=sa.id, priority=0,
-                )
-                scoping_access = evaluate_access([scoping_attached], action=action, bank_id="*")
-                final = intersect_sa_policy(parent_access, scoping_access)
-                if not final.allowed:
-                    raise AuthenticationError(f"{action} denied for sa:{sa.id}")
-                return {"principal_type": "service_account", "principal_id": f"sa:{sa.id}", "action": action, "user_id": user_id, "sa_id": sa.id}
+            final = await apply_sa_scoping(parent_access, sa.scoping_policy_id, sa.id, action, "*")
+            if not final.allowed:
+                raise AuthenticationError(f"{action} denied for sa:{sa.id}")
+            return {"principal_type": "service_account", "principal_id": f"sa:{sa.id}", "action": action, "user_id": user_id, "sa_id": sa.id}
         if not parent_access.allowed:
             raise AuthenticationError(f"{action} denied for {user_id}")
         return {"principal_type": "service_account", "principal_id": f"sa:{sa.id}", "action": action, "user_id": user_id, "sa_id": sa.id}

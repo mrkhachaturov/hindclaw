@@ -355,3 +355,44 @@ def resolve_bank_strategy(
         return best_strategy
 
     return bank_policy.default_strategy
+
+
+async def apply_sa_scoping(
+    parent_access: AccessResult,
+    scoping_policy_id: str,
+    sa_id: str,
+    action: str,
+    bank_id: str,
+) -> AccessResult:
+    """Apply SA scoping policy intersection on a parent's access result.
+
+    Fetches the scoping policy, evaluates it for the action+bank, then
+    intersects with the parent's effective access.
+
+    Args:
+        parent_access: Parent user's effective access result.
+        scoping_policy_id: Policy ID for the SA's scoping policy.
+        sa_id: Service account ID (for the synthetic attachment).
+        action: The action being checked.
+        bank_id: Target bank ID.
+
+    Returns:
+        Intersected AccessResult. Returns parent_access unchanged if
+        the scoping policy is not found.
+    """
+    # Import here to avoid circular imports (models imports from policy_engine)
+    from hindclaw_ext import db
+    from hindclaw_ext.models import AttachedPolicyRecord
+
+    scoping_policy = await db.get_policy(scoping_policy_id)
+    if not scoping_policy:
+        return parent_access
+
+    scoping_attached = AttachedPolicyRecord(
+        id=scoping_policy.id, display_name=scoping_policy.display_name,
+        document_json=scoping_policy.document_json,
+        is_builtin=scoping_policy.is_builtin,
+        principal_type="user", principal_id=sa_id, priority=0,
+    )
+    scoping_access = evaluate_access([scoping_attached], action=action, bank_id=bank_id)
+    return intersect_sa_policy(parent_access, scoping_access)

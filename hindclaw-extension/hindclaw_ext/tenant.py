@@ -106,10 +106,10 @@ class HindclawTenant(TenantExtension):
                 key_record = await db.get_api_key(token)
                 if not key_record:
                     raise AuthenticationError("Invalid API key")
-                # Check user is active
+                # Check user exists and is active
                 user = await db.get_user(key_record.user_id)
-                if user and not user.is_active:
-                    raise AuthenticationError("User account is inactive")
+                if not user or not user.is_active:
+                    raise AuthenticationError("User not found or inactive")
                 context.tenant_id = key_record.user_id
 
         return TenantContext(schema_name="public")
