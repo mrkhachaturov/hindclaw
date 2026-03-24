@@ -18,8 +18,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from hindsight_api.extensions import AuthenticationError, HttpExtension
 
 from hindclaw_ext import db
-from hindclaw_ext import resolver
 from hindclaw_ext.auth import decode_jwt
+from hindclaw_ext.policy_engine import AccessResult, evaluate_access, intersect_sa_policy
 from hindclaw_ext.http_models import (
     AddChannelRequest,
     AddMemberRequest,
@@ -129,44 +129,123 @@ async def _upsert_bank_permission(
     return {"bank_id": bank_id, "scope_type": scope_type, "scope_id": scope_id}
 
 
-def _get_admin_client_ids() -> list[str]:
-    """Read admin client IDs from environment.
-
-    Called per-request, not at import time.
-
-    Returns:
-        List of allowed client_id values for admin access.
-    """
-    return [c.strip() for c in os.environ.get("HINDCLAW_ADMIN_CLIENTS", "").split(",") if c.strip()]
-
-
 _bearer = HTTPBearer()
 
 
-async def require_admin(credentials: HTTPAuthorizationCredentials = Depends(_bearer)):
-    """Parse JWT from Bearer token and verify admin client_id.
-
-    /ext/ routes bypass TenantExtension — we parse JWT here directly.
-    HTTPBearer extracts the token and returns 403 for missing/malformed
-    credentials. AuthenticationError is caught by Hindsight's global
-    exception handler (returns 401).
+async def _evaluate_iam_access(user_id: str, action: str) -> AccessResult:
+    """Evaluate IAM access for a user.
 
     Args:
-        credentials: Bearer token extracted by FastAPI's HTTPBearer scheme.
+        user_id: User identifier.
+        action: IAM action (e.g., "iam:users:read").
 
     Returns:
-        Decoded JWT claims dict.
+        AccessResult with allowed flag.
+    """
+    groups = await db.get_user_groups(user_id)
+    group_ids = [g.id for g in groups]
+    policies = await db.get_policies_for_user(user_id, group_ids)
+    return evaluate_access(policies, action=action, bank_id="*")
+
+
+async def require_admin_for_action(
+    action: str,
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+) -> dict:
+    """Authenticate and authorize for a specific IAM action.
+
+    Accepts both JWT and API keys. Resolves the principal, then checks
+    their effective policy for the required iam:* action.
+
+    Args:
+        action: Required IAM action (e.g., "iam:users:read").
+        credentials: Bearer token from Authorization header.
+
+    Returns:
+        Dict with principal info (user_id, principal_type).
 
     Raises:
-        AuthenticationError: If token is invalid or client_id is not an admin.
+        AuthenticationError: If token is invalid or principal lacks required action.
     """
-    try:
-        claims = decode_jwt(credentials.credentials)
-    except Exception as e:
-        raise AuthenticationError(str(e))
-    if claims.get("client_id") not in _get_admin_client_ids():
-        raise AuthenticationError("Admin access required")
-    return claims
+    token = credentials.credentials
+
+    if token.startswith("eyJ"):
+        # JWT path
+        try:
+            claims = decode_jwt(token)
+        except Exception as e:
+            raise AuthenticationError(str(e))
+
+        sender = claims.get("sender")
+        if sender and ":" in sender:
+            provider, sender_id = sender.split(":", 1)
+            channel_user = await db.get_user_by_channel(provider, sender_id)
+            user = await db.get_user(channel_user.id) if channel_user else None
+            if not user or not user.is_active:
+                raise AuthenticationError("User not found or inactive")
+            user_id = user.id
+        else:
+            raise AuthenticationError("JWT must have sender for admin access")
+
+    elif token.startswith("hc_sa_"):
+        # SA key path
+        sa = await db.get_service_account_by_api_key(token)
+        if not sa or not sa.is_active:
+            raise AuthenticationError("Invalid or inactive service account key")
+        parent = await db.get_user(sa.owner_user_id)
+        if not parent or not parent.is_active:
+            raise AuthenticationError("Service account owner is inactive")
+        user_id = sa.owner_user_id
+        parent_access = await _evaluate_iam_access(user_id, action)
+        if sa.scoping_policy_id:
+            scoping_policy = await db.get_policy(sa.scoping_policy_id)
+            if scoping_policy:
+                from hindclaw_ext.models import AttachedPolicyRecord
+                scoping_attached = AttachedPolicyRecord(
+                    id=scoping_policy.id, display_name=scoping_policy.display_name,
+                    document_json=scoping_policy.document_json,
+                    is_builtin=scoping_policy.is_builtin,
+                    principal_type="user", principal_id=sa.id, priority=0,
+                )
+                scoping_access = evaluate_access([scoping_attached], action=action, bank_id="*")
+                final = intersect_sa_policy(parent_access, scoping_access)
+                if not final.allowed:
+                    raise AuthenticationError(f"{action} denied for sa:{sa.id}")
+                return {"principal_type": "service_account", "principal_id": f"sa:{sa.id}", "action": action, "user_id": user_id, "sa_id": sa.id}
+        if not parent_access.allowed:
+            raise AuthenticationError(f"{action} denied for {user_id}")
+        return {"principal_type": "service_account", "principal_id": f"sa:{sa.id}", "action": action, "user_id": user_id, "sa_id": sa.id}
+
+    else:
+        # User key path
+        key_record = await db.get_api_key(token)
+        if not key_record:
+            raise AuthenticationError("Invalid API key")
+        user = await db.get_user(key_record.user_id)
+        if not user or not user.is_active:
+            raise AuthenticationError("User not found or inactive")
+        user_id = key_record.user_id
+
+    # Evaluate IAM policy
+    access = await _evaluate_iam_access(user_id, action)
+    if not access.allowed:
+        raise AuthenticationError(f"{action} denied for {user_id}")
+
+    return {"principal_type": "user", "principal_id": user_id, "action": action, "user_id": user_id}
+
+
+def _require_iam(action: str):
+    """Create a FastAPI dependency that requires a specific IAM action.
+
+    Args:
+        action: IAM action string (e.g., "iam:users:read").
+
+    Returns:
+        Async dependency function.
+    """
+    async def dependency(credentials: HTTPAuthorizationCredentials = Depends(_bearer)):
+        return await require_admin_for_action(action, credentials)
+    return dependency
 
 
 class HindclawHttp(HttpExtension):
@@ -189,7 +268,7 @@ class HindclawHttp(HttpExtension):
         Returns:
             APIRouter mounted at ``/ext/hindclaw/`` by the Hindsight server.
         """
-        router = APIRouter(prefix="/hindclaw", dependencies=[Depends(require_admin)])
+        router = APIRouter(prefix="/hindclaw", dependencies=[Depends(_require_iam("iam:admin"))])
 
         # --- Users ---
 
@@ -502,7 +581,7 @@ class HindclawHttp(HttpExtension):
 
         # --- Debug ---
 
-        @router.get("/debug/resolve", response_model=ResolvedPermissionsResponse, operation_id="debug_resolve")
+        @router.get("/debug/resolve", operation_id="debug_resolve")
         async def debug_resolve(
             bank: str = Query(...),
             sender: str | None = Query(None),
@@ -511,21 +590,20 @@ class HindclawHttp(HttpExtension):
             topic: str | None = Query(None),
         ):
             """Resolve and return full permissions for a given context."""
-            user_id = "_anonymous"
+            user_id = "_unmapped"
             if sender:
                 if ":" not in sender:
                     raise HTTPException(400, f"Invalid sender format: {sender!r} (expected 'provider:id')")
                 provider, sender_id = sender.split(":", 1)
-                user = await db.get_user_by_channel(provider, sender_id)
-                user_id = user.id if user else "_anonymous"
+                channel_user = await db.get_user_by_channel(provider, sender_id)
+                user = await db.get_user(channel_user.id) if channel_user else None
+                user_id = user.id if (user and user.is_active) else "_unmapped"
 
-            perms = await resolver.resolve(
-                user_id=user_id,
-                bank_id=bank,
-                agent=agent,
-                channel=channel,
-                topic=topic,
-            )
-            return perms.model_dump()
+            from hindclaw_ext.validator import _resolve_user_access, _resolve_public_access
+            if user_id == "_unmapped":
+                access = await _resolve_public_access(bank, "bank:recall")
+            else:
+                access = await _resolve_user_access(user_id, "bank:recall", bank)
+            return access.model_dump()
 
         return router

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import jwt as pyjwt
 import pytest
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
 from hindsight_api.extensions import AuthenticationError
@@ -18,7 +18,6 @@ TEST_SECRET = "test-secret-key-for-http-tests!!"
 def _set_env(monkeypatch):
     """Ensure tests use test env vars, not any real values on this host."""
     monkeypatch.setenv("HINDCLAW_JWT_SECRET", TEST_SECRET)
-    monkeypatch.setenv("HINDCLAW_ADMIN_CLIENTS", "app-prod,terraform-ci")
 
 
 def _make_admin_jwt(client_id: str = "app-prod") -> str:
@@ -32,7 +31,9 @@ def _make_admin_jwt(client_id: str = "app-prod") -> str:
 
 @pytest.fixture
 def app():
-    """Create test app with HindclawHttp router."""
+    """Create test app with HindclawHttp router, auth overridden to pass."""
+    from hindclaw_ext.http import _require_iam
+
     app = FastAPI()
 
     @app.exception_handler(AuthenticationError)
@@ -43,6 +44,20 @@ def app():
     ext = HindclawHttp({})
     memory = AsyncMock()
     router = ext.get_router(memory)
+
+    # Override the IAM dependency so all existing CRUD tests pass without
+    # needing real policy evaluation — they test endpoint logic, not auth.
+    async def _fake_iam_dep():
+        return {"principal_type": "user", "user_id": "test-admin"}
+
+    for route in router.routes:
+        if hasattr(route, "dependencies"):
+            for i, dep in enumerate(route.dependencies):
+                route.dependencies[i] = Depends(_fake_iam_dep)
+
+    # Also override router-level dependencies
+    router.dependencies = [Depends(_fake_iam_dep)]
+
     app.include_router(router, prefix="/ext")
     return app
 
@@ -93,16 +108,41 @@ def mock_db_pool_with_tx():
         yield mock_db, pool, conn
 
 
-def test_no_auth_returns_401(client):
-    """Missing Authorization header returns 401."""
-    resp = client.get("/ext/hindclaw/users")
-    assert resp.status_code == 401
+@pytest.fixture
+def real_auth_app():
+    """Test app with real IAM auth (not overridden) for auth-specific tests."""
+    app = FastAPI()
+
+    @app.exception_handler(AuthenticationError)
+    async def auth_error_handler(request, exc):
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=401, content={"detail": str(exc)})
+
+    ext = HindclawHttp({})
+    memory = AsyncMock()
+    router = ext.get_router(memory)
+    app.include_router(router, prefix="/ext")
+    return app
 
 
-def test_bad_client_id_returns_401(client):
-    """JWT with unknown client_id returns 401."""
-    token = _make_admin_jwt(client_id="hacker")
-    resp = client.get("/ext/hindclaw/users", headers={"Authorization": f"Bearer {token}"})
+@pytest.fixture
+def real_auth_client(real_auth_app):
+    return TestClient(real_auth_app)
+
+
+def test_no_auth_returns_401(real_auth_client):
+    """Missing Authorization header returns 403 (HTTPBearer rejects)."""
+    resp = real_auth_client.get("/ext/hindclaw/users")
+    assert resp.status_code in (401, 403)
+
+
+def test_bad_api_key_returns_401(real_auth_client):
+    """Invalid API key returns 401."""
+    with patch("hindclaw_ext.http.db.get_api_key", return_value=None):
+        resp = real_auth_client.get(
+            "/ext/hindclaw/users",
+            headers={"Authorization": "Bearer hc_u_bad_key"},
+        )
     assert resp.status_code == 401
 
 
@@ -242,23 +282,22 @@ def test_create_api_key(client, admin_headers, mock_db_pool):
 
 
 def test_debug_resolve(client, admin_headers):
-    """GET /ext/hindclaw/debug/resolve returns resolved permissions."""
-    from hindclaw_ext.models import ResolvedPermissions
+    """GET /ext/hindclaw/debug/resolve returns access result."""
+    from hindclaw_ext.policy_engine import AccessResult
 
-    mock_perms = ResolvedPermissions(user_id="alice", is_anonymous=False, recall=True)
+    mock_access = AccessResult(allowed=True, recall_budget="mid")
 
-    with (
-        patch("hindclaw_ext.http.db") as mock_db,
-        patch("hindclaw_ext.http.resolver.resolve", new_callable=AsyncMock, return_value=mock_perms),
-    ):
+    with patch("hindclaw_ext.http.db") as mock_db, \
+         patch("hindclaw_ext.validator._resolve_public_access", new_callable=AsyncMock, return_value=mock_access):
         mock_db.get_user_by_channel = AsyncMock(return_value=None)
+        mock_db.get_user = AsyncMock(return_value=None)
 
         resp = client.get(
             "/ext/hindclaw/debug/resolve?bank=agent-alpha&sender=telegram:100001",
             headers=admin_headers,
         )
         assert resp.status_code == 200
-        assert resp.json()["recall"] is True
+        assert resp.json()["allowed"] is True
 
 
 def test_debug_resolve_bad_sender(client, admin_headers):

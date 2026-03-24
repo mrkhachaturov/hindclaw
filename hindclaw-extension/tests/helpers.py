@@ -50,3 +50,10 @@ class FakeReflectContext:
     def __init__(self, bank_id: str = "agent-alpha", tenant_id: str = "alice"):
         self.bank_id = bank_id
         self.request_context = FakeRequestContext(tenant_id=tenant_id)
+
+
+@dataclass
+class FakeAdminCredentials:
+    """Fake HTTPAuthorizationCredentials for admin auth tests."""
+
+    credentials: str
