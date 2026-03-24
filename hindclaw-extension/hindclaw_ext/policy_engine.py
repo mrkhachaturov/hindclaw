@@ -9,7 +9,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 from hindclaw_ext.models import AttachedPolicyRecord
-from hindclaw_ext.policy_models import PolicyDocument, PolicyStatement
+from hindclaw_ext.policy_models import BankPolicyDocument, PolicyDocument, PolicyStatement
 
 # Budget ordering for merge rules
 _BUDGET_ORDER = {"low": 0, "mid": 1, "high": 2}
@@ -312,3 +312,46 @@ def intersect_sa_policy(
         llm_provider=provider,
         exclude_providers=excludes,
     )
+
+
+# Context scope priority for bank policy strategy overrides (higher = more specific)
+_CONTEXT_SCOPE_PRIORITY = {"provider": 1, "channel": 2, "topic": 3}
+
+
+def resolve_bank_strategy(
+    bank_policy: BankPolicyDocument,
+    provider: str | None = None,
+    channel: str | None = None,
+    topic: str | None = None,
+) -> str | None:
+    """Resolve the retain strategy from a bank policy using context matching.
+
+    Checks strategy overrides in priority order (topic > channel > provider).
+    Falls back to default_strategy if no override matches.
+
+    Args:
+        bank_policy: The bank's policy document.
+        provider: Provider from JWT claims (e.g., "telegram").
+        channel: Channel from JWT claims.
+        topic: Topic ID from JWT claims.
+
+    Returns:
+        Strategy name, or None if no strategy defined.
+    """
+    context = {"provider": provider, "channel": channel, "topic": topic}
+
+    best_strategy: str | None = None
+    best_priority = -1
+
+    for override in bank_policy.strategy_overrides:
+        scope_priority = _CONTEXT_SCOPE_PRIORITY.get(override.scope, 0)
+        context_value = context.get(override.scope)
+
+        if context_value is not None and context_value == override.value and scope_priority > best_priority:
+            best_strategy = override.strategy
+            best_priority = scope_priority
+
+    if best_strategy is not None:
+        return best_strategy
+
+    return bank_policy.default_strategy

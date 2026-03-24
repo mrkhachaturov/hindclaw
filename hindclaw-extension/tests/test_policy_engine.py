@@ -281,3 +281,62 @@ def test_sa_no_scoping_inherits_parent():
     assert result.allowed is True
     assert result.recall_budget == "high"
     assert result.llm_model == "claude-opus-4-6"
+
+
+def test_resolve_bank_strategy_default():
+    """Bank policy default strategy when no context match."""
+    from hindclaw_ext.policy_engine import resolve_bank_strategy
+    from hindclaw_ext.policy_models import BankPolicyDocument
+
+    doc = BankPolicyDocument(
+        version="2026-03-24",
+        default_strategy="yoda-default",
+        strategy_overrides=[
+            {"scope": "channel", "value": "telegram", "strategy": "yoda-telegram"},
+        ],
+    )
+    result = resolve_bank_strategy(doc, channel="slack")
+    assert result == "yoda-default"
+
+
+def test_resolve_bank_strategy_channel_match():
+    """Channel override takes precedence over default."""
+    from hindclaw_ext.policy_engine import resolve_bank_strategy
+    from hindclaw_ext.policy_models import BankPolicyDocument
+
+    doc = BankPolicyDocument(
+        version="2026-03-24",
+        default_strategy="yoda-default",
+        strategy_overrides=[
+            {"scope": "channel", "value": "telegram", "strategy": "yoda-telegram"},
+        ],
+    )
+    result = resolve_bank_strategy(doc, channel="telegram")
+    assert result == "yoda-telegram"
+
+
+def test_resolve_bank_strategy_topic_beats_channel():
+    """Topic override beats channel override."""
+    from hindclaw_ext.policy_engine import resolve_bank_strategy
+    from hindclaw_ext.policy_models import BankPolicyDocument
+
+    doc = BankPolicyDocument(
+        version="2026-03-24",
+        default_strategy="yoda-default",
+        strategy_overrides=[
+            {"scope": "channel", "value": "telegram", "strategy": "yoda-telegram"},
+            {"scope": "topic", "value": "12345", "strategy": "yoda-dm-ruben"},
+        ],
+    )
+    result = resolve_bank_strategy(doc, channel="telegram", topic="12345")
+    assert result == "yoda-dm-ruben"
+
+
+def test_resolve_bank_strategy_none():
+    """No strategy when bank policy has no default and no match."""
+    from hindclaw_ext.policy_engine import resolve_bank_strategy
+    from hindclaw_ext.policy_models import BankPolicyDocument
+
+    doc = BankPolicyDocument(version="2026-03-24")
+    result = resolve_bank_strategy(doc)
+    assert result is None
