@@ -244,29 +244,37 @@ def test_create_api_key(client, admin_headers, mock_db_pool):
     assert data["description"] == "Claude Code MCP"
 
 
-def test_debug_resolve(client, admin_headers):
-    """GET /ext/hindclaw/debug/resolve returns access result."""
+def test_debug_resolve_user(client, admin_headers):
+    """Debug resolve returns access result for a user."""
     from hindclaw_ext.policy_engine import AccessResult
 
-    mock_access = AccessResult(allowed=True, recall_budget="mid")
+    mock_access = AccessResult(allowed=True, recall_budget="high")
 
-    with patch("hindclaw_ext.http.db") as mock_db, \
-         patch("hindclaw_ext.validator._resolve_public_access", new_callable=AsyncMock, return_value=mock_access):
-        mock_db.get_user_by_channel = AsyncMock(return_value=None)
-        mock_db.get_user = AsyncMock(return_value=None)
-
+    with patch("hindclaw_ext.validator._resolve_user_access", new_callable=AsyncMock, return_value=mock_access), \
+         patch("hindclaw_ext.http.db.get_bank_policy", new_callable=AsyncMock, return_value=None):
         resp = client.get(
-            "/ext/hindclaw/debug/resolve?bank=agent-alpha&sender=telegram:100001",
+            "/ext/hindclaw/debug/resolve?bank=yoda&action=bank:recall&user_id=alice",
             headers=admin_headers,
         )
-        assert resp.status_code == 200
-        assert resp.json()["allowed"] is True
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["principal_type"] == "user"
+    assert data["access"]["allowed"] is True
 
 
 def test_debug_resolve_bad_sender(client, admin_headers):
     """GET /ext/hindclaw/debug/resolve with malformed sender returns 400."""
     resp = client.get(
         "/ext/hindclaw/debug/resolve?bank=agent-alpha&sender=no_colon",
+        headers=admin_headers,
+    )
+    assert resp.status_code == 400
+
+
+def test_debug_resolve_no_params(client, admin_headers):
+    """Debug resolve without sender/user_id/sa_id returns 400."""
+    resp = client.get(
+        "/ext/hindclaw/debug/resolve?bank=yoda",
         headers=admin_headers,
     )
     assert resp.status_code == 400

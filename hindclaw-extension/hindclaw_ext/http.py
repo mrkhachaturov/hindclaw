@@ -535,26 +535,50 @@ class HindclawHttp(HttpExtension):
         @router.get("/debug/resolve", operation_id="debug_resolve")
         async def debug_resolve(
             bank: str = Query(...),
+            action: str = Query(default="bank:recall"),
             sender: str | None = Query(None),
-            agent: str | None = Query(None),
-            channel: str | None = Query(None),
-            topic: str | None = Query(None),
+            user_id: str | None = Query(None),
+            sa_id: str | None = Query(None),
         ):
-            """Resolve and return full permissions for a given context."""
-            user_id = "_unmapped"
-            if sender:
-                if ":" not in sender:
-                    raise HTTPException(400, f"Invalid sender format: {sender!r} (expected 'provider:id')")
-                provider, sender_id = sender.split(":", 1)
-                channel_user = await db.get_user_by_channel(provider, sender_id)
-                user = await db.get_user(channel_user.id) if channel_user else None
-                user_id = user.id if (user and user.is_active) else "_unmapped"
+            """Resolve and return effective access policy + bank policy for a context."""
+            from hindclaw_ext.validator import _resolve_user_access, _resolve_sa_access, _resolve_public_access
 
-            from hindclaw_ext.validator import _resolve_user_access, _resolve_public_access
-            if user_id == "_unmapped":
-                access = await _resolve_public_access(bank, "bank:recall")
+            if sa_id:
+                tenant_id = f"sa:{sa_id}"
+                principal_type = "service_account"
+            elif user_id:
+                tenant_id = user_id
+                principal_type = "user"
+            elif sender:
+                if ":" not in sender:
+                    raise HTTPException(400, f"Invalid sender format: {sender!r}")
+                provider, sender_id_val = sender.split(":", 1)
+                channel_user = await db.get_user_by_channel(provider, sender_id_val)
+                user = await db.get_user(channel_user.id) if channel_user else None
+                if user and user.is_active:
+                    tenant_id = user.id
+                    principal_type = "user"
+                else:
+                    tenant_id = "_unmapped"
+                    principal_type = "unmapped"
             else:
-                access = await _resolve_user_access(user_id, "bank:recall", bank)
-            return access.model_dump()
+                raise HTTPException(400, "Provide sender, user_id, or sa_id")
+
+            if tenant_id == "_unmapped":
+                access = await _resolve_public_access(bank, action)
+            elif tenant_id.startswith("sa:"):
+                access = await _resolve_sa_access(tenant_id[3:], action, bank)
+            else:
+                access = await _resolve_user_access(tenant_id, action, bank)
+
+            bank_policy_record = await db.get_bank_policy(bank)
+            bank_policy_dict = bank_policy_record.document_json if bank_policy_record else None
+
+            return {
+                "tenant_id": tenant_id,
+                "principal_type": principal_type,
+                "access": access.model_dump(),
+                "bank_policy": bank_policy_dict,
+            }
 
         return router
