@@ -43,9 +43,10 @@ async def test_jwt_auth_known_sender():
         "exp": int(time.time()) + 300,
     })
     ctx = FakeRequestContext(api_key=token)
-    user = UserRecord(id="alice", display_name="Alice", email=None)
+    user = UserRecord(id="alice", display_name="Alice", email=None, is_active=True)
 
-    with patch("hindclaw_ext.tenant.db.get_user_by_channel", return_value=user):
+    with patch("hindclaw_ext.tenant.db.get_user_by_channel", return_value=user), \
+         patch("hindclaw_ext.tenant.db.get_user", return_value=user):
         result = await tenant.authenticate(ctx)
 
     assert ctx.tenant_id == "alice"
@@ -56,8 +57,8 @@ async def test_jwt_auth_known_sender():
 
 
 @pytest.mark.asyncio
-async def test_jwt_auth_unknown_sender():
-    """JWT with unknown sender sets tenant_id to _anonymous."""
+async def test_jwt_auth_unknown_sender_unmapped():
+    """JWT with unknown sender sets tenant_id to _unmapped (not _anonymous)."""
     tenant = HindclawTenant({})
     token = _make_jwt({
         "sender": "telegram:999999",
@@ -68,22 +69,38 @@ async def test_jwt_auth_unknown_sender():
     with patch("hindclaw_ext.tenant.db.get_user_by_channel", return_value=None):
         result = await tenant.authenticate(ctx)
 
-    assert ctx.tenant_id == "_anonymous"
+    assert ctx.tenant_id == "_unmapped"
     assert result.schema_name == "public"
 
 
 @pytest.mark.asyncio
-async def test_jwt_auth_no_sender():
-    """JWT without sender field sets tenant_id to _admin."""
+async def test_jwt_auth_no_sender_rejected():
+    """JWT without sender claim raises AuthenticationError."""
+    tenant = HindclawTenant({})
+    token = _make_jwt({"exp": int(time.time()) + 300})
+    ctx = FakeRequestContext(api_key=token)
+
+    with pytest.raises(AuthenticationError, match="sender claim"):
+        await tenant.authenticate(ctx)
+
+
+@pytest.mark.asyncio
+async def test_jwt_auth_inactive_user():
+    """JWT with sender mapping to inactive user sets _unmapped."""
     tenant = HindclawTenant({})
     token = _make_jwt({
-        "client_id": "terraform-ci",
+        "sender": "telegram:100001",
         "exp": int(time.time()) + 300,
     })
     ctx = FakeRequestContext(api_key=token)
+    channel_user = UserRecord(id="alice", display_name="Alice", email=None, is_active=True)
+    inactive_user = UserRecord(id="alice", display_name="Alice", email=None, is_active=False)
 
-    result = await tenant.authenticate(ctx)
-    assert ctx.tenant_id == "_admin"
+    with patch("hindclaw_ext.tenant.db.get_user_by_channel", return_value=channel_user), \
+         patch("hindclaw_ext.tenant.db.get_user", return_value=inactive_user):
+        result = await tenant.authenticate(ctx)
+
+    assert ctx.tenant_id == "_unmapped"
 
 
 @pytest.mark.asyncio

@@ -73,14 +73,18 @@ class HindclawTenant(TenantExtension):
 
             # Resolve sender -> user
             sender = claims.get("sender")
-            if sender:
-                if ":" not in sender:
-                    raise AuthenticationError(f"Invalid sender format: {sender!r} (expected 'provider:id')")
-                provider, sender_id = sender.split(":", 1)
-                user = await db.get_user_by_channel(provider, sender_id)
-                context.tenant_id = user.id if user else "_anonymous"
+            if not sender:
+                raise AuthenticationError("JWT must have sender claim")
+            if ":" not in sender:
+                raise AuthenticationError(f"Invalid sender format: {sender!r} (expected 'provider:id')")
+            provider, sender_id = sender.split(":", 1)
+            channel_user = await db.get_user_by_channel(provider, sender_id)
+            # Follow up with get_user to check is_active
+            user = await db.get_user(channel_user.id) if channel_user else None
+            if user and user.is_active:
+                context.tenant_id = user.id
             else:
-                context.tenant_id = "_admin"
+                context.tenant_id = "_unmapped"
         else:
             # API key path — route by prefix for fast lookup
             _jwt_claims.set({})  # no claims for API key auth
