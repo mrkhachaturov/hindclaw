@@ -82,12 +82,31 @@ class HindclawTenant(TenantExtension):
             else:
                 context.tenant_id = "_admin"
         else:
-            # API key path — direct access (CLI, dashboard, Terraform, MCP)
-            key_record = await db.get_api_key(token)
-            if not key_record:
-                raise AuthenticationError("Invalid API key")
-            context.tenant_id = key_record.user_id
+            # API key path — route by prefix for fast lookup
             _jwt_claims.set({})  # no claims for API key auth
+
+            if token.startswith("hc_sa_"):
+                # Service account key
+                sa = await db.get_service_account_by_api_key(token)
+                if not sa:
+                    raise AuthenticationError("Invalid API key")
+                if not sa.is_active:
+                    raise AuthenticationError("Service account is inactive")
+                # Check parent user is active
+                parent = await db.get_user(sa.owner_user_id)
+                if not parent or not parent.is_active:
+                    raise AuthenticationError("Service account owner is inactive")
+                context.tenant_id = f"sa:{sa.id}"
+            else:
+                # User key (hc_u_ prefix or legacy keys without prefix)
+                key_record = await db.get_api_key(token)
+                if not key_record:
+                    raise AuthenticationError("Invalid API key")
+                # Check user is active
+                user = await db.get_user(key_record.user_id)
+                if user and not user.is_active:
+                    raise AuthenticationError("User account is inactive")
+                context.tenant_id = key_record.user_id
 
         return TenantContext(schema_name="public")
 

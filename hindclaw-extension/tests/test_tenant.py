@@ -92,8 +92,10 @@ async def test_api_key_auth():
     tenant = HindclawTenant({})
     ctx = FakeRequestContext(api_key="hc_alice_xxxx")
     key_record = ApiKeyRecord(id="k1", api_key="hc_alice_xxxx", user_id="alice")
+    user = UserRecord(id="alice", display_name="Alice", email=None, is_active=True)
 
-    with patch("hindclaw_ext.tenant.db.get_api_key", return_value=key_record):
+    with patch("hindclaw_ext.tenant.db.get_api_key", return_value=key_record), \
+         patch("hindclaw_ext.tenant.db.get_user", return_value=user):
         result = await tenant.authenticate(ctx)
 
     assert ctx.tenant_id == "alice"
@@ -130,3 +132,67 @@ async def test_expired_jwt():
 
     with pytest.raises(AuthenticationError, match="expired"):
         await tenant.authenticate(ctx)
+
+
+@pytest.mark.asyncio
+async def test_sa_api_key_auth():
+    """SA API key (hc_sa_ prefix) resolves to sa:<sa_id> tenant_id."""
+    from hindclaw_ext.models import ServiceAccountRecord
+
+    tenant = HindclawTenant({})
+    ctx = FakeRequestContext(api_key="hc_sa_ceo_claude_xxx")
+    sa = ServiceAccountRecord(
+        id="ceo-claude", owner_user_id="ceo@astrateam.net",
+        display_name="CEO Claude", is_active=True, scoping_policy_id=None,
+    )
+    parent = UserRecord(id="ceo@astrateam.net", display_name="CEO", is_active=True)
+
+    with patch("hindclaw_ext.tenant.db.get_service_account_by_api_key", return_value=sa), \
+         patch("hindclaw_ext.tenant.db.get_user", return_value=parent):
+        result = await tenant.authenticate(ctx)
+
+    assert ctx.tenant_id == "sa:ceo-claude"
+    assert result.schema_name == "public"
+
+
+@pytest.mark.asyncio
+async def test_sa_api_key_inactive():
+    """Inactive SA is rejected."""
+    from hindclaw_ext.models import ServiceAccountRecord
+
+    tenant = HindclawTenant({})
+    ctx = FakeRequestContext(api_key="hc_sa_disabled_xxx")
+    sa = ServiceAccountRecord(
+        id="disabled-sa", owner_user_id="ceo@astrateam.net",
+        display_name="Disabled", is_active=False, scoping_policy_id=None,
+    )
+
+    with patch("hindclaw_ext.tenant.db.get_service_account_by_api_key", return_value=sa):
+        with pytest.raises(AuthenticationError, match="inactive"):
+            await tenant.authenticate(ctx)
+
+
+@pytest.mark.asyncio
+async def test_sa_api_key_invalid():
+    """Unknown SA API key is rejected."""
+    tenant = HindclawTenant({})
+    ctx = FakeRequestContext(api_key="hc_sa_unknown_xxx")
+
+    with patch("hindclaw_ext.tenant.db.get_service_account_by_api_key", return_value=None):
+        with pytest.raises(AuthenticationError, match="Invalid"):
+            await tenant.authenticate(ctx)
+
+
+@pytest.mark.asyncio
+async def test_user_api_key_prefix():
+    """User API key (hc_u_ prefix) routes to user key lookup."""
+    tenant = HindclawTenant({})
+    ctx = FakeRequestContext(api_key="hc_u_alice_xxx")
+    key_record = ApiKeyRecord(id="k1", api_key="hc_u_alice_xxx", user_id="alice")
+    user = UserRecord(id="alice", display_name="Alice", email=None, is_active=True)
+
+    with patch("hindclaw_ext.tenant.db.get_api_key", return_value=key_record), \
+         patch("hindclaw_ext.tenant.db.get_user", return_value=user):
+        result = await tenant.authenticate(ctx)
+
+    assert ctx.tenant_id == "alice"
