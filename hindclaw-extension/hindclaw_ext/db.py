@@ -631,3 +631,49 @@ async def get_bank_policy(bank_id: str) -> BankPolicyRecord | None:
         bank_id=row["bank_id"],
         document_json=_parse_json(row["document_json"]),
     )
+
+
+async def get_user(user_id: str) -> UserRecord | None:
+    """Fetch a user by ID.
+
+    Args:
+        user_id: User identifier.
+
+    Returns:
+        UserRecord if found, None otherwise.
+    """
+    pool = await get_pool()
+    row = await pool.fetchrow(
+        "SELECT id, display_name, email, is_active FROM hindclaw_users WHERE id = $1",
+        user_id,
+    )
+    if row is None:
+        return None
+    return UserRecord(
+        id=row["id"], display_name=row["display_name"],
+        email=row.get("email"), is_active=row["is_active"],
+    )
+
+
+async def get_service_account(sa_id: str) -> ServiceAccountRecord | None:
+    """Fetch a service account by ID.
+
+    Args:
+        sa_id: Service account identifier.
+
+    Returns:
+        ServiceAccountRecord if found, None otherwise.
+    """
+    pool = await get_pool()
+    row = await pool.fetchrow(
+        "SELECT id, owner_user_id, display_name, is_active, scoping_policy_id"
+        " FROM hindclaw_service_accounts WHERE id = $1",
+        sa_id,
+    )
+    if row is None:
+        return None
+    return ServiceAccountRecord(
+        id=row["id"], owner_user_id=row["owner_user_id"],
+        display_name=row["display_name"], is_active=row["is_active"],
+        scoping_policy_id=row.get("scoping_policy_id"),
+    )

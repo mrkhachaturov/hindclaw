@@ -234,3 +234,62 @@ async def test_root_user_bootstrap(monkeypatch):
     all_text = " ".join(all_calls)
     assert "ruben" in all_text
     assert "hc_u_root_xxx" in all_text
+
+
+@pytest.mark.asyncio
+async def test_get_user_found(mock_pool):
+    """get_user returns UserRecord for an existing user."""
+    from hindclaw_ext import db
+
+    mock_pool.fetchrow.return_value = MockRecord({
+        "id": "alice", "display_name": "Alice", "email": "alice@example.com", "is_active": True,
+    })
+
+    with patch.object(db, "_pool", mock_pool):
+        result = await db.get_user("alice")
+    assert result is not None
+    assert result.id == "alice"
+    assert result.is_active is True
+
+
+@pytest.mark.asyncio
+async def test_get_user_not_found(mock_pool):
+    """get_user returns None for unknown user."""
+    from hindclaw_ext import db
+
+    mock_pool.fetchrow.return_value = None
+
+    with patch.object(db, "_pool", mock_pool):
+        result = await db.get_user("nonexistent")
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_get_service_account_found(mock_pool):
+    """get_service_account returns ServiceAccountRecord."""
+    from hindclaw_ext import db
+
+    mock_pool.fetchrow.return_value = MockRecord({
+        "id": "ceo-claude", "owner_user_id": "ruben",
+        "display_name": "CEO Claude", "is_active": True,
+        "scoping_policy_id": None,
+    })
+
+    with patch.object(db, "_pool", mock_pool):
+        result = await db.get_service_account("ceo-claude")
+    assert result is not None
+    assert result.id == "ceo-claude"
+    assert result.owner_user_id == "ruben"
+    assert result.is_active is True
+
+
+@pytest.mark.asyncio
+async def test_get_service_account_not_found(mock_pool):
+    """get_service_account returns None for unknown SA."""
+    from hindclaw_ext import db
+
+    mock_pool.fetchrow.return_value = None
+
+    with patch.object(db, "_pool", mock_pool):
+        result = await db.get_service_account("nonexistent")
+    assert result is None
