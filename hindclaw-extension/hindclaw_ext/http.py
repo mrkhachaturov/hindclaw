@@ -230,7 +230,7 @@ class HindclawHttp(HttpExtension):
             )
             if not row:
                 raise HTTPException(404, f"User {user_id} not found")
-            return row
+            return {"id": row["id"], "display_name": row["display_name"], "email": row["email"], "is_active": row["is_active"]}
 
         @router.delete("/users/{user_id}", status_code=204, operation_id="delete_user")
         async def delete_user(user_id: str, _auth=Depends(_require_iam("iam:users:write"))):
