@@ -35,7 +35,6 @@ from hindclaw_ext.http_models import (
     CreateUserRequest,
     GroupMemberResponse,
     GroupMembershipConfirmation,
-    GroupResponse,
     GroupSummaryResponse,
     PolicyAttachmentResponse,
     PolicyResponse,
@@ -239,16 +238,8 @@ class HindclawHttp(HttpExtension):
             existing = await pool.fetchval("SELECT id FROM hindclaw_users WHERE id = $1", user_id)
             if not existing:
                 raise HTTPException(404, f"User {user_id} not found")
-            # Application-level cascade in transaction (FK handles channels, api_keys, group_members)
-            async with pool.acquire() as conn:
-                async with conn.transaction():
-                    await conn.execute(
-                        "DELETE FROM hindclaw_bank_permissions WHERE scope_type = 'user' AND scope_id = $1", user_id
-                    )
-                    await conn.execute(
-                        "DELETE FROM hindclaw_strategy_scopes WHERE scope_type = 'user' AND scope_value = $1", user_id
-                    )
-                    await conn.execute("DELETE FROM hindclaw_users WHERE id = $1", user_id)
+            # FK CASCADE handles channels, api_keys, group_members, policy_attachments, service_accounts
+            await pool.execute("DELETE FROM hindclaw_users WHERE id = $1", user_id)
 
         # --- User Channels ---
 

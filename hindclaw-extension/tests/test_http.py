@@ -171,19 +171,14 @@ def test_list_users(client, admin_headers, mock_db_pool):
     assert data[0]["id"] == "alice"
 
 
-def test_delete_user_cascades(client, admin_headers, mock_db_pool_with_tx):
-    """DELETE /ext/hindclaw/users/:id cleans up related rows in a transaction."""
-    _, pool, conn = mock_db_pool_with_tx
+def test_delete_user(client, admin_headers, mock_db_pool):
+    """DELETE /ext/hindclaw/users/:id deletes user (FK CASCADE handles related rows)."""
+    _, pool = mock_db_pool
     pool.fetchval = AsyncMock(return_value="alice")  # user exists
 
     resp = client.delete("/ext/hindclaw/users/alice", headers=admin_headers)
     assert resp.status_code == 204
-
-    # Verify cascade deletes were called on the connection (inside transaction)
-    sql_calls = [c.args[0] for c in conn.execute.call_args_list if c.args]
-    assert any("hindclaw_bank_permissions" in sql for sql in sql_calls)
-    assert any("hindclaw_strategy_scopes" in sql for sql in sql_calls)
-    assert any("hindclaw_users" in sql for sql in sql_calls)
+    pool.execute.assert_called_once()
 
 
 def test_get_user_not_found(client, admin_headers, mock_db_pool):
