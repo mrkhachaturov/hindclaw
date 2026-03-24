@@ -177,3 +177,59 @@ async def test_ddl_creates_new_tables():
     assert "hindclaw_bank_policies" in ddl_call
     assert "scoping_policy_id" in ddl_call
     assert "is_active" in ddl_call
+
+
+@pytest.mark.asyncio
+async def test_builtin_policies_seeded():
+    """Built-in policies are seeded on first pool init."""
+    from hindclaw_ext import db
+
+    mock_conn = AsyncMock()
+    mock_conn.transaction = MagicMock(return_value=AsyncMock())
+
+    @asynccontextmanager
+    async def fake_acquire():
+        yield mock_conn
+
+    mock_pool = AsyncMock()
+    mock_pool.acquire = fake_acquire
+
+    with patch("asyncpg.create_pool", new_callable=AsyncMock, return_value=mock_pool):
+        await db.get_pool()
+
+    ddl_call = mock_conn.execute.call_args[0][0]
+    # Built-in policies: bank:readwrite, bank:readonly, bank:retain-only, bank:admin, iam:admin
+    assert "bank:readwrite" in ddl_call
+    assert "bank:readonly" in ddl_call
+    assert "bank:retain-only" in ddl_call
+    assert "bank:admin" in ddl_call
+    assert "iam:admin" in ddl_call
+    assert "is_builtin" in ddl_call
+
+
+@pytest.mark.asyncio
+async def test_root_user_bootstrap(monkeypatch):
+    """Root user is created from env vars on first pool init."""
+    from hindclaw_ext import db
+
+    monkeypatch.setenv("HINDCLAW_ROOT_USER", "ruben")
+    monkeypatch.setenv("HINDCLAW_ROOT_API_KEY", "hc_u_root_xxx")
+
+    mock_conn = AsyncMock()
+    mock_conn.transaction = MagicMock(return_value=AsyncMock())
+
+    @asynccontextmanager
+    async def fake_acquire():
+        yield mock_conn
+
+    mock_pool = AsyncMock()
+    mock_pool.acquire = fake_acquire
+
+    with patch("asyncpg.create_pool", new_callable=AsyncMock, return_value=mock_pool):
+        await db.get_pool()
+
+    # Check that root user seeding queries were executed
+    all_calls = [str(c) for c in mock_conn.execute.call_args_list]
+    all_text = " ".join(all_calls)
+    assert "ruben" in all_text
+    assert "hc_u_root_xxx" in all_text

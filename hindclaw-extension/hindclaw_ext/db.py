@@ -163,6 +163,15 @@ END $$;
 INSERT INTO hindclaw_groups (id, display_name, recall, retain)
 VALUES ('_default', 'Anonymous', false, false)
 ON CONFLICT DO NOTHING;
+
+-- Seed built-in policies (idempotent)
+INSERT INTO hindclaw_policies (id, display_name, document_json, is_builtin) VALUES
+    ('bank:readwrite', 'Bank Read/Write', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:recall","bank:reflect","bank:retain"],"banks":["*"]}]}', TRUE),
+    ('bank:readonly', 'Bank Read-Only', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:recall","bank:reflect"],"banks":["*"]}]}', TRUE),
+    ('bank:retain-only', 'Bank Retain-Only', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:retain"],"banks":["*"]}]}', TRUE),
+    ('bank:admin', 'Bank Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:*"],"banks":["*"]}]}', TRUE),
+    ('iam:admin', 'IAM Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["iam:*"],"banks":["*"]}]}', TRUE)
+ON CONFLICT (id) DO NOTHING;
 """
 
 
@@ -192,6 +201,28 @@ async def get_pool() -> asyncpg.Pool:
         async with _pool.acquire() as conn:
             async with conn.transaction():
                 await conn.execute(_DDL)
+            # Seed root user if env vars are set (outside DDL transaction)
+            root_user = os.environ.get("HINDCLAW_ROOT_USER")
+            root_key = os.environ.get("HINDCLAW_ROOT_API_KEY")
+            if root_user and root_key:
+                await conn.execute(
+                    "INSERT INTO hindclaw_users (id, display_name) VALUES ($1, $1) ON CONFLICT (id) DO NOTHING",
+                    root_user,
+                )
+                await conn.execute(
+                    "INSERT INTO hindclaw_api_keys (id, api_key, user_id, description) VALUES ($1 || '-root-key', $2, $1, 'Root API key (bootstrap)') ON CONFLICT (id) DO NOTHING",
+                    root_user,
+                    root_key,
+                )
+                await conn.execute(
+                    "INSERT INTO hindclaw_policy_attachments (policy_id, principal_type, principal_id, priority) VALUES ('iam:admin', 'user', $1, 0) ON CONFLICT DO NOTHING",
+                    root_user,
+                )
+                await conn.execute(
+                    "INSERT INTO hindclaw_policy_attachments (policy_id, principal_type, principal_id, priority) VALUES ('bank:admin', 'user', $1, 0) ON CONFLICT DO NOTHING",
+                    root_user,
+                )
+                logger.info("Root user '%s' ensured with admin policies", root_user)
         logger.info("Hindclaw DB pool initialized, tables ensured")
         return _pool
 
