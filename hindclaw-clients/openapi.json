@@ -454,7 +454,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GroupResponse"
+                  "$ref": "#/components/schemas/GroupSummaryResponse"
                 }
               }
             }
@@ -506,7 +506,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GroupResponse"
+                  "$ref": "#/components/schemas/GroupSummaryResponse"
                 }
               }
             }
@@ -705,468 +705,6 @@
         }
       }
     },
-    "/ext/hindclaw/banks/{bank_id}/permissions": {
-      "get": {
-        "summary": "List Bank Permissions",
-        "operationId": "list_bank_permissions",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "bank_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Bank Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BankPermissionResponse"
-                  },
-                  "title": "Response List Bank Permissions"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/ext/hindclaw/banks/{bank_id}/permissions/{scope_type}/{scope_id}": {
-      "get": {
-        "summary": "Get Bank Permission",
-        "operationId": "get_bank_permission",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "bank_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Bank Id"
-            }
-          },
-          {
-            "name": "scope_type",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Scope Type"
-            }
-          },
-          {
-            "name": "scope_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Scope Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BankPermissionResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete Bank Permission",
-        "operationId": "delete_bank_permission",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "bank_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Bank Id"
-            }
-          },
-          {
-            "name": "scope_type",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Scope Type"
-            }
-          },
-          {
-            "name": "scope_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Scope Id"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/ext/hindclaw/banks/{bank_id}/permissions/groups/{group_id}": {
-      "put": {
-        "summary": "Upsert Group Bank Permission",
-        "operationId": "upsert_group_permission",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "bank_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Bank Id"
-            }
-          },
-          {
-            "name": "group_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Group Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BankPermissionRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpsertConfirmation"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/ext/hindclaw/banks/{bank_id}/permissions/users/{user_id}": {
-      "put": {
-        "summary": "Upsert User Bank Permission",
-        "operationId": "upsert_user_permission",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "bank_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Bank Id"
-            }
-          },
-          {
-            "name": "user_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "User Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BankPermissionRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpsertConfirmation"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/ext/hindclaw/banks/{bank_id}/strategies": {
-      "get": {
-        "summary": "List Strategies",
-        "operationId": "list_strategies",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "bank_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Bank Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/StrategyScopeResponse"
-                  },
-                  "title": "Response List Strategies"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/ext/hindclaw/banks/{bank_id}/strategies/{scope_type}/{scope_value}": {
-      "put": {
-        "summary": "Upsert Strategy",
-        "operationId": "upsert_strategy",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "bank_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Bank Id"
-            }
-          },
-          {
-            "name": "scope_type",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Scope Type"
-            }
-          },
-          {
-            "name": "scope_value",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Scope Value"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StrategyRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StrategyUpsertConfirmation"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete Strategy",
-        "operationId": "delete_strategy",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "bank_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Bank Id"
-            }
-          },
-          {
-            "name": "scope_type",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Scope Type"
-            }
-          },
-          {
-            "name": "scope_value",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Scope Value"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/ext/hindclaw/users/{user_id}/api-keys": {
       "get": {
         "summary": "List Api Keys",
@@ -1314,10 +852,829 @@
         }
       }
     },
+    "/ext/hindclaw/policies": {
+      "get": {
+        "summary": "List Policies",
+        "operationId": "list_policies",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PolicyResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Policies"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create Policy",
+        "operationId": "create_policy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/policies/{policy_id}": {
+      "get": {
+        "summary": "Get Policy Endpoint",
+        "operationId": "get_policy",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Policy Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Policy Endpoint",
+        "operationId": "update_policy",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Policy Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePolicyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Policy Endpoint",
+        "operationId": "delete_policy",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Policy Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/policy-attachments": {
+      "get": {
+        "summary": "List Attachments",
+        "operationId": "list_policy_attachments",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Policy Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PolicyAttachmentResponse"
+                  },
+                  "title": "Response List Policy Attachments"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Upsert Attachment",
+        "operationId": "upsert_policy_attachment",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePolicyAttachmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyAttachmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/policy-attachments/{policy_id}/{principal_type}/{principal_id}": {
+      "delete": {
+        "summary": "Delete Attachment",
+        "operationId": "delete_policy_attachment",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "policy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Policy Id"
+            }
+          },
+          {
+            "name": "principal_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Principal Type"
+            }
+          },
+          {
+            "name": "principal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Principal Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/service-accounts": {
+      "get": {
+        "summary": "List Service Accounts",
+        "operationId": "list_service_accounts",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ServiceAccountResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Service Accounts"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create Service Account",
+        "operationId": "create_service_account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateServiceAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/service-accounts/{sa_id}": {
+      "get": {
+        "summary": "Get Service Account Endpoint",
+        "operationId": "get_service_account",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sa Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Service Account Endpoint",
+        "operationId": "update_service_account",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sa Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateServiceAccountRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Service Account Endpoint",
+        "operationId": "delete_service_account",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sa Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/service-accounts/{sa_id}/keys": {
+      "get": {
+        "summary": "List Sa Keys",
+        "operationId": "list_sa_keys",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sa Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SAKeyResponse"
+                  },
+                  "title": "Response List Sa Keys"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Sa Key",
+        "operationId": "create_sa_key",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sa Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSAKeyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SAKeyCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/service-accounts/{sa_id}/keys/{key_id}": {
+      "delete": {
+        "summary": "Delete Sa Key",
+        "operationId": "delete_sa_key",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sa Id"
+            }
+          },
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/banks/{bank_id}/policy": {
+      "get": {
+        "summary": "Get Bank Policy Endpoint",
+        "operationId": "get_bank_policy",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankPolicyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Upsert Bank Policy Endpoint",
+        "operationId": "upsert_bank_policy",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertBankPolicyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankPolicyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Bank Policy Endpoint",
+        "operationId": "delete_bank_policy",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/ext/hindclaw/debug/resolve": {
       "get": {
         "summary": "Debug Resolve",
-        "description": "Resolve and return full permissions for a given context.",
+        "description": "Resolve and return effective access policy + bank policy for a context.",
         "operationId": "debug_resolve",
         "security": [
           {
@@ -1332,6 +1689,16 @@
             "schema": {
               "type": "string",
               "title": "Bank"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "bank:recall",
+              "title": "Action"
             }
           },
           {
@@ -1351,7 +1718,7 @@
             }
           },
           {
-            "name": "agent",
+            "name": "user_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -1363,11 +1730,11 @@
                   "type": "null"
                 }
               ],
-              "title": "Agent"
+              "title": "User Id"
             }
           },
           {
-            "name": "channel",
+            "name": "sa_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -1379,23 +1746,7 @@
                   "type": "null"
                 }
               ],
-              "title": "Channel"
-            }
-          },
-          {
-            "name": "topic",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Topic"
+              "title": "Sa Id"
             }
           }
         ],
@@ -1404,9 +1755,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResolvedPermissionsResponse"
-                }
+                "schema": {}
               }
             }
           },
@@ -1517,325 +1866,25 @@
         "title": "ApiKeyResponse",
         "description": "API key in list view \u2014 key is masked after creation."
       },
-      "BankPermissionRequest": {
-        "properties": {
-          "recall": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall"
-          },
-          "retain": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain"
-          },
-          "retain_roles": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Roles"
-          },
-          "retain_tags": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Tags"
-          },
-          "retain_every_n_turns": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Every N Turns"
-          },
-          "recall_budget": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Budget"
-          },
-          "recall_max_tokens": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Max Tokens"
-          },
-          "recall_tag_groups": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Tag Groups"
-          },
-          "llm_model": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Llm Model"
-          },
-          "llm_provider": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Llm Provider"
-          },
-          "exclude_providers": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Exclude Providers"
-          },
-          "retain_strategy": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Strategy"
-          }
-        },
-        "type": "object",
-        "title": "BankPermissionRequest"
-      },
-      "BankPermissionResponse": {
+      "BankPolicyResponse": {
         "properties": {
           "bank_id": {
             "type": "string",
             "title": "Bank Id"
           },
-          "scope_type": {
-            "type": "string",
-            "title": "Scope Type"
-          },
-          "scope_id": {
-            "type": "string",
-            "title": "Scope Id"
-          },
-          "recall": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall"
-          },
-          "retain": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain"
-          },
-          "retain_roles": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Roles"
-          },
-          "retain_tags": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Tags"
-          },
-          "retain_every_n_turns": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Every N Turns"
-          },
-          "recall_budget": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Budget"
-          },
-          "recall_max_tokens": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Max Tokens"
-          },
-          "recall_tag_groups": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Tag Groups"
-          },
-          "llm_model": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Llm Model"
-          },
-          "llm_provider": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Llm Provider"
-          },
-          "exclude_providers": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Exclude Providers"
-          },
-          "retain_strategy": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Strategy"
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document"
           }
         },
         "type": "object",
         "required": [
           "bank_id",
-          "scope_type",
-          "scope_id"
+          "document"
         ],
-        "title": "BankPermissionResponse",
-        "description": "Bank-level permission entry with scope identifiers.\n\nReturned by GET /banks/:bank/permissions endpoints."
+        "title": "BankPolicyResponse",
+        "description": "Bank policy resource."
       },
       "ChannelResponse": {
         "properties": {
@@ -1882,151 +1931,6 @@
           "display_name": {
             "type": "string",
             "title": "Display Name"
-          },
-          "recall": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall"
-          },
-          "retain": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain"
-          },
-          "retain_roles": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Roles"
-          },
-          "retain_tags": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Tags"
-          },
-          "retain_every_n_turns": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Every N Turns"
-          },
-          "recall_budget": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Budget"
-          },
-          "recall_max_tokens": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Max Tokens"
-          },
-          "recall_tag_groups": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Tag Groups"
-          },
-          "llm_model": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Llm Model"
-          },
-          "llm_provider": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Llm Provider"
-          },
-          "exclude_providers": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Exclude Providers"
-          },
-          "retain_strategy": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Strategy"
           }
         },
         "type": "object",
@@ -2035,6 +1939,113 @@
           "display_name"
         ],
         "title": "CreateGroupRequest"
+      },
+      "CreatePolicyAttachmentRequest": {
+        "properties": {
+          "policy_id": {
+            "type": "string",
+            "title": "Policy Id"
+          },
+          "principal_type": {
+            "type": "string",
+            "title": "Principal Type"
+          },
+          "principal_id": {
+            "type": "string",
+            "title": "Principal Id"
+          },
+          "priority": {
+            "type": "integer",
+            "title": "Priority",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "policy_id",
+          "principal_type",
+          "principal_id"
+        ],
+        "title": "CreatePolicyAttachmentRequest",
+        "description": "Request to attach a policy to a principal."
+      },
+      "CreatePolicyRequest": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "display_name",
+          "document"
+        ],
+        "title": "CreatePolicyRequest",
+        "description": "Request to create an access policy."
+      },
+      "CreateSAKeyRequest": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "title": "CreateSAKeyRequest",
+        "description": "Request to create an SA API key."
+      },
+      "CreateServiceAccountRequest": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "owner_user_id": {
+            "type": "string",
+            "title": "Owner User Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "scoping_policy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoping Policy Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "owner_user_id",
+          "display_name"
+        ],
+        "title": "CreateServiceAccountRequest",
+        "description": "Request to create a service account."
       },
       "CreateUserRequest": {
         "properties": {
@@ -2098,170 +2109,6 @@
         "title": "GroupMembershipConfirmation",
         "description": "Confirmation returned by POST /groups/:id/members."
       },
-      "GroupResponse": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "display_name": {
-            "type": "string",
-            "title": "Display Name"
-          },
-          "recall": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall"
-          },
-          "retain": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain"
-          },
-          "retain_roles": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Roles"
-          },
-          "retain_tags": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Tags"
-          },
-          "retain_every_n_turns": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Every N Turns"
-          },
-          "recall_budget": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Budget"
-          },
-          "recall_max_tokens": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Max Tokens"
-          },
-          "recall_tag_groups": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Tag Groups"
-          },
-          "llm_model": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Llm Model"
-          },
-          "llm_provider": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Llm Provider"
-          },
-          "exclude_providers": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Exclude Providers"
-          },
-          "retain_strategy": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Strategy"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "display_name"
-        ],
-        "title": "GroupResponse",
-        "description": "Group resource with all permission fields.\n\nReturned by GET /groups/:id and POST /groups.\nPermission fields are nullable \u2014 None means \"not set (inherit from global).\""
-      },
       "GroupSummaryResponse": {
         "properties": {
           "id": {
@@ -2279,7 +2126,7 @@
           "display_name"
         ],
         "title": "GroupSummaryResponse",
-        "description": "Group summary returned by GET /groups (list view)."
+        "description": "Group resource (identity-only)."
       },
       "HTTPValidationError": {
         "properties": {
@@ -2294,43 +2141,76 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "ResolvedPermissionsResponse": {
+      "PolicyAttachmentResponse": {
         "properties": {
-          "user_id": {
+          "policy_id": {
             "type": "string",
-            "title": "User Id"
+            "title": "Policy Id"
           },
-          "is_anonymous": {
-            "type": "boolean",
-            "title": "Is Anonymous"
+          "principal_type": {
+            "type": "string",
+            "title": "Principal Type"
           },
-          "recall": {
-            "type": "boolean",
-            "title": "Recall"
+          "principal_id": {
+            "type": "string",
+            "title": "Principal Id"
           },
-          "retain": {
-            "type": "boolean",
-            "title": "Retain"
-          },
-          "retain_roles": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Retain Roles"
-          },
-          "retain_tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Retain Tags"
-          },
-          "retain_every_n_turns": {
+          "priority": {
             "type": "integer",
-            "title": "Retain Every N Turns"
+            "title": "Priority"
+          }
+        },
+        "type": "object",
+        "required": [
+          "policy_id",
+          "principal_type",
+          "principal_id",
+          "priority"
+        ],
+        "title": "PolicyAttachmentResponse",
+        "description": "Policy attachment resource."
+      },
+      "PolicyResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
           },
-          "retain_strategy": {
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document"
+          },
+          "is_builtin": {
+            "type": "boolean",
+            "title": "Is Builtin"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "display_name",
+          "document",
+          "is_builtin"
+        ],
+        "title": "PolicyResponse",
+        "description": "Access policy resource."
+      },
+      "SAKeyCreateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "api_key": {
+            "type": "string",
+            "title": "Api Key"
+          },
+          "description": {
             "anyOf": [
               {
                 "type": "string"
@@ -2339,32 +2219,29 @@
                 "type": "null"
               }
             ],
-            "title": "Retain Strategy"
-          },
-          "recall_budget": {
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "api_key",
+          "description"
+        ],
+        "title": "SAKeyCreateResponse",
+        "description": "SA API key at creation time \u2014 full key shown once."
+      },
+      "SAKeyResponse": {
+        "properties": {
+          "id": {
             "type": "string",
-            "title": "Recall Budget"
+            "title": "Id"
           },
-          "recall_max_tokens": {
-            "type": "integer",
-            "title": "Recall Max Tokens"
+          "api_key_prefix": {
+            "type": "string",
+            "title": "Api Key Prefix"
           },
-          "recall_tag_groups": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Tag Groups"
-          },
-          "llm_model": {
+          "description": {
             "anyOf": [
               {
                 "type": "string"
@@ -2373,9 +2250,37 @@
                 "type": "null"
               }
             ],
-            "title": "Llm Model"
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "api_key_prefix",
+          "description"
+        ],
+        "title": "SAKeyResponse",
+        "description": "SA API key in list view \u2014 key is masked."
+      },
+      "ServiceAccountResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
           },
-          "llm_provider": {
+          "owner_user_id": {
+            "type": "string",
+            "title": "Owner User Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "scoping_policy_id": {
             "anyOf": [
               {
                 "type": "string"
@@ -2384,106 +2289,19 @@
                 "type": "null"
               }
             ],
-            "title": "Llm Provider"
-          },
-          "exclude_providers": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Exclude Providers"
+            "title": "Scoping Policy Id"
           }
         },
         "type": "object",
         "required": [
-          "user_id",
-          "is_anonymous",
-          "recall",
-          "retain",
-          "retain_roles",
-          "retain_tags",
-          "retain_every_n_turns",
-          "retain_strategy",
-          "recall_budget",
-          "recall_max_tokens",
-          "recall_tag_groups",
-          "llm_model",
-          "llm_provider",
-          "exclude_providers"
+          "id",
+          "owner_user_id",
+          "display_name",
+          "is_active",
+          "scoping_policy_id"
         ],
-        "title": "ResolvedPermissionsResponse",
-        "description": "Full resolved permissions returned by GET /debug/resolve.\n\nMirrors hindclaw_ext.models.ResolvedPermissions but as an HTTP response model."
-      },
-      "StrategyRequest": {
-        "properties": {
-          "strategy": {
-            "type": "string",
-            "title": "Strategy"
-          }
-        },
-        "type": "object",
-        "required": [
-          "strategy"
-        ],
-        "title": "StrategyRequest"
-      },
-      "StrategyScopeResponse": {
-        "properties": {
-          "bank_id": {
-            "type": "string",
-            "title": "Bank Id"
-          },
-          "scope_type": {
-            "type": "string",
-            "title": "Scope Type"
-          },
-          "scope_value": {
-            "type": "string",
-            "title": "Scope Value"
-          },
-          "strategy": {
-            "type": "string",
-            "title": "Strategy"
-          }
-        },
-        "type": "object",
-        "required": [
-          "bank_id",
-          "scope_type",
-          "scope_value",
-          "strategy"
-        ],
-        "title": "StrategyScopeResponse",
-        "description": "Strategy scope entry returned by GET /banks/:bank/strategies."
-      },
-      "StrategyUpsertConfirmation": {
-        "properties": {
-          "bank_id": {
-            "type": "string",
-            "title": "Bank Id"
-          },
-          "scope_type": {
-            "type": "string",
-            "title": "Scope Type"
-          },
-          "scope_value": {
-            "type": "string",
-            "title": "Scope Value"
-          },
-          "strategy": {
-            "type": "string",
-            "title": "Strategy"
-          }
-        },
-        "type": "object",
-        "required": [
-          "bank_id",
-          "scope_type",
-          "scope_value",
-          "strategy"
-        ],
-        "title": "StrategyUpsertConfirmation",
-        "description": "Confirmation returned by PUT /banks/:bank/strategies/:type/:value."
+        "title": "ServiceAccountResponse",
+        "description": "Service account resource."
       },
       "UpdateGroupRequest": {
         "properties": {
@@ -2497,155 +2315,80 @@
               }
             ],
             "title": "Display Name"
-          },
-          "recall": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall"
-          },
-          "retain": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain"
-          },
-          "retain_roles": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Roles"
-          },
-          "retain_tags": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Tags"
-          },
-          "retain_every_n_turns": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Every N Turns"
-          },
-          "recall_budget": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Budget"
-          },
-          "recall_max_tokens": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Max Tokens"
-          },
-          "recall_tag_groups": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recall Tag Groups"
-          },
-          "llm_model": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Llm Model"
-          },
-          "llm_provider": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Llm Provider"
-          },
-          "exclude_providers": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Exclude Providers"
-          },
-          "retain_strategy": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Strategy"
           }
         },
         "type": "object",
         "title": "UpdateGroupRequest"
+      },
+      "UpdatePolicyRequest": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "document": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document"
+          }
+        },
+        "type": "object",
+        "title": "UpdatePolicyRequest",
+        "description": "Request to update an access policy."
+      },
+      "UpdateServiceAccountRequest": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "scoping_policy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoping Policy Id"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "UpdateServiceAccountRequest",
+        "description": "Request to update a service account."
       },
       "UpdateUserRequest": {
         "properties": {
@@ -2675,29 +2418,20 @@
         "type": "object",
         "title": "UpdateUserRequest"
       },
-      "UpsertConfirmation": {
+      "UpsertBankPolicyRequest": {
         "properties": {
-          "bank_id": {
-            "type": "string",
-            "title": "Bank Id"
-          },
-          "scope_type": {
-            "type": "string",
-            "title": "Scope Type"
-          },
-          "scope_id": {
-            "type": "string",
-            "title": "Scope Id"
+          "document": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Document"
           }
         },
         "type": "object",
         "required": [
-          "bank_id",
-          "scope_type",
-          "scope_id"
+          "document"
         ],
-        "title": "UpsertConfirmation",
-        "description": "Confirmation returned by PUT (upsert) endpoints."
+        "title": "UpsertBankPolicyRequest",
+        "description": "Request to create/update a bank policy."
       },
       "UserResponse": {
         "properties": {
