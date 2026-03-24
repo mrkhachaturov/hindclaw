@@ -211,3 +211,73 @@ def test_evaluate_iam_wildcard():
 
     result = evaluate_access(policies, action="iam:users:read", bank_id="")
     assert result.allowed is True
+
+
+def test_sa_intersect_narrows_actions():
+    """SA scoping policy removes actions not in scoping policy."""
+    from hindclaw_ext.policy_engine import intersect_sa_policy, AccessResult
+
+    parent = AccessResult(allowed=True, recall_budget="high", recall_max_tokens=2048)
+    scoping = AccessResult(allowed=True, recall_budget="mid", recall_max_tokens=1024)
+
+    result = intersect_sa_policy(parent, scoping)
+    assert result.allowed is True
+    assert result.recall_budget == "mid"  # more restrictive
+    assert result.recall_max_tokens == 1024  # lower
+
+
+def test_sa_intersect_denied_parent():
+    """If parent denies, SA is denied."""
+    from hindclaw_ext.policy_engine import intersect_sa_policy, AccessResult
+
+    parent = AccessResult(allowed=False)
+    scoping = AccessResult(allowed=True, recall_budget="high")
+
+    result = intersect_sa_policy(parent, scoping)
+    assert result.allowed is False
+
+
+def test_sa_intersect_denied_scoping():
+    """If scoping denies, SA is denied."""
+    from hindclaw_ext.policy_engine import intersect_sa_policy, AccessResult
+
+    parent = AccessResult(allowed=True, recall_budget="high")
+    scoping = AccessResult(allowed=False)
+
+    result = intersect_sa_policy(parent, scoping)
+    assert result.allowed is False
+
+
+def test_sa_intersect_roles():
+    """Retain roles are intersected (only roles in both)."""
+    from hindclaw_ext.policy_engine import intersect_sa_policy, AccessResult
+
+    parent = AccessResult(allowed=True, retain_roles=["user", "assistant", "system"])
+    scoping = AccessResult(allowed=True, retain_roles=["user", "assistant"])
+
+    result = intersect_sa_policy(parent, scoping)
+    assert result.retain_roles == ["assistant", "user"]  # sorted intersection
+
+
+def test_sa_intersect_scoping_strategy_wins():
+    """Scoping policy's strategy wins over parent."""
+    from hindclaw_ext.policy_engine import intersect_sa_policy, AccessResult
+
+    parent = AccessResult(allowed=True, retain_strategy="deep", llm_model="claude-opus-4-6")
+    scoping = AccessResult(allowed=True, retain_strategy="light", llm_model=None)
+
+    result = intersect_sa_policy(parent, scoping)
+    assert result.retain_strategy == "light"  # scoping wins
+    assert result.llm_model == "claude-opus-4-6"  # scoping is None, parent inherited
+
+
+def test_sa_no_scoping_inherits_parent():
+    """No scoping policy = full inheritance."""
+    from hindclaw_ext.policy_engine import intersect_sa_policy, AccessResult
+
+    parent = AccessResult(allowed=True, recall_budget="high", llm_model="claude-opus-4-6")
+
+    result = intersect_sa_policy(parent, scoping=None)
+    assert result.allowed is True
+    assert result.recall_budget == "high"
+    assert result.llm_model == "claude-opus-4-6"

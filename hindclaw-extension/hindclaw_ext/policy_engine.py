@@ -231,3 +231,84 @@ def evaluate_access(
     result.retain_strategy = best_strategy[1]
 
     return result
+
+
+def intersect_sa_policy(
+    parent: AccessResult,
+    scoping: AccessResult | None,
+) -> AccessResult:
+    """Intersect a service account's scoping policy with the parent user's effective policy.
+
+    If scoping is None, the SA inherits the parent's full policy.
+    If either denies, the result denies.
+    For access-adjacent fields, the more restrictive value wins.
+    For metadata fields, the scoping policy's value wins if set.
+
+    Args:
+        parent: Parent user's effective access result.
+        scoping: SA's scoping policy access result, or None for full inheritance.
+
+    Returns:
+        AccessResult with intersected permissions.
+    """
+    if scoping is None:
+        return parent.model_copy()
+
+    if not parent.allowed or not scoping.allowed:
+        return AccessResult(allowed=False)
+
+    # Access-adjacent: more restrictive
+    budget = None
+    if parent.recall_budget is not None and scoping.recall_budget is not None:
+        budget = parent.recall_budget if _BUDGET_ORDER.get(parent.recall_budget, 0) < _BUDGET_ORDER.get(scoping.recall_budget, 0) else scoping.recall_budget
+    elif scoping.recall_budget is not None:
+        budget = scoping.recall_budget
+    else:
+        budget = parent.recall_budget
+
+    max_tokens = None
+    if parent.recall_max_tokens is not None and scoping.recall_max_tokens is not None:
+        max_tokens = min(parent.recall_max_tokens, scoping.recall_max_tokens)
+    elif scoping.recall_max_tokens is not None:
+        max_tokens = scoping.recall_max_tokens
+    else:
+        max_tokens = parent.recall_max_tokens
+
+    every_n = None
+    if parent.retain_every_n_turns is not None and scoping.retain_every_n_turns is not None:
+        every_n = max(parent.retain_every_n_turns, scoping.retain_every_n_turns)
+    elif scoping.retain_every_n_turns is not None:
+        every_n = scoping.retain_every_n_turns
+    else:
+        every_n = parent.retain_every_n_turns
+
+    # Roles: intersection (only roles in both)
+    roles = None
+    if parent.retain_roles is not None and scoping.retain_roles is not None:
+        roles = sorted(set(parent.retain_roles) & set(scoping.retain_roles))
+    else:
+        roles = scoping.retain_roles or parent.retain_roles
+
+    # Tags, tag_groups, exclude_providers: union (additive)
+    tags = sorted(set(parent.retain_tags or []) | set(scoping.retain_tags or [])) or None
+    tag_groups = (parent.recall_tag_groups or []) + (scoping.recall_tag_groups or []) or None
+    excludes = sorted(set(parent.exclude_providers or []) | set(scoping.exclude_providers or [])) or None
+
+    # Metadata: scoping wins if set, else parent
+    strategy = scoping.retain_strategy if scoping.retain_strategy is not None else parent.retain_strategy
+    model = scoping.llm_model if scoping.llm_model is not None else parent.llm_model
+    provider = scoping.llm_provider if scoping.llm_provider is not None else parent.llm_provider
+
+    return AccessResult(
+        allowed=True,
+        recall_budget=budget,
+        recall_max_tokens=max_tokens,
+        recall_tag_groups=tag_groups if tag_groups else None,
+        retain_roles=roles,
+        retain_tags=tags,
+        retain_every_n_turns=every_n,
+        retain_strategy=strategy,
+        llm_model=model,
+        llm_provider=provider,
+        exclude_providers=excludes,
+    )
