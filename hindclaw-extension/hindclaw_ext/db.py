@@ -16,8 +16,13 @@ import asyncpg
 
 from hindclaw_ext.models import (
     ApiKeyRecord,
+    AttachedPolicyRecord,
     BankPermissionRecord,
+    BankPolicyRecord,
     GroupRecord,
+    PolicyRecord,
+    ServiceAccountKeyRecord,
+    ServiceAccountRecord,
     UserRecord,
 )
 
@@ -504,4 +509,125 @@ async def resolve_strategy(
         LIMIT 1
         """,
         *params,
+    )
+
+
+# --- Policy query functions (MinIO-style access model) ---
+
+
+async def get_policy(policy_id: str) -> PolicyRecord | None:
+    """Fetch a single access policy by ID.
+
+    Args:
+        policy_id: Policy identifier.
+
+    Returns:
+        PolicyRecord if found, None otherwise.
+    """
+    pool = await get_pool()
+    row = await pool.fetchrow(
+        "SELECT id, display_name, document_json, is_builtin FROM hindclaw_policies WHERE id = $1",
+        policy_id,
+    )
+    if row is None:
+        return None
+    return PolicyRecord(
+        id=row["id"], display_name=row["display_name"],
+        document_json=_parse_json(row["document_json"]),
+        is_builtin=row["is_builtin"],
+    )
+
+
+async def get_policies_for_user(
+    user_id: str, group_ids: list[str]
+) -> list[AttachedPolicyRecord]:
+    """Fetch all access policies for a user: direct attachments + group attachments.
+
+    Returns AttachedPolicyRecord instances with policy fields + attachment
+    metadata (principal_type, principal_id, priority) for the policy engine
+    to process.
+
+    Args:
+        user_id: Canonical user identifier.
+        group_ids: List of group IDs the user belongs to.
+
+    Returns:
+        List of AttachedPolicyRecord, ordered by priority.
+    """
+    pool = await get_pool()
+    rows = await pool.fetch(
+        """
+        SELECT p.id, p.display_name, p.document_json, p.is_builtin,
+               a.principal_type, a.principal_id, a.priority
+        FROM hindclaw_policies p
+        JOIN hindclaw_policy_attachments a ON a.policy_id = p.id
+        WHERE (a.principal_type = 'user' AND a.principal_id = $1)
+           OR (a.principal_type = 'group' AND a.principal_id = ANY($2))
+        ORDER BY a.priority DESC
+        """,
+        user_id,
+        group_ids,
+    )
+    return [
+        AttachedPolicyRecord(
+            id=r["id"],
+            display_name=r["display_name"],
+            document_json=_parse_json(r["document_json"]),
+            is_builtin=r["is_builtin"],
+            principal_type=r["principal_type"],
+            principal_id=r["principal_id"],
+            priority=r["priority"],
+        )
+        for r in rows
+    ]
+
+
+async def get_service_account_by_api_key(api_key: str) -> ServiceAccountRecord | None:
+    """Look up a service account by its API key.
+
+    Args:
+        api_key: The full API key string (prefix hc_sa_).
+
+    Returns:
+        ServiceAccountRecord if found, None otherwise. Caller must check is_active.
+    """
+    pool = await get_pool()
+    row = await pool.fetchrow(
+        """
+        SELECT sa.id, sa.owner_user_id, sa.scoping_policy_id,
+               sa.display_name, sa.is_active
+        FROM hindclaw_service_accounts sa
+        JOIN hindclaw_service_account_keys k ON k.service_account_id = sa.id
+        WHERE k.api_key = $1
+        """,
+        api_key,
+    )
+    if row is None:
+        return None
+    return ServiceAccountRecord(
+        id=row["id"], owner_user_id=row["owner_user_id"],
+        scoping_policy_id=row["scoping_policy_id"],
+        display_name=row["display_name"], is_active=row["is_active"],
+    )
+
+
+async def get_bank_policy(bank_id: str) -> BankPolicyRecord | None:
+    """Fetch the bank policy document for a bank.
+
+    Args:
+        bank_id: Hindsight bank identifier.
+
+    Returns:
+        BankPolicyRecord if found, None otherwise.
+    """
+    pool = await get_pool()
+    row = await pool.fetchrow(
+        "SELECT bank_id, document_json FROM hindclaw_bank_policies WHERE bank_id = $1",
+        bank_id,
+    )
+    if row is None:
+        return None
+    return BankPolicyRecord(
+        bank_id=row["bank_id"],
+        document_json=_parse_json(row["document_json"]),
     )
