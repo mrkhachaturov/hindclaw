@@ -200,36 +200,25 @@ def test_create_group(client, admin_headers, mock_db_pool):
     _, pool = mock_db_pool
     resp = client.post(
         "/ext/hindclaw/groups",
-        json={"id": "engineering", "display_name": "Engineering", "recall": True, "retain": True},
+        json={"id": "engineering", "display_name": "Engineering"},
         headers=admin_headers,
     )
     assert resp.status_code == 201
-    assert resp.json()["id"] == "engineering"
+    assert resp.json() == {"id": "engineering", "display_name": "Engineering"}
 
 
 def test_get_group(client, admin_headers, mock_db_pool):
-    """GET /ext/hindclaw/groups/:id returns group with all GroupResponse fields."""
+    """GET /ext/hindclaw/groups/:id returns group identity fields."""
     _, pool = mock_db_pool
     pool.fetchrow = AsyncMock(return_value={
         "id": "engineering", "display_name": "Engineering",
-        "recall": True, "retain": True, "retain_roles": None,
-        "retain_tags": '["department:engineering"]',
-        "retain_every_n_turns": None, "recall_budget": "low",
-        "recall_max_tokens": None, "recall_tag_groups": None,
-        "llm_model": None, "llm_provider": None,
-        "exclude_providers": None, "retain_strategy": None,
     })
 
     resp = client.get("/ext/hindclaw/groups/engineering", headers=admin_headers)
     assert resp.status_code == 200
     data = resp.json()
     assert data["id"] == "engineering"
-    assert data["recall"] is True
-    assert data["recall_budget"] == "low"
-    # JSONB string parsed into Python list by _row_to_group
-    assert data["retain_tags"] == ["department:engineering"]
-    assert "retain_strategy" in data
-    assert "retain_roles" in data
+    assert data["display_name"] == "Engineering"
 
 
 def test_get_group_not_found(client, admin_headers, mock_db_pool):
@@ -239,32 +228,6 @@ def test_get_group_not_found(client, admin_headers, mock_db_pool):
 
     resp = client.get("/ext/hindclaw/groups/nonexistent", headers=admin_headers)
     assert resp.status_code == 404
-
-
-def test_upsert_bank_permission(client, admin_headers):
-    """PUT /ext/hindclaw/banks/:bank/permissions/groups/:group upserts permission."""
-    with patch("hindclaw_ext.http._upsert_bank_permission", new_callable=AsyncMock) as mock_upsert:
-        mock_upsert.return_value = {"bank_id": "agent-alpha", "scope_type": "group", "scope_id": "engineering"}
-
-        resp = client.put(
-            "/ext/hindclaw/banks/agent-alpha/permissions/groups/engineering",
-            json={"recall": True, "retain": False},
-            headers=admin_headers,
-        )
-        assert resp.status_code == 200
-        mock_upsert.assert_called_once()
-
-
-def test_upsert_strategy(client, admin_headers, mock_db_pool):
-    """PUT /ext/hindclaw/banks/:bank/strategies/:scope_type/:scope_value sets strategy."""
-    _, pool = mock_db_pool
-    resp = client.put(
-        "/ext/hindclaw/banks/agent-alpha/strategies/topic/500001",
-        json={"strategy": "conversation"},
-        headers=admin_headers,
-    )
-    assert resp.status_code == 200
-    assert resp.json()["strategy"] == "conversation"
 
 
 def test_create_api_key(client, admin_headers, mock_db_pool):
@@ -277,7 +240,7 @@ def test_create_api_key(client, admin_headers, mock_db_pool):
     )
     assert resp.status_code == 201
     data = resp.json()
-    assert data["api_key"].startswith("hc_alice_")
+    assert data["api_key"].startswith("hc_u_")
     assert data["description"] == "Claude Code MCP"
 
 
@@ -363,41 +326,6 @@ def test_list_group_members(client, admin_headers, mock_db_pool):
     assert len(resp.json()) == 2
 
 
-# --- Bank permission tests ---
-
-
-def test_list_bank_permissions(client, admin_headers, mock_db_pool):
-    """GET /ext/hindclaw/banks/:bank/permissions returns permission list."""
-    _, pool = mock_db_pool
-    pool.fetch = AsyncMock(return_value=[
-        {"bank_id": "agent-alpha", "scope_type": "group", "scope_id": "team-lead",
-         "recall": True, "retain": False, "retain_roles": None, "retain_tags": None,
-         "retain_every_n_turns": None, "recall_budget": None, "recall_max_tokens": None,
-         "recall_tag_groups": None, "llm_model": None, "llm_provider": None,
-         "exclude_providers": None, "retain_strategy": None},
-    ])
-
-    resp = client.get("/ext/hindclaw/banks/agent-alpha/permissions", headers=admin_headers)
-    assert resp.status_code == 200
-    assert len(resp.json()) == 1
-    assert resp.json()[0]["scope_id"] == "team-lead"
-
-
-# --- Strategy tests ---
-
-
-def test_list_strategies(client, admin_headers, mock_db_pool):
-    """GET /ext/hindclaw/banks/:bank/strategies returns strategy list."""
-    _, pool = mock_db_pool
-    pool.fetch = AsyncMock(return_value=[
-        {"bank_id": "agent-alpha", "scope_type": "topic", "scope_value": "500001", "strategy": "conversation"},
-    ])
-
-    resp = client.get("/ext/hindclaw/banks/agent-alpha/strategies", headers=admin_headers)
-    assert resp.status_code == 200
-    assert resp.json()[0]["strategy"] == "conversation"
-
-
 # --- Error case tests ---
 
 
@@ -452,27 +380,20 @@ def test_update_user_not_found(client, admin_headers, mock_db_pool):
 
 
 def test_update_group(client, admin_headers, mock_db_pool):
-    """PUT /ext/hindclaw/groups/:id updates group and returns full GroupResponse."""
+    """PUT /ext/hindclaw/groups/:id updates display_name."""
     _, pool = mock_db_pool
-    pool.execute = AsyncMock(return_value="UPDATE 1")
     pool.fetchrow = AsyncMock(return_value={
-        "id": "engineering", "display_name": "Engineering",
-        "recall": True, "retain": False, "retain_roles": None,
-        "retain_tags": None, "retain_every_n_turns": None,
-        "recall_budget": None, "recall_max_tokens": None,
-        "recall_tag_groups": None, "llm_model": None,
-        "llm_provider": None, "exclude_providers": None,
-        "retain_strategy": None,
+        "id": "engineering", "display_name": "Eng Team",
     })
 
     resp = client.put(
         "/ext/hindclaw/groups/engineering",
-        json={"recall": True, "retain": False},
+        json={"display_name": "Eng Team"},
         headers=admin_headers,
     )
     assert resp.status_code == 200
-    assert resp.json()["recall"] is True
-    assert "retain_strategy" in resp.json()
+    assert resp.json()["id"] == "engineering"
+    assert resp.json()["display_name"] == "Eng Team"
 
 
 def test_delete_group(client, admin_headers, mock_db_pool_with_tx):
@@ -499,57 +420,6 @@ def test_remove_group_member(client, admin_headers, mock_db_pool):
     _, pool = mock_db_pool
     resp = client.delete(
         "/ext/hindclaw/groups/engineering/members/alice",
-        headers=admin_headers,
-    )
-    assert resp.status_code == 204
-
-
-def test_get_bank_permission(client, admin_headers, mock_db_pool):
-    """GET /ext/hindclaw/banks/:bank/permissions/:scope_type/:scope_id returns permission."""
-    _, pool = mock_db_pool
-    pool.fetchrow = AsyncMock(return_value={
-        "bank_id": "agent-alpha", "scope_type": "group", "scope_id": "team-lead",
-        "recall": True, "retain": False, "retain_roles": None, "retain_tags": None,
-        "retain_every_n_turns": None, "recall_budget": None, "recall_max_tokens": None,
-        "recall_tag_groups": None, "llm_model": None, "llm_provider": None,
-        "exclude_providers": None, "retain_strategy": None,
-    })
-
-    resp = client.get(
-        "/ext/hindclaw/banks/agent-alpha/permissions/group/team-lead",
-        headers=admin_headers,
-    )
-    assert resp.status_code == 200
-    assert resp.json()["recall"] is True
-
-
-def test_get_bank_permission_not_found(client, admin_headers, mock_db_pool):
-    """GET /ext/hindclaw/banks/:bank/permissions/:scope_type/:scope_id returns 404."""
-    _, pool = mock_db_pool
-    pool.fetchrow = AsyncMock(return_value=None)
-
-    resp = client.get(
-        "/ext/hindclaw/banks/agent-alpha/permissions/user/nobody",
-        headers=admin_headers,
-    )
-    assert resp.status_code == 404
-
-
-def test_delete_bank_permission(client, admin_headers, mock_db_pool):
-    """DELETE /ext/hindclaw/banks/:bank/permissions/:scope_type/:scope_id deletes."""
-    _, pool = mock_db_pool
-    resp = client.delete(
-        "/ext/hindclaw/banks/agent-alpha/permissions/group/team-lead",
-        headers=admin_headers,
-    )
-    assert resp.status_code == 204
-
-
-def test_delete_strategy(client, admin_headers, mock_db_pool):
-    """DELETE /ext/hindclaw/banks/:bank/strategies/:scope_type/:scope_value deletes."""
-    _, pool = mock_db_pool
-    resp = client.delete(
-        "/ext/hindclaw/banks/agent-alpha/strategies/topic/500001",
         headers=admin_headers,
     )
     assert resp.status_code == 204
