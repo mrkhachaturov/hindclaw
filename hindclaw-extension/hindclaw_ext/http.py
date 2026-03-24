@@ -27,23 +27,37 @@ from hindclaw_ext.http_models import (
     ApiKeyResponse,
     BankPermissionRequest,
     BankPermissionResponse,
+    BankPolicyResponse,
     ChannelResponse,
     CreateApiKeyRequest,
     CreateGroupRequest,
+    CreatePolicyAttachmentRequest,
+    CreatePolicyRequest,
+    CreateSAKeyRequest,
+    CreateServiceAccountRequest,
     CreateUserRequest,
     GroupMemberResponse,
     GroupMembershipConfirmation,
     GroupResponse,
     GroupSummaryResponse,
+    PolicyAttachmentResponse,
+    PolicyResponse,
     ResolvedPermissionsResponse,
+    SAKeyCreateResponse,
+    SAKeyResponse,
+    ServiceAccountResponse,
     StrategyRequest,
     StrategyScopeResponse,
     StrategyUpsertConfirmation,
     UpdateGroupRequest,
+    UpdatePolicyRequest,
+    UpdateServiceAccountRequest,
     UpdateUserRequest,
+    UpsertBankPolicyRequest,
     UpsertConfirmation,
     UserResponse,
 )
+from hindclaw_ext.policy_models import BankPolicyDocument, PolicyDocument
 
 logger = logging.getLogger(__name__)
 
@@ -568,6 +582,140 @@ class HindclawHttp(HttpExtension):
                 "DELETE FROM hindclaw_api_keys WHERE id = $1 AND user_id = $2",
                 key_id, user_id,
             )
+
+        # --- Policies ---
+
+        @router.get("/policies", response_model=list[PolicyResponse], operation_id="list_policies")
+        async def list_policies():
+            results = await db.list_policies()
+            return [{"id": r.id, "display_name": r.display_name, "document": r.document_json, "is_builtin": r.is_builtin} for r in results]
+
+        @router.post("/policies", status_code=201, response_model=PolicyResponse, operation_id="create_policy")
+        async def create_policy(req: CreatePolicyRequest):
+            PolicyDocument(**req.document)
+            await db.create_policy(req.id, req.display_name, req.document)
+            return {"id": req.id, "display_name": req.display_name, "document": req.document, "is_builtin": False}
+
+        @router.get("/policies/{policy_id}", response_model=PolicyResponse, operation_id="get_policy")
+        async def get_policy_endpoint(policy_id: str):
+            result = await db.get_policy(policy_id)
+            if not result:
+                raise HTTPException(404, f"Policy {policy_id} not found")
+            return {"id": result.id, "display_name": result.display_name, "document": result.document_json, "is_builtin": result.is_builtin}
+
+        @router.put("/policies/{policy_id}", response_model=PolicyResponse, operation_id="update_policy")
+        async def update_policy_endpoint(policy_id: str, req: UpdatePolicyRequest):
+            if req.document:
+                PolicyDocument(**req.document)
+            updated = await db.update_policy(policy_id, req.display_name, req.document)
+            if not updated:
+                raise HTTPException(404, f"Policy {policy_id} not found or is built-in")
+            result = await db.get_policy(policy_id)
+            return {"id": result.id, "display_name": result.display_name, "document": result.document_json, "is_builtin": result.is_builtin}
+
+        @router.delete("/policies/{policy_id}", status_code=204, operation_id="delete_policy")
+        async def delete_policy_endpoint(policy_id: str):
+            existing = await db.get_policy(policy_id)
+            if not existing:
+                raise HTTPException(404, f"Policy {policy_id} not found")
+            await db.delete_policy(policy_id)
+
+        # --- Policy Attachments ---
+
+        @router.get("/policy-attachments", response_model=list[PolicyAttachmentResponse], operation_id="list_policy_attachments")
+        async def list_attachments(policy_id: str = Query(...)):
+            return await db.list_policy_attachments(policy_id)
+
+        @router.put("/policy-attachments", response_model=PolicyAttachmentResponse, operation_id="upsert_policy_attachment")
+        async def upsert_attachment(req: CreatePolicyAttachmentRequest):
+            await db.create_policy_attachment(req.policy_id, req.principal_type, req.principal_id, req.priority)
+            return req.model_dump()
+
+        @router.delete("/policy-attachments/{policy_id}/{principal_type}/{principal_id}", status_code=204, operation_id="delete_policy_attachment")
+        async def delete_attachment(policy_id: str, principal_type: str, principal_id: str):
+            existing = await db.get_policy_attachment(policy_id, principal_type, principal_id)
+            if not existing:
+                raise HTTPException(404, f"Attachment {policy_id}/{principal_type}/{principal_id} not found")
+            await db.delete_policy_attachment(policy_id, principal_type, principal_id)
+
+        # --- Service Accounts ---
+
+        @router.get("/service-accounts", response_model=list[ServiceAccountResponse], operation_id="list_service_accounts")
+        async def list_service_accounts():
+            return await db.list_service_accounts()
+
+        @router.post("/service-accounts", status_code=201, response_model=ServiceAccountResponse, operation_id="create_service_account")
+        async def create_service_account(req: CreateServiceAccountRequest):
+            await db.create_service_account(req.id, req.owner_user_id, req.display_name, req.scoping_policy_id)
+            return {"id": req.id, "owner_user_id": req.owner_user_id, "display_name": req.display_name, "is_active": True, "scoping_policy_id": req.scoping_policy_id}
+
+        @router.get("/service-accounts/{sa_id}", response_model=ServiceAccountResponse, operation_id="get_service_account")
+        async def get_service_account_endpoint(sa_id: str):
+            result = await db.get_service_account(sa_id)
+            if not result:
+                raise HTTPException(404, f"Service account {sa_id} not found")
+            return result
+
+        @router.put("/service-accounts/{sa_id}", response_model=ServiceAccountResponse, operation_id="update_service_account")
+        async def update_service_account_endpoint(sa_id: str, req: UpdateServiceAccountRequest):
+            updates = req.model_dump(exclude_unset=True)
+            if not updates:
+                raise HTTPException(status_code=400, detail="No fields to update")
+            await db.update_service_account(sa_id, display_name=updates.get("display_name"), scoping_policy_id=updates.get("scoping_policy_id"), is_active=updates.get("is_active"))
+            result = await db.get_service_account(sa_id)
+            if not result:
+                raise HTTPException(404, f"Service account {sa_id} not found")
+            return result
+
+        @router.delete("/service-accounts/{sa_id}", status_code=204, operation_id="delete_service_account")
+        async def delete_service_account_endpoint(sa_id: str):
+            existing = await db.get_service_account(sa_id)
+            if not existing:
+                raise HTTPException(404, f"Service account {sa_id} not found")
+            await db.delete_service_account(sa_id)
+
+        # --- SA Keys ---
+
+        @router.get("/service-accounts/{sa_id}/keys", response_model=list[SAKeyResponse], operation_id="list_sa_keys")
+        async def list_sa_keys(sa_id: str):
+            keys = await db.list_sa_keys(sa_id)
+            return [{"id": k.id, "api_key_prefix": k.api_key[:_API_KEY_MASK_LENGTH], "description": k.description} for k in keys]
+
+        @router.post("/service-accounts/{sa_id}/keys", status_code=201, response_model=SAKeyCreateResponse, operation_id="create_sa_key")
+        async def create_sa_key(sa_id: str, req: CreateSAKeyRequest):
+            key_id = secrets.token_hex(8)
+            api_key = f"hc_sa_{sa_id}_{secrets.token_hex(16)}"
+            await db.create_sa_key(key_id, sa_id, api_key, req.description)
+            return {"id": key_id, "api_key": api_key, "description": req.description}
+
+        @router.delete("/service-accounts/{sa_id}/keys/{key_id}", status_code=204, operation_id="delete_sa_key")
+        async def delete_sa_key(sa_id: str, key_id: str):
+            existing = await db.get_sa_key(key_id, sa_id)
+            if not existing:
+                raise HTTPException(404, f"SA key {key_id} not found")
+            await db.delete_sa_key(key_id, sa_id)
+
+        # --- Bank Policies ---
+
+        @router.get("/banks/{bank_id}/policy", response_model=BankPolicyResponse, operation_id="get_bank_policy")
+        async def get_bank_policy_endpoint(bank_id: str):
+            result = await db.get_bank_policy(bank_id)
+            if not result:
+                raise HTTPException(404, f"Bank policy for {bank_id} not found")
+            return {"bank_id": result.bank_id, "document": result.document_json}
+
+        @router.put("/banks/{bank_id}/policy", response_model=BankPolicyResponse, operation_id="upsert_bank_policy")
+        async def upsert_bank_policy_endpoint(bank_id: str, req: UpsertBankPolicyRequest):
+            BankPolicyDocument(**req.document)
+            await db.upsert_bank_policy(bank_id, req.document)
+            return {"bank_id": bank_id, "document": req.document}
+
+        @router.delete("/banks/{bank_id}/policy", status_code=204, operation_id="delete_bank_policy")
+        async def delete_bank_policy_endpoint(bank_id: str):
+            existing = await db.get_bank_policy(bank_id)
+            if not existing:
+                raise HTTPException(404, f"Bank policy for {bank_id} not found")
+            await db.delete_bank_policy(bank_id)
 
         # --- Debug ---
 
