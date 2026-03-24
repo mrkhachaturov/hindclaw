@@ -17,7 +17,6 @@ import asyncpg
 from hindclaw_ext.models import (
     ApiKeyRecord,
     AttachedPolicyRecord,
-    BankPermissionRecord,
     BankPolicyRecord,
     GroupRecord,
     PolicyAttachmentRecord,
@@ -58,22 +57,10 @@ CREATE TABLE IF NOT EXISTS hindclaw_user_channels (
 );
 
 CREATE TABLE IF NOT EXISTS hindclaw_groups (
-    id              TEXT PRIMARY KEY,
-    display_name    TEXT NOT NULL,
-    recall          BOOLEAN,
-    retain          BOOLEAN,
-    retain_roles    JSONB,
-    retain_tags     JSONB,
-    retain_every_n_turns INTEGER,
-    recall_budget   TEXT CHECK (recall_budget IN ('low', 'mid', 'high')),
-    recall_max_tokens INTEGER,
-    recall_tag_groups JSONB,
-    llm_model       TEXT,
-    llm_provider    TEXT,
-    exclude_providers JSONB,
-    retain_strategy TEXT,
-    created_at      TIMESTAMPTZ DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ DEFAULT NOW()
+    id           TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL,
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS hindclaw_group_members (
@@ -81,37 +68,6 @@ CREATE TABLE IF NOT EXISTS hindclaw_group_members (
     user_id  TEXT NOT NULL REFERENCES hindclaw_users(id) ON DELETE CASCADE,
     PRIMARY KEY (group_id, user_id)
 );
-
-CREATE TABLE IF NOT EXISTS hindclaw_bank_permissions (
-    bank_id         TEXT NOT NULL,
-    scope_type      TEXT NOT NULL CHECK (scope_type IN ('group', 'user')),
-    scope_id        TEXT NOT NULL,
-    recall          BOOLEAN,
-    retain          BOOLEAN,
-    retain_roles    JSONB,
-    retain_tags     JSONB,
-    retain_every_n_turns INTEGER,
-    recall_budget   TEXT CHECK (recall_budget IN ('low', 'mid', 'high')),
-    recall_max_tokens INTEGER,
-    recall_tag_groups JSONB,
-    llm_model       TEXT,
-    llm_provider    TEXT,
-    exclude_providers JSONB,
-    retain_strategy TEXT,
-    created_at      TIMESTAMPTZ DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ DEFAULT NOW(),
-    PRIMARY KEY (bank_id, scope_type, scope_id)
-);
-
-CREATE TABLE IF NOT EXISTS hindclaw_strategy_scopes (
-    bank_id     TEXT NOT NULL,
-    scope_type  TEXT NOT NULL CHECK (scope_type IN ('agent', 'channel', 'topic', 'group', 'user')),
-    scope_value TEXT NOT NULL,
-    strategy    TEXT NOT NULL,
-    UNIQUE (bank_id, scope_type, scope_value)
-);
-
--- New tables for MinIO-style access model
 
 CREATE TABLE IF NOT EXISTS hindclaw_policies (
     id           TEXT PRIMARY KEY,
@@ -166,10 +122,6 @@ BEGIN
     END IF;
 END $$;
 
-INSERT INTO hindclaw_groups (id, display_name, recall, retain)
-VALUES ('_default', 'Anonymous', false, false)
-ON CONFLICT DO NOTHING;
-
 -- Seed built-in policies (idempotent)
 INSERT INTO hindclaw_policies (id, display_name, document_json, is_builtin) VALUES
     ('bank:readwrite', 'Bank Read/Write', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:recall","bank:reflect","bank:retain"],"banks":["*"]}]}', TRUE),
@@ -178,6 +130,31 @@ INSERT INTO hindclaw_policies (id, display_name, document_json, is_builtin) VALU
     ('bank:admin', 'Bank Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:*"],"banks":["*"]}]}', TRUE),
     ('iam:admin', 'IAM Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["iam:*"],"banks":["*"]}]}', TRUE)
 ON CONFLICT (id) DO NOTHING;
+"""
+
+# Migration: drop old tables replaced by policies + bank policies
+_MIGRATION_V2 = """\
+DROP TABLE IF EXISTS hindclaw_bank_permissions;
+DROP TABLE IF EXISTS hindclaw_strategy_scopes;
+
+-- Strip permission columns from groups (idempotent)
+DO $$
+BEGIN
+    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS recall;
+    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS retain;
+    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS retain_roles;
+    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS retain_tags;
+    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS retain_every_n_turns;
+    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS recall_budget;
+    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS recall_max_tokens;
+    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS recall_tag_groups;
+    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS llm_model;
+    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS llm_provider;
+    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS exclude_providers;
+    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS retain_strategy;
+END $$;
+
+DELETE FROM hindclaw_groups WHERE id = '_default';
 """
 
 
@@ -207,6 +184,8 @@ async def get_pool() -> asyncpg.Pool:
         async with _pool.acquire() as conn:
             async with conn.transaction():
                 await conn.execute(_DDL)
+            async with conn.transaction():
+                await conn.execute(_MIGRATION_V2)
             # Seed root user if env vars are set (outside DDL transaction)
             root_user = os.environ.get("HINDCLAW_ROOT_USER")
             root_key = os.environ.get("HINDCLAW_ROOT_API_KEY")
@@ -311,10 +290,7 @@ async def get_user_groups(user_id: str) -> list[GroupRecord]:
     pool = await get_pool()
     rows = await pool.fetch(
         """
-        SELECT g.id, g.display_name, g.recall, g.retain,
-               g.retain_roles, g.retain_tags, g.retain_every_n_turns,
-               g.recall_budget, g.recall_max_tokens, g.recall_tag_groups,
-               g.llm_model, g.llm_provider, g.exclude_providers, g.retain_strategy
+        SELECT g.id, g.display_name
         FROM hindclaw_groups g
         JOIN hindclaw_group_members m ON m.group_id = g.id
         WHERE m.user_id = $1
@@ -322,195 +298,11 @@ async def get_user_groups(user_id: str) -> list[GroupRecord]:
         """,
         user_id,
     )
-    return [
-        GroupRecord(
-            id=r["id"],
-            display_name=r["display_name"],
-            recall=r["recall"],
-            retain=r["retain"],
-            retain_roles=_parse_json(r["retain_roles"]),
-            retain_tags=_parse_json(r["retain_tags"]),
-            retain_every_n_turns=r["retain_every_n_turns"],
-            recall_budget=r["recall_budget"],
-            recall_max_tokens=r["recall_max_tokens"],
-            recall_tag_groups=_parse_json(r["recall_tag_groups"]),
-            llm_model=r["llm_model"],
-            llm_provider=r["llm_provider"],
-            exclude_providers=_parse_json(r["exclude_providers"]),
-            retain_strategy=r["retain_strategy"],
-        )
-        for r in rows
-    ]
+    return [GroupRecord(id=r["id"], display_name=r["display_name"]) for r in rows]
 
 
-async def get_default_group() -> GroupRecord | None:
-    """Get the _default group used for anonymous/ungrouped users.
-
-    Returns:
-        GroupRecord for the _default group, or None if it doesn't exist.
-    """
-    pool = await get_pool()
-    row = await pool.fetchrow(
-        """
-        SELECT id, display_name, recall, retain,
-               retain_roles, retain_tags, retain_every_n_turns,
-               recall_budget, recall_max_tokens, recall_tag_groups,
-               llm_model, llm_provider, exclude_providers, retain_strategy
-        FROM hindclaw_groups WHERE id = '_default'
-        """
-    )
-    if row is None:
-        return None
-    return GroupRecord(
-        id=row["id"],
-        display_name=row["display_name"],
-        recall=row["recall"],
-        retain=row["retain"],
-        retain_roles=_parse_json(row["retain_roles"]),
-        retain_tags=_parse_json(row["retain_tags"]),
-        retain_every_n_turns=row["retain_every_n_turns"],
-        recall_budget=row["recall_budget"],
-        recall_max_tokens=row["recall_max_tokens"],
-        recall_tag_groups=_parse_json(row["recall_tag_groups"]),
-        llm_model=row["llm_model"],
-        llm_provider=row["llm_provider"],
-        exclude_providers=_parse_json(row["exclude_providers"]),
-        retain_strategy=row["retain_strategy"],
-    )
 
 
-async def get_bank_permissions(
-    bank_id: str, group_ids: list[str], user_id: str
-) -> list[BankPermissionRecord]:
-    """Get all bank-level permission entries for a user's groups and the user itself.
-
-    Automatically includes the _default group in the query.
-
-    Args:
-        bank_id: Hindsight bank identifier.
-        group_ids: List of group IDs the user belongs to.
-        user_id: Canonical user identifier.
-
-    Returns:
-        List of BankPermissionRecord ordered by scope_type, scope_id.
-    """
-    pool = await get_pool()
-    rows = await pool.fetch(
-        """
-        SELECT bank_id, scope_type, scope_id,
-               recall, retain, retain_roles, retain_tags,
-               retain_every_n_turns, recall_budget, recall_max_tokens,
-               recall_tag_groups, llm_model, llm_provider,
-               exclude_providers, retain_strategy
-        FROM hindclaw_bank_permissions
-        WHERE bank_id = $1
-          AND (
-            (scope_type = 'group' AND scope_id = ANY($2))
-            OR (scope_type = 'user' AND scope_id = $3)
-          )
-        ORDER BY scope_type, scope_id
-        """,
-        bank_id,
-        group_ids + ["_default"],
-        user_id,
-    )
-    return [
-        BankPermissionRecord(
-            bank_id=r["bank_id"],
-            scope_type=r["scope_type"],
-            scope_id=r["scope_id"],
-            recall=r["recall"],
-            retain=r["retain"],
-            retain_roles=_parse_json(r["retain_roles"]),
-            retain_tags=_parse_json(r["retain_tags"]),
-            retain_every_n_turns=r["retain_every_n_turns"],
-            recall_budget=r["recall_budget"],
-            recall_max_tokens=r["recall_max_tokens"],
-            recall_tag_groups=_parse_json(r["recall_tag_groups"]),
-            llm_model=r["llm_model"],
-            llm_provider=r["llm_provider"],
-            exclude_providers=_parse_json(r["exclude_providers"]),
-            retain_strategy=r["retain_strategy"],
-        )
-        for r in rows
-    ]
-
-
-async def resolve_strategy(
-    bank_id: str,
-    agent: str | None = None,
-    channel: str | None = None,
-    topic: str | None = None,
-    group_ids: list[str] | None = None,
-    user_id: str | None = None,
-) -> str | None:
-    """Resolve the retain strategy via the 5-level scope cascade.
-
-    Most specific scope wins. Tiebreaker within same scope_type:
-    alphabetically first scope_value. See spec Section 7.
-
-    Cascade priority: user(5) > group(4) > topic(3) > channel(2) > agent(1).
-
-    Args:
-        bank_id: Hindsight bank identifier.
-        agent: Agent name from JWT claims.
-        channel: Channel name from JWT claims.
-        topic: Topic ID from JWT claims.
-        group_ids: User's group IDs (for group-level strategy scopes).
-        user_id: Canonical user identifier (for user-level strategy scopes).
-
-    Returns:
-        Named strategy string, or None if no strategy scope matches.
-    """
-    pool = await get_pool()
-
-    # Build WHERE conditions dynamically
-    conditions = []
-    params: list = [bank_id]
-    idx = 2
-
-    if agent:
-        conditions.append(f"(scope_type = 'agent' AND scope_value = ${idx})")
-        params.append(agent)
-        idx += 1
-    if channel:
-        conditions.append(f"(scope_type = 'channel' AND scope_value = ${idx})")
-        params.append(channel)
-        idx += 1
-    if topic:
-        conditions.append(f"(scope_type = 'topic' AND scope_value = ${idx})")
-        params.append(topic)
-        idx += 1
-    if group_ids:
-        conditions.append(f"(scope_type = 'group' AND scope_value = ANY(${idx}))")
-        params.append(group_ids)
-        idx += 1
-    if user_id:
-        conditions.append(f"(scope_type = 'user' AND scope_value = ${idx})")
-        params.append(user_id)
-        idx += 1
-
-    if not conditions:
-        return None
-
-    where = " OR ".join(conditions)
-    return await pool.fetchval(
-        f"""
-        SELECT strategy FROM hindclaw_strategy_scopes
-        WHERE bank_id = $1 AND ({where})
-        ORDER BY
-            CASE scope_type
-                WHEN 'user'    THEN 5
-                WHEN 'group'   THEN 4
-                WHEN 'topic'   THEN 3
-                WHEN 'channel' THEN 2
-                WHEN 'agent'   THEN 1
-            END DESC,
-            scope_value ASC
-        LIMIT 1
-        """,
-        *params,
-    )
 
 
 # --- Policy query functions (MinIO-style access model) ---

@@ -32,34 +32,12 @@ def seed_data():
             {"user_id": "bob", "provider": "telegram", "sender_id": "100002"},
         ],
         "groups": [
-            {"id": "_default", "display_name": "Anonymous", "recall": False, "retain": False},
-            {
-                "id": "team-lead",
-                "display_name": "Team Lead",
-                "recall": True,
-                "retain": True,
-                "retain_tags": ["role:team-lead"],
-                "recall_budget": "mid",
-                "recall_tag_groups": [{"not": {"tags": ["sensitivity:restricted"], "match": "any_strict"}}],
-            },
-            {
-                "id": "engineering",
-                "display_name": "Engineering",
-                "recall": True,
-                "retain": True,
-                "retain_tags": ["department:engineering"],
-                "recall_budget": "low",
-            },
+            {"id": "team-lead", "display_name": "Team Lead"},
+            {"id": "engineering", "display_name": "Engineering"},
         ],
         "memberships": [
             {"group_id": "team-lead", "user_id": "alice"},
             {"group_id": "engineering", "user_id": "alice"},
             {"group_id": "engineering", "user_id": "bob"},
-        ],
-        "bank_permissions": [
-            {"bank_id": "agent-alpha", "scope_type": "group", "scope_id": "team-lead", "recall": True, "retain": False},
-        ],
-        "strategy_scopes": [
-            {"bank_id": "agent-alpha", "scope_type": "topic", "scope_value": "500001", "strategy": "conversation"},
         ],
     }

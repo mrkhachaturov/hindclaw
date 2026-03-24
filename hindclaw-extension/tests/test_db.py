@@ -1,5 +1,4 @@
 """Tests for hindclaw_ext.db — connection pool and queries."""
-import json
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -97,58 +96,13 @@ async def test_get_user_groups(mock_pool):
     from hindclaw_ext import db
 
     mock_pool.fetch.return_value = make_records([
-        {"id": "team-lead", "display_name": "Team Lead", "recall": True, "retain": True,
-         "retain_roles": None, "retain_tags": json.dumps(["role:team-lead"]),
-         "retain_every_n_turns": None, "recall_budget": "mid", "recall_max_tokens": None,
-         "recall_tag_groups": None, "llm_model": None, "llm_provider": None,
-         "exclude_providers": None, "retain_strategy": None},
+        {"id": "team-lead", "display_name": "Team Lead"},
     ])
 
     with patch.object(db, "_pool", mock_pool):
         groups = await db.get_user_groups("alice")
         assert len(groups) == 1
         assert groups[0].id == "team-lead"
-
-
-@pytest.mark.asyncio
-async def test_get_bank_permissions(mock_pool):
-    """Get bank-level permissions."""
-    from hindclaw_ext import db
-
-    mock_pool.fetch.return_value = make_records([
-        {"bank_id": "agent-alpha", "scope_type": "group", "scope_id": "team-lead",
-         "recall": True, "retain": False,
-         "retain_roles": None, "retain_tags": None, "retain_every_n_turns": None,
-         "recall_budget": None, "recall_max_tokens": None, "recall_tag_groups": None,
-         "llm_model": None, "llm_provider": None, "exclude_providers": None,
-         "retain_strategy": None},
-    ])
-
-    with patch.object(db, "_pool", mock_pool):
-        perms = await db.get_bank_permissions("agent-alpha", ["team-lead"], "alice")
-        assert len(perms) == 1
-        assert perms[0].scope_id == "team-lead"
-        assert perms[0].recall is True
-        assert perms[0].retain is False
-
-
-@pytest.mark.asyncio
-async def test_resolve_strategy(mock_pool):
-    """Strategy cascade returns most specific scope."""
-    from hindclaw_ext import db
-
-    mock_pool.fetchval.return_value = "conversation"
-
-    with patch.object(db, "_pool", mock_pool):
-        strategy = await db.resolve_strategy(
-            bank_id="agent-alpha",
-            agent="agent-alpha",
-            channel="telegram",
-            topic="500001",
-            group_ids=["team-lead"],
-            user_id="alice",
-        )
-        assert strategy == "conversation"
 
 
 @pytest.mark.asyncio
@@ -169,15 +123,15 @@ async def test_ddl_creates_new_tables():
     with patch("asyncpg.create_pool", new_callable=AsyncMock, return_value=mock_pool):
         await db.get_pool()
 
-    # Verify DDL was executed
-    ddl_call = mock_conn.execute.call_args[0][0]
-    assert "hindclaw_policies" in ddl_call
-    assert "hindclaw_policy_attachments" in ddl_call
-    assert "hindclaw_service_accounts" in ddl_call
-    assert "hindclaw_service_account_keys" in ddl_call
-    assert "hindclaw_bank_policies" in ddl_call
-    assert "scoping_policy_id" in ddl_call
-    assert "is_active" in ddl_call
+    # Verify DDL was executed (check across all execute calls)
+    all_calls = " ".join(str(c) for c in mock_conn.execute.call_args_list)
+    assert "hindclaw_policies" in all_calls
+    assert "hindclaw_policy_attachments" in all_calls
+    assert "hindclaw_service_accounts" in all_calls
+    assert "hindclaw_service_account_keys" in all_calls
+    assert "hindclaw_bank_policies" in all_calls
+    assert "scoping_policy_id" in all_calls
+    assert "is_active" in all_calls
 
 
 @pytest.mark.asyncio
@@ -198,14 +152,14 @@ async def test_builtin_policies_seeded():
     with patch("asyncpg.create_pool", new_callable=AsyncMock, return_value=mock_pool):
         await db.get_pool()
 
-    ddl_call = mock_conn.execute.call_args[0][0]
+    all_calls = " ".join(str(c) for c in mock_conn.execute.call_args_list)
     # Built-in policies: bank:readwrite, bank:readonly, bank:retain-only, bank:admin, iam:admin
-    assert "bank:readwrite" in ddl_call
-    assert "bank:readonly" in ddl_call
-    assert "bank:retain-only" in ddl_call
-    assert "bank:admin" in ddl_call
-    assert "iam:admin" in ddl_call
-    assert "is_builtin" in ddl_call
+    assert "bank:readwrite" in all_calls
+    assert "bank:readonly" in all_calls
+    assert "bank:retain-only" in all_calls
+    assert "bank:admin" in all_calls
+    assert "iam:admin" in all_calls
+    assert "is_builtin" in all_calls
 
 
 @pytest.mark.asyncio
