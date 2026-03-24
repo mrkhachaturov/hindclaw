@@ -1,3 +1,7 @@
 [submodule "hindclaw-terraform"]
 	path = hindclaw-terraform
 	url = git@github.com:mrkhachaturov/terraform-provider-hindclaw.git
+[submodule "hindclaw-integrations/claude-code"]
+	path = hindclaw-integrations/claude-code
+	url = git@github.com:mrkhachaturov/claude-hindclaw-plugin.git
+	branch = main
