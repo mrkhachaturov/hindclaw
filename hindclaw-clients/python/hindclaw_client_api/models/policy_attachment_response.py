@@ -17,17 +17,20 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
-class UpdateGroupRequest(BaseModel):
+class PolicyAttachmentResponse(BaseModel):
     """
-    UpdateGroupRequest
+    Policy attachment resource.
     """ # noqa: E501
-    display_name: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["display_name"]
+    policy_id: StrictStr
+    principal_type: StrictStr
+    principal_id: StrictStr
+    priority: StrictInt
+    __properties: ClassVar[List[str]] = ["policy_id", "principal_type", "principal_id", "priority"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -47,7 +50,7 @@ class UpdateGroupRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of UpdateGroupRequest from a JSON string"""
+        """Create an instance of PolicyAttachmentResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -68,16 +71,11 @@ class UpdateGroupRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if display_name (nullable) is None
-        # and model_fields_set contains the field
-        if self.display_name is None and "display_name" in self.model_fields_set:
-            _dict['display_name'] = None
-
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of UpdateGroupRequest from a dict"""
+        """Create an instance of PolicyAttachmentResponse from a dict"""
         if obj is None:
             return None
 
@@ -85,7 +83,10 @@ class UpdateGroupRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "display_name": obj.get("display_name")
+            "policy_id": obj.get("policy_id"),
+            "principal_type": obj.get("principal_type"),
+            "principal_id": obj.get("principal_id"),
+            "priority": obj.get("priority")
         })
         return _obj
 

@@ -19,7 +19,7 @@ import (
 // checks if the GroupSummaryResponse type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &GroupSummaryResponse{}
 
-// GroupSummaryResponse Group summary returned by GET /groups (list view).
+// GroupSummaryResponse Group resource (identity-only).
 type GroupSummaryResponse struct {
 	Id string `json:"id"`
 	DisplayName string `json:"display_name"`

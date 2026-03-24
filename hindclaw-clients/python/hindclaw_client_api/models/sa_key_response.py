@@ -18,16 +18,18 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class StrategyRequest(BaseModel):
+class SAKeyResponse(BaseModel):
     """
-    StrategyRequest
+    SA API key in list view — key is masked.
     """ # noqa: E501
-    strategy: StrictStr
-    __properties: ClassVar[List[str]] = ["strategy"]
+    id: StrictStr
+    api_key_prefix: StrictStr
+    description: Optional[StrictStr]
+    __properties: ClassVar[List[str]] = ["id", "api_key_prefix", "description"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -47,7 +49,7 @@ class StrategyRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of StrategyRequest from a JSON string"""
+        """Create an instance of SAKeyResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -68,11 +70,16 @@ class StrategyRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if description (nullable) is None
+        # and model_fields_set contains the field
+        if self.description is None and "description" in self.model_fields_set:
+            _dict['description'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of StrategyRequest from a dict"""
+        """Create an instance of SAKeyResponse from a dict"""
         if obj is None:
             return None
 
@@ -80,7 +87,9 @@ class StrategyRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "strategy": obj.get("strategy")
+            "id": obj.get("id"),
+            "api_key_prefix": obj.get("api_key_prefix"),
+            "description": obj.get("description")
         })
         return _obj
 

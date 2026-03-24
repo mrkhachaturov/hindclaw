@@ -17,28 +17,33 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
 
 from pydantic import StrictStr
-from typing import List, Optional
+from typing import Any, List, Optional
 from hindclaw_client_api.models.add_channel_request import AddChannelRequest
 from hindclaw_client_api.models.add_member_request import AddMemberRequest
 from hindclaw_client_api.models.api_key_create_response import ApiKeyCreateResponse
 from hindclaw_client_api.models.api_key_response import ApiKeyResponse
-from hindclaw_client_api.models.bank_permission_request import BankPermissionRequest
-from hindclaw_client_api.models.bank_permission_response import BankPermissionResponse
+from hindclaw_client_api.models.bank_policy_response import BankPolicyResponse
 from hindclaw_client_api.models.channel_response import ChannelResponse
 from hindclaw_client_api.models.create_api_key_request import CreateApiKeyRequest
 from hindclaw_client_api.models.create_group_request import CreateGroupRequest
+from hindclaw_client_api.models.create_policy_attachment_request import CreatePolicyAttachmentRequest
+from hindclaw_client_api.models.create_policy_request import CreatePolicyRequest
+from hindclaw_client_api.models.create_sa_key_request import CreateSAKeyRequest
+from hindclaw_client_api.models.create_service_account_request import CreateServiceAccountRequest
 from hindclaw_client_api.models.create_user_request import CreateUserRequest
 from hindclaw_client_api.models.group_member_response import GroupMemberResponse
 from hindclaw_client_api.models.group_membership_confirmation import GroupMembershipConfirmation
-from hindclaw_client_api.models.group_response import GroupResponse
 from hindclaw_client_api.models.group_summary_response import GroupSummaryResponse
-from hindclaw_client_api.models.resolved_permissions_response import ResolvedPermissionsResponse
-from hindclaw_client_api.models.strategy_request import StrategyRequest
-from hindclaw_client_api.models.strategy_scope_response import StrategyScopeResponse
-from hindclaw_client_api.models.strategy_upsert_confirmation import StrategyUpsertConfirmation
+from hindclaw_client_api.models.policy_attachment_response import PolicyAttachmentResponse
+from hindclaw_client_api.models.policy_response import PolicyResponse
+from hindclaw_client_api.models.sa_key_create_response import SAKeyCreateResponse
+from hindclaw_client_api.models.sa_key_response import SAKeyResponse
+from hindclaw_client_api.models.service_account_response import ServiceAccountResponse
 from hindclaw_client_api.models.update_group_request import UpdateGroupRequest
+from hindclaw_client_api.models.update_policy_request import UpdatePolicyRequest
+from hindclaw_client_api.models.update_service_account_request import UpdateServiceAccountRequest
 from hindclaw_client_api.models.update_user_request import UpdateUserRequest
-from hindclaw_client_api.models.upsert_confirmation import UpsertConfirmation
+from hindclaw_client_api.models.upsert_bank_policy_request import UpsertBankPolicyRequest
 from hindclaw_client_api.models.user_response import UserResponse
 
 from hindclaw_client_api.api_client import ApiClient, RequestSerialized
@@ -1201,6 +1206,843 @@ class DefaultApi:
 
 
     @validate_call
+    async def create_policy(
+        self,
+        create_policy_request: CreatePolicyRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> PolicyResponse:
+        """Create Policy
+
+
+        :param create_policy_request: (required)
+        :type create_policy_request: CreatePolicyRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._create_policy_serialize(
+            create_policy_request=create_policy_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "PolicyResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def create_policy_with_http_info(
+        self,
+        create_policy_request: CreatePolicyRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[PolicyResponse]:
+        """Create Policy
+
+
+        :param create_policy_request: (required)
+        :type create_policy_request: CreatePolicyRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._create_policy_serialize(
+            create_policy_request=create_policy_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "PolicyResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def create_policy_without_preload_content(
+        self,
+        create_policy_request: CreatePolicyRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Create Policy
+
+
+        :param create_policy_request: (required)
+        :type create_policy_request: CreatePolicyRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._create_policy_serialize(
+            create_policy_request=create_policy_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "PolicyResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _create_policy_serialize(
+        self,
+        create_policy_request,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if create_policy_request is not None:
+            _body_params = create_policy_request
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/ext/hindclaw/policies',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def create_sa_key(
+        self,
+        sa_id: StrictStr,
+        create_sa_key_request: CreateSAKeyRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> SAKeyCreateResponse:
+        """Create Sa Key
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param create_sa_key_request: (required)
+        :type create_sa_key_request: CreateSAKeyRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._create_sa_key_serialize(
+            sa_id=sa_id,
+            create_sa_key_request=create_sa_key_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "SAKeyCreateResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def create_sa_key_with_http_info(
+        self,
+        sa_id: StrictStr,
+        create_sa_key_request: CreateSAKeyRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[SAKeyCreateResponse]:
+        """Create Sa Key
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param create_sa_key_request: (required)
+        :type create_sa_key_request: CreateSAKeyRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._create_sa_key_serialize(
+            sa_id=sa_id,
+            create_sa_key_request=create_sa_key_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "SAKeyCreateResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def create_sa_key_without_preload_content(
+        self,
+        sa_id: StrictStr,
+        create_sa_key_request: CreateSAKeyRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Create Sa Key
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param create_sa_key_request: (required)
+        :type create_sa_key_request: CreateSAKeyRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._create_sa_key_serialize(
+            sa_id=sa_id,
+            create_sa_key_request=create_sa_key_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "SAKeyCreateResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _create_sa_key_serialize(
+        self,
+        sa_id,
+        create_sa_key_request,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if sa_id is not None:
+            _path_params['sa_id'] = sa_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if create_sa_key_request is not None:
+            _body_params = create_sa_key_request
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/ext/hindclaw/service-accounts/{sa_id}/keys',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def create_service_account(
+        self,
+        create_service_account_request: CreateServiceAccountRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ServiceAccountResponse:
+        """Create Service Account
+
+
+        :param create_service_account_request: (required)
+        :type create_service_account_request: CreateServiceAccountRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._create_service_account_serialize(
+            create_service_account_request=create_service_account_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "ServiceAccountResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def create_service_account_with_http_info(
+        self,
+        create_service_account_request: CreateServiceAccountRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[ServiceAccountResponse]:
+        """Create Service Account
+
+
+        :param create_service_account_request: (required)
+        :type create_service_account_request: CreateServiceAccountRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._create_service_account_serialize(
+            create_service_account_request=create_service_account_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "ServiceAccountResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def create_service_account_without_preload_content(
+        self,
+        create_service_account_request: CreateServiceAccountRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Create Service Account
+
+
+        :param create_service_account_request: (required)
+        :type create_service_account_request: CreateServiceAccountRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._create_service_account_serialize(
+            create_service_account_request=create_service_account_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '201': "ServiceAccountResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _create_service_account_serialize(
+        self,
+        create_service_account_request,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if create_service_account_request is not None:
+            _body_params = create_service_account_request
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/ext/hindclaw/service-accounts',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
     async def create_user(
         self,
         create_user_request: CreateUserRequest,
@@ -1478,10 +2320,10 @@ class DefaultApi:
     async def debug_resolve(
         self,
         bank: StrictStr,
+        action: Optional[StrictStr] = None,
         sender: Optional[StrictStr] = None,
-        agent: Optional[StrictStr] = None,
-        channel: Optional[StrictStr] = None,
-        topic: Optional[StrictStr] = None,
+        user_id: Optional[StrictStr] = None,
+        sa_id: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1494,21 +2336,21 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ResolvedPermissionsResponse:
+    ) -> object:
         """Debug Resolve
 
-        Resolve and return full permissions for a given context.
+        Resolve and return effective access policy + bank policy for a context.
 
         :param bank: (required)
         :type bank: str
+        :param action:
+        :type action: str
         :param sender:
         :type sender: str
-        :param agent:
-        :type agent: str
-        :param channel:
-        :type channel: str
-        :param topic:
-        :type topic: str
+        :param user_id:
+        :type user_id: str
+        :param sa_id:
+        :type sa_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1533,10 +2375,10 @@ class DefaultApi:
 
         _param = self._debug_resolve_serialize(
             bank=bank,
+            action=action,
             sender=sender,
-            agent=agent,
-            channel=channel,
-            topic=topic,
+            user_id=user_id,
+            sa_id=sa_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1544,7 +2386,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResolvedPermissionsResponse",
+            '200': "object",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -1562,10 +2404,10 @@ class DefaultApi:
     async def debug_resolve_with_http_info(
         self,
         bank: StrictStr,
+        action: Optional[StrictStr] = None,
         sender: Optional[StrictStr] = None,
-        agent: Optional[StrictStr] = None,
-        channel: Optional[StrictStr] = None,
-        topic: Optional[StrictStr] = None,
+        user_id: Optional[StrictStr] = None,
+        sa_id: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1578,21 +2420,21 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ResolvedPermissionsResponse]:
+    ) -> ApiResponse[object]:
         """Debug Resolve
 
-        Resolve and return full permissions for a given context.
+        Resolve and return effective access policy + bank policy for a context.
 
         :param bank: (required)
         :type bank: str
+        :param action:
+        :type action: str
         :param sender:
         :type sender: str
-        :param agent:
-        :type agent: str
-        :param channel:
-        :type channel: str
-        :param topic:
-        :type topic: str
+        :param user_id:
+        :type user_id: str
+        :param sa_id:
+        :type sa_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1617,10 +2459,10 @@ class DefaultApi:
 
         _param = self._debug_resolve_serialize(
             bank=bank,
+            action=action,
             sender=sender,
-            agent=agent,
-            channel=channel,
-            topic=topic,
+            user_id=user_id,
+            sa_id=sa_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1628,7 +2470,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResolvedPermissionsResponse",
+            '200': "object",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -1646,10 +2488,10 @@ class DefaultApi:
     async def debug_resolve_without_preload_content(
         self,
         bank: StrictStr,
+        action: Optional[StrictStr] = None,
         sender: Optional[StrictStr] = None,
-        agent: Optional[StrictStr] = None,
-        channel: Optional[StrictStr] = None,
-        topic: Optional[StrictStr] = None,
+        user_id: Optional[StrictStr] = None,
+        sa_id: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1665,18 +2507,18 @@ class DefaultApi:
     ) -> RESTResponseType:
         """Debug Resolve
 
-        Resolve and return full permissions for a given context.
+        Resolve and return effective access policy + bank policy for a context.
 
         :param bank: (required)
         :type bank: str
+        :param action:
+        :type action: str
         :param sender:
         :type sender: str
-        :param agent:
-        :type agent: str
-        :param channel:
-        :type channel: str
-        :param topic:
-        :type topic: str
+        :param user_id:
+        :type user_id: str
+        :param sa_id:
+        :type sa_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1701,10 +2543,10 @@ class DefaultApi:
 
         _param = self._debug_resolve_serialize(
             bank=bank,
+            action=action,
             sender=sender,
-            agent=agent,
-            channel=channel,
-            topic=topic,
+            user_id=user_id,
+            sa_id=sa_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1712,7 +2554,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResolvedPermissionsResponse",
+            '200': "object",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -1725,10 +2567,10 @@ class DefaultApi:
     def _debug_resolve_serialize(
         self,
         bank,
+        action,
         sender,
-        agent,
-        channel,
-        topic,
+        user_id,
+        sa_id,
         _request_auth,
         _content_type,
         _headers,
@@ -1755,21 +2597,21 @@ class DefaultApi:
             
             _query_params.append(('bank', bank))
             
+        if action is not None:
+            
+            _query_params.append(('action', action))
+            
         if sender is not None:
             
             _query_params.append(('sender', sender))
             
-        if agent is not None:
+        if user_id is not None:
             
-            _query_params.append(('agent', agent))
+            _query_params.append(('user_id', user_id))
             
-        if channel is not None:
+        if sa_id is not None:
             
-            _query_params.append(('channel', channel))
-            
-        if topic is not None:
-            
-            _query_params.append(('topic', topic))
+            _query_params.append(('sa_id', sa_id))
             
         # process the header parameters
         # process the form parameters
@@ -2085,11 +2927,9 @@ class DefaultApi:
 
 
     @validate_call
-    async def delete_bank_permission(
+    async def delete_bank_policy(
         self,
         bank_id: StrictStr,
-        scope_type: StrictStr,
-        scope_id: StrictStr,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2103,15 +2943,11 @@ class DefaultApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> None:
-        """Delete Bank Permission
+        """Delete Bank Policy Endpoint
 
 
         :param bank_id: (required)
         :type bank_id: str
-        :param scope_type: (required)
-        :type scope_type: str
-        :param scope_id: (required)
-        :type scope_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2134,10 +2970,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_bank_permission_serialize(
+        _param = self._delete_bank_policy_serialize(
             bank_id=bank_id,
-            scope_type=scope_type,
-            scope_id=scope_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2160,11 +2994,9 @@ class DefaultApi:
 
 
     @validate_call
-    async def delete_bank_permission_with_http_info(
+    async def delete_bank_policy_with_http_info(
         self,
         bank_id: StrictStr,
-        scope_type: StrictStr,
-        scope_id: StrictStr,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2178,15 +3010,11 @@ class DefaultApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[None]:
-        """Delete Bank Permission
+        """Delete Bank Policy Endpoint
 
 
         :param bank_id: (required)
         :type bank_id: str
-        :param scope_type: (required)
-        :type scope_type: str
-        :param scope_id: (required)
-        :type scope_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2209,10 +3037,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_bank_permission_serialize(
+        _param = self._delete_bank_policy_serialize(
             bank_id=bank_id,
-            scope_type=scope_type,
-            scope_id=scope_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2235,11 +3061,9 @@ class DefaultApi:
 
 
     @validate_call
-    async def delete_bank_permission_without_preload_content(
+    async def delete_bank_policy_without_preload_content(
         self,
         bank_id: StrictStr,
-        scope_type: StrictStr,
-        scope_id: StrictStr,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2253,15 +3077,11 @@ class DefaultApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Delete Bank Permission
+        """Delete Bank Policy Endpoint
 
 
         :param bank_id: (required)
         :type bank_id: str
-        :param scope_type: (required)
-        :type scope_type: str
-        :param scope_id: (required)
-        :type scope_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2284,10 +3104,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_bank_permission_serialize(
+        _param = self._delete_bank_policy_serialize(
             bank_id=bank_id,
-            scope_type=scope_type,
-            scope_id=scope_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2305,11 +3123,9 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_bank_permission_serialize(
+    def _delete_bank_policy_serialize(
         self,
         bank_id,
-        scope_type,
-        scope_id,
         _request_auth,
         _content_type,
         _headers,
@@ -2333,10 +3149,6 @@ class DefaultApi:
         # process the path parameters
         if bank_id is not None:
             _path_params['bank_id'] = bank_id
-        if scope_type is not None:
-            _path_params['scope_type'] = scope_type
-        if scope_id is not None:
-            _path_params['scope_id'] = scope_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -2359,7 +3171,7 @@ class DefaultApi:
 
         return self.api_client.param_serialize(
             method='DELETE',
-            resource_path='/ext/hindclaw/banks/{bank_id}/permissions/{scope_type}/{scope_id}',
+            resource_path='/ext/hindclaw/banks/{bank_id}/policy',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -2637,11 +3449,9 @@ class DefaultApi:
 
 
     @validate_call
-    async def delete_strategy(
+    async def delete_policy(
         self,
-        bank_id: StrictStr,
-        scope_type: StrictStr,
-        scope_value: StrictStr,
+        policy_id: StrictStr,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2655,15 +3465,11 @@ class DefaultApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> None:
-        """Delete Strategy
+        """Delete Policy Endpoint
 
 
-        :param bank_id: (required)
-        :type bank_id: str
-        :param scope_type: (required)
-        :type scope_type: str
-        :param scope_value: (required)
-        :type scope_value: str
+        :param policy_id: (required)
+        :type policy_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2686,10 +3492,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_strategy_serialize(
-            bank_id=bank_id,
-            scope_type=scope_type,
-            scope_value=scope_value,
+        _param = self._delete_policy_serialize(
+            policy_id=policy_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2712,11 +3516,9 @@ class DefaultApi:
 
 
     @validate_call
-    async def delete_strategy_with_http_info(
+    async def delete_policy_with_http_info(
         self,
-        bank_id: StrictStr,
-        scope_type: StrictStr,
-        scope_value: StrictStr,
+        policy_id: StrictStr,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2730,15 +3532,11 @@ class DefaultApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[None]:
-        """Delete Strategy
+        """Delete Policy Endpoint
 
 
-        :param bank_id: (required)
-        :type bank_id: str
-        :param scope_type: (required)
-        :type scope_type: str
-        :param scope_value: (required)
-        :type scope_value: str
+        :param policy_id: (required)
+        :type policy_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2761,10 +3559,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_strategy_serialize(
-            bank_id=bank_id,
-            scope_type=scope_type,
-            scope_value=scope_value,
+        _param = self._delete_policy_serialize(
+            policy_id=policy_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2787,11 +3583,9 @@ class DefaultApi:
 
 
     @validate_call
-    async def delete_strategy_without_preload_content(
+    async def delete_policy_without_preload_content(
         self,
-        bank_id: StrictStr,
-        scope_type: StrictStr,
-        scope_value: StrictStr,
+        policy_id: StrictStr,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2805,15 +3599,11 @@ class DefaultApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Delete Strategy
+        """Delete Policy Endpoint
 
 
-        :param bank_id: (required)
-        :type bank_id: str
-        :param scope_type: (required)
-        :type scope_type: str
-        :param scope_value: (required)
-        :type scope_value: str
+        :param policy_id: (required)
+        :type policy_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2836,10 +3626,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_strategy_serialize(
-            bank_id=bank_id,
-            scope_type=scope_type,
-            scope_value=scope_value,
+        _param = self._delete_policy_serialize(
+            policy_id=policy_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2857,11 +3645,9 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_strategy_serialize(
+    def _delete_policy_serialize(
         self,
-        bank_id,
-        scope_type,
-        scope_value,
+        policy_id,
         _request_auth,
         _content_type,
         _headers,
@@ -2883,12 +3669,8 @@ class DefaultApi:
         _body_params: Optional[bytes] = None
 
         # process the path parameters
-        if bank_id is not None:
-            _path_params['bank_id'] = bank_id
-        if scope_type is not None:
-            _path_params['scope_type'] = scope_type
-        if scope_value is not None:
-            _path_params['scope_value'] = scope_value
+        if policy_id is not None:
+            _path_params['policy_id'] = policy_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -2911,7 +3693,835 @@ class DefaultApi:
 
         return self.api_client.param_serialize(
             method='DELETE',
-            resource_path='/ext/hindclaw/banks/{bank_id}/strategies/{scope_type}/{scope_value}',
+            resource_path='/ext/hindclaw/policies/{policy_id}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def delete_policy_attachment(
+        self,
+        policy_id: StrictStr,
+        principal_type: StrictStr,
+        principal_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """Delete Attachment
+
+
+        :param policy_id: (required)
+        :type policy_id: str
+        :param principal_type: (required)
+        :type principal_type: str
+        :param principal_id: (required)
+        :type principal_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_policy_attachment_serialize(
+            policy_id=policy_id,
+            principal_type=principal_type,
+            principal_id=principal_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def delete_policy_attachment_with_http_info(
+        self,
+        policy_id: StrictStr,
+        principal_type: StrictStr,
+        principal_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """Delete Attachment
+
+
+        :param policy_id: (required)
+        :type policy_id: str
+        :param principal_type: (required)
+        :type principal_type: str
+        :param principal_id: (required)
+        :type principal_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_policy_attachment_serialize(
+            policy_id=policy_id,
+            principal_type=principal_type,
+            principal_id=principal_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def delete_policy_attachment_without_preload_content(
+        self,
+        policy_id: StrictStr,
+        principal_type: StrictStr,
+        principal_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Delete Attachment
+
+
+        :param policy_id: (required)
+        :type policy_id: str
+        :param principal_type: (required)
+        :type principal_type: str
+        :param principal_id: (required)
+        :type principal_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_policy_attachment_serialize(
+            policy_id=policy_id,
+            principal_type=principal_type,
+            principal_id=principal_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _delete_policy_attachment_serialize(
+        self,
+        policy_id,
+        principal_type,
+        principal_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if policy_id is not None:
+            _path_params['policy_id'] = policy_id
+        if principal_type is not None:
+            _path_params['principal_type'] = principal_type
+        if principal_id is not None:
+            _path_params['principal_id'] = principal_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='DELETE',
+            resource_path='/ext/hindclaw/policy-attachments/{policy_id}/{principal_type}/{principal_id}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def delete_sa_key(
+        self,
+        sa_id: StrictStr,
+        key_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """Delete Sa Key
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param key_id: (required)
+        :type key_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_sa_key_serialize(
+            sa_id=sa_id,
+            key_id=key_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def delete_sa_key_with_http_info(
+        self,
+        sa_id: StrictStr,
+        key_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """Delete Sa Key
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param key_id: (required)
+        :type key_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_sa_key_serialize(
+            sa_id=sa_id,
+            key_id=key_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def delete_sa_key_without_preload_content(
+        self,
+        sa_id: StrictStr,
+        key_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Delete Sa Key
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param key_id: (required)
+        :type key_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_sa_key_serialize(
+            sa_id=sa_id,
+            key_id=key_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _delete_sa_key_serialize(
+        self,
+        sa_id,
+        key_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if sa_id is not None:
+            _path_params['sa_id'] = sa_id
+        if key_id is not None:
+            _path_params['key_id'] = key_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='DELETE',
+            resource_path='/ext/hindclaw/service-accounts/{sa_id}/keys/{key_id}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def delete_service_account(
+        self,
+        sa_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """Delete Service Account Endpoint
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_service_account_serialize(
+            sa_id=sa_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def delete_service_account_with_http_info(
+        self,
+        sa_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """Delete Service Account Endpoint
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_service_account_serialize(
+            sa_id=sa_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def delete_service_account_without_preload_content(
+        self,
+        sa_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Delete Service Account Endpoint
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_service_account_serialize(
+            sa_id=sa_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '204': None,
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _delete_service_account_serialize(
+        self,
+        sa_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if sa_id is not None:
+            _path_params['sa_id'] = sa_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='DELETE',
+            resource_path='/ext/hindclaw/service-accounts/{sa_id}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -3189,11 +4799,9 @@ class DefaultApi:
 
 
     @validate_call
-    async def get_bank_permission(
+    async def get_bank_policy(
         self,
         bank_id: StrictStr,
-        scope_type: StrictStr,
-        scope_id: StrictStr,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3206,16 +4814,12 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> BankPermissionResponse:
-        """Get Bank Permission
+    ) -> BankPolicyResponse:
+        """Get Bank Policy Endpoint
 
 
         :param bank_id: (required)
         :type bank_id: str
-        :param scope_type: (required)
-        :type scope_type: str
-        :param scope_id: (required)
-        :type scope_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3238,10 +4842,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._get_bank_permission_serialize(
+        _param = self._get_bank_policy_serialize(
             bank_id=bank_id,
-            scope_type=scope_type,
-            scope_id=scope_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -3249,7 +4851,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "BankPermissionResponse",
+            '200': "BankPolicyResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -3264,11 +4866,9 @@ class DefaultApi:
 
 
     @validate_call
-    async def get_bank_permission_with_http_info(
+    async def get_bank_policy_with_http_info(
         self,
         bank_id: StrictStr,
-        scope_type: StrictStr,
-        scope_id: StrictStr,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3281,16 +4881,12 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[BankPermissionResponse]:
-        """Get Bank Permission
+    ) -> ApiResponse[BankPolicyResponse]:
+        """Get Bank Policy Endpoint
 
 
         :param bank_id: (required)
         :type bank_id: str
-        :param scope_type: (required)
-        :type scope_type: str
-        :param scope_id: (required)
-        :type scope_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3313,10 +4909,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._get_bank_permission_serialize(
+        _param = self._get_bank_policy_serialize(
             bank_id=bank_id,
-            scope_type=scope_type,
-            scope_id=scope_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -3324,7 +4918,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "BankPermissionResponse",
+            '200': "BankPolicyResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -3339,11 +4933,9 @@ class DefaultApi:
 
 
     @validate_call
-    async def get_bank_permission_without_preload_content(
+    async def get_bank_policy_without_preload_content(
         self,
         bank_id: StrictStr,
-        scope_type: StrictStr,
-        scope_id: StrictStr,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3357,15 +4949,11 @@ class DefaultApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Get Bank Permission
+        """Get Bank Policy Endpoint
 
 
         :param bank_id: (required)
         :type bank_id: str
-        :param scope_type: (required)
-        :type scope_type: str
-        :param scope_id: (required)
-        :type scope_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3388,10 +4976,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._get_bank_permission_serialize(
+        _param = self._get_bank_policy_serialize(
             bank_id=bank_id,
-            scope_type=scope_type,
-            scope_id=scope_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -3399,7 +4985,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "BankPermissionResponse",
+            '200': "BankPolicyResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -3409,11 +4995,9 @@ class DefaultApi:
         return response_data.response
 
 
-    def _get_bank_permission_serialize(
+    def _get_bank_policy_serialize(
         self,
         bank_id,
-        scope_type,
-        scope_id,
         _request_auth,
         _content_type,
         _headers,
@@ -3437,10 +5021,6 @@ class DefaultApi:
         # process the path parameters
         if bank_id is not None:
             _path_params['bank_id'] = bank_id
-        if scope_type is not None:
-            _path_params['scope_type'] = scope_type
-        if scope_id is not None:
-            _path_params['scope_id'] = scope_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -3463,7 +5043,7 @@ class DefaultApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/ext/hindclaw/banks/{bank_id}/permissions/{scope_type}/{scope_id}',
+            resource_path='/ext/hindclaw/banks/{bank_id}/policy',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -3495,7 +5075,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GroupResponse:
+    ) -> GroupSummaryResponse:
         """Get Group
 
 
@@ -3532,7 +5112,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GroupResponse",
+            '200': "GroupSummaryResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -3562,7 +5142,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GroupResponse]:
+    ) -> ApiResponse[GroupSummaryResponse]:
         """Get Group
 
 
@@ -3599,7 +5179,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GroupResponse",
+            '200': "GroupSummaryResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -3666,7 +5246,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GroupResponse",
+            '200': "GroupSummaryResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -3725,6 +5305,528 @@ class DefaultApi:
         return self.api_client.param_serialize(
             method='GET',
             resource_path='/ext/hindclaw/groups/{group_id}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def get_policy(
+        self,
+        policy_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> PolicyResponse:
+        """Get Policy Endpoint
+
+
+        :param policy_id: (required)
+        :type policy_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_policy_serialize(
+            policy_id=policy_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "PolicyResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def get_policy_with_http_info(
+        self,
+        policy_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[PolicyResponse]:
+        """Get Policy Endpoint
+
+
+        :param policy_id: (required)
+        :type policy_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_policy_serialize(
+            policy_id=policy_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "PolicyResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def get_policy_without_preload_content(
+        self,
+        policy_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Get Policy Endpoint
+
+
+        :param policy_id: (required)
+        :type policy_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_policy_serialize(
+            policy_id=policy_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "PolicyResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_policy_serialize(
+        self,
+        policy_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if policy_id is not None:
+            _path_params['policy_id'] = policy_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/ext/hindclaw/policies/{policy_id}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def get_service_account(
+        self,
+        sa_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ServiceAccountResponse:
+        """Get Service Account Endpoint
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_service_account_serialize(
+            sa_id=sa_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ServiceAccountResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def get_service_account_with_http_info(
+        self,
+        sa_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[ServiceAccountResponse]:
+        """Get Service Account Endpoint
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_service_account_serialize(
+            sa_id=sa_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ServiceAccountResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def get_service_account_without_preload_content(
+        self,
+        sa_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Get Service Account Endpoint
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_service_account_serialize(
+            sa_id=sa_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ServiceAccountResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_service_account_serialize(
+        self,
+        sa_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if sa_id is not None:
+            _path_params['sa_id'] = sa_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/ext/hindclaw/service-accounts/{sa_id}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -4266,267 +6368,6 @@ class DefaultApi:
 
 
     @validate_call
-    async def list_bank_permissions(
-        self,
-        bank_id: StrictStr,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> List[BankPermissionResponse]:
-        """List Bank Permissions
-
-
-        :param bank_id: (required)
-        :type bank_id: str
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._list_bank_permissions_serialize(
-            bank_id=bank_id,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "List[BankPermissionResponse]",
-            '422': "HTTPValidationError",
-        }
-        response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        await response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        ).data
-
-
-    @validate_call
-    async def list_bank_permissions_with_http_info(
-        self,
-        bank_id: StrictStr,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[List[BankPermissionResponse]]:
-        """List Bank Permissions
-
-
-        :param bank_id: (required)
-        :type bank_id: str
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._list_bank_permissions_serialize(
-            bank_id=bank_id,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "List[BankPermissionResponse]",
-            '422': "HTTPValidationError",
-        }
-        response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        await response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        )
-
-
-    @validate_call
-    async def list_bank_permissions_without_preload_content(
-        self,
-        bank_id: StrictStr,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> RESTResponseType:
-        """List Bank Permissions
-
-
-        :param bank_id: (required)
-        :type bank_id: str
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._list_bank_permissions_serialize(
-            bank_id=bank_id,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "List[BankPermissionResponse]",
-            '422': "HTTPValidationError",
-        }
-        response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        return response_data.response
-
-
-    def _list_bank_permissions_serialize(
-        self,
-        bank_id,
-        _request_auth,
-        _content_type,
-        _headers,
-        _host_index,
-    ) -> RequestSerialized:
-
-        _host = None
-
-        _collection_formats: Dict[str, str] = {
-        }
-
-        _path_params: Dict[str, str] = {}
-        _query_params: List[Tuple[str, str]] = []
-        _header_params: Dict[str, Optional[str]] = _headers or {}
-        _form_params: List[Tuple[str, str]] = []
-        _files: Dict[
-            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
-        ] = {}
-        _body_params: Optional[bytes] = None
-
-        # process the path parameters
-        if bank_id is not None:
-            _path_params['bank_id'] = bank_id
-        # process the query parameters
-        # process the header parameters
-        # process the form parameters
-        # process the body parameter
-
-
-        # set the HTTP header `Accept`
-        if 'Accept' not in _header_params:
-            _header_params['Accept'] = self.api_client.select_header_accept(
-                [
-                    'application/json'
-                ]
-            )
-
-
-        # authentication setting
-        _auth_settings: List[str] = [
-            'HTTPBearer'
-        ]
-
-        return self.api_client.param_serialize(
-            method='GET',
-            resource_path='/ext/hindclaw/banks/{bank_id}/permissions',
-            path_params=_path_params,
-            query_params=_query_params,
-            header_params=_header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            auth_settings=_auth_settings,
-            collection_formats=_collection_formats,
-            _host=_host,
-            _request_auth=_request_auth
-        )
-
-
-
-
-    @validate_call
     async def list_group_members(
         self,
         group_id: StrictStr,
@@ -5031,9 +6872,8 @@ class DefaultApi:
 
 
     @validate_call
-    async def list_strategies(
+    async def list_policies(
         self,
-        bank_id: StrictStr,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -5046,12 +6886,10 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> List[StrategyScopeResponse]:
-        """List Strategies
+    ) -> List[PolicyResponse]:
+        """List Policies
 
 
-        :param bank_id: (required)
-        :type bank_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -5074,8 +6912,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._list_strategies_serialize(
-            bank_id=bank_id,
+        _param = self._list_policies_serialize(
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -5083,8 +6920,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "List[StrategyScopeResponse]",
-            '422': "HTTPValidationError",
+            '200': "List[PolicyResponse]",
         }
         response_data = await self.api_client.call_api(
             *_param,
@@ -5098,9 +6934,8 @@ class DefaultApi:
 
 
     @validate_call
-    async def list_strategies_with_http_info(
+    async def list_policies_with_http_info(
         self,
-        bank_id: StrictStr,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -5113,12 +6948,10 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[List[StrategyScopeResponse]]:
-        """List Strategies
+    ) -> ApiResponse[List[PolicyResponse]]:
+        """List Policies
 
 
-        :param bank_id: (required)
-        :type bank_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -5141,8 +6974,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._list_strategies_serialize(
-            bank_id=bank_id,
+        _param = self._list_policies_serialize(
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -5150,8 +6982,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "List[StrategyScopeResponse]",
-            '422': "HTTPValidationError",
+            '200': "List[PolicyResponse]",
         }
         response_data = await self.api_client.call_api(
             *_param,
@@ -5165,9 +6996,8 @@ class DefaultApi:
 
 
     @validate_call
-    async def list_strategies_without_preload_content(
+    async def list_policies_without_preload_content(
         self,
-        bank_id: StrictStr,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -5181,11 +7011,9 @@ class DefaultApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """List Strategies
+        """List Policies
 
 
-        :param bank_id: (required)
-        :type bank_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -5208,8 +7036,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._list_strategies_serialize(
-            bank_id=bank_id,
+        _param = self._list_policies_serialize(
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -5217,8 +7044,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "List[StrategyScopeResponse]",
-            '422': "HTTPValidationError",
+            '200': "List[PolicyResponse]",
         }
         response_data = await self.api_client.call_api(
             *_param,
@@ -5227,9 +7053,8 @@ class DefaultApi:
         return response_data.response
 
 
-    def _list_strategies_serialize(
+    def _list_policies_serialize(
         self,
-        bank_id,
         _request_auth,
         _content_type,
         _headers,
@@ -5251,8 +7076,6 @@ class DefaultApi:
         _body_params: Optional[bytes] = None
 
         # process the path parameters
-        if bank_id is not None:
-            _path_params['bank_id'] = bank_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -5275,7 +7098,774 @@ class DefaultApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/ext/hindclaw/banks/{bank_id}/strategies',
+            resource_path='/ext/hindclaw/policies',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def list_policy_attachments(
+        self,
+        policy_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> List[PolicyAttachmentResponse]:
+        """List Attachments
+
+
+        :param policy_id: (required)
+        :type policy_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_policy_attachments_serialize(
+            policy_id=policy_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[PolicyAttachmentResponse]",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def list_policy_attachments_with_http_info(
+        self,
+        policy_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[List[PolicyAttachmentResponse]]:
+        """List Attachments
+
+
+        :param policy_id: (required)
+        :type policy_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_policy_attachments_serialize(
+            policy_id=policy_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[PolicyAttachmentResponse]",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def list_policy_attachments_without_preload_content(
+        self,
+        policy_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """List Attachments
+
+
+        :param policy_id: (required)
+        :type policy_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_policy_attachments_serialize(
+            policy_id=policy_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[PolicyAttachmentResponse]",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _list_policy_attachments_serialize(
+        self,
+        policy_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        # process the query parameters
+        if policy_id is not None:
+            
+            _query_params.append(('policy_id', policy_id))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/ext/hindclaw/policy-attachments',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def list_sa_keys(
+        self,
+        sa_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> List[SAKeyResponse]:
+        """List Sa Keys
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_sa_keys_serialize(
+            sa_id=sa_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[SAKeyResponse]",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def list_sa_keys_with_http_info(
+        self,
+        sa_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[List[SAKeyResponse]]:
+        """List Sa Keys
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_sa_keys_serialize(
+            sa_id=sa_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[SAKeyResponse]",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def list_sa_keys_without_preload_content(
+        self,
+        sa_id: StrictStr,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """List Sa Keys
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_sa_keys_serialize(
+            sa_id=sa_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[SAKeyResponse]",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _list_sa_keys_serialize(
+        self,
+        sa_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if sa_id is not None:
+            _path_params['sa_id'] = sa_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/ext/hindclaw/service-accounts/{sa_id}/keys',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def list_service_accounts(
+        self,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> List[ServiceAccountResponse]:
+        """List Service Accounts
+
+
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_service_accounts_serialize(
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[ServiceAccountResponse]",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def list_service_accounts_with_http_info(
+        self,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[List[ServiceAccountResponse]]:
+        """List Service Accounts
+
+
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_service_accounts_serialize(
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[ServiceAccountResponse]",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def list_service_accounts_without_preload_content(
+        self,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """List Service Accounts
+
+
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_service_accounts_serialize(
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[ServiceAccountResponse]",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _list_service_accounts_serialize(
+        self,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/ext/hindclaw/service-accounts',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -6379,7 +8969,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GroupResponse:
+    ) -> GroupSummaryResponse:
         """Update Group
 
 
@@ -6419,7 +9009,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GroupResponse",
+            '200': "GroupSummaryResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -6450,7 +9040,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GroupResponse]:
+    ) -> ApiResponse[GroupSummaryResponse]:
         """Update Group
 
 
@@ -6490,7 +9080,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GroupResponse",
+            '200': "GroupSummaryResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -6561,7 +9151,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GroupResponse",
+            '200': "GroupSummaryResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -6636,6 +9226,584 @@ class DefaultApi:
         return self.api_client.param_serialize(
             method='PUT',
             resource_path='/ext/hindclaw/groups/{group_id}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def update_policy(
+        self,
+        policy_id: StrictStr,
+        update_policy_request: UpdatePolicyRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> PolicyResponse:
+        """Update Policy Endpoint
+
+
+        :param policy_id: (required)
+        :type policy_id: str
+        :param update_policy_request: (required)
+        :type update_policy_request: UpdatePolicyRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._update_policy_serialize(
+            policy_id=policy_id,
+            update_policy_request=update_policy_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "PolicyResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def update_policy_with_http_info(
+        self,
+        policy_id: StrictStr,
+        update_policy_request: UpdatePolicyRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[PolicyResponse]:
+        """Update Policy Endpoint
+
+
+        :param policy_id: (required)
+        :type policy_id: str
+        :param update_policy_request: (required)
+        :type update_policy_request: UpdatePolicyRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._update_policy_serialize(
+            policy_id=policy_id,
+            update_policy_request=update_policy_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "PolicyResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def update_policy_without_preload_content(
+        self,
+        policy_id: StrictStr,
+        update_policy_request: UpdatePolicyRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Update Policy Endpoint
+
+
+        :param policy_id: (required)
+        :type policy_id: str
+        :param update_policy_request: (required)
+        :type update_policy_request: UpdatePolicyRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._update_policy_serialize(
+            policy_id=policy_id,
+            update_policy_request=update_policy_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "PolicyResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _update_policy_serialize(
+        self,
+        policy_id,
+        update_policy_request,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if policy_id is not None:
+            _path_params['policy_id'] = policy_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if update_policy_request is not None:
+            _body_params = update_policy_request
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='PUT',
+            resource_path='/ext/hindclaw/policies/{policy_id}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def update_service_account(
+        self,
+        sa_id: StrictStr,
+        update_service_account_request: UpdateServiceAccountRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ServiceAccountResponse:
+        """Update Service Account Endpoint
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param update_service_account_request: (required)
+        :type update_service_account_request: UpdateServiceAccountRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._update_service_account_serialize(
+            sa_id=sa_id,
+            update_service_account_request=update_service_account_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ServiceAccountResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def update_service_account_with_http_info(
+        self,
+        sa_id: StrictStr,
+        update_service_account_request: UpdateServiceAccountRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[ServiceAccountResponse]:
+        """Update Service Account Endpoint
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param update_service_account_request: (required)
+        :type update_service_account_request: UpdateServiceAccountRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._update_service_account_serialize(
+            sa_id=sa_id,
+            update_service_account_request=update_service_account_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ServiceAccountResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def update_service_account_without_preload_content(
+        self,
+        sa_id: StrictStr,
+        update_service_account_request: UpdateServiceAccountRequest,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Update Service Account Endpoint
+
+
+        :param sa_id: (required)
+        :type sa_id: str
+        :param update_service_account_request: (required)
+        :type update_service_account_request: UpdateServiceAccountRequest
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._update_service_account_serialize(
+            sa_id=sa_id,
+            update_service_account_request=update_service_account_request,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ServiceAccountResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _update_service_account_serialize(
+        self,
+        sa_id,
+        update_service_account_request,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if sa_id is not None:
+            _path_params['sa_id'] = sa_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if update_service_account_request is not None:
+            _body_params = update_service_account_request
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'HTTPBearer'
+        ]
+
+        return self.api_client.param_serialize(
+            method='PUT',
+            resource_path='/ext/hindclaw/service-accounts/{sa_id}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -6941,11 +10109,10 @@ class DefaultApi:
 
 
     @validate_call
-    async def upsert_group_permission(
+    async def upsert_bank_policy(
         self,
         bank_id: StrictStr,
-        group_id: StrictStr,
-        bank_permission_request: BankPermissionRequest,
+        upsert_bank_policy_request: UpsertBankPolicyRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -6958,16 +10125,14 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> UpsertConfirmation:
-        """Upsert Group Bank Permission
+    ) -> BankPolicyResponse:
+        """Upsert Bank Policy Endpoint
 
 
         :param bank_id: (required)
         :type bank_id: str
-        :param group_id: (required)
-        :type group_id: str
-        :param bank_permission_request: (required)
-        :type bank_permission_request: BankPermissionRequest
+        :param upsert_bank_policy_request: (required)
+        :type upsert_bank_policy_request: UpsertBankPolicyRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -6990,10 +10155,9 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._upsert_group_permission_serialize(
+        _param = self._upsert_bank_policy_serialize(
             bank_id=bank_id,
-            group_id=group_id,
-            bank_permission_request=bank_permission_request,
+            upsert_bank_policy_request=upsert_bank_policy_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -7001,7 +10165,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "UpsertConfirmation",
+            '200': "BankPolicyResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -7016,11 +10180,10 @@ class DefaultApi:
 
 
     @validate_call
-    async def upsert_group_permission_with_http_info(
+    async def upsert_bank_policy_with_http_info(
         self,
         bank_id: StrictStr,
-        group_id: StrictStr,
-        bank_permission_request: BankPermissionRequest,
+        upsert_bank_policy_request: UpsertBankPolicyRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -7033,16 +10196,14 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[UpsertConfirmation]:
-        """Upsert Group Bank Permission
+    ) -> ApiResponse[BankPolicyResponse]:
+        """Upsert Bank Policy Endpoint
 
 
         :param bank_id: (required)
         :type bank_id: str
-        :param group_id: (required)
-        :type group_id: str
-        :param bank_permission_request: (required)
-        :type bank_permission_request: BankPermissionRequest
+        :param upsert_bank_policy_request: (required)
+        :type upsert_bank_policy_request: UpsertBankPolicyRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -7065,10 +10226,9 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._upsert_group_permission_serialize(
+        _param = self._upsert_bank_policy_serialize(
             bank_id=bank_id,
-            group_id=group_id,
-            bank_permission_request=bank_permission_request,
+            upsert_bank_policy_request=upsert_bank_policy_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -7076,7 +10236,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "UpsertConfirmation",
+            '200': "BankPolicyResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -7091,11 +10251,10 @@ class DefaultApi:
 
 
     @validate_call
-    async def upsert_group_permission_without_preload_content(
+    async def upsert_bank_policy_without_preload_content(
         self,
         bank_id: StrictStr,
-        group_id: StrictStr,
-        bank_permission_request: BankPermissionRequest,
+        upsert_bank_policy_request: UpsertBankPolicyRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -7109,15 +10268,13 @@ class DefaultApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Upsert Group Bank Permission
+        """Upsert Bank Policy Endpoint
 
 
         :param bank_id: (required)
         :type bank_id: str
-        :param group_id: (required)
-        :type group_id: str
-        :param bank_permission_request: (required)
-        :type bank_permission_request: BankPermissionRequest
+        :param upsert_bank_policy_request: (required)
+        :type upsert_bank_policy_request: UpsertBankPolicyRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -7140,10 +10297,9 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._upsert_group_permission_serialize(
+        _param = self._upsert_bank_policy_serialize(
             bank_id=bank_id,
-            group_id=group_id,
-            bank_permission_request=bank_permission_request,
+            upsert_bank_policy_request=upsert_bank_policy_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -7151,7 +10307,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "UpsertConfirmation",
+            '200': "BankPolicyResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -7161,11 +10317,10 @@ class DefaultApi:
         return response_data.response
 
 
-    def _upsert_group_permission_serialize(
+    def _upsert_bank_policy_serialize(
         self,
         bank_id,
-        group_id,
-        bank_permission_request,
+        upsert_bank_policy_request,
         _request_auth,
         _content_type,
         _headers,
@@ -7189,14 +10344,12 @@ class DefaultApi:
         # process the path parameters
         if bank_id is not None:
             _path_params['bank_id'] = bank_id
-        if group_id is not None:
-            _path_params['group_id'] = group_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if bank_permission_request is not None:
-            _body_params = bank_permission_request
+        if upsert_bank_policy_request is not None:
+            _body_params = upsert_bank_policy_request
 
 
         # set the HTTP header `Accept`
@@ -7228,7 +10381,7 @@ class DefaultApi:
 
         return self.api_client.param_serialize(
             method='PUT',
-            resource_path='/ext/hindclaw/banks/{bank_id}/permissions/groups/{group_id}',
+            resource_path='/ext/hindclaw/banks/{bank_id}/policy',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -7245,12 +10398,9 @@ class DefaultApi:
 
 
     @validate_call
-    async def upsert_strategy(
+    async def upsert_policy_attachment(
         self,
-        bank_id: StrictStr,
-        scope_type: StrictStr,
-        scope_value: StrictStr,
-        strategy_request: StrategyRequest,
+        create_policy_attachment_request: CreatePolicyAttachmentRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -7263,18 +10413,12 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> StrategyUpsertConfirmation:
-        """Upsert Strategy
+    ) -> PolicyAttachmentResponse:
+        """Upsert Attachment
 
 
-        :param bank_id: (required)
-        :type bank_id: str
-        :param scope_type: (required)
-        :type scope_type: str
-        :param scope_value: (required)
-        :type scope_value: str
-        :param strategy_request: (required)
-        :type strategy_request: StrategyRequest
+        :param create_policy_attachment_request: (required)
+        :type create_policy_attachment_request: CreatePolicyAttachmentRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -7297,11 +10441,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._upsert_strategy_serialize(
-            bank_id=bank_id,
-            scope_type=scope_type,
-            scope_value=scope_value,
-            strategy_request=strategy_request,
+        _param = self._upsert_policy_attachment_serialize(
+            create_policy_attachment_request=create_policy_attachment_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -7309,7 +10450,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "StrategyUpsertConfirmation",
+            '200': "PolicyAttachmentResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -7324,12 +10465,9 @@ class DefaultApi:
 
 
     @validate_call
-    async def upsert_strategy_with_http_info(
+    async def upsert_policy_attachment_with_http_info(
         self,
-        bank_id: StrictStr,
-        scope_type: StrictStr,
-        scope_value: StrictStr,
-        strategy_request: StrategyRequest,
+        create_policy_attachment_request: CreatePolicyAttachmentRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -7342,18 +10480,12 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[StrategyUpsertConfirmation]:
-        """Upsert Strategy
+    ) -> ApiResponse[PolicyAttachmentResponse]:
+        """Upsert Attachment
 
 
-        :param bank_id: (required)
-        :type bank_id: str
-        :param scope_type: (required)
-        :type scope_type: str
-        :param scope_value: (required)
-        :type scope_value: str
-        :param strategy_request: (required)
-        :type strategy_request: StrategyRequest
+        :param create_policy_attachment_request: (required)
+        :type create_policy_attachment_request: CreatePolicyAttachmentRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -7376,11 +10508,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._upsert_strategy_serialize(
-            bank_id=bank_id,
-            scope_type=scope_type,
-            scope_value=scope_value,
-            strategy_request=strategy_request,
+        _param = self._upsert_policy_attachment_serialize(
+            create_policy_attachment_request=create_policy_attachment_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -7388,7 +10517,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "StrategyUpsertConfirmation",
+            '200': "PolicyAttachmentResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -7403,12 +10532,9 @@ class DefaultApi:
 
 
     @validate_call
-    async def upsert_strategy_without_preload_content(
+    async def upsert_policy_attachment_without_preload_content(
         self,
-        bank_id: StrictStr,
-        scope_type: StrictStr,
-        scope_value: StrictStr,
-        strategy_request: StrategyRequest,
+        create_policy_attachment_request: CreatePolicyAttachmentRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -7422,17 +10548,11 @@ class DefaultApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Upsert Strategy
+        """Upsert Attachment
 
 
-        :param bank_id: (required)
-        :type bank_id: str
-        :param scope_type: (required)
-        :type scope_type: str
-        :param scope_value: (required)
-        :type scope_value: str
-        :param strategy_request: (required)
-        :type strategy_request: StrategyRequest
+        :param create_policy_attachment_request: (required)
+        :type create_policy_attachment_request: CreatePolicyAttachmentRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -7455,11 +10575,8 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._upsert_strategy_serialize(
-            bank_id=bank_id,
-            scope_type=scope_type,
-            scope_value=scope_value,
-            strategy_request=strategy_request,
+        _param = self._upsert_policy_attachment_serialize(
+            create_policy_attachment_request=create_policy_attachment_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -7467,7 +10584,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "StrategyUpsertConfirmation",
+            '200': "PolicyAttachmentResponse",
             '422': "HTTPValidationError",
         }
         response_data = await self.api_client.call_api(
@@ -7477,12 +10594,9 @@ class DefaultApi:
         return response_data.response
 
 
-    def _upsert_strategy_serialize(
+    def _upsert_policy_attachment_serialize(
         self,
-        bank_id,
-        scope_type,
-        scope_value,
-        strategy_request,
+        create_policy_attachment_request,
         _request_auth,
         _content_type,
         _headers,
@@ -7504,18 +10618,12 @@ class DefaultApi:
         _body_params: Optional[bytes] = None
 
         # process the path parameters
-        if bank_id is not None:
-            _path_params['bank_id'] = bank_id
-        if scope_type is not None:
-            _path_params['scope_type'] = scope_type
-        if scope_value is not None:
-            _path_params['scope_value'] = scope_value
         # process the query parameters
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if strategy_request is not None:
-            _body_params = strategy_request
+        if create_policy_attachment_request is not None:
+            _body_params = create_policy_attachment_request
 
 
         # set the HTTP header `Accept`
@@ -7547,311 +10655,7 @@ class DefaultApi:
 
         return self.api_client.param_serialize(
             method='PUT',
-            resource_path='/ext/hindclaw/banks/{bank_id}/strategies/{scope_type}/{scope_value}',
-            path_params=_path_params,
-            query_params=_query_params,
-            header_params=_header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            auth_settings=_auth_settings,
-            collection_formats=_collection_formats,
-            _host=_host,
-            _request_auth=_request_auth
-        )
-
-
-
-
-    @validate_call
-    async def upsert_user_permission(
-        self,
-        bank_id: StrictStr,
-        user_id: StrictStr,
-        bank_permission_request: BankPermissionRequest,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> UpsertConfirmation:
-        """Upsert User Bank Permission
-
-
-        :param bank_id: (required)
-        :type bank_id: str
-        :param user_id: (required)
-        :type user_id: str
-        :param bank_permission_request: (required)
-        :type bank_permission_request: BankPermissionRequest
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._upsert_user_permission_serialize(
-            bank_id=bank_id,
-            user_id=user_id,
-            bank_permission_request=bank_permission_request,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "UpsertConfirmation",
-            '422': "HTTPValidationError",
-        }
-        response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        await response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        ).data
-
-
-    @validate_call
-    async def upsert_user_permission_with_http_info(
-        self,
-        bank_id: StrictStr,
-        user_id: StrictStr,
-        bank_permission_request: BankPermissionRequest,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[UpsertConfirmation]:
-        """Upsert User Bank Permission
-
-
-        :param bank_id: (required)
-        :type bank_id: str
-        :param user_id: (required)
-        :type user_id: str
-        :param bank_permission_request: (required)
-        :type bank_permission_request: BankPermissionRequest
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._upsert_user_permission_serialize(
-            bank_id=bank_id,
-            user_id=user_id,
-            bank_permission_request=bank_permission_request,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "UpsertConfirmation",
-            '422': "HTTPValidationError",
-        }
-        response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        await response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        )
-
-
-    @validate_call
-    async def upsert_user_permission_without_preload_content(
-        self,
-        bank_id: StrictStr,
-        user_id: StrictStr,
-        bank_permission_request: BankPermissionRequest,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> RESTResponseType:
-        """Upsert User Bank Permission
-
-
-        :param bank_id: (required)
-        :type bank_id: str
-        :param user_id: (required)
-        :type user_id: str
-        :param bank_permission_request: (required)
-        :type bank_permission_request: BankPermissionRequest
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._upsert_user_permission_serialize(
-            bank_id=bank_id,
-            user_id=user_id,
-            bank_permission_request=bank_permission_request,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "UpsertConfirmation",
-            '422': "HTTPValidationError",
-        }
-        response_data = await self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        return response_data.response
-
-
-    def _upsert_user_permission_serialize(
-        self,
-        bank_id,
-        user_id,
-        bank_permission_request,
-        _request_auth,
-        _content_type,
-        _headers,
-        _host_index,
-    ) -> RequestSerialized:
-
-        _host = None
-
-        _collection_formats: Dict[str, str] = {
-        }
-
-        _path_params: Dict[str, str] = {}
-        _query_params: List[Tuple[str, str]] = []
-        _header_params: Dict[str, Optional[str]] = _headers or {}
-        _form_params: List[Tuple[str, str]] = []
-        _files: Dict[
-            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
-        ] = {}
-        _body_params: Optional[bytes] = None
-
-        # process the path parameters
-        if bank_id is not None:
-            _path_params['bank_id'] = bank_id
-        if user_id is not None:
-            _path_params['user_id'] = user_id
-        # process the query parameters
-        # process the header parameters
-        # process the form parameters
-        # process the body parameter
-        if bank_permission_request is not None:
-            _body_params = bank_permission_request
-
-
-        # set the HTTP header `Accept`
-        if 'Accept' not in _header_params:
-            _header_params['Accept'] = self.api_client.select_header_accept(
-                [
-                    'application/json'
-                ]
-            )
-
-        # set the HTTP header `Content-Type`
-        if _content_type:
-            _header_params['Content-Type'] = _content_type
-        else:
-            _default_content_type = (
-                self.api_client.select_header_content_type(
-                    [
-                        'application/json'
-                    ]
-                )
-            )
-            if _default_content_type is not None:
-                _header_params['Content-Type'] = _default_content_type
-
-        # authentication setting
-        _auth_settings: List[str] = [
-            'HTTPBearer'
-        ]
-
-        return self.api_client.param_serialize(
-            method='PUT',
-            resource_path='/ext/hindclaw/banks/{bank_id}/permissions/users/{user_id}',
+            resource_path='/ext/hindclaw/policy-attachments',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,

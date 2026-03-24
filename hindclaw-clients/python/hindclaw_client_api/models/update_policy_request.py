@@ -18,19 +18,17 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class StrategyUpsertConfirmation(BaseModel):
+class UpdatePolicyRequest(BaseModel):
     """
-    Confirmation returned by PUT /banks/:bank/strategies/:type/:value.
+    Request to update an access policy.
     """ # noqa: E501
-    bank_id: StrictStr
-    scope_type: StrictStr
-    scope_value: StrictStr
-    strategy: StrictStr
-    __properties: ClassVar[List[str]] = ["bank_id", "scope_type", "scope_value", "strategy"]
+    display_name: Optional[StrictStr] = None
+    document: Optional[Dict[str, Any]] = None
+    __properties: ClassVar[List[str]] = ["display_name", "document"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -50,7 +48,7 @@ class StrategyUpsertConfirmation(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of StrategyUpsertConfirmation from a JSON string"""
+        """Create an instance of UpdatePolicyRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -71,11 +69,21 @@ class StrategyUpsertConfirmation(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if display_name (nullable) is None
+        # and model_fields_set contains the field
+        if self.display_name is None and "display_name" in self.model_fields_set:
+            _dict['display_name'] = None
+
+        # set to None if document (nullable) is None
+        # and model_fields_set contains the field
+        if self.document is None and "document" in self.model_fields_set:
+            _dict['document'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of StrategyUpsertConfirmation from a dict"""
+        """Create an instance of UpdatePolicyRequest from a dict"""
         if obj is None:
             return None
 
@@ -83,10 +91,8 @@ class StrategyUpsertConfirmation(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "bank_id": obj.get("bank_id"),
-            "scope_type": obj.get("scope_type"),
-            "scope_value": obj.get("scope_value"),
-            "strategy": obj.get("strategy")
+            "display_name": obj.get("display_name"),
+            "document": obj.get("document")
         })
         return _obj
 

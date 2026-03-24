@@ -24,7 +24,7 @@ from typing_extensions import Self
 
 class GroupSummaryResponse(BaseModel):
     """
-    Group summary returned by GET /groups (list view).
+    Group resource (identity-only).
     """ # noqa: E501
     id: StrictStr
     display_name: StrictStr

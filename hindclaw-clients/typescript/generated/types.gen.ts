@@ -69,131 +69,21 @@ export type ApiKeyResponse = {
 };
 
 /**
- * BankPermissionRequest
- */
-export type BankPermissionRequest = {
-    /**
-     * Recall
-     */
-    recall?: boolean | null;
-    /**
-     * Retain
-     */
-    retain?: boolean | null;
-    /**
-     * Retain Roles
-     */
-    retain_roles?: Array<string> | null;
-    /**
-     * Retain Tags
-     */
-    retain_tags?: Array<string> | null;
-    /**
-     * Retain Every N Turns
-     */
-    retain_every_n_turns?: number | null;
-    /**
-     * Recall Budget
-     */
-    recall_budget?: string | null;
-    /**
-     * Recall Max Tokens
-     */
-    recall_max_tokens?: number | null;
-    /**
-     * Recall Tag Groups
-     */
-    recall_tag_groups?: Array<{
-        [key: string]: unknown;
-    }> | null;
-    /**
-     * Llm Model
-     */
-    llm_model?: string | null;
-    /**
-     * Llm Provider
-     */
-    llm_provider?: string | null;
-    /**
-     * Exclude Providers
-     */
-    exclude_providers?: Array<string> | null;
-    /**
-     * Retain Strategy
-     */
-    retain_strategy?: string | null;
-};
-
-/**
- * BankPermissionResponse
+ * BankPolicyResponse
  *
- * Bank-level permission entry with scope identifiers.
- *
- * Returned by GET /banks/:bank/permissions endpoints.
+ * Bank policy resource.
  */
-export type BankPermissionResponse = {
+export type BankPolicyResponse = {
     /**
      * Bank Id
      */
     bank_id: string;
     /**
-     * Scope Type
+     * Document
      */
-    scope_type: string;
-    /**
-     * Scope Id
-     */
-    scope_id: string;
-    /**
-     * Recall
-     */
-    recall?: boolean | null;
-    /**
-     * Retain
-     */
-    retain?: boolean | null;
-    /**
-     * Retain Roles
-     */
-    retain_roles?: Array<string> | null;
-    /**
-     * Retain Tags
-     */
-    retain_tags?: Array<string> | null;
-    /**
-     * Retain Every N Turns
-     */
-    retain_every_n_turns?: number | null;
-    /**
-     * Recall Budget
-     */
-    recall_budget?: string | null;
-    /**
-     * Recall Max Tokens
-     */
-    recall_max_tokens?: number | null;
-    /**
-     * Recall Tag Groups
-     */
-    recall_tag_groups?: Array<{
+    document: {
         [key: string]: unknown;
-    }> | null;
-    /**
-     * Llm Model
-     */
-    llm_model?: string | null;
-    /**
-     * Llm Provider
-     */
-    llm_provider?: string | null;
-    /**
-     * Exclude Providers
-     */
-    exclude_providers?: Array<string> | null;
-    /**
-     * Retain Strategy
-     */
-    retain_strategy?: string | null;
+    };
 };
 
 /**
@@ -234,56 +124,88 @@ export type CreateGroupRequest = {
      * Display Name
      */
     display_name: string;
+};
+
+/**
+ * CreatePolicyAttachmentRequest
+ *
+ * Request to attach a policy to a principal.
+ */
+export type CreatePolicyAttachmentRequest = {
     /**
-     * Recall
+     * Policy Id
      */
-    recall?: boolean | null;
+    policy_id: string;
     /**
-     * Retain
+     * Principal Type
      */
-    retain?: boolean | null;
+    principal_type: string;
     /**
-     * Retain Roles
+     * Principal Id
      */
-    retain_roles?: Array<string> | null;
+    principal_id: string;
     /**
-     * Retain Tags
+     * Priority
      */
-    retain_tags?: Array<string> | null;
+    priority?: number;
+};
+
+/**
+ * CreatePolicyRequest
+ *
+ * Request to create an access policy.
+ */
+export type CreatePolicyRequest = {
     /**
-     * Retain Every N Turns
+     * Id
      */
-    retain_every_n_turns?: number | null;
+    id: string;
     /**
-     * Recall Budget
+     * Display Name
      */
-    recall_budget?: string | null;
+    display_name: string;
     /**
-     * Recall Max Tokens
+     * Document
      */
-    recall_max_tokens?: number | null;
-    /**
-     * Recall Tag Groups
-     */
-    recall_tag_groups?: Array<{
+    document: {
         [key: string]: unknown;
-    }> | null;
+    };
+};
+
+/**
+ * CreateSAKeyRequest
+ *
+ * Request to create an SA API key.
+ */
+export type CreateSaKeyRequest = {
     /**
-     * Llm Model
+     * Description
      */
-    llm_model?: string | null;
+    description?: string | null;
+};
+
+/**
+ * CreateServiceAccountRequest
+ *
+ * Request to create a service account.
+ */
+export type CreateServiceAccountRequest = {
     /**
-     * Llm Provider
+     * Id
      */
-    llm_provider?: string | null;
+    id: string;
     /**
-     * Exclude Providers
+     * Owner User Id
      */
-    exclude_providers?: Array<string> | null;
+    owner_user_id: string;
     /**
-     * Retain Strategy
+     * Display Name
      */
-    retain_strategy?: string | null;
+    display_name: string;
+    /**
+     * Scoping Policy Id
+     */
+    scoping_policy_id?: string | null;
 };
 
 /**
@@ -333,78 +255,9 @@ export type GroupMembershipConfirmation = {
 };
 
 /**
- * GroupResponse
- *
- * Group resource with all permission fields.
- *
- * Returned by GET /groups/:id and POST /groups.
- * Permission fields are nullable — None means "not set (inherit from global)."
- */
-export type GroupResponse = {
-    /**
-     * Id
-     */
-    id: string;
-    /**
-     * Display Name
-     */
-    display_name: string;
-    /**
-     * Recall
-     */
-    recall?: boolean | null;
-    /**
-     * Retain
-     */
-    retain?: boolean | null;
-    /**
-     * Retain Roles
-     */
-    retain_roles?: Array<string> | null;
-    /**
-     * Retain Tags
-     */
-    retain_tags?: Array<string> | null;
-    /**
-     * Retain Every N Turns
-     */
-    retain_every_n_turns?: number | null;
-    /**
-     * Recall Budget
-     */
-    recall_budget?: string | null;
-    /**
-     * Recall Max Tokens
-     */
-    recall_max_tokens?: number | null;
-    /**
-     * Recall Tag Groups
-     */
-    recall_tag_groups?: Array<{
-        [key: string]: unknown;
-    }> | null;
-    /**
-     * Llm Model
-     */
-    llm_model?: string | null;
-    /**
-     * Llm Provider
-     */
-    llm_provider?: string | null;
-    /**
-     * Exclude Providers
-     */
-    exclude_providers?: Array<string> | null;
-    /**
-     * Retain Strategy
-     */
-    retain_strategy?: string | null;
-};
-
-/**
  * GroupSummaryResponse
  *
- * Group summary returned by GET /groups (list view).
+ * Group resource (identity-only).
  */
 export type GroupSummaryResponse = {
     /**
@@ -428,129 +281,121 @@ export type HttpValidationError = {
 };
 
 /**
- * ResolvedPermissionsResponse
+ * PolicyAttachmentResponse
  *
- * Full resolved permissions returned by GET /debug/resolve.
- *
- * Mirrors hindclaw_ext.models.ResolvedPermissions but as an HTTP response model.
+ * Policy attachment resource.
  */
-export type ResolvedPermissionsResponse = {
+export type PolicyAttachmentResponse = {
     /**
-     * User Id
+     * Policy Id
      */
-    user_id: string;
+    policy_id: string;
     /**
-     * Is Anonymous
+     * Principal Type
      */
-    is_anonymous: boolean;
+    principal_type: string;
     /**
-     * Recall
+     * Principal Id
      */
-    recall: boolean;
+    principal_id: string;
     /**
-     * Retain
+     * Priority
      */
-    retain: boolean;
+    priority: number;
+};
+
+/**
+ * PolicyResponse
+ *
+ * Access policy resource.
+ */
+export type PolicyResponse = {
     /**
-     * Retain Roles
+     * Id
      */
-    retain_roles: Array<string>;
+    id: string;
     /**
-     * Retain Tags
+     * Display Name
      */
-    retain_tags: Array<string>;
+    display_name: string;
     /**
-     * Retain Every N Turns
+     * Document
      */
-    retain_every_n_turns: number;
-    /**
-     * Retain Strategy
-     */
-    retain_strategy: string | null;
-    /**
-     * Recall Budget
-     */
-    recall_budget: string;
-    /**
-     * Recall Max Tokens
-     */
-    recall_max_tokens: number;
-    /**
-     * Recall Tag Groups
-     */
-    recall_tag_groups: Array<{
+    document: {
         [key: string]: unknown;
-    }> | null;
+    };
     /**
-     * Llm Model
+     * Is Builtin
      */
-    llm_model: string | null;
-    /**
-     * Llm Provider
-     */
-    llm_provider: string | null;
-    /**
-     * Exclude Providers
-     */
-    exclude_providers: Array<string>;
+    is_builtin: boolean;
 };
 
 /**
- * StrategyRequest
- */
-export type StrategyRequest = {
-    /**
-     * Strategy
-     */
-    strategy: string;
-};
-
-/**
- * StrategyScopeResponse
+ * SAKeyCreateResponse
  *
- * Strategy scope entry returned by GET /banks/:bank/strategies.
+ * SA API key at creation time — full key shown once.
  */
-export type StrategyScopeResponse = {
+export type SaKeyCreateResponse = {
     /**
-     * Bank Id
+     * Id
      */
-    bank_id: string;
+    id: string;
     /**
-     * Scope Type
+     * Api Key
      */
-    scope_type: string;
+    api_key: string;
     /**
-     * Scope Value
+     * Description
      */
-    scope_value: string;
-    /**
-     * Strategy
-     */
-    strategy: string;
+    description: string | null;
 };
 
 /**
- * StrategyUpsertConfirmation
+ * SAKeyResponse
  *
- * Confirmation returned by PUT /banks/:bank/strategies/:type/:value.
+ * SA API key in list view — key is masked.
  */
-export type StrategyUpsertConfirmation = {
+export type SaKeyResponse = {
     /**
-     * Bank Id
+     * Id
      */
-    bank_id: string;
+    id: string;
     /**
-     * Scope Type
+     * Api Key Prefix
      */
-    scope_type: string;
+    api_key_prefix: string;
     /**
-     * Scope Value
+     * Description
      */
-    scope_value: string;
+    description: string | null;
+};
+
+/**
+ * ServiceAccountResponse
+ *
+ * Service account resource.
+ */
+export type ServiceAccountResponse = {
     /**
-     * Strategy
+     * Id
      */
-    strategy: string;
+    id: string;
+    /**
+     * Owner User Id
+     */
+    owner_user_id: string;
+    /**
+     * Display Name
+     */
+    display_name: string;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+    /**
+     * Scoping Policy Id
+     */
+    scoping_policy_id: string | null;
 };
 
 /**
@@ -561,56 +406,44 @@ export type UpdateGroupRequest = {
      * Display Name
      */
     display_name?: string | null;
+};
+
+/**
+ * UpdatePolicyRequest
+ *
+ * Request to update an access policy.
+ */
+export type UpdatePolicyRequest = {
     /**
-     * Recall
+     * Display Name
      */
-    recall?: boolean | null;
+    display_name?: string | null;
     /**
-     * Retain
+     * Document
      */
-    retain?: boolean | null;
-    /**
-     * Retain Roles
-     */
-    retain_roles?: Array<string> | null;
-    /**
-     * Retain Tags
-     */
-    retain_tags?: Array<string> | null;
-    /**
-     * Retain Every N Turns
-     */
-    retain_every_n_turns?: number | null;
-    /**
-     * Recall Budget
-     */
-    recall_budget?: string | null;
-    /**
-     * Recall Max Tokens
-     */
-    recall_max_tokens?: number | null;
-    /**
-     * Recall Tag Groups
-     */
-    recall_tag_groups?: Array<{
+    document?: {
         [key: string]: unknown;
-    }> | null;
+    } | null;
+};
+
+/**
+ * UpdateServiceAccountRequest
+ *
+ * Request to update a service account.
+ */
+export type UpdateServiceAccountRequest = {
     /**
-     * Llm Model
+     * Display Name
      */
-    llm_model?: string | null;
+    display_name?: string | null;
     /**
-     * Llm Provider
+     * Scoping Policy Id
      */
-    llm_provider?: string | null;
+    scoping_policy_id?: string | null;
     /**
-     * Exclude Providers
+     * Is Active
      */
-    exclude_providers?: Array<string> | null;
-    /**
-     * Retain Strategy
-     */
-    retain_strategy?: string | null;
+    is_active?: boolean | null;
 };
 
 /**
@@ -628,23 +461,17 @@ export type UpdateUserRequest = {
 };
 
 /**
- * UpsertConfirmation
+ * UpsertBankPolicyRequest
  *
- * Confirmation returned by PUT (upsert) endpoints.
+ * Request to create/update a bank policy.
  */
-export type UpsertConfirmation = {
+export type UpsertBankPolicyRequest = {
     /**
-     * Bank Id
+     * Document
      */
-    bank_id: string;
-    /**
-     * Scope Type
-     */
-    scope_type: string;
-    /**
-     * Scope Id
-     */
-    scope_id: string;
+    document: {
+        [key: string]: unknown;
+    };
 };
 
 /**
@@ -1026,7 +853,7 @@ export type GetGroupResponses = {
     /**
      * Successful Response
      */
-    200: GroupResponse;
+    200: GroupSummaryResponse;
 };
 
 export type GetGroupResponse = GetGroupResponses[keyof GetGroupResponses];
@@ -1056,7 +883,7 @@ export type UpdateGroupResponses = {
     /**
      * Successful Response
      */
-    200: GroupResponse;
+    200: GroupSummaryResponse;
 };
 
 export type UpdateGroupResponse = UpdateGroupResponses[keyof UpdateGroupResponses];
@@ -1157,290 +984,6 @@ export type RemoveGroupMemberResponses = {
 
 export type RemoveGroupMemberResponse = RemoveGroupMemberResponses[keyof RemoveGroupMemberResponses];
 
-export type ListBankPermissionsData = {
-    body?: never;
-    path: {
-        /**
-         * Bank Id
-         */
-        bank_id: string;
-    };
-    query?: never;
-    url: '/ext/hindclaw/banks/{bank_id}/permissions';
-};
-
-export type ListBankPermissionsErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ListBankPermissionsError = ListBankPermissionsErrors[keyof ListBankPermissionsErrors];
-
-export type ListBankPermissionsResponses = {
-    /**
-     * Response List Bank Permissions
-     *
-     * Successful Response
-     */
-    200: Array<BankPermissionResponse>;
-};
-
-export type ListBankPermissionsResponse = ListBankPermissionsResponses[keyof ListBankPermissionsResponses];
-
-export type DeleteBankPermissionData = {
-    body?: never;
-    path: {
-        /**
-         * Bank Id
-         */
-        bank_id: string;
-        /**
-         * Scope Type
-         */
-        scope_type: string;
-        /**
-         * Scope Id
-         */
-        scope_id: string;
-    };
-    query?: never;
-    url: '/ext/hindclaw/banks/{bank_id}/permissions/{scope_type}/{scope_id}';
-};
-
-export type DeleteBankPermissionErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type DeleteBankPermissionError = DeleteBankPermissionErrors[keyof DeleteBankPermissionErrors];
-
-export type DeleteBankPermissionResponses = {
-    /**
-     * Successful Response
-     */
-    204: void;
-};
-
-export type DeleteBankPermissionResponse = DeleteBankPermissionResponses[keyof DeleteBankPermissionResponses];
-
-export type GetBankPermissionData = {
-    body?: never;
-    path: {
-        /**
-         * Bank Id
-         */
-        bank_id: string;
-        /**
-         * Scope Type
-         */
-        scope_type: string;
-        /**
-         * Scope Id
-         */
-        scope_id: string;
-    };
-    query?: never;
-    url: '/ext/hindclaw/banks/{bank_id}/permissions/{scope_type}/{scope_id}';
-};
-
-export type GetBankPermissionErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetBankPermissionError = GetBankPermissionErrors[keyof GetBankPermissionErrors];
-
-export type GetBankPermissionResponses = {
-    /**
-     * Successful Response
-     */
-    200: BankPermissionResponse;
-};
-
-export type GetBankPermissionResponse = GetBankPermissionResponses[keyof GetBankPermissionResponses];
-
-export type UpsertGroupPermissionData = {
-    body: BankPermissionRequest;
-    path: {
-        /**
-         * Bank Id
-         */
-        bank_id: string;
-        /**
-         * Group Id
-         */
-        group_id: string;
-    };
-    query?: never;
-    url: '/ext/hindclaw/banks/{bank_id}/permissions/groups/{group_id}';
-};
-
-export type UpsertGroupPermissionErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type UpsertGroupPermissionError = UpsertGroupPermissionErrors[keyof UpsertGroupPermissionErrors];
-
-export type UpsertGroupPermissionResponses = {
-    /**
-     * Successful Response
-     */
-    200: UpsertConfirmation;
-};
-
-export type UpsertGroupPermissionResponse = UpsertGroupPermissionResponses[keyof UpsertGroupPermissionResponses];
-
-export type UpsertUserPermissionData = {
-    body: BankPermissionRequest;
-    path: {
-        /**
-         * Bank Id
-         */
-        bank_id: string;
-        /**
-         * User Id
-         */
-        user_id: string;
-    };
-    query?: never;
-    url: '/ext/hindclaw/banks/{bank_id}/permissions/users/{user_id}';
-};
-
-export type UpsertUserPermissionErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type UpsertUserPermissionError = UpsertUserPermissionErrors[keyof UpsertUserPermissionErrors];
-
-export type UpsertUserPermissionResponses = {
-    /**
-     * Successful Response
-     */
-    200: UpsertConfirmation;
-};
-
-export type UpsertUserPermissionResponse = UpsertUserPermissionResponses[keyof UpsertUserPermissionResponses];
-
-export type ListStrategiesData = {
-    body?: never;
-    path: {
-        /**
-         * Bank Id
-         */
-        bank_id: string;
-    };
-    query?: never;
-    url: '/ext/hindclaw/banks/{bank_id}/strategies';
-};
-
-export type ListStrategiesErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ListStrategiesError = ListStrategiesErrors[keyof ListStrategiesErrors];
-
-export type ListStrategiesResponses = {
-    /**
-     * Response List Strategies
-     *
-     * Successful Response
-     */
-    200: Array<StrategyScopeResponse>;
-};
-
-export type ListStrategiesResponse = ListStrategiesResponses[keyof ListStrategiesResponses];
-
-export type DeleteStrategyData = {
-    body?: never;
-    path: {
-        /**
-         * Bank Id
-         */
-        bank_id: string;
-        /**
-         * Scope Type
-         */
-        scope_type: string;
-        /**
-         * Scope Value
-         */
-        scope_value: string;
-    };
-    query?: never;
-    url: '/ext/hindclaw/banks/{bank_id}/strategies/{scope_type}/{scope_value}';
-};
-
-export type DeleteStrategyErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type DeleteStrategyError = DeleteStrategyErrors[keyof DeleteStrategyErrors];
-
-export type DeleteStrategyResponses = {
-    /**
-     * Successful Response
-     */
-    204: void;
-};
-
-export type DeleteStrategyResponse = DeleteStrategyResponses[keyof DeleteStrategyResponses];
-
-export type UpsertStrategyData = {
-    body: StrategyRequest;
-    path: {
-        /**
-         * Bank Id
-         */
-        bank_id: string;
-        /**
-         * Scope Type
-         */
-        scope_type: string;
-        /**
-         * Scope Value
-         */
-        scope_value: string;
-    };
-    query?: never;
-    url: '/ext/hindclaw/banks/{bank_id}/strategies/{scope_type}/{scope_value}';
-};
-
-export type UpsertStrategyErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type UpsertStrategyError = UpsertStrategyErrors[keyof UpsertStrategyErrors];
-
-export type UpsertStrategyResponses = {
-    /**
-     * Successful Response
-     */
-    200: StrategyUpsertConfirmation;
-};
-
-export type UpsertStrategyResponse = UpsertStrategyResponses[keyof UpsertStrategyResponses];
-
 export type ListApiKeysData = {
     body?: never;
     path: {
@@ -1537,6 +1080,553 @@ export type DeleteApiKeyResponses = {
 
 export type DeleteApiKeyResponse = DeleteApiKeyResponses[keyof DeleteApiKeyResponses];
 
+export type ListPoliciesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/policies';
+};
+
+export type ListPoliciesResponses = {
+    /**
+     * Response List Policies
+     *
+     * Successful Response
+     */
+    200: Array<PolicyResponse>;
+};
+
+export type ListPoliciesResponse = ListPoliciesResponses[keyof ListPoliciesResponses];
+
+export type CreatePolicyData = {
+    body: CreatePolicyRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/policies';
+};
+
+export type CreatePolicyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreatePolicyError = CreatePolicyErrors[keyof CreatePolicyErrors];
+
+export type CreatePolicyResponses = {
+    /**
+     * Successful Response
+     */
+    201: PolicyResponse;
+};
+
+export type CreatePolicyResponse = CreatePolicyResponses[keyof CreatePolicyResponses];
+
+export type DeletePolicyData = {
+    body?: never;
+    path: {
+        /**
+         * Policy Id
+         */
+        policy_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/policies/{policy_id}';
+};
+
+export type DeletePolicyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeletePolicyError = DeletePolicyErrors[keyof DeletePolicyErrors];
+
+export type DeletePolicyResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeletePolicyResponse = DeletePolicyResponses[keyof DeletePolicyResponses];
+
+export type GetPolicyData = {
+    body?: never;
+    path: {
+        /**
+         * Policy Id
+         */
+        policy_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/policies/{policy_id}';
+};
+
+export type GetPolicyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetPolicyError = GetPolicyErrors[keyof GetPolicyErrors];
+
+export type GetPolicyResponses = {
+    /**
+     * Successful Response
+     */
+    200: PolicyResponse;
+};
+
+export type GetPolicyResponse = GetPolicyResponses[keyof GetPolicyResponses];
+
+export type UpdatePolicyData = {
+    body: UpdatePolicyRequest;
+    path: {
+        /**
+         * Policy Id
+         */
+        policy_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/policies/{policy_id}';
+};
+
+export type UpdatePolicyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdatePolicyError = UpdatePolicyErrors[keyof UpdatePolicyErrors];
+
+export type UpdatePolicyResponses = {
+    /**
+     * Successful Response
+     */
+    200: PolicyResponse;
+};
+
+export type UpdatePolicyResponse = UpdatePolicyResponses[keyof UpdatePolicyResponses];
+
+export type ListPolicyAttachmentsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Policy Id
+         */
+        policy_id: string;
+    };
+    url: '/ext/hindclaw/policy-attachments';
+};
+
+export type ListPolicyAttachmentsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListPolicyAttachmentsError = ListPolicyAttachmentsErrors[keyof ListPolicyAttachmentsErrors];
+
+export type ListPolicyAttachmentsResponses = {
+    /**
+     * Response List Policy Attachments
+     *
+     * Successful Response
+     */
+    200: Array<PolicyAttachmentResponse>;
+};
+
+export type ListPolicyAttachmentsResponse = ListPolicyAttachmentsResponses[keyof ListPolicyAttachmentsResponses];
+
+export type UpsertPolicyAttachmentData = {
+    body: CreatePolicyAttachmentRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/policy-attachments';
+};
+
+export type UpsertPolicyAttachmentErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpsertPolicyAttachmentError = UpsertPolicyAttachmentErrors[keyof UpsertPolicyAttachmentErrors];
+
+export type UpsertPolicyAttachmentResponses = {
+    /**
+     * Successful Response
+     */
+    200: PolicyAttachmentResponse;
+};
+
+export type UpsertPolicyAttachmentResponse = UpsertPolicyAttachmentResponses[keyof UpsertPolicyAttachmentResponses];
+
+export type DeletePolicyAttachmentData = {
+    body?: never;
+    path: {
+        /**
+         * Policy Id
+         */
+        policy_id: string;
+        /**
+         * Principal Type
+         */
+        principal_type: string;
+        /**
+         * Principal Id
+         */
+        principal_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/policy-attachments/{policy_id}/{principal_type}/{principal_id}';
+};
+
+export type DeletePolicyAttachmentErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeletePolicyAttachmentError = DeletePolicyAttachmentErrors[keyof DeletePolicyAttachmentErrors];
+
+export type DeletePolicyAttachmentResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeletePolicyAttachmentResponse = DeletePolicyAttachmentResponses[keyof DeletePolicyAttachmentResponses];
+
+export type ListServiceAccountsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/service-accounts';
+};
+
+export type ListServiceAccountsResponses = {
+    /**
+     * Response List Service Accounts
+     *
+     * Successful Response
+     */
+    200: Array<ServiceAccountResponse>;
+};
+
+export type ListServiceAccountsResponse = ListServiceAccountsResponses[keyof ListServiceAccountsResponses];
+
+export type CreateServiceAccountData = {
+    body: CreateServiceAccountRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/service-accounts';
+};
+
+export type CreateServiceAccountErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateServiceAccountError = CreateServiceAccountErrors[keyof CreateServiceAccountErrors];
+
+export type CreateServiceAccountResponses = {
+    /**
+     * Successful Response
+     */
+    201: ServiceAccountResponse;
+};
+
+export type CreateServiceAccountResponse = CreateServiceAccountResponses[keyof CreateServiceAccountResponses];
+
+export type DeleteServiceAccountData = {
+    body?: never;
+    path: {
+        /**
+         * Sa Id
+         */
+        sa_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/service-accounts/{sa_id}';
+};
+
+export type DeleteServiceAccountErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteServiceAccountError = DeleteServiceAccountErrors[keyof DeleteServiceAccountErrors];
+
+export type DeleteServiceAccountResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteServiceAccountResponse = DeleteServiceAccountResponses[keyof DeleteServiceAccountResponses];
+
+export type GetServiceAccountData = {
+    body?: never;
+    path: {
+        /**
+         * Sa Id
+         */
+        sa_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/service-accounts/{sa_id}';
+};
+
+export type GetServiceAccountErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetServiceAccountError = GetServiceAccountErrors[keyof GetServiceAccountErrors];
+
+export type GetServiceAccountResponses = {
+    /**
+     * Successful Response
+     */
+    200: ServiceAccountResponse;
+};
+
+export type GetServiceAccountResponse = GetServiceAccountResponses[keyof GetServiceAccountResponses];
+
+export type UpdateServiceAccountData = {
+    body: UpdateServiceAccountRequest;
+    path: {
+        /**
+         * Sa Id
+         */
+        sa_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/service-accounts/{sa_id}';
+};
+
+export type UpdateServiceAccountErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateServiceAccountError = UpdateServiceAccountErrors[keyof UpdateServiceAccountErrors];
+
+export type UpdateServiceAccountResponses = {
+    /**
+     * Successful Response
+     */
+    200: ServiceAccountResponse;
+};
+
+export type UpdateServiceAccountResponse = UpdateServiceAccountResponses[keyof UpdateServiceAccountResponses];
+
+export type ListSaKeysData = {
+    body?: never;
+    path: {
+        /**
+         * Sa Id
+         */
+        sa_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/service-accounts/{sa_id}/keys';
+};
+
+export type ListSaKeysErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListSaKeysError = ListSaKeysErrors[keyof ListSaKeysErrors];
+
+export type ListSaKeysResponses = {
+    /**
+     * Response List Sa Keys
+     *
+     * Successful Response
+     */
+    200: Array<SaKeyResponse>;
+};
+
+export type ListSaKeysResponse = ListSaKeysResponses[keyof ListSaKeysResponses];
+
+export type CreateSaKeyData = {
+    body: CreateSaKeyRequest;
+    path: {
+        /**
+         * Sa Id
+         */
+        sa_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/service-accounts/{sa_id}/keys';
+};
+
+export type CreateSaKeyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateSaKeyError = CreateSaKeyErrors[keyof CreateSaKeyErrors];
+
+export type CreateSaKeyResponses = {
+    /**
+     * Successful Response
+     */
+    201: SaKeyCreateResponse;
+};
+
+export type CreateSaKeyResponse = CreateSaKeyResponses[keyof CreateSaKeyResponses];
+
+export type DeleteSaKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Sa Id
+         */
+        sa_id: string;
+        /**
+         * Key Id
+         */
+        key_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/service-accounts/{sa_id}/keys/{key_id}';
+};
+
+export type DeleteSaKeyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteSaKeyError = DeleteSaKeyErrors[keyof DeleteSaKeyErrors];
+
+export type DeleteSaKeyResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteSaKeyResponse = DeleteSaKeyResponses[keyof DeleteSaKeyResponses];
+
+export type DeleteBankPolicyData = {
+    body?: never;
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/banks/{bank_id}/policy';
+};
+
+export type DeleteBankPolicyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteBankPolicyError = DeleteBankPolicyErrors[keyof DeleteBankPolicyErrors];
+
+export type DeleteBankPolicyResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteBankPolicyResponse = DeleteBankPolicyResponses[keyof DeleteBankPolicyResponses];
+
+export type GetBankPolicyData = {
+    body?: never;
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/banks/{bank_id}/policy';
+};
+
+export type GetBankPolicyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetBankPolicyError = GetBankPolicyErrors[keyof GetBankPolicyErrors];
+
+export type GetBankPolicyResponses = {
+    /**
+     * Successful Response
+     */
+    200: BankPolicyResponse;
+};
+
+export type GetBankPolicyResponse = GetBankPolicyResponses[keyof GetBankPolicyResponses];
+
+export type UpsertBankPolicyData = {
+    body: UpsertBankPolicyRequest;
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/banks/{bank_id}/policy';
+};
+
+export type UpsertBankPolicyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpsertBankPolicyError = UpsertBankPolicyErrors[keyof UpsertBankPolicyErrors];
+
+export type UpsertBankPolicyResponses = {
+    /**
+     * Successful Response
+     */
+    200: BankPolicyResponse;
+};
+
+export type UpsertBankPolicyResponse = UpsertBankPolicyResponses[keyof UpsertBankPolicyResponses];
+
 export type DebugResolveData = {
     body?: never;
     path?: never;
@@ -1546,21 +1636,21 @@ export type DebugResolveData = {
          */
         bank: string;
         /**
+         * Action
+         */
+        action?: string;
+        /**
          * Sender
          */
         sender?: string | null;
         /**
-         * Agent
+         * User Id
          */
-        agent?: string | null;
+        user_id?: string | null;
         /**
-         * Channel
+         * Sa Id
          */
-        channel?: string | null;
-        /**
-         * Topic
-         */
-        topic?: string | null;
+        sa_id?: string | null;
     };
     url: '/ext/hindclaw/debug/resolve';
 };
@@ -1578,7 +1668,5 @@ export type DebugResolveResponses = {
     /**
      * Successful Response
      */
-    200: ResolvedPermissionsResponse;
+    200: unknown;
 };
-
-export type DebugResolveResponse = DebugResolveResponses[keyof DebugResolveResponses];

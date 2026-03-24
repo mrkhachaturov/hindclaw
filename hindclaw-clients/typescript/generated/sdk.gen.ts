@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddGroupMemberData, AddGroupMemberErrors, AddGroupMemberResponses, AddUserChannelData, AddUserChannelErrors, AddUserChannelResponses, CreateApiKeyData, CreateApiKeyErrors, CreateApiKeyResponses, CreateGroupData, CreateGroupErrors, CreateGroupResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DebugResolveData, DebugResolveErrors, DebugResolveResponses, DeleteApiKeyData, DeleteApiKeyErrors, DeleteApiKeyResponses, DeleteBankPermissionData, DeleteBankPermissionErrors, DeleteBankPermissionResponses, DeleteGroupData, DeleteGroupErrors, DeleteGroupResponses, DeleteStrategyData, DeleteStrategyErrors, DeleteStrategyResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetBankPermissionData, GetBankPermissionErrors, GetBankPermissionResponses, GetGroupData, GetGroupErrors, GetGroupResponses, GetUserData, GetUserErrors, GetUserResponses, ListApiKeysData, ListApiKeysErrors, ListApiKeysResponses, ListBankPermissionsData, ListBankPermissionsErrors, ListBankPermissionsResponses, ListGroupMembersData, ListGroupMembersErrors, ListGroupMembersResponses, ListGroupsData, ListGroupsResponses, ListStrategiesData, ListStrategiesErrors, ListStrategiesResponses, ListUserChannelsData, ListUserChannelsErrors, ListUserChannelsResponses, ListUsersData, ListUsersResponses, RemoveGroupMemberData, RemoveGroupMemberErrors, RemoveGroupMemberResponses, RemoveUserChannelData, RemoveUserChannelErrors, RemoveUserChannelResponses, UpdateGroupData, UpdateGroupErrors, UpdateGroupResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpsertGroupPermissionData, UpsertGroupPermissionErrors, UpsertGroupPermissionResponses, UpsertStrategyData, UpsertStrategyErrors, UpsertStrategyResponses, UpsertUserPermissionData, UpsertUserPermissionErrors, UpsertUserPermissionResponses } from './types.gen';
+import type { AddGroupMemberData, AddGroupMemberErrors, AddGroupMemberResponses, AddUserChannelData, AddUserChannelErrors, AddUserChannelResponses, CreateApiKeyData, CreateApiKeyErrors, CreateApiKeyResponses, CreateGroupData, CreateGroupErrors, CreateGroupResponses, CreatePolicyData, CreatePolicyErrors, CreatePolicyResponses, CreateSaKeyData, CreateSaKeyErrors, CreateSaKeyResponses, CreateServiceAccountData, CreateServiceAccountErrors, CreateServiceAccountResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DebugResolveData, DebugResolveErrors, DebugResolveResponses, DeleteApiKeyData, DeleteApiKeyErrors, DeleteApiKeyResponses, DeleteBankPolicyData, DeleteBankPolicyErrors, DeleteBankPolicyResponses, DeleteGroupData, DeleteGroupErrors, DeleteGroupResponses, DeletePolicyAttachmentData, DeletePolicyAttachmentErrors, DeletePolicyAttachmentResponses, DeletePolicyData, DeletePolicyErrors, DeletePolicyResponses, DeleteSaKeyData, DeleteSaKeyErrors, DeleteSaKeyResponses, DeleteServiceAccountData, DeleteServiceAccountErrors, DeleteServiceAccountResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetBankPolicyData, GetBankPolicyErrors, GetBankPolicyResponses, GetGroupData, GetGroupErrors, GetGroupResponses, GetPolicyData, GetPolicyErrors, GetPolicyResponses, GetServiceAccountData, GetServiceAccountErrors, GetServiceAccountResponses, GetUserData, GetUserErrors, GetUserResponses, ListApiKeysData, ListApiKeysErrors, ListApiKeysResponses, ListGroupMembersData, ListGroupMembersErrors, ListGroupMembersResponses, ListGroupsData, ListGroupsResponses, ListPoliciesData, ListPoliciesResponses, ListPolicyAttachmentsData, ListPolicyAttachmentsErrors, ListPolicyAttachmentsResponses, ListSaKeysData, ListSaKeysErrors, ListSaKeysResponses, ListServiceAccountsData, ListServiceAccountsResponses, ListUserChannelsData, ListUserChannelsErrors, ListUserChannelsResponses, ListUsersData, ListUsersResponses, RemoveGroupMemberData, RemoveGroupMemberErrors, RemoveGroupMemberResponses, RemoveUserChannelData, RemoveUserChannelErrors, RemoveUserChannelResponses, UpdateGroupData, UpdateGroupErrors, UpdateGroupResponses, UpdatePolicyData, UpdatePolicyErrors, UpdatePolicyResponses, UpdateServiceAccountData, UpdateServiceAccountErrors, UpdateServiceAccountResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpsertBankPolicyData, UpsertBankPolicyErrors, UpsertBankPolicyResponses, UpsertPolicyAttachmentData, UpsertPolicyAttachmentErrors, UpsertPolicyAttachmentResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -187,90 +187,6 @@ export const removeGroupMember = <ThrowOnError extends boolean = false>(options:
 });
 
 /**
- * List Bank Permissions
- */
-export const listBankPermissions = <ThrowOnError extends boolean = false>(options: Options<ListBankPermissionsData, ThrowOnError>) => (options.client ?? client).get<ListBankPermissionsResponses, ListBankPermissionsErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/banks/{bank_id}/permissions',
-    ...options
-});
-
-/**
- * Delete Bank Permission
- */
-export const deleteBankPermission = <ThrowOnError extends boolean = false>(options: Options<DeleteBankPermissionData, ThrowOnError>) => (options.client ?? client).delete<DeleteBankPermissionResponses, DeleteBankPermissionErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/banks/{bank_id}/permissions/{scope_type}/{scope_id}',
-    ...options
-});
-
-/**
- * Get Bank Permission
- */
-export const getBankPermission = <ThrowOnError extends boolean = false>(options: Options<GetBankPermissionData, ThrowOnError>) => (options.client ?? client).get<GetBankPermissionResponses, GetBankPermissionErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/banks/{bank_id}/permissions/{scope_type}/{scope_id}',
-    ...options
-});
-
-/**
- * Upsert Group Bank Permission
- */
-export const upsertGroupPermission = <ThrowOnError extends boolean = false>(options: Options<UpsertGroupPermissionData, ThrowOnError>) => (options.client ?? client).put<UpsertGroupPermissionResponses, UpsertGroupPermissionErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/banks/{bank_id}/permissions/groups/{group_id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Upsert User Bank Permission
- */
-export const upsertUserPermission = <ThrowOnError extends boolean = false>(options: Options<UpsertUserPermissionData, ThrowOnError>) => (options.client ?? client).put<UpsertUserPermissionResponses, UpsertUserPermissionErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/banks/{bank_id}/permissions/users/{user_id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * List Strategies
- */
-export const listStrategies = <ThrowOnError extends boolean = false>(options: Options<ListStrategiesData, ThrowOnError>) => (options.client ?? client).get<ListStrategiesResponses, ListStrategiesErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/banks/{bank_id}/strategies',
-    ...options
-});
-
-/**
- * Delete Strategy
- */
-export const deleteStrategy = <ThrowOnError extends boolean = false>(options: Options<DeleteStrategyData, ThrowOnError>) => (options.client ?? client).delete<DeleteStrategyResponses, DeleteStrategyErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/banks/{bank_id}/strategies/{scope_type}/{scope_value}',
-    ...options
-});
-
-/**
- * Upsert Strategy
- */
-export const upsertStrategy = <ThrowOnError extends boolean = false>(options: Options<UpsertStrategyData, ThrowOnError>) => (options.client ?? client).put<UpsertStrategyResponses, UpsertStrategyErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/banks/{bank_id}/strategies/{scope_type}/{scope_value}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
  * List Api Keys
  *
  * List API keys for a user. Keys are masked after creation.
@@ -304,9 +220,208 @@ export const deleteApiKey = <ThrowOnError extends boolean = false>(options: Opti
 });
 
 /**
+ * List Policies
+ */
+export const listPolicies = <ThrowOnError extends boolean = false>(options?: Options<ListPoliciesData, ThrowOnError>) => (options?.client ?? client).get<ListPoliciesResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/policies',
+    ...options
+});
+
+/**
+ * Create Policy
+ */
+export const createPolicy = <ThrowOnError extends boolean = false>(options: Options<CreatePolicyData, ThrowOnError>) => (options.client ?? client).post<CreatePolicyResponses, CreatePolicyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/policies',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Policy Endpoint
+ */
+export const deletePolicy = <ThrowOnError extends boolean = false>(options: Options<DeletePolicyData, ThrowOnError>) => (options.client ?? client).delete<DeletePolicyResponses, DeletePolicyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/policies/{policy_id}',
+    ...options
+});
+
+/**
+ * Get Policy Endpoint
+ */
+export const getPolicy = <ThrowOnError extends boolean = false>(options: Options<GetPolicyData, ThrowOnError>) => (options.client ?? client).get<GetPolicyResponses, GetPolicyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/policies/{policy_id}',
+    ...options
+});
+
+/**
+ * Update Policy Endpoint
+ */
+export const updatePolicy = <ThrowOnError extends boolean = false>(options: Options<UpdatePolicyData, ThrowOnError>) => (options.client ?? client).put<UpdatePolicyResponses, UpdatePolicyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/policies/{policy_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Attachments
+ */
+export const listPolicyAttachments = <ThrowOnError extends boolean = false>(options: Options<ListPolicyAttachmentsData, ThrowOnError>) => (options.client ?? client).get<ListPolicyAttachmentsResponses, ListPolicyAttachmentsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/policy-attachments',
+    ...options
+});
+
+/**
+ * Upsert Attachment
+ */
+export const upsertPolicyAttachment = <ThrowOnError extends boolean = false>(options: Options<UpsertPolicyAttachmentData, ThrowOnError>) => (options.client ?? client).put<UpsertPolicyAttachmentResponses, UpsertPolicyAttachmentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/policy-attachments',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Attachment
+ */
+export const deletePolicyAttachment = <ThrowOnError extends boolean = false>(options: Options<DeletePolicyAttachmentData, ThrowOnError>) => (options.client ?? client).delete<DeletePolicyAttachmentResponses, DeletePolicyAttachmentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/policy-attachments/{policy_id}/{principal_type}/{principal_id}',
+    ...options
+});
+
+/**
+ * List Service Accounts
+ */
+export const listServiceAccounts = <ThrowOnError extends boolean = false>(options?: Options<ListServiceAccountsData, ThrowOnError>) => (options?.client ?? client).get<ListServiceAccountsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/service-accounts',
+    ...options
+});
+
+/**
+ * Create Service Account
+ */
+export const createServiceAccount = <ThrowOnError extends boolean = false>(options: Options<CreateServiceAccountData, ThrowOnError>) => (options.client ?? client).post<CreateServiceAccountResponses, CreateServiceAccountErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/service-accounts',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Service Account Endpoint
+ */
+export const deleteServiceAccount = <ThrowOnError extends boolean = false>(options: Options<DeleteServiceAccountData, ThrowOnError>) => (options.client ?? client).delete<DeleteServiceAccountResponses, DeleteServiceAccountErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/service-accounts/{sa_id}',
+    ...options
+});
+
+/**
+ * Get Service Account Endpoint
+ */
+export const getServiceAccount = <ThrowOnError extends boolean = false>(options: Options<GetServiceAccountData, ThrowOnError>) => (options.client ?? client).get<GetServiceAccountResponses, GetServiceAccountErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/service-accounts/{sa_id}',
+    ...options
+});
+
+/**
+ * Update Service Account Endpoint
+ */
+export const updateServiceAccount = <ThrowOnError extends boolean = false>(options: Options<UpdateServiceAccountData, ThrowOnError>) => (options.client ?? client).put<UpdateServiceAccountResponses, UpdateServiceAccountErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/service-accounts/{sa_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Sa Keys
+ */
+export const listSaKeys = <ThrowOnError extends boolean = false>(options: Options<ListSaKeysData, ThrowOnError>) => (options.client ?? client).get<ListSaKeysResponses, ListSaKeysErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/service-accounts/{sa_id}/keys',
+    ...options
+});
+
+/**
+ * Create Sa Key
+ */
+export const createSaKey = <ThrowOnError extends boolean = false>(options: Options<CreateSaKeyData, ThrowOnError>) => (options.client ?? client).post<CreateSaKeyResponses, CreateSaKeyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/service-accounts/{sa_id}/keys',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Sa Key
+ */
+export const deleteSaKey = <ThrowOnError extends boolean = false>(options: Options<DeleteSaKeyData, ThrowOnError>) => (options.client ?? client).delete<DeleteSaKeyResponses, DeleteSaKeyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/service-accounts/{sa_id}/keys/{key_id}',
+    ...options
+});
+
+/**
+ * Delete Bank Policy Endpoint
+ */
+export const deleteBankPolicy = <ThrowOnError extends boolean = false>(options: Options<DeleteBankPolicyData, ThrowOnError>) => (options.client ?? client).delete<DeleteBankPolicyResponses, DeleteBankPolicyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/banks/{bank_id}/policy',
+    ...options
+});
+
+/**
+ * Get Bank Policy Endpoint
+ */
+export const getBankPolicy = <ThrowOnError extends boolean = false>(options: Options<GetBankPolicyData, ThrowOnError>) => (options.client ?? client).get<GetBankPolicyResponses, GetBankPolicyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/banks/{bank_id}/policy',
+    ...options
+});
+
+/**
+ * Upsert Bank Policy Endpoint
+ */
+export const upsertBankPolicy = <ThrowOnError extends boolean = false>(options: Options<UpsertBankPolicyData, ThrowOnError>) => (options.client ?? client).put<UpsertBankPolicyResponses, UpsertBankPolicyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/banks/{bank_id}/policy',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * Debug Resolve
  *
- * Resolve and return full permissions for a given context.
+ * Resolve and return effective access policy + bank policy for a context.
  */
 export const debugResolve = <ThrowOnError extends boolean = false>(options: Options<DebugResolveData, ThrowOnError>) => (options.client ?? client).get<DebugResolveResponses, DebugResolveErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

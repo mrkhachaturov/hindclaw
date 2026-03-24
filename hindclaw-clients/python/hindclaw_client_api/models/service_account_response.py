@@ -17,20 +17,21 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class StrategyScopeResponse(BaseModel):
+class ServiceAccountResponse(BaseModel):
     """
-    Strategy scope entry returned by GET /banks/:bank/strategies.
+    Service account resource.
     """ # noqa: E501
-    bank_id: StrictStr
-    scope_type: StrictStr
-    scope_value: StrictStr
-    strategy: StrictStr
-    __properties: ClassVar[List[str]] = ["bank_id", "scope_type", "scope_value", "strategy"]
+    id: StrictStr
+    owner_user_id: StrictStr
+    display_name: StrictStr
+    is_active: StrictBool
+    scoping_policy_id: Optional[StrictStr]
+    __properties: ClassVar[List[str]] = ["id", "owner_user_id", "display_name", "is_active", "scoping_policy_id"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -50,7 +51,7 @@ class StrategyScopeResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of StrategyScopeResponse from a JSON string"""
+        """Create an instance of ServiceAccountResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -71,11 +72,16 @@ class StrategyScopeResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if scoping_policy_id (nullable) is None
+        # and model_fields_set contains the field
+        if self.scoping_policy_id is None and "scoping_policy_id" in self.model_fields_set:
+            _dict['scoping_policy_id'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of StrategyScopeResponse from a dict"""
+        """Create an instance of ServiceAccountResponse from a dict"""
         if obj is None:
             return None
 
@@ -83,10 +89,11 @@ class StrategyScopeResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "bank_id": obj.get("bank_id"),
-            "scope_type": obj.get("scope_type"),
-            "scope_value": obj.get("scope_value"),
-            "strategy": obj.get("strategy")
+            "id": obj.get("id"),
+            "owner_user_id": obj.get("owner_user_id"),
+            "display_name": obj.get("display_name"),
+            "is_active": obj.get("is_active"),
+            "scoping_policy_id": obj.get("scoping_policy_id")
         })
         return _obj
 

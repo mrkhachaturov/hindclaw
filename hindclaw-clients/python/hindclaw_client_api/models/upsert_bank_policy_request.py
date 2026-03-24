@@ -17,19 +17,17 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict
 from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
-class UpsertConfirmation(BaseModel):
+class UpsertBankPolicyRequest(BaseModel):
     """
-    Confirmation returned by PUT (upsert) endpoints.
+    Request to create/update a bank policy.
     """ # noqa: E501
-    bank_id: StrictStr
-    scope_type: StrictStr
-    scope_id: StrictStr
-    __properties: ClassVar[List[str]] = ["bank_id", "scope_type", "scope_id"]
+    document: Dict[str, Any]
+    __properties: ClassVar[List[str]] = ["document"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -49,7 +47,7 @@ class UpsertConfirmation(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of UpsertConfirmation from a JSON string"""
+        """Create an instance of UpsertBankPolicyRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -74,7 +72,7 @@ class UpsertConfirmation(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of UpsertConfirmation from a dict"""
+        """Create an instance of UpsertBankPolicyRequest from a dict"""
         if obj is None:
             return None
 
@@ -82,9 +80,7 @@ class UpsertConfirmation(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "bank_id": obj.get("bank_id"),
-            "scope_type": obj.get("scope_type"),
-            "scope_id": obj.get("scope_id")
+            "document": obj.get("document")
         })
         return _obj
 

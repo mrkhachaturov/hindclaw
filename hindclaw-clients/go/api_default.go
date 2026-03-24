@@ -74,6 +74,43 @@ type DefaultAPI interface {
 	CreateGroupExecute(r DefaultAPICreateGroupRequest) (*GroupSummaryResponse, *http.Response, error)
 
 	/*
+	CreatePolicy Create Policy
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return DefaultAPICreatePolicyRequest
+	*/
+	CreatePolicy(ctx context.Context) DefaultAPICreatePolicyRequest
+
+	// CreatePolicyExecute executes the request
+	//  @return PolicyResponse
+	CreatePolicyExecute(r DefaultAPICreatePolicyRequest) (*PolicyResponse, *http.Response, error)
+
+	/*
+	CreateSaKey Create Sa Key
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param saId
+	@return DefaultAPICreateSaKeyRequest
+	*/
+	CreateSaKey(ctx context.Context, saId string) DefaultAPICreateSaKeyRequest
+
+	// CreateSaKeyExecute executes the request
+	//  @return SAKeyCreateResponse
+	CreateSaKeyExecute(r DefaultAPICreateSaKeyRequest) (*SAKeyCreateResponse, *http.Response, error)
+
+	/*
+	CreateServiceAccount Create Service Account
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return DefaultAPICreateServiceAccountRequest
+	*/
+	CreateServiceAccount(ctx context.Context) DefaultAPICreateServiceAccountRequest
+
+	// CreateServiceAccountExecute executes the request
+	//  @return ServiceAccountResponse
+	CreateServiceAccountExecute(r DefaultAPICreateServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error)
+
+	/*
 	CreateUser Create User
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -88,7 +125,7 @@ type DefaultAPI interface {
 	/*
 	DebugResolve Debug Resolve
 
-	Resolve and return full permissions for a given context.
+	Resolve and return effective access policy + bank policy for a context.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return DefaultAPIDebugResolveRequest
@@ -96,8 +133,8 @@ type DefaultAPI interface {
 	DebugResolve(ctx context.Context) DefaultAPIDebugResolveRequest
 
 	// DebugResolveExecute executes the request
-	//  @return ResolvedPermissionsResponse
-	DebugResolveExecute(r DefaultAPIDebugResolveRequest) (*ResolvedPermissionsResponse, *http.Response, error)
+	//  @return interface{}
+	DebugResolveExecute(r DefaultAPIDebugResolveRequest) (interface{}, *http.Response, error)
 
 	/*
 	DeleteApiKey Delete Api Key
@@ -113,18 +150,16 @@ type DefaultAPI interface {
 	DeleteApiKeyExecute(r DefaultAPIDeleteApiKeyRequest) (*http.Response, error)
 
 	/*
-	DeleteBankPermission Delete Bank Permission
+	DeleteBankPolicy Delete Bank Policy Endpoint
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param bankId
-	@param scopeType
-	@param scopeId
-	@return DefaultAPIDeleteBankPermissionRequest
+	@return DefaultAPIDeleteBankPolicyRequest
 	*/
-	DeleteBankPermission(ctx context.Context, bankId string, scopeType string, scopeId string) DefaultAPIDeleteBankPermissionRequest
+	DeleteBankPolicy(ctx context.Context, bankId string) DefaultAPIDeleteBankPolicyRequest
 
-	// DeleteBankPermissionExecute executes the request
-	DeleteBankPermissionExecute(r DefaultAPIDeleteBankPermissionRequest) (*http.Response, error)
+	// DeleteBankPolicyExecute executes the request
+	DeleteBankPolicyExecute(r DefaultAPIDeleteBankPolicyRequest) (*http.Response, error)
 
 	/*
 	DeleteGroup Delete Group
@@ -139,18 +174,55 @@ type DefaultAPI interface {
 	DeleteGroupExecute(r DefaultAPIDeleteGroupRequest) (*http.Response, error)
 
 	/*
-	DeleteStrategy Delete Strategy
+	DeletePolicy Delete Policy Endpoint
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param bankId
-	@param scopeType
-	@param scopeValue
-	@return DefaultAPIDeleteStrategyRequest
+	@param policyId
+	@return DefaultAPIDeletePolicyRequest
 	*/
-	DeleteStrategy(ctx context.Context, bankId string, scopeType string, scopeValue string) DefaultAPIDeleteStrategyRequest
+	DeletePolicy(ctx context.Context, policyId string) DefaultAPIDeletePolicyRequest
 
-	// DeleteStrategyExecute executes the request
-	DeleteStrategyExecute(r DefaultAPIDeleteStrategyRequest) (*http.Response, error)
+	// DeletePolicyExecute executes the request
+	DeletePolicyExecute(r DefaultAPIDeletePolicyRequest) (*http.Response, error)
+
+	/*
+	DeletePolicyAttachment Delete Attachment
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param policyId
+	@param principalType
+	@param principalId
+	@return DefaultAPIDeletePolicyAttachmentRequest
+	*/
+	DeletePolicyAttachment(ctx context.Context, policyId string, principalType string, principalId string) DefaultAPIDeletePolicyAttachmentRequest
+
+	// DeletePolicyAttachmentExecute executes the request
+	DeletePolicyAttachmentExecute(r DefaultAPIDeletePolicyAttachmentRequest) (*http.Response, error)
+
+	/*
+	DeleteSaKey Delete Sa Key
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param saId
+	@param keyId
+	@return DefaultAPIDeleteSaKeyRequest
+	*/
+	DeleteSaKey(ctx context.Context, saId string, keyId string) DefaultAPIDeleteSaKeyRequest
+
+	// DeleteSaKeyExecute executes the request
+	DeleteSaKeyExecute(r DefaultAPIDeleteSaKeyRequest) (*http.Response, error)
+
+	/*
+	DeleteServiceAccount Delete Service Account Endpoint
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param saId
+	@return DefaultAPIDeleteServiceAccountRequest
+	*/
+	DeleteServiceAccount(ctx context.Context, saId string) DefaultAPIDeleteServiceAccountRequest
+
+	// DeleteServiceAccountExecute executes the request
+	DeleteServiceAccountExecute(r DefaultAPIDeleteServiceAccountRequest) (*http.Response, error)
 
 	/*
 	DeleteUser Delete User
@@ -165,19 +237,17 @@ type DefaultAPI interface {
 	DeleteUserExecute(r DefaultAPIDeleteUserRequest) (*http.Response, error)
 
 	/*
-	GetBankPermission Get Bank Permission
+	GetBankPolicy Get Bank Policy Endpoint
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param bankId
-	@param scopeType
-	@param scopeId
-	@return DefaultAPIGetBankPermissionRequest
+	@return DefaultAPIGetBankPolicyRequest
 	*/
-	GetBankPermission(ctx context.Context, bankId string, scopeType string, scopeId string) DefaultAPIGetBankPermissionRequest
+	GetBankPolicy(ctx context.Context, bankId string) DefaultAPIGetBankPolicyRequest
 
-	// GetBankPermissionExecute executes the request
-	//  @return BankPermissionResponse
-	GetBankPermissionExecute(r DefaultAPIGetBankPermissionRequest) (*BankPermissionResponse, *http.Response, error)
+	// GetBankPolicyExecute executes the request
+	//  @return BankPolicyResponse
+	GetBankPolicyExecute(r DefaultAPIGetBankPolicyRequest) (*BankPolicyResponse, *http.Response, error)
 
 	/*
 	GetGroup Get Group
@@ -189,8 +259,34 @@ type DefaultAPI interface {
 	GetGroup(ctx context.Context, groupId string) DefaultAPIGetGroupRequest
 
 	// GetGroupExecute executes the request
-	//  @return GroupResponse
-	GetGroupExecute(r DefaultAPIGetGroupRequest) (*GroupResponse, *http.Response, error)
+	//  @return GroupSummaryResponse
+	GetGroupExecute(r DefaultAPIGetGroupRequest) (*GroupSummaryResponse, *http.Response, error)
+
+	/*
+	GetPolicy Get Policy Endpoint
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param policyId
+	@return DefaultAPIGetPolicyRequest
+	*/
+	GetPolicy(ctx context.Context, policyId string) DefaultAPIGetPolicyRequest
+
+	// GetPolicyExecute executes the request
+	//  @return PolicyResponse
+	GetPolicyExecute(r DefaultAPIGetPolicyRequest) (*PolicyResponse, *http.Response, error)
+
+	/*
+	GetServiceAccount Get Service Account Endpoint
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param saId
+	@return DefaultAPIGetServiceAccountRequest
+	*/
+	GetServiceAccount(ctx context.Context, saId string) DefaultAPIGetServiceAccountRequest
+
+	// GetServiceAccountExecute executes the request
+	//  @return ServiceAccountResponse
+	GetServiceAccountExecute(r DefaultAPIGetServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error)
 
 	/*
 	GetUser Get User
@@ -221,19 +317,6 @@ type DefaultAPI interface {
 	ListApiKeysExecute(r DefaultAPIListApiKeysRequest) ([]ApiKeyResponse, *http.Response, error)
 
 	/*
-	ListBankPermissions List Bank Permissions
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param bankId
-	@return DefaultAPIListBankPermissionsRequest
-	*/
-	ListBankPermissions(ctx context.Context, bankId string) DefaultAPIListBankPermissionsRequest
-
-	// ListBankPermissionsExecute executes the request
-	//  @return []BankPermissionResponse
-	ListBankPermissionsExecute(r DefaultAPIListBankPermissionsRequest) ([]BankPermissionResponse, *http.Response, error)
-
-	/*
 	ListGroupMembers List Group Members
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -259,17 +342,53 @@ type DefaultAPI interface {
 	ListGroupsExecute(r DefaultAPIListGroupsRequest) ([]GroupSummaryResponse, *http.Response, error)
 
 	/*
-	ListStrategies List Strategies
+	ListPolicies List Policies
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param bankId
-	@return DefaultAPIListStrategiesRequest
+	@return DefaultAPIListPoliciesRequest
 	*/
-	ListStrategies(ctx context.Context, bankId string) DefaultAPIListStrategiesRequest
+	ListPolicies(ctx context.Context) DefaultAPIListPoliciesRequest
 
-	// ListStrategiesExecute executes the request
-	//  @return []StrategyScopeResponse
-	ListStrategiesExecute(r DefaultAPIListStrategiesRequest) ([]StrategyScopeResponse, *http.Response, error)
+	// ListPoliciesExecute executes the request
+	//  @return []PolicyResponse
+	ListPoliciesExecute(r DefaultAPIListPoliciesRequest) ([]PolicyResponse, *http.Response, error)
+
+	/*
+	ListPolicyAttachments List Attachments
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return DefaultAPIListPolicyAttachmentsRequest
+	*/
+	ListPolicyAttachments(ctx context.Context) DefaultAPIListPolicyAttachmentsRequest
+
+	// ListPolicyAttachmentsExecute executes the request
+	//  @return []PolicyAttachmentResponse
+	ListPolicyAttachmentsExecute(r DefaultAPIListPolicyAttachmentsRequest) ([]PolicyAttachmentResponse, *http.Response, error)
+
+	/*
+	ListSaKeys List Sa Keys
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param saId
+	@return DefaultAPIListSaKeysRequest
+	*/
+	ListSaKeys(ctx context.Context, saId string) DefaultAPIListSaKeysRequest
+
+	// ListSaKeysExecute executes the request
+	//  @return []SAKeyResponse
+	ListSaKeysExecute(r DefaultAPIListSaKeysRequest) ([]SAKeyResponse, *http.Response, error)
+
+	/*
+	ListServiceAccounts List Service Accounts
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return DefaultAPIListServiceAccountsRequest
+	*/
+	ListServiceAccounts(ctx context.Context) DefaultAPIListServiceAccountsRequest
+
+	// ListServiceAccountsExecute executes the request
+	//  @return []ServiceAccountResponse
+	ListServiceAccountsExecute(r DefaultAPIListServiceAccountsRequest) ([]ServiceAccountResponse, *http.Response, error)
 
 	/*
 	ListUserChannels List User Channels
@@ -333,8 +452,34 @@ type DefaultAPI interface {
 	UpdateGroup(ctx context.Context, groupId string) DefaultAPIUpdateGroupRequest
 
 	// UpdateGroupExecute executes the request
-	//  @return GroupResponse
-	UpdateGroupExecute(r DefaultAPIUpdateGroupRequest) (*GroupResponse, *http.Response, error)
+	//  @return GroupSummaryResponse
+	UpdateGroupExecute(r DefaultAPIUpdateGroupRequest) (*GroupSummaryResponse, *http.Response, error)
+
+	/*
+	UpdatePolicy Update Policy Endpoint
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param policyId
+	@return DefaultAPIUpdatePolicyRequest
+	*/
+	UpdatePolicy(ctx context.Context, policyId string) DefaultAPIUpdatePolicyRequest
+
+	// UpdatePolicyExecute executes the request
+	//  @return PolicyResponse
+	UpdatePolicyExecute(r DefaultAPIUpdatePolicyRequest) (*PolicyResponse, *http.Response, error)
+
+	/*
+	UpdateServiceAccount Update Service Account Endpoint
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param saId
+	@return DefaultAPIUpdateServiceAccountRequest
+	*/
+	UpdateServiceAccount(ctx context.Context, saId string) DefaultAPIUpdateServiceAccountRequest
+
+	// UpdateServiceAccountExecute executes the request
+	//  @return ServiceAccountResponse
+	UpdateServiceAccountExecute(r DefaultAPIUpdateServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error)
 
 	/*
 	UpdateUser Update User
@@ -350,47 +495,29 @@ type DefaultAPI interface {
 	UpdateUserExecute(r DefaultAPIUpdateUserRequest) (*UserResponse, *http.Response, error)
 
 	/*
-	UpsertGroupPermission Upsert Group Bank Permission
+	UpsertBankPolicy Upsert Bank Policy Endpoint
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param bankId
-	@param groupId
-	@return DefaultAPIUpsertGroupPermissionRequest
+	@return DefaultAPIUpsertBankPolicyRequest
 	*/
-	UpsertGroupPermission(ctx context.Context, bankId string, groupId string) DefaultAPIUpsertGroupPermissionRequest
+	UpsertBankPolicy(ctx context.Context, bankId string) DefaultAPIUpsertBankPolicyRequest
 
-	// UpsertGroupPermissionExecute executes the request
-	//  @return UpsertConfirmation
-	UpsertGroupPermissionExecute(r DefaultAPIUpsertGroupPermissionRequest) (*UpsertConfirmation, *http.Response, error)
+	// UpsertBankPolicyExecute executes the request
+	//  @return BankPolicyResponse
+	UpsertBankPolicyExecute(r DefaultAPIUpsertBankPolicyRequest) (*BankPolicyResponse, *http.Response, error)
 
 	/*
-	UpsertStrategy Upsert Strategy
+	UpsertPolicyAttachment Upsert Attachment
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param bankId
-	@param scopeType
-	@param scopeValue
-	@return DefaultAPIUpsertStrategyRequest
+	@return DefaultAPIUpsertPolicyAttachmentRequest
 	*/
-	UpsertStrategy(ctx context.Context, bankId string, scopeType string, scopeValue string) DefaultAPIUpsertStrategyRequest
+	UpsertPolicyAttachment(ctx context.Context) DefaultAPIUpsertPolicyAttachmentRequest
 
-	// UpsertStrategyExecute executes the request
-	//  @return StrategyUpsertConfirmation
-	UpsertStrategyExecute(r DefaultAPIUpsertStrategyRequest) (*StrategyUpsertConfirmation, *http.Response, error)
-
-	/*
-	UpsertUserPermission Upsert User Bank Permission
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param bankId
-	@param userId
-	@return DefaultAPIUpsertUserPermissionRequest
-	*/
-	UpsertUserPermission(ctx context.Context, bankId string, userId string) DefaultAPIUpsertUserPermissionRequest
-
-	// UpsertUserPermissionExecute executes the request
-	//  @return UpsertConfirmation
-	UpsertUserPermissionExecute(r DefaultAPIUpsertUserPermissionRequest) (*UpsertConfirmation, *http.Response, error)
+	// UpsertPolicyAttachmentExecute executes the request
+	//  @return PolicyAttachmentResponse
+	UpsertPolicyAttachmentExecute(r DefaultAPIUpsertPolicyAttachmentRequest) (*PolicyAttachmentResponse, *http.Response, error)
 }
 
 // DefaultAPIService DefaultAPI service
@@ -880,6 +1007,364 @@ func (a *DefaultAPIService) CreateGroupExecute(r DefaultAPICreateGroupRequest) (
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type DefaultAPICreatePolicyRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	createPolicyRequest *CreatePolicyRequest
+}
+
+func (r DefaultAPICreatePolicyRequest) CreatePolicyRequest(createPolicyRequest CreatePolicyRequest) DefaultAPICreatePolicyRequest {
+	r.createPolicyRequest = &createPolicyRequest
+	return r
+}
+
+func (r DefaultAPICreatePolicyRequest) Execute() (*PolicyResponse, *http.Response, error) {
+	return r.ApiService.CreatePolicyExecute(r)
+}
+
+/*
+CreatePolicy Create Policy
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return DefaultAPICreatePolicyRequest
+*/
+func (a *DefaultAPIService) CreatePolicy(ctx context.Context) DefaultAPICreatePolicyRequest {
+	return DefaultAPICreatePolicyRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return PolicyResponse
+func (a *DefaultAPIService) CreatePolicyExecute(r DefaultAPICreatePolicyRequest) (*PolicyResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *PolicyResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreatePolicy")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/policies"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.createPolicyRequest == nil {
+		return localVarReturnValue, nil, reportError("createPolicyRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.createPolicyRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPICreateSaKeyRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	saId string
+	createSAKeyRequest *CreateSAKeyRequest
+}
+
+func (r DefaultAPICreateSaKeyRequest) CreateSAKeyRequest(createSAKeyRequest CreateSAKeyRequest) DefaultAPICreateSaKeyRequest {
+	r.createSAKeyRequest = &createSAKeyRequest
+	return r
+}
+
+func (r DefaultAPICreateSaKeyRequest) Execute() (*SAKeyCreateResponse, *http.Response, error) {
+	return r.ApiService.CreateSaKeyExecute(r)
+}
+
+/*
+CreateSaKey Create Sa Key
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param saId
+ @return DefaultAPICreateSaKeyRequest
+*/
+func (a *DefaultAPIService) CreateSaKey(ctx context.Context, saId string) DefaultAPICreateSaKeyRequest {
+	return DefaultAPICreateSaKeyRequest{
+		ApiService: a,
+		ctx: ctx,
+		saId: saId,
+	}
+}
+
+// Execute executes the request
+//  @return SAKeyCreateResponse
+func (a *DefaultAPIService) CreateSaKeyExecute(r DefaultAPICreateSaKeyRequest) (*SAKeyCreateResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *SAKeyCreateResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreateSaKey")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/service-accounts/{sa_id}/keys"
+	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.createSAKeyRequest == nil {
+		return localVarReturnValue, nil, reportError("createSAKeyRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.createSAKeyRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPICreateServiceAccountRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	createServiceAccountRequest *CreateServiceAccountRequest
+}
+
+func (r DefaultAPICreateServiceAccountRequest) CreateServiceAccountRequest(createServiceAccountRequest CreateServiceAccountRequest) DefaultAPICreateServiceAccountRequest {
+	r.createServiceAccountRequest = &createServiceAccountRequest
+	return r
+}
+
+func (r DefaultAPICreateServiceAccountRequest) Execute() (*ServiceAccountResponse, *http.Response, error) {
+	return r.ApiService.CreateServiceAccountExecute(r)
+}
+
+/*
+CreateServiceAccount Create Service Account
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return DefaultAPICreateServiceAccountRequest
+*/
+func (a *DefaultAPIService) CreateServiceAccount(ctx context.Context) DefaultAPICreateServiceAccountRequest {
+	return DefaultAPICreateServiceAccountRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return ServiceAccountResponse
+func (a *DefaultAPIService) CreateServiceAccountExecute(r DefaultAPICreateServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ServiceAccountResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreateServiceAccount")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/service-accounts"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.createServiceAccountRequest == nil {
+		return localVarReturnValue, nil, reportError("createServiceAccountRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.createServiceAccountRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type DefaultAPICreateUserRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
@@ -1002,14 +1487,19 @@ type DefaultAPIDebugResolveRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
 	bank *string
+	action *string
 	sender *string
-	agent *string
-	channel *string
-	topic *string
+	userId *string
+	saId *string
 }
 
 func (r DefaultAPIDebugResolveRequest) Bank(bank string) DefaultAPIDebugResolveRequest {
 	r.bank = &bank
+	return r
+}
+
+func (r DefaultAPIDebugResolveRequest) Action(action string) DefaultAPIDebugResolveRequest {
+	r.action = &action
 	return r
 }
 
@@ -1018,29 +1508,24 @@ func (r DefaultAPIDebugResolveRequest) Sender(sender string) DefaultAPIDebugReso
 	return r
 }
 
-func (r DefaultAPIDebugResolveRequest) Agent(agent string) DefaultAPIDebugResolveRequest {
-	r.agent = &agent
+func (r DefaultAPIDebugResolveRequest) UserId(userId string) DefaultAPIDebugResolveRequest {
+	r.userId = &userId
 	return r
 }
 
-func (r DefaultAPIDebugResolveRequest) Channel(channel string) DefaultAPIDebugResolveRequest {
-	r.channel = &channel
+func (r DefaultAPIDebugResolveRequest) SaId(saId string) DefaultAPIDebugResolveRequest {
+	r.saId = &saId
 	return r
 }
 
-func (r DefaultAPIDebugResolveRequest) Topic(topic string) DefaultAPIDebugResolveRequest {
-	r.topic = &topic
-	return r
-}
-
-func (r DefaultAPIDebugResolveRequest) Execute() (*ResolvedPermissionsResponse, *http.Response, error) {
+func (r DefaultAPIDebugResolveRequest) Execute() (interface{}, *http.Response, error) {
 	return r.ApiService.DebugResolveExecute(r)
 }
 
 /*
 DebugResolve Debug Resolve
 
-Resolve and return full permissions for a given context.
+Resolve and return effective access policy + bank policy for a context.
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return DefaultAPIDebugResolveRequest
@@ -1053,13 +1538,13 @@ func (a *DefaultAPIService) DebugResolve(ctx context.Context) DefaultAPIDebugRes
 }
 
 // Execute executes the request
-//  @return ResolvedPermissionsResponse
-func (a *DefaultAPIService) DebugResolveExecute(r DefaultAPIDebugResolveRequest) (*ResolvedPermissionsResponse, *http.Response, error) {
+//  @return interface{}
+func (a *DefaultAPIService) DebugResolveExecute(r DefaultAPIDebugResolveRequest) (interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *ResolvedPermissionsResponse
+		localVarReturnValue  interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DebugResolve")
@@ -1077,17 +1562,20 @@ func (a *DefaultAPIService) DebugResolveExecute(r DefaultAPIDebugResolveRequest)
 	}
 
 	parameterAddToHeaderOrQuery(localVarQueryParams, "bank", r.bank, "form", "")
+	if r.action != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "action", r.action, "form", "")
+	} else {
+		var defaultValue string = "bank:recall"
+		r.action = &defaultValue
+	}
 	if r.sender != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "sender", r.sender, "form", "")
 	}
-	if r.agent != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "agent", r.agent, "form", "")
+	if r.userId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "user_id", r.userId, "form", "")
 	}
-	if r.channel != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "channel", r.channel, "form", "")
-	}
-	if r.topic != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "topic", r.topic, "form", "")
+	if r.saId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "sa_id", r.saId, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1257,54 +1745,46 @@ func (a *DefaultAPIService) DeleteApiKeyExecute(r DefaultAPIDeleteApiKeyRequest)
 	return localVarHTTPResponse, nil
 }
 
-type DefaultAPIDeleteBankPermissionRequest struct {
+type DefaultAPIDeleteBankPolicyRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
 	bankId string
-	scopeType string
-	scopeId string
 }
 
-func (r DefaultAPIDeleteBankPermissionRequest) Execute() (*http.Response, error) {
-	return r.ApiService.DeleteBankPermissionExecute(r)
+func (r DefaultAPIDeleteBankPolicyRequest) Execute() (*http.Response, error) {
+	return r.ApiService.DeleteBankPolicyExecute(r)
 }
 
 /*
-DeleteBankPermission Delete Bank Permission
+DeleteBankPolicy Delete Bank Policy Endpoint
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @param bankId
- @param scopeType
- @param scopeId
- @return DefaultAPIDeleteBankPermissionRequest
+ @return DefaultAPIDeleteBankPolicyRequest
 */
-func (a *DefaultAPIService) DeleteBankPermission(ctx context.Context, bankId string, scopeType string, scopeId string) DefaultAPIDeleteBankPermissionRequest {
-	return DefaultAPIDeleteBankPermissionRequest{
+func (a *DefaultAPIService) DeleteBankPolicy(ctx context.Context, bankId string) DefaultAPIDeleteBankPolicyRequest {
+	return DefaultAPIDeleteBankPolicyRequest{
 		ApiService: a,
 		ctx: ctx,
 		bankId: bankId,
-		scopeType: scopeType,
-		scopeId: scopeId,
 	}
 }
 
 // Execute executes the request
-func (a *DefaultAPIService) DeleteBankPermissionExecute(r DefaultAPIDeleteBankPermissionRequest) (*http.Response, error) {
+func (a *DefaultAPIService) DeleteBankPolicyExecute(r DefaultAPIDeleteBankPolicyRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteBankPermission")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteBankPolicy")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ext/hindclaw/banks/{bank_id}/permissions/{scope_type}/{scope_id}"
+	localVarPath := localBasePath + "/ext/hindclaw/banks/{bank_id}/policy"
 	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"scope_type"+"}", url.PathEscape(parameterValueToString(r.scopeType, "scopeType")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"scope_id"+"}", url.PathEscape(parameterValueToString(r.scopeId, "scopeId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -1465,54 +1945,358 @@ func (a *DefaultAPIService) DeleteGroupExecute(r DefaultAPIDeleteGroupRequest) (
 	return localVarHTTPResponse, nil
 }
 
-type DefaultAPIDeleteStrategyRequest struct {
+type DefaultAPIDeletePolicyRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
-	bankId string
-	scopeType string
-	scopeValue string
+	policyId string
 }
 
-func (r DefaultAPIDeleteStrategyRequest) Execute() (*http.Response, error) {
-	return r.ApiService.DeleteStrategyExecute(r)
+func (r DefaultAPIDeletePolicyRequest) Execute() (*http.Response, error) {
+	return r.ApiService.DeletePolicyExecute(r)
 }
 
 /*
-DeleteStrategy Delete Strategy
+DeletePolicy Delete Policy Endpoint
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param scopeType
- @param scopeValue
- @return DefaultAPIDeleteStrategyRequest
+ @param policyId
+ @return DefaultAPIDeletePolicyRequest
 */
-func (a *DefaultAPIService) DeleteStrategy(ctx context.Context, bankId string, scopeType string, scopeValue string) DefaultAPIDeleteStrategyRequest {
-	return DefaultAPIDeleteStrategyRequest{
+func (a *DefaultAPIService) DeletePolicy(ctx context.Context, policyId string) DefaultAPIDeletePolicyRequest {
+	return DefaultAPIDeletePolicyRequest{
 		ApiService: a,
 		ctx: ctx,
-		bankId: bankId,
-		scopeType: scopeType,
-		scopeValue: scopeValue,
+		policyId: policyId,
 	}
 }
 
 // Execute executes the request
-func (a *DefaultAPIService) DeleteStrategyExecute(r DefaultAPIDeleteStrategyRequest) (*http.Response, error) {
+func (a *DefaultAPIService) DeletePolicyExecute(r DefaultAPIDeletePolicyRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodDelete
 		localVarPostBody     interface{}
 		formFiles            []formFile
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteStrategy")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeletePolicy")
 	if err != nil {
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ext/hindclaw/banks/{bank_id}/strategies/{scope_type}/{scope_value}"
-	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"scope_type"+"}", url.PathEscape(parameterValueToString(r.scopeType, "scopeType")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"scope_value"+"}", url.PathEscape(parameterValueToString(r.scopeValue, "scopeValue")), -1)
+	localVarPath := localBasePath + "/ext/hindclaw/policies/{policy_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"policy_id"+"}", url.PathEscape(parameterValueToString(r.policyId, "policyId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+type DefaultAPIDeletePolicyAttachmentRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	policyId string
+	principalType string
+	principalId string
+}
+
+func (r DefaultAPIDeletePolicyAttachmentRequest) Execute() (*http.Response, error) {
+	return r.ApiService.DeletePolicyAttachmentExecute(r)
+}
+
+/*
+DeletePolicyAttachment Delete Attachment
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param policyId
+ @param principalType
+ @param principalId
+ @return DefaultAPIDeletePolicyAttachmentRequest
+*/
+func (a *DefaultAPIService) DeletePolicyAttachment(ctx context.Context, policyId string, principalType string, principalId string) DefaultAPIDeletePolicyAttachmentRequest {
+	return DefaultAPIDeletePolicyAttachmentRequest{
+		ApiService: a,
+		ctx: ctx,
+		policyId: policyId,
+		principalType: principalType,
+		principalId: principalId,
+	}
+}
+
+// Execute executes the request
+func (a *DefaultAPIService) DeletePolicyAttachmentExecute(r DefaultAPIDeletePolicyAttachmentRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeletePolicyAttachment")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/policy-attachments/{policy_id}/{principal_type}/{principal_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"policy_id"+"}", url.PathEscape(parameterValueToString(r.policyId, "policyId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"principal_type"+"}", url.PathEscape(parameterValueToString(r.principalType, "principalType")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"principal_id"+"}", url.PathEscape(parameterValueToString(r.principalId, "principalId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+type DefaultAPIDeleteSaKeyRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	saId string
+	keyId string
+}
+
+func (r DefaultAPIDeleteSaKeyRequest) Execute() (*http.Response, error) {
+	return r.ApiService.DeleteSaKeyExecute(r)
+}
+
+/*
+DeleteSaKey Delete Sa Key
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param saId
+ @param keyId
+ @return DefaultAPIDeleteSaKeyRequest
+*/
+func (a *DefaultAPIService) DeleteSaKey(ctx context.Context, saId string, keyId string) DefaultAPIDeleteSaKeyRequest {
+	return DefaultAPIDeleteSaKeyRequest{
+		ApiService: a,
+		ctx: ctx,
+		saId: saId,
+		keyId: keyId,
+	}
+}
+
+// Execute executes the request
+func (a *DefaultAPIService) DeleteSaKeyExecute(r DefaultAPIDeleteSaKeyRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteSaKey")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/service-accounts/{sa_id}/keys/{key_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"key_id"+"}", url.PathEscape(parameterValueToString(r.keyId, "keyId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+type DefaultAPIDeleteServiceAccountRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	saId string
+}
+
+func (r DefaultAPIDeleteServiceAccountRequest) Execute() (*http.Response, error) {
+	return r.ApiService.DeleteServiceAccountExecute(r)
+}
+
+/*
+DeleteServiceAccount Delete Service Account Endpoint
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param saId
+ @return DefaultAPIDeleteServiceAccountRequest
+*/
+func (a *DefaultAPIService) DeleteServiceAccount(ctx context.Context, saId string) DefaultAPIDeleteServiceAccountRequest {
+	return DefaultAPIDeleteServiceAccountRequest{
+		ApiService: a,
+		ctx: ctx,
+		saId: saId,
+	}
+}
+
+// Execute executes the request
+func (a *DefaultAPIService) DeleteServiceAccountExecute(r DefaultAPIDeleteServiceAccountRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteServiceAccount")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/service-accounts/{sa_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -1673,56 +2457,48 @@ func (a *DefaultAPIService) DeleteUserExecute(r DefaultAPIDeleteUserRequest) (*h
 	return localVarHTTPResponse, nil
 }
 
-type DefaultAPIGetBankPermissionRequest struct {
+type DefaultAPIGetBankPolicyRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
 	bankId string
-	scopeType string
-	scopeId string
 }
 
-func (r DefaultAPIGetBankPermissionRequest) Execute() (*BankPermissionResponse, *http.Response, error) {
-	return r.ApiService.GetBankPermissionExecute(r)
+func (r DefaultAPIGetBankPolicyRequest) Execute() (*BankPolicyResponse, *http.Response, error) {
+	return r.ApiService.GetBankPolicyExecute(r)
 }
 
 /*
-GetBankPermission Get Bank Permission
+GetBankPolicy Get Bank Policy Endpoint
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @param bankId
- @param scopeType
- @param scopeId
- @return DefaultAPIGetBankPermissionRequest
+ @return DefaultAPIGetBankPolicyRequest
 */
-func (a *DefaultAPIService) GetBankPermission(ctx context.Context, bankId string, scopeType string, scopeId string) DefaultAPIGetBankPermissionRequest {
-	return DefaultAPIGetBankPermissionRequest{
+func (a *DefaultAPIService) GetBankPolicy(ctx context.Context, bankId string) DefaultAPIGetBankPolicyRequest {
+	return DefaultAPIGetBankPolicyRequest{
 		ApiService: a,
 		ctx: ctx,
 		bankId: bankId,
-		scopeType: scopeType,
-		scopeId: scopeId,
 	}
 }
 
 // Execute executes the request
-//  @return BankPermissionResponse
-func (a *DefaultAPIService) GetBankPermissionExecute(r DefaultAPIGetBankPermissionRequest) (*BankPermissionResponse, *http.Response, error) {
+//  @return BankPolicyResponse
+func (a *DefaultAPIService) GetBankPolicyExecute(r DefaultAPIGetBankPolicyRequest) (*BankPolicyResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *BankPermissionResponse
+		localVarReturnValue  *BankPolicyResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetBankPermission")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetBankPolicy")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ext/hindclaw/banks/{bank_id}/permissions/{scope_type}/{scope_id}"
+	localVarPath := localBasePath + "/ext/hindclaw/banks/{bank_id}/policy"
 	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"scope_type"+"}", url.PathEscape(parameterValueToString(r.scopeType, "scopeType")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"scope_id"+"}", url.PathEscape(parameterValueToString(r.scopeId, "scopeId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -1798,7 +2574,7 @@ type DefaultAPIGetGroupRequest struct {
 	groupId string
 }
 
-func (r DefaultAPIGetGroupRequest) Execute() (*GroupResponse, *http.Response, error) {
+func (r DefaultAPIGetGroupRequest) Execute() (*GroupSummaryResponse, *http.Response, error) {
 	return r.ApiService.GetGroupExecute(r)
 }
 
@@ -1818,13 +2594,13 @@ func (a *DefaultAPIService) GetGroup(ctx context.Context, groupId string) Defaul
 }
 
 // Execute executes the request
-//  @return GroupResponse
-func (a *DefaultAPIService) GetGroupExecute(r DefaultAPIGetGroupRequest) (*GroupResponse, *http.Response, error) {
+//  @return GroupSummaryResponse
+func (a *DefaultAPIService) GetGroupExecute(r DefaultAPIGetGroupRequest) (*GroupSummaryResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *GroupResponse
+		localVarReturnValue  *GroupSummaryResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetGroup")
@@ -1834,6 +2610,228 @@ func (a *DefaultAPIService) GetGroupExecute(r DefaultAPIGetGroupRequest) (*Group
 
 	localVarPath := localBasePath + "/ext/hindclaw/groups/{group_id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"group_id"+"}", url.PathEscape(parameterValueToString(r.groupId, "groupId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIGetPolicyRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	policyId string
+}
+
+func (r DefaultAPIGetPolicyRequest) Execute() (*PolicyResponse, *http.Response, error) {
+	return r.ApiService.GetPolicyExecute(r)
+}
+
+/*
+GetPolicy Get Policy Endpoint
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param policyId
+ @return DefaultAPIGetPolicyRequest
+*/
+func (a *DefaultAPIService) GetPolicy(ctx context.Context, policyId string) DefaultAPIGetPolicyRequest {
+	return DefaultAPIGetPolicyRequest{
+		ApiService: a,
+		ctx: ctx,
+		policyId: policyId,
+	}
+}
+
+// Execute executes the request
+//  @return PolicyResponse
+func (a *DefaultAPIService) GetPolicyExecute(r DefaultAPIGetPolicyRequest) (*PolicyResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *PolicyResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetPolicy")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/policies/{policy_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"policy_id"+"}", url.PathEscape(parameterValueToString(r.policyId, "policyId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIGetServiceAccountRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	saId string
+}
+
+func (r DefaultAPIGetServiceAccountRequest) Execute() (*ServiceAccountResponse, *http.Response, error) {
+	return r.ApiService.GetServiceAccountExecute(r)
+}
+
+/*
+GetServiceAccount Get Service Account Endpoint
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param saId
+ @return DefaultAPIGetServiceAccountRequest
+*/
+func (a *DefaultAPIService) GetServiceAccount(ctx context.Context, saId string) DefaultAPIGetServiceAccountRequest {
+	return DefaultAPIGetServiceAccountRequest{
+		ApiService: a,
+		ctx: ctx,
+		saId: saId,
+	}
+}
+
+// Execute executes the request
+//  @return ServiceAccountResponse
+func (a *DefaultAPIService) GetServiceAccountExecute(r DefaultAPIGetServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ServiceAccountResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetServiceAccount")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/service-accounts/{sa_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -2127,117 +3125,6 @@ func (a *DefaultAPIService) ListApiKeysExecute(r DefaultAPIListApiKeysRequest) (
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type DefaultAPIListBankPermissionsRequest struct {
-	ctx context.Context
-	ApiService DefaultAPI
-	bankId string
-}
-
-func (r DefaultAPIListBankPermissionsRequest) Execute() ([]BankPermissionResponse, *http.Response, error) {
-	return r.ApiService.ListBankPermissionsExecute(r)
-}
-
-/*
-ListBankPermissions List Bank Permissions
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return DefaultAPIListBankPermissionsRequest
-*/
-func (a *DefaultAPIService) ListBankPermissions(ctx context.Context, bankId string) DefaultAPIListBankPermissionsRequest {
-	return DefaultAPIListBankPermissionsRequest{
-		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-	}
-}
-
-// Execute executes the request
-//  @return []BankPermissionResponse
-func (a *DefaultAPIService) ListBankPermissionsExecute(r DefaultAPIListBankPermissionsRequest) ([]BankPermissionResponse, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  []BankPermissionResponse
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListBankPermissions")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/ext/hindclaw/banks/{bank_id}/permissions"
-	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 422 {
-			var v HTTPValidationError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
 type DefaultAPIListGroupMembersRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
@@ -2446,48 +3333,262 @@ func (a *DefaultAPIService) ListGroupsExecute(r DefaultAPIListGroupsRequest) ([]
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type DefaultAPIListStrategiesRequest struct {
+type DefaultAPIListPoliciesRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
-	bankId string
 }
 
-func (r DefaultAPIListStrategiesRequest) Execute() ([]StrategyScopeResponse, *http.Response, error) {
-	return r.ApiService.ListStrategiesExecute(r)
+func (r DefaultAPIListPoliciesRequest) Execute() ([]PolicyResponse, *http.Response, error) {
+	return r.ApiService.ListPoliciesExecute(r)
 }
 
 /*
-ListStrategies List Strategies
+ListPolicies List Policies
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return DefaultAPIListStrategiesRequest
+ @return DefaultAPIListPoliciesRequest
 */
-func (a *DefaultAPIService) ListStrategies(ctx context.Context, bankId string) DefaultAPIListStrategiesRequest {
-	return DefaultAPIListStrategiesRequest{
+func (a *DefaultAPIService) ListPolicies(ctx context.Context) DefaultAPIListPoliciesRequest {
+	return DefaultAPIListPoliciesRequest{
 		ApiService: a,
 		ctx: ctx,
-		bankId: bankId,
 	}
 }
 
 // Execute executes the request
-//  @return []StrategyScopeResponse
-func (a *DefaultAPIService) ListStrategiesExecute(r DefaultAPIListStrategiesRequest) ([]StrategyScopeResponse, *http.Response, error) {
+//  @return []PolicyResponse
+func (a *DefaultAPIService) ListPoliciesExecute(r DefaultAPIListPoliciesRequest) ([]PolicyResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodGet
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  []StrategyScopeResponse
+		localVarReturnValue  []PolicyResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListStrategies")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListPolicies")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ext/hindclaw/banks/{bank_id}/strategies"
-	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+	localVarPath := localBasePath + "/ext/hindclaw/policies"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIListPolicyAttachmentsRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	policyId *string
+}
+
+func (r DefaultAPIListPolicyAttachmentsRequest) PolicyId(policyId string) DefaultAPIListPolicyAttachmentsRequest {
+	r.policyId = &policyId
+	return r
+}
+
+func (r DefaultAPIListPolicyAttachmentsRequest) Execute() ([]PolicyAttachmentResponse, *http.Response, error) {
+	return r.ApiService.ListPolicyAttachmentsExecute(r)
+}
+
+/*
+ListPolicyAttachments List Attachments
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return DefaultAPIListPolicyAttachmentsRequest
+*/
+func (a *DefaultAPIService) ListPolicyAttachments(ctx context.Context) DefaultAPIListPolicyAttachmentsRequest {
+	return DefaultAPIListPolicyAttachmentsRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return []PolicyAttachmentResponse
+func (a *DefaultAPIService) ListPolicyAttachmentsExecute(r DefaultAPIListPolicyAttachmentsRequest) ([]PolicyAttachmentResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  []PolicyAttachmentResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListPolicyAttachments")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/policy-attachments"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.policyId == nil {
+		return localVarReturnValue, nil, reportError("policyId is required and must be specified")
+	}
+
+	parameterAddToHeaderOrQuery(localVarQueryParams, "policy_id", r.policyId, "form", "")
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIListSaKeysRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	saId string
+}
+
+func (r DefaultAPIListSaKeysRequest) Execute() ([]SAKeyResponse, *http.Response, error) {
+	return r.ApiService.ListSaKeysExecute(r)
+}
+
+/*
+ListSaKeys List Sa Keys
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param saId
+ @return DefaultAPIListSaKeysRequest
+*/
+func (a *DefaultAPIService) ListSaKeys(ctx context.Context, saId string) DefaultAPIListSaKeysRequest {
+	return DefaultAPIListSaKeysRequest{
+		ApiService: a,
+		ctx: ctx,
+		saId: saId,
+	}
+}
+
+// Execute executes the request
+//  @return []SAKeyResponse
+func (a *DefaultAPIService) ListSaKeysExecute(r DefaultAPIListSaKeysRequest) ([]SAKeyResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  []SAKeyResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListSaKeys")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/service-accounts/{sa_id}/keys"
+	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -2541,6 +3642,103 @@ func (a *DefaultAPIService) ListStrategiesExecute(r DefaultAPIListStrategiesRequ
 			}
 					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIListServiceAccountsRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+}
+
+func (r DefaultAPIListServiceAccountsRequest) Execute() ([]ServiceAccountResponse, *http.Response, error) {
+	return r.ApiService.ListServiceAccountsExecute(r)
+}
+
+/*
+ListServiceAccounts List Service Accounts
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return DefaultAPIListServiceAccountsRequest
+*/
+func (a *DefaultAPIService) ListServiceAccounts(ctx context.Context) DefaultAPIListServiceAccountsRequest {
+	return DefaultAPIListServiceAccountsRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return []ServiceAccountResponse
+func (a *DefaultAPIService) ListServiceAccountsExecute(r DefaultAPIListServiceAccountsRequest) ([]ServiceAccountResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  []ServiceAccountResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListServiceAccounts")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/service-accounts"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2989,7 +4187,7 @@ func (r DefaultAPIUpdateGroupRequest) UpdateGroupRequest(updateGroupRequest Upda
 	return r
 }
 
-func (r DefaultAPIUpdateGroupRequest) Execute() (*GroupResponse, *http.Response, error) {
+func (r DefaultAPIUpdateGroupRequest) Execute() (*GroupSummaryResponse, *http.Response, error) {
 	return r.ApiService.UpdateGroupExecute(r)
 }
 
@@ -3009,13 +4207,13 @@ func (a *DefaultAPIService) UpdateGroup(ctx context.Context, groupId string) Def
 }
 
 // Execute executes the request
-//  @return GroupResponse
-func (a *DefaultAPIService) UpdateGroupExecute(r DefaultAPIUpdateGroupRequest) (*GroupResponse, *http.Response, error) {
+//  @return GroupSummaryResponse
+func (a *DefaultAPIService) UpdateGroupExecute(r DefaultAPIUpdateGroupRequest) (*GroupSummaryResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *GroupResponse
+		localVarReturnValue  *GroupSummaryResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpdateGroup")
@@ -3052,6 +4250,250 @@ func (a *DefaultAPIService) UpdateGroupExecute(r DefaultAPIUpdateGroupRequest) (
 	}
 	// body params
 	localVarPostBody = r.updateGroupRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIUpdatePolicyRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	policyId string
+	updatePolicyRequest *UpdatePolicyRequest
+}
+
+func (r DefaultAPIUpdatePolicyRequest) UpdatePolicyRequest(updatePolicyRequest UpdatePolicyRequest) DefaultAPIUpdatePolicyRequest {
+	r.updatePolicyRequest = &updatePolicyRequest
+	return r
+}
+
+func (r DefaultAPIUpdatePolicyRequest) Execute() (*PolicyResponse, *http.Response, error) {
+	return r.ApiService.UpdatePolicyExecute(r)
+}
+
+/*
+UpdatePolicy Update Policy Endpoint
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param policyId
+ @return DefaultAPIUpdatePolicyRequest
+*/
+func (a *DefaultAPIService) UpdatePolicy(ctx context.Context, policyId string) DefaultAPIUpdatePolicyRequest {
+	return DefaultAPIUpdatePolicyRequest{
+		ApiService: a,
+		ctx: ctx,
+		policyId: policyId,
+	}
+}
+
+// Execute executes the request
+//  @return PolicyResponse
+func (a *DefaultAPIService) UpdatePolicyExecute(r DefaultAPIUpdatePolicyRequest) (*PolicyResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPut
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *PolicyResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpdatePolicy")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/policies/{policy_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"policy_id"+"}", url.PathEscape(parameterValueToString(r.policyId, "policyId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.updatePolicyRequest == nil {
+		return localVarReturnValue, nil, reportError("updatePolicyRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.updatePolicyRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIUpdateServiceAccountRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	saId string
+	updateServiceAccountRequest *UpdateServiceAccountRequest
+}
+
+func (r DefaultAPIUpdateServiceAccountRequest) UpdateServiceAccountRequest(updateServiceAccountRequest UpdateServiceAccountRequest) DefaultAPIUpdateServiceAccountRequest {
+	r.updateServiceAccountRequest = &updateServiceAccountRequest
+	return r
+}
+
+func (r DefaultAPIUpdateServiceAccountRequest) Execute() (*ServiceAccountResponse, *http.Response, error) {
+	return r.ApiService.UpdateServiceAccountExecute(r)
+}
+
+/*
+UpdateServiceAccount Update Service Account Endpoint
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param saId
+ @return DefaultAPIUpdateServiceAccountRequest
+*/
+func (a *DefaultAPIService) UpdateServiceAccount(ctx context.Context, saId string) DefaultAPIUpdateServiceAccountRequest {
+	return DefaultAPIUpdateServiceAccountRequest{
+		ApiService: a,
+		ctx: ctx,
+		saId: saId,
+	}
+}
+
+// Execute executes the request
+//  @return ServiceAccountResponse
+func (a *DefaultAPIService) UpdateServiceAccountExecute(r DefaultAPIUpdateServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPut
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ServiceAccountResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpdateServiceAccount")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/service-accounts/{sa_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.updateServiceAccountRequest == nil {
+		return localVarReturnValue, nil, reportError("updateServiceAccountRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.updateServiceAccountRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -3221,64 +4663,60 @@ func (a *DefaultAPIService) UpdateUserExecute(r DefaultAPIUpdateUserRequest) (*U
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type DefaultAPIUpsertGroupPermissionRequest struct {
+type DefaultAPIUpsertBankPolicyRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
 	bankId string
-	groupId string
-	bankPermissionRequest *BankPermissionRequest
+	upsertBankPolicyRequest *UpsertBankPolicyRequest
 }
 
-func (r DefaultAPIUpsertGroupPermissionRequest) BankPermissionRequest(bankPermissionRequest BankPermissionRequest) DefaultAPIUpsertGroupPermissionRequest {
-	r.bankPermissionRequest = &bankPermissionRequest
+func (r DefaultAPIUpsertBankPolicyRequest) UpsertBankPolicyRequest(upsertBankPolicyRequest UpsertBankPolicyRequest) DefaultAPIUpsertBankPolicyRequest {
+	r.upsertBankPolicyRequest = &upsertBankPolicyRequest
 	return r
 }
 
-func (r DefaultAPIUpsertGroupPermissionRequest) Execute() (*UpsertConfirmation, *http.Response, error) {
-	return r.ApiService.UpsertGroupPermissionExecute(r)
+func (r DefaultAPIUpsertBankPolicyRequest) Execute() (*BankPolicyResponse, *http.Response, error) {
+	return r.ApiService.UpsertBankPolicyExecute(r)
 }
 
 /*
-UpsertGroupPermission Upsert Group Bank Permission
+UpsertBankPolicy Upsert Bank Policy Endpoint
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @param bankId
- @param groupId
- @return DefaultAPIUpsertGroupPermissionRequest
+ @return DefaultAPIUpsertBankPolicyRequest
 */
-func (a *DefaultAPIService) UpsertGroupPermission(ctx context.Context, bankId string, groupId string) DefaultAPIUpsertGroupPermissionRequest {
-	return DefaultAPIUpsertGroupPermissionRequest{
+func (a *DefaultAPIService) UpsertBankPolicy(ctx context.Context, bankId string) DefaultAPIUpsertBankPolicyRequest {
+	return DefaultAPIUpsertBankPolicyRequest{
 		ApiService: a,
 		ctx: ctx,
 		bankId: bankId,
-		groupId: groupId,
 	}
 }
 
 // Execute executes the request
-//  @return UpsertConfirmation
-func (a *DefaultAPIService) UpsertGroupPermissionExecute(r DefaultAPIUpsertGroupPermissionRequest) (*UpsertConfirmation, *http.Response, error) {
+//  @return BankPolicyResponse
+func (a *DefaultAPIService) UpsertBankPolicyExecute(r DefaultAPIUpsertBankPolicyRequest) (*BankPolicyResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *UpsertConfirmation
+		localVarReturnValue  *BankPolicyResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpsertGroupPermission")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpsertBankPolicy")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ext/hindclaw/banks/{bank_id}/permissions/groups/{group_id}"
+	localVarPath := localBasePath + "/ext/hindclaw/banks/{bank_id}/policy"
 	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"group_id"+"}", url.PathEscape(parameterValueToString(r.groupId, "groupId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.bankPermissionRequest == nil {
-		return localVarReturnValue, nil, reportError("bankPermissionRequest is required and must be specified")
+	if r.upsertBankPolicyRequest == nil {
+		return localVarReturnValue, nil, reportError("upsertBankPolicyRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -3299,7 +4737,7 @@ func (a *DefaultAPIService) UpsertGroupPermissionExecute(r DefaultAPIUpsertGroup
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.bankPermissionRequest
+	localVarPostBody = r.upsertBankPolicyRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -3347,68 +4785,56 @@ func (a *DefaultAPIService) UpsertGroupPermissionExecute(r DefaultAPIUpsertGroup
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type DefaultAPIUpsertStrategyRequest struct {
+type DefaultAPIUpsertPolicyAttachmentRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
-	bankId string
-	scopeType string
-	scopeValue string
-	strategyRequest *StrategyRequest
+	createPolicyAttachmentRequest *CreatePolicyAttachmentRequest
 }
 
-func (r DefaultAPIUpsertStrategyRequest) StrategyRequest(strategyRequest StrategyRequest) DefaultAPIUpsertStrategyRequest {
-	r.strategyRequest = &strategyRequest
+func (r DefaultAPIUpsertPolicyAttachmentRequest) CreatePolicyAttachmentRequest(createPolicyAttachmentRequest CreatePolicyAttachmentRequest) DefaultAPIUpsertPolicyAttachmentRequest {
+	r.createPolicyAttachmentRequest = &createPolicyAttachmentRequest
 	return r
 }
 
-func (r DefaultAPIUpsertStrategyRequest) Execute() (*StrategyUpsertConfirmation, *http.Response, error) {
-	return r.ApiService.UpsertStrategyExecute(r)
+func (r DefaultAPIUpsertPolicyAttachmentRequest) Execute() (*PolicyAttachmentResponse, *http.Response, error) {
+	return r.ApiService.UpsertPolicyAttachmentExecute(r)
 }
 
 /*
-UpsertStrategy Upsert Strategy
+UpsertPolicyAttachment Upsert Attachment
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param scopeType
- @param scopeValue
- @return DefaultAPIUpsertStrategyRequest
+ @return DefaultAPIUpsertPolicyAttachmentRequest
 */
-func (a *DefaultAPIService) UpsertStrategy(ctx context.Context, bankId string, scopeType string, scopeValue string) DefaultAPIUpsertStrategyRequest {
-	return DefaultAPIUpsertStrategyRequest{
+func (a *DefaultAPIService) UpsertPolicyAttachment(ctx context.Context) DefaultAPIUpsertPolicyAttachmentRequest {
+	return DefaultAPIUpsertPolicyAttachmentRequest{
 		ApiService: a,
 		ctx: ctx,
-		bankId: bankId,
-		scopeType: scopeType,
-		scopeValue: scopeValue,
 	}
 }
 
 // Execute executes the request
-//  @return StrategyUpsertConfirmation
-func (a *DefaultAPIService) UpsertStrategyExecute(r DefaultAPIUpsertStrategyRequest) (*StrategyUpsertConfirmation, *http.Response, error) {
+//  @return PolicyAttachmentResponse
+func (a *DefaultAPIService) UpsertPolicyAttachmentExecute(r DefaultAPIUpsertPolicyAttachmentRequest) (*PolicyAttachmentResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPut
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *StrategyUpsertConfirmation
+		localVarReturnValue  *PolicyAttachmentResponse
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpsertStrategy")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpsertPolicyAttachment")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/ext/hindclaw/banks/{bank_id}/strategies/{scope_type}/{scope_value}"
-	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"scope_type"+"}", url.PathEscape(parameterValueToString(r.scopeType, "scopeType")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"scope_value"+"}", url.PathEscape(parameterValueToString(r.scopeValue, "scopeValue")), -1)
+	localVarPath := localBasePath + "/ext/hindclaw/policy-attachments"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.strategyRequest == nil {
-		return localVarReturnValue, nil, reportError("strategyRequest is required and must be specified")
+	if r.createPolicyAttachmentRequest == nil {
+		return localVarReturnValue, nil, reportError("createPolicyAttachmentRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -3429,133 +4855,7 @@ func (a *DefaultAPIService) UpsertStrategyExecute(r DefaultAPIUpsertStrategyRequ
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.strategyRequest
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 422 {
-			var v HTTPValidationError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type DefaultAPIUpsertUserPermissionRequest struct {
-	ctx context.Context
-	ApiService DefaultAPI
-	bankId string
-	userId string
-	bankPermissionRequest *BankPermissionRequest
-}
-
-func (r DefaultAPIUpsertUserPermissionRequest) BankPermissionRequest(bankPermissionRequest BankPermissionRequest) DefaultAPIUpsertUserPermissionRequest {
-	r.bankPermissionRequest = &bankPermissionRequest
-	return r
-}
-
-func (r DefaultAPIUpsertUserPermissionRequest) Execute() (*UpsertConfirmation, *http.Response, error) {
-	return r.ApiService.UpsertUserPermissionExecute(r)
-}
-
-/*
-UpsertUserPermission Upsert User Bank Permission
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param userId
- @return DefaultAPIUpsertUserPermissionRequest
-*/
-func (a *DefaultAPIService) UpsertUserPermission(ctx context.Context, bankId string, userId string) DefaultAPIUpsertUserPermissionRequest {
-	return DefaultAPIUpsertUserPermissionRequest{
-		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		userId: userId,
-	}
-}
-
-// Execute executes the request
-//  @return UpsertConfirmation
-func (a *DefaultAPIService) UpsertUserPermissionExecute(r DefaultAPIUpsertUserPermissionRequest) (*UpsertConfirmation, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodPut
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *UpsertConfirmation
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpsertUserPermission")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/ext/hindclaw/banks/{bank_id}/permissions/users/{user_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", url.PathEscape(parameterValueToString(r.userId, "userId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.bankPermissionRequest == nil {
-		return localVarReturnValue, nil, reportError("bankPermissionRequest is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// body params
-	localVarPostBody = r.bankPermissionRequest
+	localVarPostBody = r.createPolicyAttachmentRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

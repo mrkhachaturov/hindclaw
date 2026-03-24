@@ -311,7 +311,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GroupResponse'
+                $ref: '#/components/schemas/GroupSummaryResponse'
           description: Successful Response
         "422":
           content:
@@ -344,7 +344,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GroupResponse'
+                $ref: '#/components/schemas/GroupSummaryResponse'
           description: Successful Response
         "422":
           content:
@@ -450,322 +450,6 @@ paths:
       security:
       - HTTPBearer: []
       summary: Remove Group Member
-  /ext/hindclaw/banks/{bank_id}/permissions:
-    get:
-      operationId: list_bank_permissions
-      parameters:
-      - explode: false
-        in: path
-        name: bank_id
-        required: true
-        schema:
-          title: Bank Id
-          type: string
-        style: simple
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/BankPermissionResponse'
-                type: array
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: List Bank Permissions
-  /ext/hindclaw/banks/{bank_id}/permissions/{scope_type}/{scope_id}:
-    delete:
-      operationId: delete_bank_permission
-      parameters:
-      - explode: false
-        in: path
-        name: bank_id
-        required: true
-        schema:
-          title: Bank Id
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: scope_type
-        required: true
-        schema:
-          title: Scope Type
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: scope_id
-        required: true
-        schema:
-          title: Scope Id
-          type: string
-        style: simple
-      responses:
-        "204":
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Delete Bank Permission
-    get:
-      operationId: get_bank_permission
-      parameters:
-      - explode: false
-        in: path
-        name: bank_id
-        required: true
-        schema:
-          title: Bank Id
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: scope_type
-        required: true
-        schema:
-          title: Scope Type
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: scope_id
-        required: true
-        schema:
-          title: Scope Id
-          type: string
-        style: simple
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BankPermissionResponse'
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Get Bank Permission
-  /ext/hindclaw/banks/{bank_id}/permissions/groups/{group_id}:
-    put:
-      operationId: upsert_group_permission
-      parameters:
-      - explode: false
-        in: path
-        name: bank_id
-        required: true
-        schema:
-          title: Bank Id
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: group_id
-        required: true
-        schema:
-          title: Group Id
-          type: string
-        style: simple
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BankPermissionRequest'
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpsertConfirmation'
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Upsert Group Bank Permission
-  /ext/hindclaw/banks/{bank_id}/permissions/users/{user_id}:
-    put:
-      operationId: upsert_user_permission
-      parameters:
-      - explode: false
-        in: path
-        name: bank_id
-        required: true
-        schema:
-          title: Bank Id
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: user_id
-        required: true
-        schema:
-          title: User Id
-          type: string
-        style: simple
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BankPermissionRequest'
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpsertConfirmation'
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Upsert User Bank Permission
-  /ext/hindclaw/banks/{bank_id}/strategies:
-    get:
-      operationId: list_strategies
-      parameters:
-      - explode: false
-        in: path
-        name: bank_id
-        required: true
-        schema:
-          title: Bank Id
-          type: string
-        style: simple
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/StrategyScopeResponse'
-                type: array
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: List Strategies
-  /ext/hindclaw/banks/{bank_id}/strategies/{scope_type}/{scope_value}:
-    delete:
-      operationId: delete_strategy
-      parameters:
-      - explode: false
-        in: path
-        name: bank_id
-        required: true
-        schema:
-          title: Bank Id
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: scope_type
-        required: true
-        schema:
-          title: Scope Type
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: scope_value
-        required: true
-        schema:
-          title: Scope Value
-          type: string
-        style: simple
-      responses:
-        "204":
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Delete Strategy
-    put:
-      operationId: upsert_strategy
-      parameters:
-      - explode: false
-        in: path
-        name: bank_id
-        required: true
-        schema:
-          title: Bank Id
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: scope_type
-        required: true
-        schema:
-          title: Scope Type
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: scope_value
-        required: true
-        schema:
-          title: Scope Value
-          type: string
-        style: simple
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StrategyRequest'
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StrategyUpsertConfirmation'
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Upsert Strategy
   /ext/hindclaw/users/{user_id}/api-keys:
     get:
       description: List API keys for a user. Keys are masked after creation.
@@ -862,9 +546,529 @@ paths:
       security:
       - HTTPBearer: []
       summary: Delete Api Key
+  /ext/hindclaw/policies:
+    get:
+      operationId: list_policies
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PolicyResponse'
+                type: array
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: List Policies
+    post:
+      operationId: create_policy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePolicyRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create Policy
+  /ext/hindclaw/policies/{policy_id}:
+    delete:
+      operationId: delete_policy
+      parameters:
+      - explode: false
+        in: path
+        name: policy_id
+        required: true
+        schema:
+          title: Policy Id
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete Policy Endpoint
+    get:
+      operationId: get_policy
+      parameters:
+      - explode: false
+        in: path
+        name: policy_id
+        required: true
+        schema:
+          title: Policy Id
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Get Policy Endpoint
+    put:
+      operationId: update_policy
+      parameters:
+      - explode: false
+        in: path
+        name: policy_id
+        required: true
+        schema:
+          title: Policy Id
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePolicyRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Update Policy Endpoint
+  /ext/hindclaw/policy-attachments:
+    get:
+      operationId: list_policy_attachments
+      parameters:
+      - explode: true
+        in: query
+        name: policy_id
+        required: true
+        schema:
+          title: Policy Id
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PolicyAttachmentResponse'
+                type: array
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: List Attachments
+    put:
+      operationId: upsert_policy_attachment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePolicyAttachmentRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyAttachmentResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Upsert Attachment
+  /ext/hindclaw/policy-attachments/{policy_id}/{principal_type}/{principal_id}:
+    delete:
+      operationId: delete_policy_attachment
+      parameters:
+      - explode: false
+        in: path
+        name: policy_id
+        required: true
+        schema:
+          title: Policy Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: principal_type
+        required: true
+        schema:
+          title: Principal Type
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: principal_id
+        required: true
+        schema:
+          title: Principal Id
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete Attachment
+  /ext/hindclaw/service-accounts:
+    get:
+      operationId: list_service_accounts
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ServiceAccountResponse'
+                type: array
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: List Service Accounts
+    post:
+      operationId: create_service_account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateServiceAccountRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAccountResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create Service Account
+  /ext/hindclaw/service-accounts/{sa_id}:
+    delete:
+      operationId: delete_service_account
+      parameters:
+      - explode: false
+        in: path
+        name: sa_id
+        required: true
+        schema:
+          title: Sa Id
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete Service Account Endpoint
+    get:
+      operationId: get_service_account
+      parameters:
+      - explode: false
+        in: path
+        name: sa_id
+        required: true
+        schema:
+          title: Sa Id
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAccountResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Get Service Account Endpoint
+    put:
+      operationId: update_service_account
+      parameters:
+      - explode: false
+        in: path
+        name: sa_id
+        required: true
+        schema:
+          title: Sa Id
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateServiceAccountRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAccountResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Update Service Account Endpoint
+  /ext/hindclaw/service-accounts/{sa_id}/keys:
+    get:
+      operationId: list_sa_keys
+      parameters:
+      - explode: false
+        in: path
+        name: sa_id
+        required: true
+        schema:
+          title: Sa Id
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SAKeyResponse'
+                type: array
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: List Sa Keys
+    post:
+      operationId: create_sa_key
+      parameters:
+      - explode: false
+        in: path
+        name: sa_id
+        required: true
+        schema:
+          title: Sa Id
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSAKeyRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SAKeyCreateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create Sa Key
+  /ext/hindclaw/service-accounts/{sa_id}/keys/{key_id}:
+    delete:
+      operationId: delete_sa_key
+      parameters:
+      - explode: false
+        in: path
+        name: sa_id
+        required: true
+        schema:
+          title: Sa Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: key_id
+        required: true
+        schema:
+          title: Key Id
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete Sa Key
+  /ext/hindclaw/banks/{bank_id}/policy:
+    delete:
+      operationId: delete_bank_policy
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete Bank Policy Endpoint
+    get:
+      operationId: get_bank_policy
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankPolicyResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Get Bank Policy Endpoint
+    put:
+      operationId: upsert_bank_policy
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertBankPolicyRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankPolicyResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Upsert Bank Policy Endpoint
   /ext/hindclaw/debug/resolve:
     get:
-      description: Resolve and return full permissions for a given context.
+      description: Resolve and return effective access policy + bank policy for a
+        context.
       operationId: debug_resolve
       parameters:
       - explode: true
@@ -877,6 +1081,15 @@ paths:
         style: form
       - explode: true
         in: query
+        name: action
+        required: false
+        schema:
+          default: bank:recall
+          title: Action
+          type: string
+        style: form
+      - explode: true
+        in: query
         name: sender
         required: false
         schema:
@@ -885,7 +1098,7 @@ paths:
         style: form
       - explode: true
         in: query
-        name: agent
+        name: user_id
         required: false
         schema:
           nullable: true
@@ -893,15 +1106,7 @@ paths:
         style: form
       - explode: true
         in: query
-        name: channel
-        required: false
-        schema:
-          nullable: true
-          type: string
-        style: form
-      - explode: true
-        in: query
-        name: topic
+        name: sa_id
         required: false
         schema:
           nullable: true
@@ -911,8 +1116,7 @@ paths:
         "200":
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/ResolvedPermissionsResponse'
+              schema: {}
           description: Successful Response
         "422":
           content:
@@ -990,164 +1194,24 @@ components:
       - api_key_prefix
       - id
       title: ApiKeyResponse
-    BankPermissionRequest:
+    BankPolicyResponse:
+      description: Bank policy resource.
       example:
-        recall_tag_groups:
-        - key: ""
-        - key: ""
-        llm_model: llm_model
-        exclude_providers:
-        - exclude_providers
-        - exclude_providers
-        recall: true
-        retain: true
-        retain_roles:
-        - retain_roles
-        - retain_roles
-        llm_provider: llm_provider
-        retain_strategy: retain_strategy
-        retain_tags:
-        - retain_tags
-        - retain_tags
-        retain_every_n_turns: 0
-        recall_budget: recall_budget
-        recall_max_tokens: 6
-      properties:
-        recall:
-          nullable: true
-          type: boolean
-        retain:
-          nullable: true
-          type: boolean
-        retain_roles:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_tags:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_every_n_turns:
-          nullable: true
-          type: integer
-        recall_budget:
-          nullable: true
-          type: string
-        recall_max_tokens:
-          nullable: true
-          type: integer
-        recall_tag_groups:
-          items:
-            additionalProperties: true
-            type: object
-          nullable: true
-          type: array
-        llm_model:
-          nullable: true
-          type: string
-        llm_provider:
-          nullable: true
-          type: string
-        exclude_providers:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_strategy:
-          nullable: true
-          type: string
-      title: BankPermissionRequest
-    BankPermissionResponse:
-      description: |-
-        Bank-level permission entry with scope identifiers.
-
-        Returned by GET /banks/:bank/permissions endpoints.
-      example:
-        recall_tag_groups:
-        - key: ""
-        - key: ""
-        llm_model: llm_model
-        retain: true
-        retain_roles:
-        - retain_roles
-        - retain_roles
-        retain_tags:
-        - retain_tags
-        - retain_tags
-        recall_budget: recall_budget
-        exclude_providers:
-        - exclude_providers
-        - exclude_providers
-        scope_id: scope_id
         bank_id: bank_id
-        recall: true
-        llm_provider: llm_provider
-        retain_strategy: retain_strategy
-        scope_type: scope_type
-        retain_every_n_turns: 0
-        recall_max_tokens: 6
+        document:
+          key: ""
       properties:
         bank_id:
           title: Bank Id
           type: string
-        scope_type:
-          title: Scope Type
-          type: string
-        scope_id:
-          title: Scope Id
-          type: string
-        recall:
-          nullable: true
-          type: boolean
-        retain:
-          nullable: true
-          type: boolean
-        retain_roles:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_tags:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_every_n_turns:
-          nullable: true
-          type: integer
-        recall_budget:
-          nullable: true
-          type: string
-        recall_max_tokens:
-          nullable: true
-          type: integer
-        recall_tag_groups:
-          items:
-            additionalProperties: true
-            type: object
-          nullable: true
-          type: array
-        llm_model:
-          nullable: true
-          type: string
-        llm_provider:
-          nullable: true
-          type: string
-        exclude_providers:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_strategy:
-          nullable: true
-          type: string
+        document:
+          additionalProperties: true
+          title: Document
+          type: object
       required:
       - bank_id
-      - scope_id
-      - scope_type
-      title: BankPermissionResponse
+      - document
+      title: BankPolicyResponse
     ChannelResponse:
       description: Channel mapping returned by GET/POST endpoints.
       example:
@@ -1174,28 +1238,8 @@ components:
       title: CreateApiKeyRequest
     CreateGroupRequest:
       example:
-        recall_tag_groups:
-        - key: ""
-        - key: ""
-        llm_model: llm_model
-        retain: true
-        retain_roles:
-        - retain_roles
-        - retain_roles
-        retain_tags:
-        - retain_tags
-        - retain_tags
-        display_name: display_name
-        recall_budget: recall_budget
-        exclude_providers:
-        - exclude_providers
-        - exclude_providers
-        recall: true
-        llm_provider: llm_provider
-        retain_strategy: retain_strategy
         id: id
-        retain_every_n_turns: 0
-        recall_max_tokens: 6
+        display_name: display_name
       properties:
         id:
           title: Id
@@ -1203,55 +1247,93 @@ components:
         display_name:
           title: Display Name
           type: string
-        recall:
-          nullable: true
-          type: boolean
-        retain:
-          nullable: true
-          type: boolean
-        retain_roles:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_tags:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_every_n_turns:
-          nullable: true
+      required:
+      - display_name
+      - id
+      title: CreateGroupRequest
+    CreatePolicyAttachmentRequest:
+      description: Request to attach a policy to a principal.
+      example:
+        policy_id: policy_id
+        principal_type: principal_type
+        priority: 0
+        principal_id: principal_id
+      properties:
+        policy_id:
+          title: Policy Id
+          type: string
+        principal_type:
+          title: Principal Type
+          type: string
+        principal_id:
+          title: Principal Id
+          type: string
+        priority:
+          default: 0
+          title: Priority
           type: integer
-        recall_budget:
+      required:
+      - policy_id
+      - principal_id
+      - principal_type
+      title: CreatePolicyAttachmentRequest
+    CreatePolicyRequest:
+      description: Request to create an access policy.
+      example:
+        document:
+          key: ""
+        id: id
+        display_name: display_name
+      properties:
+        id:
+          title: Id
+          type: string
+        display_name:
+          title: Display Name
+          type: string
+        document:
+          additionalProperties: true
+          title: Document
+          type: object
+      required:
+      - display_name
+      - document
+      - id
+      title: CreatePolicyRequest
+    CreateSAKeyRequest:
+      description: Request to create an SA API key.
+      example:
+        description: description
+      properties:
+        description:
           nullable: true
           type: string
-        recall_max_tokens:
-          nullable: true
-          type: integer
-        recall_tag_groups:
-          items:
-            additionalProperties: true
-            type: object
-          nullable: true
-          type: array
-        llm_model:
-          nullable: true
+      title: CreateSAKeyRequest
+    CreateServiceAccountRequest:
+      description: Request to create a service account.
+      example:
+        owner_user_id: owner_user_id
+        id: id
+        display_name: display_name
+        scoping_policy_id: scoping_policy_id
+      properties:
+        id:
+          title: Id
           type: string
-        llm_provider:
-          nullable: true
+        owner_user_id:
+          title: Owner User Id
           type: string
-        exclude_providers:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_strategy:
+        display_name:
+          title: Display Name
+          type: string
+        scoping_policy_id:
           nullable: true
           type: string
       required:
       - display_name
       - id
-      title: CreateGroupRequest
+      - owner_user_id
+      title: CreateServiceAccountRequest
     CreateUserRequest:
       example:
         id: id
@@ -1298,93 +1380,8 @@ components:
       - group_id
       - user_id
       title: GroupMembershipConfirmation
-    GroupResponse:
-      description: |-
-        Group resource with all permission fields.
-
-        Returned by GET /groups/:id and POST /groups.
-        Permission fields are nullable — None means "not set (inherit from global)."
-      example:
-        recall_tag_groups:
-        - key: ""
-        - key: ""
-        llm_model: llm_model
-        retain: true
-        retain_roles:
-        - retain_roles
-        - retain_roles
-        retain_tags:
-        - retain_tags
-        - retain_tags
-        display_name: display_name
-        recall_budget: recall_budget
-        exclude_providers:
-        - exclude_providers
-        - exclude_providers
-        recall: true
-        llm_provider: llm_provider
-        retain_strategy: retain_strategy
-        id: id
-        retain_every_n_turns: 0
-        recall_max_tokens: 6
-      properties:
-        id:
-          title: Id
-          type: string
-        display_name:
-          title: Display Name
-          type: string
-        recall:
-          nullable: true
-          type: boolean
-        retain:
-          nullable: true
-          type: boolean
-        retain_roles:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_tags:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_every_n_turns:
-          nullable: true
-          type: integer
-        recall_budget:
-          nullable: true
-          type: string
-        recall_max_tokens:
-          nullable: true
-          type: integer
-        recall_tag_groups:
-          items:
-            additionalProperties: true
-            type: object
-          nullable: true
-          type: array
-        llm_model:
-          nullable: true
-          type: string
-        llm_provider:
-          nullable: true
-          type: string
-        exclude_providers:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_strategy:
-          nullable: true
-          type: string
-      required:
-      - display_name
-      - id
-      title: GroupResponse
     GroupSummaryResponse:
-      description: Group summary returned by GET /groups (list view).
+      description: Group resource (identity-only).
       example:
         id: id
         display_name: display_name
@@ -1422,234 +1419,173 @@ components:
             $ref: '#/components/schemas/ValidationError'
           type: array
       title: HTTPValidationError
-    ResolvedPermissionsResponse:
-      description: |-
-        Full resolved permissions returned by GET /debug/resolve.
-
-        Mirrors hindclaw_ext.models.ResolvedPermissions but as an HTTP response model.
+    PolicyAttachmentResponse:
+      description: Policy attachment resource.
       example:
-        recall_tag_groups:
-        - key: ""
-        - key: ""
-        llm_model: llm_model
-        retain: true
-        retain_roles:
-        - retain_roles
-        - retain_roles
-        retain_tags:
-        - retain_tags
-        - retain_tags
-        recall_budget: recall_budget
-        exclude_providers:
-        - exclude_providers
-        - exclude_providers
-        user_id: user_id
-        is_anonymous: true
-        recall: true
-        retain_strategy: retain_strategy
-        llm_provider: llm_provider
-        retain_every_n_turns: 0
-        recall_max_tokens: 6
+        policy_id: policy_id
+        principal_type: principal_type
+        priority: 0
+        principal_id: principal_id
       properties:
-        user_id:
-          title: User Id
+        policy_id:
+          title: Policy Id
           type: string
-        is_anonymous:
-          title: Is Anonymous
-          type: boolean
-        recall:
-          title: Recall
-          type: boolean
-        retain:
-          title: Retain
-          type: boolean
-        retain_roles:
-          items:
-            type: string
-          type: array
-        retain_tags:
-          items:
-            type: string
-          type: array
-        retain_every_n_turns:
-          title: Retain Every N Turns
+        principal_type:
+          title: Principal Type
+          type: string
+        principal_id:
+          title: Principal Id
+          type: string
+        priority:
+          title: Priority
           type: integer
-        retain_strategy:
-          nullable: true
-          type: string
-        recall_budget:
-          title: Recall Budget
-          type: string
-        recall_max_tokens:
-          title: Recall Max Tokens
-          type: integer
-        recall_tag_groups:
-          items:
-            additionalProperties: true
-            type: object
-          nullable: true
-          type: array
-        llm_model:
-          nullable: true
-          type: string
-        llm_provider:
-          nullable: true
-          type: string
-        exclude_providers:
-          items:
-            type: string
-          type: array
       required:
-      - exclude_providers
-      - is_anonymous
-      - llm_model
-      - llm_provider
-      - recall
-      - recall_budget
-      - recall_max_tokens
-      - recall_tag_groups
-      - retain
-      - retain_every_n_turns
-      - retain_roles
-      - retain_strategy
-      - retain_tags
-      - user_id
-      title: ResolvedPermissionsResponse
-    StrategyRequest:
+      - policy_id
+      - principal_id
+      - principal_type
+      - priority
+      title: PolicyAttachmentResponse
+    PolicyResponse:
+      description: Access policy resource.
       example:
-        strategy: strategy
+        document:
+          key: ""
+        id: id
+        display_name: display_name
+        is_builtin: true
       properties:
-        strategy:
-          title: Strategy
+        id:
+          title: Id
           type: string
+        display_name:
+          title: Display Name
+          type: string
+        document:
+          additionalProperties: true
+          title: Document
+          type: object
+        is_builtin:
+          title: Is Builtin
+          type: boolean
       required:
-      - strategy
-      title: StrategyRequest
-    StrategyScopeResponse:
-      description: Strategy scope entry returned by GET /banks/:bank/strategies.
+      - display_name
+      - document
+      - id
+      - is_builtin
+      title: PolicyResponse
+    SAKeyCreateResponse:
+      description: SA API key at creation time — full key shown once.
       example:
-        bank_id: bank_id
-        scope_value: scope_value
-        strategy: strategy
-        scope_type: scope_type
+        api_key: api_key
+        description: description
+        id: id
       properties:
-        bank_id:
-          title: Bank Id
+        id:
+          title: Id
           type: string
-        scope_type:
-          title: Scope Type
+        api_key:
+          title: Api Key
           type: string
-        scope_value:
-          title: Scope Value
-          type: string
-        strategy:
-          title: Strategy
+        description:
+          nullable: true
           type: string
       required:
-      - bank_id
-      - scope_type
-      - scope_value
-      - strategy
-      title: StrategyScopeResponse
-    StrategyUpsertConfirmation:
-      description: Confirmation returned by PUT /banks/:bank/strategies/:type/:value.
+      - api_key
+      - description
+      - id
+      title: SAKeyCreateResponse
+    SAKeyResponse:
+      description: SA API key in list view — key is masked.
       example:
-        bank_id: bank_id
-        scope_value: scope_value
-        strategy: strategy
-        scope_type: scope_type
+        description: description
+        id: id
+        api_key_prefix: api_key_prefix
       properties:
-        bank_id:
-          title: Bank Id
+        id:
+          title: Id
           type: string
-        scope_type:
-          title: Scope Type
+        api_key_prefix:
+          title: Api Key Prefix
           type: string
-        scope_value:
-          title: Scope Value
-          type: string
-        strategy:
-          title: Strategy
+        description:
+          nullable: true
           type: string
       required:
-      - bank_id
-      - scope_type
-      - scope_value
-      - strategy
-      title: StrategyUpsertConfirmation
+      - api_key_prefix
+      - description
+      - id
+      title: SAKeyResponse
+    ServiceAccountResponse:
+      description: Service account resource.
+      example:
+        is_active: true
+        owner_user_id: owner_user_id
+        id: id
+        display_name: display_name
+        scoping_policy_id: scoping_policy_id
+      properties:
+        id:
+          title: Id
+          type: string
+        owner_user_id:
+          title: Owner User Id
+          type: string
+        display_name:
+          title: Display Name
+          type: string
+        is_active:
+          title: Is Active
+          type: boolean
+        scoping_policy_id:
+          nullable: true
+          type: string
+      required:
+      - display_name
+      - id
+      - is_active
+      - owner_user_id
+      - scoping_policy_id
+      title: ServiceAccountResponse
     UpdateGroupRequest:
       example:
-        recall_tag_groups:
-        - key: ""
-        - key: ""
-        llm_model: llm_model
-        retain: true
-        retain_roles:
-        - retain_roles
-        - retain_roles
-        retain_tags:
-        - retain_tags
-        - retain_tags
         display_name: display_name
-        recall_budget: recall_budget
-        exclude_providers:
-        - exclude_providers
-        - exclude_providers
-        recall: true
-        llm_provider: llm_provider
-        retain_strategy: retain_strategy
-        retain_every_n_turns: 0
-        recall_max_tokens: 6
       properties:
         display_name:
           nullable: true
           type: string
-        recall:
-          nullable: true
-          type: boolean
-        retain:
-          nullable: true
-          type: boolean
-        retain_roles:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_tags:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_every_n_turns:
-          nullable: true
-          type: integer
-        recall_budget:
-          nullable: true
-          type: string
-        recall_max_tokens:
-          nullable: true
-          type: integer
-        recall_tag_groups:
-          items:
-            additionalProperties: true
-            type: object
-          nullable: true
-          type: array
-        llm_model:
-          nullable: true
-          type: string
-        llm_provider:
-          nullable: true
-          type: string
-        exclude_providers:
-          items:
-            type: string
-          nullable: true
-          type: array
-        retain_strategy:
-          nullable: true
-          type: string
       title: UpdateGroupRequest
+    UpdatePolicyRequest:
+      description: Request to update an access policy.
+      example:
+        document:
+          key: ""
+        display_name: display_name
+      properties:
+        display_name:
+          nullable: true
+          type: string
+        document:
+          additionalProperties: true
+          nullable: true
+          type: object
+      title: UpdatePolicyRequest
+    UpdateServiceAccountRequest:
+      description: Request to update a service account.
+      example:
+        is_active: true
+        display_name: display_name
+        scoping_policy_id: scoping_policy_id
+      properties:
+        display_name:
+          nullable: true
+          type: string
+        scoping_policy_id:
+          nullable: true
+          type: string
+        is_active:
+          nullable: true
+          type: boolean
+      title: UpdateServiceAccountRequest
     UpdateUserRequest:
       example:
         display_name: display_name
@@ -1662,27 +1598,19 @@ components:
           nullable: true
           type: string
       title: UpdateUserRequest
-    UpsertConfirmation:
-      description: Confirmation returned by PUT (upsert) endpoints.
+    UpsertBankPolicyRequest:
+      description: Request to create/update a bank policy.
       example:
-        scope_id: scope_id
-        bank_id: bank_id
-        scope_type: scope_type
+        document:
+          key: ""
       properties:
-        bank_id:
-          title: Bank Id
-          type: string
-        scope_type:
-          title: Scope Type
-          type: string
-        scope_id:
-          title: Scope Id
-          type: string
+        document:
+          additionalProperties: true
+          title: Document
+          type: object
       required:
-      - bank_id
-      - scope_id
-      - scope_type
-      title: UpsertConfirmation
+      - document
+      title: UpsertBankPolicyRequest
     UserResponse:
       description: User resource returned by GET/POST/PUT endpoints.
       example:

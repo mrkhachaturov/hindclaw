@@ -17,8 +17,8 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, StrictStr
+from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -28,19 +28,7 @@ class CreateGroupRequest(BaseModel):
     """ # noqa: E501
     id: StrictStr
     display_name: StrictStr
-    recall: Optional[StrictBool] = None
-    retain: Optional[StrictBool] = None
-    retain_roles: Optional[List[StrictStr]] = None
-    retain_tags: Optional[List[StrictStr]] = None
-    retain_every_n_turns: Optional[StrictInt] = None
-    recall_budget: Optional[StrictStr] = None
-    recall_max_tokens: Optional[StrictInt] = None
-    recall_tag_groups: Optional[List[Dict[str, Any]]] = None
-    llm_model: Optional[StrictStr] = None
-    llm_provider: Optional[StrictStr] = None
-    exclude_providers: Optional[List[StrictStr]] = None
-    retain_strategy: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["id", "display_name", "recall", "retain", "retain_roles", "retain_tags", "retain_every_n_turns", "recall_budget", "recall_max_tokens", "recall_tag_groups", "llm_model", "llm_provider", "exclude_providers", "retain_strategy"]
+    __properties: ClassVar[List[str]] = ["id", "display_name"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -81,66 +69,6 @@ class CreateGroupRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if recall (nullable) is None
-        # and model_fields_set contains the field
-        if self.recall is None and "recall" in self.model_fields_set:
-            _dict['recall'] = None
-
-        # set to None if retain (nullable) is None
-        # and model_fields_set contains the field
-        if self.retain is None and "retain" in self.model_fields_set:
-            _dict['retain'] = None
-
-        # set to None if retain_roles (nullable) is None
-        # and model_fields_set contains the field
-        if self.retain_roles is None and "retain_roles" in self.model_fields_set:
-            _dict['retain_roles'] = None
-
-        # set to None if retain_tags (nullable) is None
-        # and model_fields_set contains the field
-        if self.retain_tags is None and "retain_tags" in self.model_fields_set:
-            _dict['retain_tags'] = None
-
-        # set to None if retain_every_n_turns (nullable) is None
-        # and model_fields_set contains the field
-        if self.retain_every_n_turns is None and "retain_every_n_turns" in self.model_fields_set:
-            _dict['retain_every_n_turns'] = None
-
-        # set to None if recall_budget (nullable) is None
-        # and model_fields_set contains the field
-        if self.recall_budget is None and "recall_budget" in self.model_fields_set:
-            _dict['recall_budget'] = None
-
-        # set to None if recall_max_tokens (nullable) is None
-        # and model_fields_set contains the field
-        if self.recall_max_tokens is None and "recall_max_tokens" in self.model_fields_set:
-            _dict['recall_max_tokens'] = None
-
-        # set to None if recall_tag_groups (nullable) is None
-        # and model_fields_set contains the field
-        if self.recall_tag_groups is None and "recall_tag_groups" in self.model_fields_set:
-            _dict['recall_tag_groups'] = None
-
-        # set to None if llm_model (nullable) is None
-        # and model_fields_set contains the field
-        if self.llm_model is None and "llm_model" in self.model_fields_set:
-            _dict['llm_model'] = None
-
-        # set to None if llm_provider (nullable) is None
-        # and model_fields_set contains the field
-        if self.llm_provider is None and "llm_provider" in self.model_fields_set:
-            _dict['llm_provider'] = None
-
-        # set to None if exclude_providers (nullable) is None
-        # and model_fields_set contains the field
-        if self.exclude_providers is None and "exclude_providers" in self.model_fields_set:
-            _dict['exclude_providers'] = None
-
-        # set to None if retain_strategy (nullable) is None
-        # and model_fields_set contains the field
-        if self.retain_strategy is None and "retain_strategy" in self.model_fields_set:
-            _dict['retain_strategy'] = None
-
         return _dict
 
     @classmethod
@@ -154,19 +82,7 @@ class CreateGroupRequest(BaseModel):
 
         _obj = cls.model_validate({
             "id": obj.get("id"),
-            "display_name": obj.get("display_name"),
-            "recall": obj.get("recall"),
-            "retain": obj.get("retain"),
-            "retain_roles": obj.get("retain_roles"),
-            "retain_tags": obj.get("retain_tags"),
-            "retain_every_n_turns": obj.get("retain_every_n_turns"),
-            "recall_budget": obj.get("recall_budget"),
-            "recall_max_tokens": obj.get("recall_max_tokens"),
-            "recall_tag_groups": obj.get("recall_tag_groups"),
-            "llm_model": obj.get("llm_model"),
-            "llm_provider": obj.get("llm_provider"),
-            "exclude_providers": obj.get("exclude_providers"),
-            "retain_strategy": obj.get("retain_strategy")
+            "display_name": obj.get("display_name")
         })
         return _obj
 
