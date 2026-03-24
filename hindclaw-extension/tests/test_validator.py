@@ -282,3 +282,31 @@ async def test_unmapped_retain_denied_no_public():
         result = await validator.validate_retain(ctx)
 
     assert result.allowed is False
+
+
+# --- Internal bypass edge cases ---
+
+@pytest.mark.asyncio
+async def test_unmapped_with_jwt_is_not_internal():
+    """_unmapped with JWT claims present is NOT internal."""
+    from tests.helpers import FakeRequestContext
+
+    validator = HindclawValidator({})
+    assert not validator._is_internal_server_call(
+        FakeRequestContext(api_key="eyJtoken", tenant_id="_unmapped")
+    )
+    _jwt_claims.set({"sender": "telegram:999"})
+    assert not validator._is_internal_server_call(
+        FakeRequestContext(api_key="eyJtoken", tenant_id="_unmapped")
+    )
+
+
+def test_internal_check_true_when_no_auth():
+    """No API key + no claims + None tenant = internal."""
+    from tests.helpers import FakeRequestContext
+
+    validator = HindclawValidator({})
+    _jwt_claims.set({})
+    assert validator._is_internal_server_call(
+        FakeRequestContext(api_key=None, tenant_id=None)
+    )
