@@ -55,12 +55,13 @@ async def test_get_user_by_channel(mock_pool):
     """Resolve sender ID to user."""
     from hindclaw_ext import db
 
-    mock_pool.fetchrow.return_value = MockRecord({"id": "alice", "display_name": "Alice", "email": "alice@example.com"})
+    mock_pool.fetchrow.return_value = MockRecord({"id": "alice", "display_name": "Alice", "email": "alice@example.com", "is_active": True})
 
     with patch.object(db, "_pool", mock_pool):
         user = await db.get_user_by_channel("telegram", "100001")
         assert user is not None
         assert user.id == "alice"
+        assert user.is_active is True
 
     mock_pool.fetchrow.assert_called_once()
 

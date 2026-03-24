@@ -266,7 +266,7 @@ async def get_user_by_channel(provider: str, sender_id: str) -> UserRecord | Non
     pool = await get_pool()
     row = await pool.fetchrow(
         """
-        SELECT u.id, u.display_name, u.email
+        SELECT u.id, u.display_name, u.email, u.is_active
         FROM hindclaw_users u
         JOIN hindclaw_user_channels c ON c.user_id = u.id
         WHERE c.provider = $1 AND c.sender_id = $2
@@ -276,7 +276,7 @@ async def get_user_by_channel(provider: str, sender_id: str) -> UserRecord | Non
     )
     if row is None:
         return None
-    return UserRecord(id=row["id"], display_name=row["display_name"], email=row["email"])
+    return UserRecord(id=row["id"], display_name=row["display_name"], email=row["email"], is_active=row["is_active"])
 
 
 async def get_api_key(api_key: str) -> ApiKeyRecord | None:
@@ -563,7 +563,7 @@ async def get_policies_for_user(
         JOIN hindclaw_policy_attachments a ON a.policy_id = p.id
         WHERE (a.principal_type = 'user' AND a.principal_id = $1)
            OR (a.principal_type = 'group' AND a.principal_id = ANY($2))
-        ORDER BY a.priority DESC
+        ORDER BY a.priority DESC, p.id ASC
         """,
         user_id,
         group_ids,
