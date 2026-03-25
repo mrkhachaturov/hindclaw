@@ -30,6 +30,9 @@
           {
             "HTTPBearer": []
           }
+        ],
+        "tags": [
+          "Users"
         ]
       },
       "post": {
@@ -71,6 +74,9 @@
           {
             "HTTPBearer": []
           }
+        ],
+        "tags": [
+          "Users"
         ]
       }
     },
@@ -115,7 +121,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Users"
+        ]
       },
       "put": {
         "summary": "Update User",
@@ -167,7 +176,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Users"
+        ]
       },
       "delete": {
         "summary": "Delete User",
@@ -202,7 +214,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Users"
+        ]
       }
     },
     "/ext/hindclaw/users/{user_id}/channels": {
@@ -250,7 +265,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Users"
+        ]
       },
       "post": {
         "summary": "Add User Channel",
@@ -302,7 +320,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Users"
+        ]
       }
     },
     "/ext/hindclaw/users/{user_id}/channels/{provider}/{sender_id}": {
@@ -357,7 +378,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Users"
+        ]
       }
     },
     "/ext/hindclaw/groups": {
@@ -384,6 +408,9 @@
           {
             "HTTPBearer": []
           }
+        ],
+        "tags": [
+          "Groups"
         ]
       },
       "post": {
@@ -425,6 +452,9 @@
           {
             "HTTPBearer": []
           }
+        ],
+        "tags": [
+          "Groups"
         ]
       }
     },
@@ -469,7 +499,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Groups"
+        ]
       },
       "put": {
         "summary": "Update Group",
@@ -521,7 +554,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Groups"
+        ]
       },
       "delete": {
         "summary": "Delete Group",
@@ -556,7 +592,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Groups"
+        ]
       }
     },
     "/ext/hindclaw/groups/{group_id}/members": {
@@ -604,7 +643,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Groups"
+        ]
       },
       "post": {
         "summary": "Add Group Member",
@@ -656,7 +698,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Groups"
+        ]
       }
     },
     "/ext/hindclaw/groups/{group_id}/members/{user_id}": {
@@ -702,7 +747,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Groups"
+        ]
       }
     },
     "/ext/hindclaw/users/{user_id}/api-keys": {
@@ -751,7 +799,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "API Keys"
+        ]
       },
       "post": {
         "summary": "Create Api Key",
@@ -803,7 +854,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "API Keys"
+        ]
       }
     },
     "/ext/hindclaw/users/{user_id}/api-keys/{key_id}": {
@@ -849,7 +903,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "API Keys"
+        ]
       }
     },
     "/ext/hindclaw/policies": {
@@ -876,6 +933,9 @@
           {
             "HTTPBearer": []
           }
+        ],
+        "tags": [
+          "Policies"
         ]
       },
       "post": {
@@ -917,6 +977,9 @@
           {
             "HTTPBearer": []
           }
+        ],
+        "tags": [
+          "Policies"
         ]
       }
     },
@@ -961,7 +1024,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Policies"
+        ]
       },
       "put": {
         "summary": "Update Policy Endpoint",
@@ -1013,7 +1079,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Policies"
+        ]
       },
       "delete": {
         "summary": "Delete Policy Endpoint",
@@ -1048,7 +1117,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Policies"
+        ]
       }
     },
     "/ext/hindclaw/policy-attachments": {
@@ -1096,7 +1168,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Policies"
+        ]
       },
       "put": {
         "summary": "Upsert Attachment",
@@ -1137,7 +1212,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Policies"
+        ]
       }
     },
     "/ext/hindclaw/policy-attachments/{policy_id}/{principal_type}/{principal_id}": {
@@ -1192,7 +1270,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Policies"
+        ]
       }
     },
     "/ext/hindclaw/service-accounts": {
@@ -1219,6 +1300,9 @@
           {
             "HTTPBearer": []
           }
+        ],
+        "tags": [
+          "Service Accounts"
         ]
       },
       "post": {
@@ -1260,6 +1344,9 @@
           {
             "HTTPBearer": []
           }
+        ],
+        "tags": [
+          "Service Accounts"
         ]
       }
     },
@@ -1304,7 +1391,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Service Accounts"
+        ]
       },
       "put": {
         "summary": "Update Service Account Endpoint",
@@ -1356,7 +1446,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Service Accounts"
+        ]
       },
       "delete": {
         "summary": "Delete Service Account Endpoint",
@@ -1391,7 +1484,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Service Accounts"
+        ]
       }
     },
     "/ext/hindclaw/service-accounts/{sa_id}/keys": {
@@ -1439,7 +1535,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Service Accounts"
+        ]
       },
       "post": {
         "summary": "Create Sa Key",
@@ -1491,7 +1590,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Service Accounts"
+        ]
       }
     },
     "/ext/hindclaw/service-accounts/{sa_id}/keys/{key_id}": {
@@ -1537,7 +1639,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Service Accounts"
+        ]
       }
     },
     "/ext/hindclaw/banks/{bank_id}/policy": {
@@ -1581,7 +1686,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Bank Policies"
+        ]
       },
       "put": {
         "summary": "Upsert Bank Policy Endpoint",
@@ -1633,7 +1741,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Bank Policies"
+        ]
       },
       "delete": {
         "summary": "Delete Bank Policy Endpoint",
@@ -1668,7 +1779,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Bank Policies"
+        ]
       }
     },
     "/ext/hindclaw/debug/resolve": {
@@ -1769,7 +1883,10 @@
               }
             }
           }
-        }
+        },
+        "tags": [
+          "Debug"
+        ]
       }
     }
   },
@@ -2531,5 +2648,35 @@
         "scheme": "bearer"
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "Users",
+      "description": "User identity and channel mappings"
+    },
+    {
+      "name": "Groups",
+      "description": "Groups and memberships"
+    },
+    {
+      "name": "API Keys",
+      "description": "User API keys"
+    },
+    {
+      "name": "Policies",
+      "description": "Access policies and attachments"
+    },
+    {
+      "name": "Service Accounts",
+      "description": "Machine principals and keys"
+    },
+    {
+      "name": "Bank Policies",
+      "description": "Per-bank strategy and access config"
+    },
+    {
+      "name": "Debug",
+      "description": "Debug and diagnostics"
+    }
+  ]
 }

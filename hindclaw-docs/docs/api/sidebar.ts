@@ -8,7 +8,7 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
-      label: "UNTAGGED",
+      label: "Users",
       items: [
         {
           type: "doc",
@@ -58,6 +58,12 @@ const sidebar: SidebarsConfig = {
           label: "Remove User Channel",
           className: "api-method delete",
         },
+      ],
+    },
+    {
+      type: "category",
+      label: "Groups",
+      items: [
         {
           type: "doc",
           id: "api/list-groups",
@@ -106,6 +112,12 @@ const sidebar: SidebarsConfig = {
           label: "Remove Group Member",
           className: "api-method delete",
         },
+      ],
+    },
+    {
+      type: "category",
+      label: "API Keys",
+      items: [
         {
           type: "doc",
           id: "api/list-api-keys",
@@ -124,6 +136,12 @@ const sidebar: SidebarsConfig = {
           label: "Delete Api Key",
           className: "api-method delete",
         },
+      ],
+    },
+    {
+      type: "category",
+      label: "Policies",
+      items: [
         {
           type: "doc",
           id: "api/list-policies",
@@ -172,6 +190,12 @@ const sidebar: SidebarsConfig = {
           label: "Delete Attachment",
           className: "api-method delete",
         },
+      ],
+    },
+    {
+      type: "category",
+      label: "Service Accounts",
+      items: [
         {
           type: "doc",
           id: "api/list-service-accounts",
@@ -220,6 +244,12 @@ const sidebar: SidebarsConfig = {
           label: "Delete Sa Key",
           className: "api-method delete",
         },
+      ],
+    },
+    {
+      type: "category",
+      label: "Bank Policies",
+      items: [
         {
           type: "doc",
           id: "api/get-bank-policy",
@@ -238,6 +268,12 @@ const sidebar: SidebarsConfig = {
           label: "Delete Bank Policy Endpoint",
           className: "api-method delete",
         },
+      ],
+    },
+    {
+      type: "category",
+      label: "Debug",
+      items: [
         {
           type: "doc",
           id: "api/debug-resolve",
