@@ -1,0 +1,44 @@
+[package]
+name = "hindclaw-client"
+version = "0.1.0"
+edition = "2021"
+authors = ["Ruben Khachaturov"]
+description = "Rust client library for Hindclaw access control API"
+license = "MIT"
+repository = "https://github.com/mrkhachaturov/hindclaw"
+keywords = ["api", "client", "hindsight", "access-control"]
+categories = ["api-bindings"]
+
+[dependencies]
+# Security: bytes >= 1.11.1 fixes integer overflow in BytesMut::reserve
+bytes = "1.11.1"
+# HTTP client
+reqwest = { version = "0.12", features = ["json"] }
+# Async runtime (no default features — consumers choose their own runtime config)
+tokio = { version = "1", default-features = false }
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+# Progenitor client support
+progenitor-client = "0.11"
+# Error handling
+thiserror = "1.0"
+# Additional types
+chrono = { version = "0.4", features = ["serde"] }
+# HTTP types
+http = "1.0"
+# URL handling
+url = "2.5"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
+tokio-test = "0.4"
+uuid = { version = "1.0", features = ["v4"] }
+
+[build-dependencies]
+progenitor = "0.11"
+serde_json = "1.0"
+syn = "2.0"
+prettyplease = "0.2"
+openapiv3 = "2.2"
+regex = "1.10"
