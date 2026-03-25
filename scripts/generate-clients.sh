@@ -335,6 +335,25 @@ echo "TypeScript client generated at $TYPESCRIPT_CLIENT_DIR"
 echo ""
 
 # ==========================================
+# Rust client
+# ==========================================
+echo "=================================================="
+echo "Verifying Rust client..."
+echo "=================================================="
+
+RUST_CLIENT_DIR="$CLIENTS_DIR/rust"
+
+if ! command -v cargo &> /dev/null; then
+    echo "Cargo not found, skipping Rust client verification"
+else
+    echo "Running cargo check..."
+    cd "$RUST_CLIENT_DIR"
+    cargo check
+    echo "Rust client verified at $RUST_CLIENT_DIR"
+fi
+echo ""
+
+# ==========================================
 # Done
 # ==========================================
 echo "=================================================="
@@ -344,6 +363,7 @@ echo ""
 echo "Go client:         $GO_CLIENT_DIR"
 echo "Python client:     $PYTHON_CLIENT_DIR"
 echo "TypeScript client: $TYPESCRIPT_CLIENT_DIR"
+echo "Rust client:       $RUST_CLIENT_DIR"
 echo ""
 echo "Next steps:"
 echo "  1. Review the generated clients"

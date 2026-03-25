@@ -10,3 +10,6 @@ hindclaw-docs/build/
 hindclaw-docs/.docusaurus/
 hindclaw-docs/node_modules/
 .worktrees/
+
+# Rust
+hindclaw-clients/rust/target
