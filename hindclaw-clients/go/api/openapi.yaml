@@ -1411,6 +1411,7 @@ components:
           input: ""
           ctx: "{}"
           type: type
+          url: url
         - msg: msg
           loc:
           - ValidationError_loc_inner
@@ -1418,6 +1419,7 @@ components:
           input: ""
           ctx: "{}"
           type: type
+          url: url
       properties:
         detail:
           items:
@@ -1654,6 +1656,7 @@ components:
         input: ""
         ctx: "{}"
         type: type
+        url: url
       properties:
         loc:
           items:
@@ -1669,6 +1672,9 @@ components:
         ctx:
           title: Context
           type: object
+        url:
+          title: URL
+          type: string
       required:
       - loc
       - msg

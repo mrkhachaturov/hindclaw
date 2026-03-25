@@ -44,7 +44,19 @@ def extract() -> dict:
     # Type annotation says MemoryEngine but Python doesn't enforce at runtime.
     router = ext.get_router(memory=None)  # type: ignore[arg-type]
     app.include_router(router, prefix="/ext")
-    return app.openapi()
+
+    # Patch ValidationError schema to match Pydantic v2 actual error format.
+    # FastAPI only generates loc/msg/type, but Pydantic v2 also returns input,
+    # ctx, and url. Without these, Go clients with DisallowUnknownFields break.
+    schema = app.openapi()
+    ve = schema.get("components", {}).get("schemas", {}).get("ValidationError")
+    if ve:
+        props = ve.setdefault("properties", {})
+        props.setdefault("input", {"title": "Input"})
+        props.setdefault("ctx", {"title": "Context", "type": "object"})
+        props.setdefault("url", {"title": "URL", "type": "string"})
+
+    return schema
 
 
 if __name__ == "__main__":
