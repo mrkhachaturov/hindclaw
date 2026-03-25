@@ -1,72 +1,192 @@
 ---
 sidebar_position: 1
 slug: /intro
-title: What is HindClaw?
+title: "HindClaw: AI Memory Orchestrator"
 ---
 
-# What is HindClaw?
+# HindClaw: AI Memory Orchestrator
 
-HindClaw is a production-grade [Hindsight](https://hindsight.vectorize.io) memory system for [OpenClaw](https://github.com/openclaw/openclaw). It consists of two components: a **thin plugin** that generates JWTs and sends standard Hindsight API calls, and a **server extension** (`hindclaw-extension`) that enforces access control, resolves policies, and enriches requests with tags and strategies. Together they give your AI agent fleet long-term memory with per-agent configuration, multi-bank recall, named retain strategies, and infrastructure-as-code management.
+HindClaw is a management layer for AI agent memory, built on [Hindsight](https://hindsight.vectorize.io) by [Vectorize](https://vectorize.io), the highest-scoring agent memory system on the [LongMemEval benchmark](https://hindsight.vectorize.io/blog/agent-memory-benchmark). Hindsight handles the hard part: fact extraction, knowledge graphs, semantic recall, mental models. HindClaw adds what's missing when you go to production: access control, strategy routing, service accounts, and a control plane to orchestrate it all.
 
-## Two Dimensions
+## Why this exists
 
-Every message resolves along two orthogonal axes:
+AI agents already have memory. OpenClaw writes markdown files to disk. Claude Code keeps its own memory. Most frameworks have something. Hindsight goes further and gives you a proper memory engine with automated extraction, retrieval across four parallel strategies, and reflection that reasons over what it knows.
 
-**WHO** -- access enforced server-side by the hindclaw-extension using a policy-based model. Policies are versioned JSON documents with allow/deny statements that control what actions a principal can perform on which banks, plus behavioral parameters (recall budget, token limits, retain roles, etc.). Policies are attached to users or groups via `hindclaw_policy_attachment`. The policy engine collects all policies from the user and their groups, deny takes precedence, then the most specific allow wins. Service accounts inherit their parent user's full effective policy, optionally narrowed by a single scoping policy.
+But here's what I ran into when I had 11 agents and started thinking about deploying this at the office: who decides what each agent can remember? Which agents can read from which memory banks? How do you give a strategic advisor access to every department's knowledge while keeping HR data away from the marketing bot?
 
-**HOW** -- strategy resolved server-side via bank policies. Each bank has a `bank_policy` document that defines a default retain strategy and context-level overrides (per-channel, per-topic). If the principal's access policy sets a `retain_strategy`, that takes precedence over the bank policy. Strategy selection and tag enrichment happen entirely server-side.
+Think about Confluence. Nobody gives each user their own isolated space and copies documents around. You organize by domain: engineering, finance, HR, strategy. Then you control who reads, who writes, what they see. One source of truth per domain.
+
+Memory banks should work the same way. A finance bank holds financial knowledge. An HR bank holds HR data. A strategy bank collects cross-departmental insights. Agents that need finance data query the finance bank. The ones that shouldn't, can't. You manage who has access to what through policies, as code or through an API.
+
+Hindsight gives you the banks. HindClaw gives you the rules.
+
+## What you get
+
+Say you're running a company with a few AI agents, each with a different job:
+
+| Agent | Role | Memory bank |
+|-------|------|-------------|
+| Strategic advisor | Cross-departmental analysis, priorities | `strategy` |
+| Finance analyst | Revenue, margins, budgets | `finance` |
+| HR assistant | Team health, attendance, capacity | `hr` |
+| Project manager | Tasks, deadlines, OKRs | `projects` |
+
+Each agent owns a bank, organized by domain. Now the questions come up: can the strategic advisor read from all four banks? Can the HR assistant write to the finance bank? Can an intern only recall from their department? Can a CI bot have read-only access?
+
+HindClaw answers these with policies. A policy is a JSON document with allow/deny statements: "allow `bank:recall` and `bank:reflect` on banks `strategy` and `finance`, recall budget `high`, max tokens `2048`." Or: "deny `bank:retain` on bank `hr`." Attach them to users or groups, set priority to break ties. Deny always wins. If you've used MinIO IAM policies, this will feel familiar.
+
+Here's what happens when the strategic advisor asks "how's the company doing?":
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as Strategic Advisor
+    participant HC as HindClaw Extension
+    participant S as strategy bank
+    participant F as finance bank
+    participant H as hr bank
+    participant P as projects bank
+
+    U->>A: "How's the company doing?"
+    A->>HC: recall (strategy, finance, hr, projects)
+    HC->>HC: Check policies: advisor has recall on all 4 banks
+    HC->>S: recall
+    HC->>F: recall
+    HC->>H: recall
+    HC->>P: recall
+    S-->>HC: strategic priorities
+    F-->>HC: revenue down 12%, margin stable
+    H-->>HC: two open positions, one burnout risk
+    P-->>HC: Q2 OKR at 60%
+    HC-->>A: merged context injected
+    A-->>U: cross-departmental analysis
+    A->>HC: retain to strategy bank
+    HC->>HC: Check policy: advisor can retain to strategy
+    HC->>S: retain (cross-departmental summary)
+```
+
+The advisor reads from four banks but writes only to its own. HindClaw checks policies on every operation. The finance analyst's latest observations feed into the advisor's session at startup through mental models, so it already knows the numbers before anyone asks. The agents never exchange messages. Knowledge flows through the banks, controlled by policies.
+
+For machines that need memory access, there are service accounts. A Terraform provider, a Claude Code MCP server, a customer-facing chat bot: each gets its own API key scoped to the banks and actions it needs. A service account inherits its parent user's access and can be narrowed with a scoping policy.
 
 ```mermaid
 graph TD
-    MSG["Message: user + bank + topic"] --> PLUGIN["Plugin generates JWT\n(sender, agent, channel, topic)"]
-    PLUGIN --> SERVER["Hindsight API Server"]
-    SERVER --> TENANT["HindclawTenant\nJWT -> user identity"]
-    TENANT --> VALIDATOR["HindclawValidator\nevaluate policies + resolve strategy"]
-    VALIDATOR --> R{"bank:recall\nallowed?"}
-    VALIDATOR --> W{"bank:retain\nallowed?"}
-    R -->|yes| RECALL["accept_with(tag_groups)\nserver-side filtering"]
-    R -->|no| NO_R["reject"]
-    W -->|yes| RETAIN["accept_with(tags, strategy)\nserver-side enrichment"]
-    W -->|no| NO_W["reject"]
+    SA1["Claude Code MCP<br/>service account"] -->|"recall: strategy, finance<br/>retain: denied"| HC["HindClaw Policy Engine"]
+    SA2["Web Chat Bot<br/>service account"] -->|"recall: projects<br/>retain: projects"| HC
+    SA3["Terraform Provider<br/>service account"] -->|"iam:admin<br/>full control plane"| HC
+    HC --> Banks["Memory Banks"]
 ```
 
-Policy evaluation, tag injection, and strategy selection all happen server-side in the hindclaw-extension. The plugin is a thin adapter that generates a JWT and sends standard Hindsight API calls. Every combination of **(user x bank x topic)** can produce different behavior.
+Each bank also has its own strategy configuration. Telegram conversations can use one extraction strategy while topic threads use another. You can open public access for unmapped senders, like customers in a web chat, without creating HindClaw accounts for them.
 
-## Core Features
+The control plane is API-first. Call the REST API directly, or use the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) for a declarative approach. Like Kubernetes gives you a declarative way to manage containers, HindClaw gives you a declarative way to manage memory: define the desired state, apply it, let the system converge. A management UI is in the works.
 
-**Policy-based access control** -- access policies are reusable JSON documents with versioned allow/deny statements. Each statement targets specific actions (`bank:recall`, `bank:retain`, `bank:reflect`, extended bank actions) and banks (exact, prefix wildcard, or `*`). Deny overrides allow at any specificity level. Behavioral parameters (`recall_budget`, `recall_max_tokens`, `retain_roles`, `retain_strategy`, etc.) travel on the same statement. Policies are attached to users and groups via `hindclaw_policy_attachment` with a priority value for tie-breaking.
+## Architecture
 
-**Service accounts** -- machine principals owned by a user. A service account inherits its parent user's full effective access policy by default. Attach a single scoping policy to narrow it below the parent's access without ever exceeding it. Service accounts are the primary auth mechanism for MCP clients, Terraform, Claude Code, and CI/CD.
+```
+Integrations                    Hindsight Server
+┌─────────────┐                ┌──────────────────────────────┐
+│ OpenClaw    │──── JWT ──────>│  HindClaw Extension          │
+│ Plugin      │                │    Tenant  (identity)        │
+├─────────────┤                │    Validator (policy engine)  │
+│ Claude Code │── SA Key ─────>│    Http  (admin API)         │
+│ MCP         │                │           |                   │
+├─────────────┤                │           v                   │
+│ Web Chat    │── SA Key ─────>│    Hindsight Core             │
+│ (planned)   │                │    retain / recall / reflect  │
+├─────────────┤                │    knowledge graph, facts,    │
+│ Any tool    │── JWT/Key ────>│    mental models, embeddings  │
+└─────────────┘                └──────────────────────────────┘
+                                          |
+                               ┌──────────┴──────────┐
+                               │  Terraform Provider  │
+                               │  users, groups,      │
+                               │  policies, SAs,      │
+                               │  bank config, ...    │
+                               └──────────────────────┘
+```
 
-**Bank policies** -- per-bank configuration documents that define the bank's default retain strategy and context-level strategy overrides (by channel, topic, or provider). Bank policies also control public access for unmapped senders (anonymous customers in a Telegram group, web chat visitors) without requiring HindClaw user accounts.
+Integrations are thin clients. They generate a JWT or use a service account key and send standard Hindsight API calls. The extension sits server-side, intercepts every request, checks policies, resolves strategies, injects tags. The Terraform provider manages the control plane as code.
 
-**Per-endpoint IAM** -- granular control plane actions (`iam:users:read`, `iam:groups:write`, `iam:policies:write`, `iam:service_accounts:write`, etc.) controlled by the same policy engine. Admins get `iam:*` via the built-in `iam:admin` policy.
-
-**Root user bootstrap** -- on first install, HindClaw auto-creates the root user from `HINDCLAW_ROOT_USER` / `HINDCLAW_ROOT_API_KEY` environment variables with full admin policies attached. The root user is a real user, not a special principal type. It authenticates the same way as any other user and acts as break-glass access after bootstrap.
-
-**Per-agent bank configs** -- each agent gets its own retain mission, entity labels, dispositions, and directives via the bank's strategy configuration. Bank configs, users, groups, policies, directives, and mental models are managed via the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest).
-
-**Multi-bank recall** -- agents read from multiple banks in parallel. A strategic advisor recalls from finance, marketing, and ops banks simultaneously. The principal needs `bank:recall` on each bank in the list.
-
-**Session start context** -- mental models loaded before the first message. No cold start.
-
-**Reflect-on-recall** -- use Hindsight's reflect API (`bank:reflect`) instead of raw recall for richer, reasoned responses. Reflect is a distinct action from recall -- it can be granted independently.
-
-**Multi-server** -- per-agent infrastructure routing. One gateway, multiple Hindsight servers (home, office, local daemon).
-
-**Infrastructure as Code** -- the **[terraform-provider-hindclaw](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest)** manages the full stack -- users, groups, policies, policy attachments, service accounts, bank policies, directives, and mental models -- as standard Terraform resources. All HindClaw infrastructure is declared in `.tf` files and applied with `terraform apply`.
+Two integrations exist today: an OpenClaw plugin and a Claude Code MCP server. Anything that can make HTTP calls with a bearer token can connect.
 
 ## Built on Hindsight
 
-[Hindsight](https://hindsight.vectorize.io) is a biomimetic memory system for AI agents with semantic, BM25, graph, and temporal retrieval. HindClaw is a client that maps OpenClaw concepts (agents, channels, topics, users) onto Hindsight capabilities (banks, strategies, tags, tag_groups).
+[Hindsight](https://hindsight.vectorize.io) is an open source memory engine by [Vectorize](https://vectorize.io). If you're not familiar with it, here are the three core operations:
+
+### Retain: conversations become structured knowledge
+
+When an agent finishes a conversation turn, the transcript is sent to Hindsight. An LLM extracts discrete facts, entities, and relationships from it automatically. You don't tell it what to remember.
+
+```mermaid
+graph LR
+    C["Conversation transcript"] --> R["Retain"]
+    R --> F["Facts extracted"]
+    R --> E["Entities identified"]
+    R --> L["Relationships mapped"]
+    F --> B["Memory Bank"]
+    E --> B
+    L --> B
+```
+
+A conversation about a supplier change might produce: "Detail margin dropped to 27% after switching primer supplier in January" (fact), "AcmePrimer" (entity), "AcmePrimer supplies Detail department" (relationship). All of this happens in the background after each turn.
+
+### Recall: find relevant memories before each response
+
+Before an agent responds, Hindsight searches the bank for relevant memories. It runs four retrieval strategies in parallel and merges the results:
+
+```mermaid
+graph LR
+    Q["Query from conversation"] --> S["Semantic search"]
+    Q --> K["BM25 keyword search"]
+    Q --> G["Knowledge graph traversal"]
+    Q --> T["Temporal proximity"]
+    S --> M["Merge + rerank"]
+    K --> M
+    G --> M
+    T --> M
+    M --> I["Inject into agent context"]
+```
+
+The agent doesn't call a search tool. Memories are injected into context before the agent sees the user's message.
+
+### Reflect: reason over memories, not just retrieve them
+
+Recall returns raw facts. Reflect goes further: Hindsight reasons over what it knows and produces a synthesized answer. It checks mental models first (pre-computed summaries), then observations (patterns across facts), then raw facts.
+
+```mermaid
+graph TD
+    Q["Reflect query"] --> MM{"Mental model exists?"}
+    MM -->|yes, fresh| A["Return pre-computed summary"]
+    MM -->|no or stale| O["Check observations"]
+    O --> F["Search raw facts"]
+    F --> S["Synthesize answer"]
+    S --> A2["Return reasoned response"]
+```
+
+When you ask "what's the financial situation this quarter?", reflect doesn't return 50 individual facts. It returns a coherent analysis built from everything the bank knows.
+
+### Mental models
+
+Mental models are Hindsight's way of maintaining an up-to-date understanding of a topic. You define a model with a query ("What are the current strategic priorities?") and Hindsight keeps the answer fresh. Every time new facts arrive and consolidate, the mental model re-runs its query and updates.
+
+Agents can load mental models at session start, so they wake up with current context before the user writes anything. The strategic advisor loads its "company priorities" model, the finance analyst loads "quarterly numbers", and they're ready from the first message.
+
+### Banks
+
+Each bank is an isolated memory store with its own extraction mission, entity labels, dispositions, and directives. The extraction mission tells Hindsight what to focus on when retaining. Entity labels define how facts get classified. Dispositions control how skeptical or empathetic the reflect engine is. Banks don't share data with each other unless an agent has cross-bank recall access through HindClaw.
+
+---
+
+HindClaw doesn't touch any of this. The memory engine is Hindsight's territory. HindClaw adds the layer above: who can access which banks, what policies apply, what strategy to use, and how to manage it all.
 
 :::tip Looking for a managed solution?
-Skip the self-hosting and use [Hindsight Cloud](https://ui.hindsight.vectorize.io/signup) — managed memory infrastructure by [Vectorize](https://vectorize.io), the team behind Hindsight.
+Skip the self-hosting and use [Hindsight Cloud](https://ui.hindsight.vectorize.io/signup) from [Vectorize](https://vectorize.io), the team behind Hindsight.
 :::
 
-## Next Steps
+## Next steps
 
-- [Installation](./getting-started/installation) -- set up the plugin and (optionally) the server extension
-- [Terraform Provider](./guides/terraform) -- manage bank configs, users, groups, and policies as code
-- [Access Control](./guides/access-control) -- set up multi-user permissions via hindclaw-extension
+- [Installation](./getting-started/installation) -- set up the plugin, the server extension, or both
+- [Access Control](./guides/access-control) -- policies, service accounts, bank policies
+- [Terraform Provider](./guides/terraform) -- manage everything as code
 - [Configuration Reference](./reference/configuration) -- plugin and JWT configuration
