@@ -6,7 +6,7 @@ title: "HindClaw: AI Memory Orchestrator"
 
 # HindClaw: AI Memory Orchestrator
 
-HindClaw is a management layer for AI agent memory, built on [Hindsight](https://hindsight.vectorize.io) by [Vectorize](https://vectorize.io), the highest-scoring agent memory system on the [LongMemEval benchmark](https://hindsight.vectorize.io/blog/agent-memory-benchmark). Hindsight handles the hard part: fact extraction, knowledge graphs, semantic recall, mental models. HindClaw adds what's missing when you go to production: access control, strategy routing, service accounts, and a control plane to orchestrate it all.
+HindClaw is a management layer for AI agent memory, built on [Hindsight](https://hindsight.vectorize.io) by [Vectorize](https://vectorize.io), the highest-scoring agent memory system on the [LongMemEval benchmark](https://hindsight.vectorize.io/blog/agent-memory-benchmark) (90%+). Hindsight handles the hard part: fact extraction, knowledge graphs, semantic recall, mental models. HindClaw adds what's missing when you go to production: access control, strategy routing, service accounts, and a control plane to orchestrate it all. Everything is managed as code through a [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) or REST API.
 
 ## Why this exists
 
@@ -33,7 +33,29 @@ Say you're running a company with a few AI agents, each with a different job:
 
 Each agent owns a bank, organized by domain. Now the questions come up: can the strategic advisor read from all four banks? Can the HR assistant write to the finance bank? Can an intern only recall from their department? Can a CI bot have read-only access?
 
-HindClaw answers these with policies. A policy is a JSON document with allow/deny statements: "allow `bank:recall` and `bank:reflect` on banks `strategy` and `finance`, recall budget `high`, max tokens `2048`." Or: "deny `bank:retain` on bank `hr`." Attach them to users or groups, set priority to break ties. Deny always wins. If you've used MinIO IAM policies, this will feel familiar.
+HindClaw answers these with policies. A policy is a JSON document with allow/deny statements. Here's one:
+
+```json
+{
+  "version": "2026-03-24",
+  "statements": [
+    {
+      "effect": "allow",
+      "actions": ["bank:recall", "bank:reflect"],
+      "banks": ["strategy", "finance"],
+      "recall_budget": "high",
+      "recall_max_tokens": 2048
+    },
+    {
+      "effect": "deny",
+      "actions": ["bank:retain"],
+      "banks": ["hr"]
+    }
+  ]
+}
+```
+
+This policy lets its holder read from `strategy` and `finance` with a high recall budget, and blocks writing to `hr`. Attach policies to users or groups, set priority to break ties. When multiple allow statements match, the highest-priority one sets the behavioral parameters (budget, tokens, roles). Deny always wins regardless of priority. If you've used MinIO IAM policies, this will feel familiar.
 
 Here's what happens when the strategic advisor asks "how's the company doing?":
 
@@ -106,7 +128,7 @@ Integrations                    Hindsight Server
                                └──────────────────────┘
 ```
 
-Integrations are thin clients. They generate a JWT or use a service account key and send standard Hindsight API calls. The extension sits server-side, intercepts every request, checks policies, resolves strategies, injects tags. The Terraform provider manages the control plane as code.
+Integrations are thin clients. Plugins generate short-lived JWTs signed with a shared HMAC secret (configured on both the plugin and server, no external identity provider needed). Service accounts use static API keys (`hc_sa_` prefix). The extension sits server-side, intercepts every request, checks policies, resolves strategies, injects tags. If the extension is unreachable or crashes, Hindsight rejects requests (fail-closed, not fail-open). The Terraform provider manages the control plane as code.
 
 Two integrations exist today: an OpenClaw plugin and a Claude Code MCP server. Anything that can make HTTP calls with a bearer token can connect.
 
@@ -170,7 +192,7 @@ When you ask "what's the financial situation this quarter?", reflect doesn't ret
 
 Mental models are Hindsight's way of maintaining an up-to-date understanding of a topic. You define a model with a query ("What are the current strategic priorities?") and Hindsight keeps the answer fresh. Every time new facts arrive and consolidate, the mental model re-runs its query and updates.
 
-Agents can load mental models at session start, so they wake up with current context before the user writes anything. The strategic advisor loads its "company priorities" model, the finance analyst loads "quarterly numbers", and they're ready from the first message.
+Agents can load mental models at session start via the plugin's `session_start` hook. The plugin makes API calls to fetch configured mental models before the first user message arrives, so the agent wakes up with current context. The strategic advisor loads its "company priorities" model, the finance analyst loads "quarterly numbers", and they're ready from the first message. If a mental model fetch fails, the agent starts without it (graceful degradation, not hard failure).
 
 ### Banks
 
