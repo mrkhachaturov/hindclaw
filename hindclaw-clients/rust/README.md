@@ -42,7 +42,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 The client regenerates automatically on `cargo build` when `openapi.json` changes. To force:
 
 ```bash
-cd build/hindclaw
 python scripts/extract-openapi.py > hindclaw-clients/openapi.json
 cd hindclaw-clients/rust && cargo check
 ```
