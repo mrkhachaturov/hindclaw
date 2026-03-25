@@ -157,8 +157,9 @@ HINDSIGHT_API_HTTP_EXTENSION=hindclaw_ext.http:HindclawHttp
 # Shared secret for JWT validation (must match jwtSecret in plugin config)
 HINDSIGHT_API_TENANT_JWT_SECRET=shared-secret-between-plugin-and-server
 
-# Optional: admin client IDs for CRUD API access
-HINDSIGHT_API_TENANT_ADMIN_CLIENTS=openclaw-prod
+# Root user bootstrapped automatically on startup (gets iam:admin + bank:admin policies)
+HINDCLAW_ROOT_USER=admin@example.com
+HINDCLAW_ROOT_API_KEY=hc_u_root_<random>
 ```
 
 The extensions use the same PostgreSQL database as Hindsight core (`HINDSIGHT_API_DATABASE_URL`). Tables are created automatically on startup via `CREATE TABLE IF NOT EXISTS`.

@@ -8,7 +8,7 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
-      label: "Users",
+      label: "UNTAGGED",
       items: [
         {
           type: "doc",
@@ -40,12 +40,6 @@ const sidebar: SidebarsConfig = {
           label: "Delete User",
           className: "api-method delete",
         },
-      ],
-    },
-    {
-      type: "category",
-      label: "Channels",
-      items: [
         {
           type: "doc",
           id: "api/list-user-channels",
@@ -64,12 +58,6 @@ const sidebar: SidebarsConfig = {
           label: "Remove User Channel",
           className: "api-method delete",
         },
-      ],
-    },
-    {
-      type: "category",
-      label: "Groups",
-      items: [
         {
           type: "doc",
           id: "api/list-groups",
@@ -100,12 +88,6 @@ const sidebar: SidebarsConfig = {
           label: "Delete Group",
           className: "api-method delete",
         },
-      ],
-    },
-    {
-      type: "category",
-      label: "Members",
-      items: [
         {
           type: "doc",
           id: "api/list-group-members",
@@ -124,72 +106,6 @@ const sidebar: SidebarsConfig = {
           label: "Remove Group Member",
           className: "api-method delete",
         },
-      ],
-    },
-    {
-      type: "category",
-      label: "Permissions",
-      items: [
-        {
-          type: "doc",
-          id: "api/list-bank-permissions",
-          label: "List Bank Permissions",
-          className: "api-method get",
-        },
-        {
-          type: "doc",
-          id: "api/get-bank-permission",
-          label: "Get Bank Permission",
-          className: "api-method get",
-        },
-        {
-          type: "doc",
-          id: "api/delete-bank-permission",
-          label: "Delete Bank Permission",
-          className: "api-method delete",
-        },
-        {
-          type: "doc",
-          id: "api/upsert-group-permission",
-          label: "Upsert Group Bank Permission",
-          className: "api-method put",
-        },
-        {
-          type: "doc",
-          id: "api/upsert-user-permission",
-          label: "Upsert User Bank Permission",
-          className: "api-method put",
-        },
-      ],
-    },
-    {
-      type: "category",
-      label: "Strategies",
-      items: [
-        {
-          type: "doc",
-          id: "api/list-strategies",
-          label: "List Strategies",
-          className: "api-method get",
-        },
-        {
-          type: "doc",
-          id: "api/upsert-strategy",
-          label: "Upsert Strategy",
-          className: "api-method put",
-        },
-        {
-          type: "doc",
-          id: "api/delete-strategy",
-          label: "Delete Strategy",
-          className: "api-method delete",
-        },
-      ],
-    },
-    {
-      type: "category",
-      label: "API Keys",
-      items: [
         {
           type: "doc",
           id: "api/list-api-keys",
@@ -208,12 +124,120 @@ const sidebar: SidebarsConfig = {
           label: "Delete Api Key",
           className: "api-method delete",
         },
-      ],
-    },
-    {
-      type: "category",
-      label: "Debug",
-      items: [
+        {
+          type: "doc",
+          id: "api/list-policies",
+          label: "List Policies",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/create-policy",
+          label: "Create Policy",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/get-policy",
+          label: "Get Policy Endpoint",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/update-policy",
+          label: "Update Policy Endpoint",
+          className: "api-method put",
+        },
+        {
+          type: "doc",
+          id: "api/delete-policy",
+          label: "Delete Policy Endpoint",
+          className: "api-method delete",
+        },
+        {
+          type: "doc",
+          id: "api/list-policy-attachments",
+          label: "List Attachments",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/upsert-policy-attachment",
+          label: "Upsert Attachment",
+          className: "api-method put",
+        },
+        {
+          type: "doc",
+          id: "api/delete-policy-attachment",
+          label: "Delete Attachment",
+          className: "api-method delete",
+        },
+        {
+          type: "doc",
+          id: "api/list-service-accounts",
+          label: "List Service Accounts",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/create-service-account",
+          label: "Create Service Account",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/get-service-account",
+          label: "Get Service Account Endpoint",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/update-service-account",
+          label: "Update Service Account Endpoint",
+          className: "api-method put",
+        },
+        {
+          type: "doc",
+          id: "api/delete-service-account",
+          label: "Delete Service Account Endpoint",
+          className: "api-method delete",
+        },
+        {
+          type: "doc",
+          id: "api/list-sa-keys",
+          label: "List Sa Keys",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/create-sa-key",
+          label: "Create Sa Key",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/delete-sa-key",
+          label: "Delete Sa Key",
+          className: "api-method delete",
+        },
+        {
+          type: "doc",
+          id: "api/get-bank-policy",
+          label: "Get Bank Policy Endpoint",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/upsert-bank-policy",
+          label: "Upsert Bank Policy Endpoint",
+          className: "api-method put",
+        },
+        {
+          type: "doc",
+          id: "api/delete-bank-policy",
+          label: "Delete Bank Policy Endpoint",
+          className: "api-method delete",
+        },
         {
           type: "doc",
           id: "api/debug-resolve",

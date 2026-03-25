@@ -1,0 +1,1 @@
+{"parameters":[{"name":"policy_id","in":"path","required":true,"schema":{"type":"string","title":"Policy Id"}},{"name":"principal_type","in":"path","required":true,"schema":{"type":"string","title":"Principal Type"}},{"name":"principal_id","in":"path","required":true,"schema":{"type":"string","title":"Principal Id"}}]}

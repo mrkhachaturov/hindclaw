@@ -1,30 +1,25 @@
 # Access Control
 
-Layered permission model: users belong to groups, groups define defaults, banks override per-group or per-user. All access control data lives in the Hindsight PostgreSQL database and is managed through the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw).
+Policy-based model: policies are attached to users, groups, and service accounts. Deny takes precedence over allow. All access control data lives in the Hindsight PostgreSQL database and is managed through the [Terraform provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw).
 
 There are no config files for access control. See the [Access Control Guide](./guides/access-control) for a full walkthrough.
 
 ## Permission Model
 
 ```
-Users
-  └── belong to Groups (via memberships)
-        └── Groups define permission defaults
-              └── Banks override per-group or per-user
+Policies
+  └── attached to Users, Groups, or Service Accounts
+        └── evaluated per endpoint (IAM actions)
+              └── deny takes precedence over allow
 ```
 
-Resolution order (most specific wins):
+Each policy contains one or more statements. Each statement targets specific IAM actions (e.g., `bank:retain`, `bank:recall`, `iam:admin`) with an effect of `allow` or `deny`.
 
-1. **Merge global groups** -- collect all user's groups, merge with rules below
-2. **Bank `_default` baseline** -- if bank has a `_default` permission entry, start there
-3. **Bank group overlay** -- merge bank-level group entries for this user's groups
-4. **Bank user override** -- apply per-user override if defined
-
-Banks without permission overrides fall through to global group defaults.
+When a user makes a request, all policies attached to that user (directly and via group memberships) are collected and evaluated. If any policy denies the action, access is denied regardless of other allows.
 
 ## Managing with Terraform
 
-The `mrkhachaturov/hindclaw` provider manages users, groups, memberships, and permissions as standard Terraform resources.
+The `mrkhachaturov/hindclaw` provider manages users, groups, memberships, policies, policy attachments, and service accounts as standard Terraform resources.
 
 ### Provider configuration
 
@@ -65,45 +60,19 @@ resource "hindclaw_user_channel" "alice_slack" {
 }
 ```
 
-### Groups
+### Groups (identity only)
+
+Groups are identity constructs. They have no permission fields. Permissions are granted by attaching policies to the group.
 
 ```hcl
 resource "hindclaw_group" "executives" {
-  id               = "executives"
-  display_name     = "Executive"
-  recall           = true
-  retain           = true
-  retain_roles     = ["user", "assistant", "tool"]
-  retain_tags      = ["role:executive"]
-  recall_budget    = "high"
-  recall_max_tokens = 2048
-  recall_tag_groups = null   # no filter -- sees everything
+  id           = "executives"
+  display_name = "Executive"
 }
 
 resource "hindclaw_group" "staff" {
-  id                   = "staff"
-  display_name         = "Staff"
-  recall               = true
-  retain               = true
-  retain_roles         = ["assistant"]
-  retain_tags          = ["role:staff"]
-  retain_every_n_turns = 2
-  recall_budget        = "low"
-  recall_max_tokens    = 512
-  recall_tag_groups    = jsonencode([
-    { not = { tags = ["sensitivity:restricted"], match = "any_strict" } }
-  ])
-  llm_provider = "openai"
-  llm_model    = "gpt-4o-mini"
-}
-
-resource "hindclaw_group" "sales_team" {
-  id           = "sales-team"
-  display_name = "Sales Team"
-  recall_tag_groups = jsonencode([
-    { tags = ["department:sales"], match = "any" }
-  ])
-  retain_tags = ["department:sales"]
+  id           = "staff"
+  display_name = "Staff"
 }
 ```
 
@@ -119,74 +88,76 @@ resource "hindclaw_group_membership" "bob_staff" {
   group_id = hindclaw_group.staff.id
   user_id  = hindclaw_user.bob.id
 }
-
-resource "hindclaw_group_membership" "bob_sales" {
-  group_id = hindclaw_group.sales_team.id
-  user_id  = hindclaw_user.bob.id
-}
 ```
 
-### Bank-level permission overrides
+### Policies and attachments
 
 ```hcl
-# On advisor bank: staff can recall but not retain
-resource "hindclaw_bank_permission" "advisor_staff" {
-  bank_id    = "advisor"
-  scope_type = "group"
-  scope_id   = hindclaw_group.staff.id
-  recall     = true
-  retain     = false
+# Policy granting full recall and retain on all banks
+resource "hindclaw_policy" "exec_memory" {
+  id          = "exec-memory"
+  display_name = "Executive Memory Access"
+
+  statement {
+    effect  = "allow"
+    actions = ["bank:recall", "bank:retain"]
+    resources = ["*"]
+  }
 }
 
-# On ops-agent bank: Bob gets elevated recall
-resource "hindclaw_bank_permission" "ops_bob" {
-  bank_id           = "ops-agent"
-  scope_type        = "user"
-  scope_id          = hindclaw_user.bob.id
-  recall_budget     = "high"
-  recall_max_tokens = 2048
+# Policy granting recall-only on all banks, deny retain
+resource "hindclaw_policy" "staff_readonly" {
+  id           = "staff-readonly"
+  display_name = "Staff Read-Only Memory"
+
+  statement {
+    effect  = "allow"
+    actions = ["bank:recall"]
+    resources = ["*"]
+  }
+
+  statement {
+    effect  = "deny"
+    actions = ["bank:retain"]
+    resources = ["*"]
+  }
+}
+
+# Attach exec policy to executives group
+resource "hindclaw_policy_attachment" "exec_memory_attach" {
+  policy_id   = hindclaw_policy.exec_memory.id
+  target_type = "group"
+  target_id   = hindclaw_group.executives.id
+}
+
+# Attach staff policy to staff group
+resource "hindclaw_policy_attachment" "staff_readonly_attach" {
+  policy_id   = hindclaw_policy.staff_readonly.id
+  target_type = "group"
+  target_id   = hindclaw_group.staff.id
 }
 ```
 
-## Group Fields
+### Service accounts
 
-Every field below can be set at the group level, and overridden at the bank level per-group or per-user.
+Service accounts are non-human principals used by automation, Terraform itself, or other systems. They authenticate via API key and have policies attached the same way as users.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `display_name` | string | Human-readable name |
-| `recall` | boolean | Can read from memory |
-| `retain` | boolean | Can write to memory |
-| `retain_roles` | string[] | Message roles retained: `user`, `assistant`, `system`, `tool` |
-| `retain_tags` | string[] | Tags added to all retained facts |
-| `retain_every_n_turns` | number | Retain every Nth turn |
-| `retain_strategy` | string | Named retain strategy (from cascade) |
-| `recall_budget` | string | Recall effort: `low`, `mid`, `high` |
-| `recall_max_tokens` | number | Max tokens injected per turn |
-| `recall_tag_groups` | TagGroup[] or null | Tag filter for recall. `null` = no filter. |
-| `llm_model` | string | LLM model for extraction |
-| `llm_provider` | string | LLM provider for extraction |
-| `exclude_providers` | string[] | Skip these message providers |
+```hcl
+resource "hindclaw_service_account" "terraform_admin" {
+  id           = "terraform-admin"
+  display_name = "Terraform Admin"
+}
 
-## Merge Rules (multiple groups)
-
-When a user belongs to multiple groups:
-
-| Field | Rule |
-|-------|------|
-| `recall`, `retain` | Most permissive wins (`true > false`) |
-| `retain_roles`, `retain_tags` | Unioned |
-| `recall_budget` | Most permissive (`high > mid > low`) |
-| `recall_max_tokens` | Highest value wins |
-| `recall_tag_groups` | AND-ed together |
-| `llm_model`, `llm_provider` | Alphabetically first group that defines it wins |
-| `retain_every_n_turns` | Lowest value wins (most frequent) |
-| `exclude_providers` | Unioned (most restrictive) |
-| `retain_strategy` | From strategy cascade (separate resolution) |
+resource "hindclaw_policy_attachment" "terraform_admin_iam" {
+  policy_id   = hindclaw_policy.iam_admin.id
+  target_type = "service_account"
+  target_id   = hindclaw_service_account.terraform_admin.id
+}
+```
 
 ## Tag-Based Filtering
 
-`recall_tag_groups` uses Hindsight's `tag_groups` API for boolean filtering:
+`recall_tag_groups` on bank policies uses Hindsight's `tag_groups` API for boolean filtering:
 
 ```json5
 // See everything (no filter)
@@ -204,7 +175,7 @@ When a user belongs to multiple groups:
 ```
 
 Tags come from two sources:
-1. **Extension-injected** -- `retain_tags` from groups plus automatic `user:<id>` tags, injected via `accept_with()` during retain
+1. **Extension-injected** -- `retain_tags` from bank policies plus automatic `user:<id>` tags, injected via `accept_with()` during retain
 2. **LLM-extracted** -- entity labels with `tag: true` in bank config
 
 Both merge into a single `tags` array on each fact.

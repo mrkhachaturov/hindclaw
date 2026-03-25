@@ -1,1 +1,0 @@
-{"parameters":[{"name":"bank_id","in":"path","required":true,"schema":{"type":"string","title":"Bank Id"}},{"name":"group_id","in":"path","required":true,"schema":{"type":"string","title":"Group Id"}}]}

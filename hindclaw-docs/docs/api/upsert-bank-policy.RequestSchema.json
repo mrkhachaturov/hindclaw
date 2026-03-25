@@ -1,0 +1,1 @@
+{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"properties":{"document":{"additionalProperties":true,"type":"object","title":"Document"}},"type":"object","required":["document"],"title":"UpsertBankPolicyRequest","description":"Request to create/update a bank policy."}}}}}

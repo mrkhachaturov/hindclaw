@@ -1,0 +1,1 @@
+{"parameters":[{"name":"policy_id","in":"path","required":true,"schema":{"type":"string","title":"Policy Id"}}]}

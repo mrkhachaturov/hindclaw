@@ -1,1 +1,0 @@
-{"title":"Body","body":{"required":true,"content":{"application/json":{"schema":{"properties":{"strategy":{"type":"string","title":"Strategy"}},"type":"object","required":["strategy"],"title":"StrategyRequest"}}}}}

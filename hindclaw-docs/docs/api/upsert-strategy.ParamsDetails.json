@@ -1,1 +1,0 @@
-{"parameters":[{"name":"bank_id","in":"path","required":true,"schema":{"type":"string","title":"Bank Id"}},{"name":"scope_type","in":"path","required":true,"schema":{"type":"string","title":"Scope Type"}},{"name":"scope_value","in":"path","required":true,"schema":{"type":"string","title":"Scope Value"}}]}
