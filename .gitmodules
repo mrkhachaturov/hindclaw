@@ -3,5 +3,9 @@
 	url = git@github.com:mrkhachaturov/terraform-provider-hindclaw.git
 [submodule "hindclaw-integrations/claude-code"]
 	path = hindclaw-integrations/claude-code
-	url = git@github.com:mrkhachaturov/claude-hindclaw-plugin.git
+	url = git@github.com:mrkhachaturov/hindclaw-claude-plugin.git
+	branch = main
+[submodule "hindclaw-integrations/openclaw"]
+	path = hindclaw-integrations/openclaw
+	url = git@github.com:mrkhachaturov/hindclaw-openclaw-plugin.git
 	branch = main
