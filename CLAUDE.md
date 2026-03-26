@@ -8,16 +8,14 @@ Self-hosted [Hindsight](https://hindsight.vectorize.io) management platform. Mul
 
 ```
 hindclaw/
-├── hindclaw-extension/          # pip: hindclaw-extension — Hindsight server extensions (Python)
-│   ├── hindclaw_ext/            #   TenantExtension, OperationValidatorExtension, HttpExtension
-│   └── tests/                   #   71 tests (pytest, mocked asyncpg)
+├── hindclaw-extension/          # Core Hindsight server extensions (Python)
+├── hindclaw-cli/                # CLI tool (TypeScript, still part of core repo)
+├── hindclaw-docs/               # Product docs site
 ├── hindclaw-integrations/
-│   └── openclaw/                # npm: hindclaw-openclaw — OpenClaw plugin (TypeScript)
-│       ├── src/                 #   hooks (recall, retain, session-start), config, client
-│       └── tests/               #   176 unit tests (vitest) + integration tests
-├── hindclaw-cli/src/            # CLI tool (TypeScript, being extracted)
-├── hindclaw-docs/               # hindclaw.pro — Docusaurus documentation site
-├── .github/workflows/           # publish-plugin.yml, publish-extension.yml, deploy-docs.yml
+│   ├── openclaw/                # Submodule: hindclaw-openclaw-plugin
+│   └── claude-code/             # Submodule: hindclaw-claude-plugin
+├── hindclaw-terraform/          # Submodule: terraform-provider-hindclaw
+├── .github/workflows/           # Core repo workflows
 ├── CLAUDE.md
 ├── LICENSE
 └── README.md
@@ -28,8 +26,24 @@ hindclaw/
 | Package | Language | Registry | Purpose |
 |---------|----------|----------|---------|
 | `hindclaw-extension` | Python | [PyPI](https://pypi.org/project/hindclaw-extension/) | Server-side access control extensions for Hindsight API |
-| `hindclaw-openclaw` | TypeScript | [npm](https://www.npmjs.com/package/hindclaw-openclaw) | OpenClaw integration plugin |
 | `hindclaw-cli` | TypeScript | — | CLI for bank/permission management |
+
+## Repository Model
+
+Hindclaw is now split between a core product repo and independently versioned component repos.
+
+**Core repo version line:**
+- `hindclaw-extension`
+- `hindclaw-docs`
+- `hindclaw-cli` (until extracted later)
+
+**Independent repo version lines:**
+- `hindclaw-openclaw-plugin`
+- `hindclaw-claude-plugin`
+- `terraform-provider-hindclaw`
+
+The core repo pins those independent components as submodules. Their changelogs, release cadence,
+and publish flows are owned in their own repositories.
 
 ## Stack
 
@@ -62,35 +76,16 @@ Code follows upstream Hindsight conventions (studied from `hindsight-api-slim/`)
 - **Type hints** — `str | None` syntax, no `Optional`
 - **Testing** — `pytest-asyncio` strict mode, `autouse` fixtures, mocked asyncpg
 
-## hindclaw-integrations/openclaw (TypeScript)
-
-OpenClaw plugin — hooks into recall/retain/session-start lifecycle:
-
-```bash
-cd hindclaw-integrations/openclaw
-npm install && npm run build
-npm test                      # 164 unit tests
-```
-
-### Key Patterns
-
-- **Two-level config**: Plugin defaults + bank config file overrides (shallow merge, bank file wins)
-- **Stateless client**: Every method takes `bankId` first. No instance-level bank state.
-- **Graceful degradation**: All hooks catch errors and log. Never crash the gateway.
-
 ## Publishing
 
-**PyPI** (extension): push `ext-v*` tag — GitHub Actions publishes via OIDC trusted publisher
+**Core repo / extension**: push `ext-v*` tag — GitHub Actions publishes the Python extension via OIDC trusted publisher
 
-**npm** (plugin): push `v*` tag — GitHub Actions publishes via npm token
-- Bump version in `hindclaw-integrations/openclaw/package.json`
-- Add changelog entry in `CHANGELOG.md` with the same version
-- Commit, tag, push
+**Independent components**: publish from their own repositories and changelogs, not from this repo.
 
 ## Commit Style
 
-Conventional commits: `feat(hindclaw-ext):`, `fix(openclaw):`, `chore:`, `docs:`
+Conventional commits in the core repo: `feat(hindclaw-ext):`, `fix(hindclaw-cli):`, `chore:`, `docs:`
 
 ## Design Specs
 
-In the astromech repo: `docs/specs/2026-03-21-hindclaw-server-extension-design.md`
+In the astromech repo: `docs/superpowers/specs/hindclaw/2026-03-21-hindclaw-server-extension-design.md`
