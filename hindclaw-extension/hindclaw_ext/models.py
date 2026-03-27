@@ -121,3 +121,12 @@ class TemplateRecord(BaseModel):
     mental_model_seeds: list[dict]
     created_at: str
     updated_at: str
+
+
+class TemplateSourceRecord(BaseModel):
+    """A registered marketplace template source."""
+
+    name: str
+    url: str
+    auth_token: str | None
+    created_at: str

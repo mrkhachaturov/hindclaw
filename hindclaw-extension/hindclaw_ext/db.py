@@ -24,6 +24,7 @@ from hindclaw_ext.models import (
     ServiceAccountKeyRecord,
     ServiceAccountRecord,
     TemplateRecord,
+    TemplateSourceRecord,
     UserRecord,
 )
 
@@ -162,6 +163,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS bank_templates_custom_uniq
     ON bank_templates (id, scope, COALESCE(owner, ''))
     WHERE source_name IS NULL;
 
+CREATE TABLE IF NOT EXISTS template_sources (
+    name       TEXT PRIMARY KEY,
+    url        TEXT NOT NULL,
+    auth_token TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Add is_active to existing users table (idempotent)
 DO $$
 BEGIN
@@ -180,7 +188,7 @@ INSERT INTO hindclaw_policies (id, display_name, document_json, is_builtin) VALU
     ('bank:retain-only', 'Bank Retain-Only', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:retain"],"banks":["*"]}]}', TRUE),
     ('bank:admin', 'Bank Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:*"],"banks":["*"]}]}', TRUE),
     ('iam:admin', 'IAM Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["iam:*"],"banks":["*"]}]}', TRUE),
-    ('template:admin', 'Template Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["template:list","template:create","template:install","template:manage","bank:create"],"banks":["*"]}]}', TRUE)
+    ('template:admin', 'Template Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["template:list","template:create","template:install","template:manage","template:source","bank:create"],"banks":["*"]}]}', TRUE)
 ON CONFLICT (id) DO NOTHING;
 """
 
@@ -215,6 +223,13 @@ _MIGRATION_V3 = """\
 -- The DDL handles table creation idempotently.
 """
 
+_MIGRATION_V4 = """\
+-- Add template:source action to template:admin builtin policy
+UPDATE hindclaw_policies
+SET document_json = '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["template:list","template:create","template:install","template:manage","template:source","bank:create"],"banks":["*"]}]}'
+WHERE id = 'template:admin' AND is_builtin = TRUE;
+"""
+
 
 async def get_pool() -> asyncpg.Pool:
     """Get or create the shared asyncpg connection pool.
@@ -246,6 +261,8 @@ async def get_pool() -> asyncpg.Pool:
                 await conn.execute(_MIGRATION_V2)
             async with conn.transaction():
                 await conn.execute(_MIGRATION_V3)
+            async with conn.transaction():
+                await conn.execute(_MIGRATION_V4)
             # Seed root user if env vars are set (outside DDL transaction)
             root_user = os.environ.get("HINDCLAW_ROOT_USER")
             root_key = os.environ.get("HINDCLAW_ROOT_API_KEY")
@@ -1019,4 +1036,97 @@ async def delete_template(
             "DELETE FROM bank_templates WHERE id = $1 AND scope = $2 AND source_name IS NULL AND owner IS NOT DISTINCT FROM $3",
             id, scope, owner,
         )
+    return result == "DELETE 1"
+
+
+# --- Template source queries ---
+
+
+def _row_to_source(row) -> TemplateSourceRecord:
+    """Convert an asyncpg Record to a TemplateSourceRecord.
+
+    Args:
+        row: asyncpg Record from template_sources table.
+
+    Returns:
+        TemplateSourceRecord with fields mapped.
+    """
+    d = dict(row)
+    return TemplateSourceRecord(
+        name=d["name"],
+        url=d["url"],
+        auth_token=d.get("auth_token"),
+        created_at=str(d["created_at"]),
+    )
+
+
+async def create_template_source(
+    name: str,
+    url: str,
+    auth_token: str | None = None,
+) -> TemplateSourceRecord:
+    """Create a marketplace template source.
+
+    Args:
+        name: Source name (derived from git org or admin-provided alias).
+        url: Marketplace repository URL.
+        auth_token: Optional auth token for private repositories.
+
+    Returns:
+        The created TemplateSourceRecord.
+    """
+    pool = await get_pool()
+    row = await pool.fetchrow(
+        """INSERT INTO template_sources (name, url, auth_token)
+           VALUES ($1, $2, $3)
+           RETURNING *""",
+        name, url, auth_token,
+    )
+    return _row_to_source(row)
+
+
+async def get_template_source(name: str) -> TemplateSourceRecord | None:
+    """Get a marketplace source by name.
+
+    Args:
+        name: Source name.
+
+    Returns:
+        TemplateSourceRecord or None.
+    """
+    pool = await get_pool()
+    row = await pool.fetchrow(
+        "SELECT * FROM template_sources WHERE name = $1",
+        name,
+    )
+    return _row_to_source(row) if row else None
+
+
+async def list_template_sources() -> list[TemplateSourceRecord]:
+    """List all registered marketplace sources.
+
+    Returns:
+        List of TemplateSourceRecord instances, ordered by name.
+    """
+    pool = await get_pool()
+    rows = await pool.fetch(
+        "SELECT * FROM template_sources ORDER BY name",
+    )
+    return [_row_to_source(r) for r in rows]
+
+
+async def delete_template_source(name: str) -> bool:
+    """Delete a marketplace source.
+
+    Args:
+        name: Source name to delete.
+
+    Returns:
+        True if a row was deleted, False if not found.
+    """
+    pool = await get_pool()
+    result = await pool.execute(
+        "DELETE FROM template_sources WHERE name = $1",
+        name,
+    )
     return result == "DELETE 1"
