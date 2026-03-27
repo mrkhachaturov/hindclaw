@@ -232,6 +232,24 @@ class TestInstallTemplate:
         call_kwargs = mock_db.upsert_template_from_marketplace.call_args[1]
         assert call_kwargs["owner"] == "test-admin"
 
+    def test_install_name_mismatch(self, client):
+        source = _make_source()
+        mkt_template = _make_marketplace_template(name="other-template")
+
+        with (
+            patch("hindclaw_ext.http.db") as mock_db,
+            patch("hindclaw_ext.http.marketplace") as mock_mkt,
+        ):
+            mock_db.get_template_source = AsyncMock(return_value=source)
+            mock_mkt.fetch_template = AsyncMock(return_value=mkt_template)
+            resp = client.post(
+                "/ext/hindclaw/templates/install",
+                json={"source": "hindclaw", "name": "backend-python", "scope": "server"},
+                headers=_AUTH_HEADER,
+            )
+        assert resp.status_code == 422
+        assert "mismatch" in resp.json()["detail"].lower()
+
 
 class TestUpdateTemplate:
     def test_update_success(self, client):
@@ -304,3 +322,22 @@ class TestUpdateTemplate:
             )
         assert resp.status_code == 404
         assert "source" in resp.json()["detail"].lower()
+
+    def test_update_name_mismatch(self, client):
+        installed = _make_template_record()
+        source = _make_source()
+        mismatched = _make_marketplace_template(name="wrong-name")
+
+        with (
+            patch("hindclaw_ext.http.db") as mock_db,
+            patch("hindclaw_ext.http.marketplace") as mock_mkt,
+        ):
+            mock_db.get_template = AsyncMock(return_value=installed)
+            mock_db.get_template_source = AsyncMock(return_value=source)
+            mock_mkt.fetch_template = AsyncMock(return_value=mismatched)
+            resp = client.post(
+                "/ext/hindclaw/templates/server/hindclaw/backend-python/update",
+                headers=_AUTH_HEADER,
+            )
+        assert resp.status_code == 422
+        assert "mismatch" in resp.json()["detail"].lower()

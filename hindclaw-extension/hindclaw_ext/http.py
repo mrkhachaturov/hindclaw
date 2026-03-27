@@ -20,6 +20,7 @@ from hindclaw_ext import db, marketplace
 from hindclaw_ext.auth import decode_jwt
 from hindclaw_ext.hindsight_client import get_banks_api, get_directives_api, get_mental_models_api
 from hindclaw_ext.marketplace import derive_source_name
+from hindclaw_ext.version import is_version_compatible
 from hindclaw_ext.policy_engine import AccessResult, apply_sa_scoping, evaluate_access, intersect_sa_policy
 from hindclaw_ext.template_ref import parse_template_ref
 from hindclaw_ext.http_models import (
@@ -1154,40 +1155,46 @@ class HindclawHttp(HttpExtension):
             owner = principal["user_id"] if request.scope == "personal" else None
 
             # 6. Upsert into bank_templates
-            rec = await db.upsert_template_from_marketplace(
-                id=template.name,
-                scope=request.scope,
-                owner=owner,
-                source_name=request.source,
-                source_url=source.url,
-                source_revision=None,
-                schema_version=template.schema_version,
-                min_hindclaw_version=template.min_hindclaw_version,
-                min_hindsight_version=template.min_hindsight_version,
-                version=template.version,
-                description=template.description,
-                author=template.author,
-                tags=template.tags,
-                retain_mission=template.retain_mission,
-                reflect_mission=template.reflect_mission,
-                observations_mission=template.observations_mission,
-                retain_extraction_mode=template.retain_extraction_mode,
-                retain_custom_instructions=template.retain_custom_instructions,
-                retain_chunk_size=template.retain_chunk_size,
-                retain_default_strategy=template.retain_default_strategy,
-                retain_strategies=template.retain_strategies,
-                entity_labels=[l.model_dump() for l in template.entity_labels],
-                entities_allow_free_form=template.entities_allow_free_form,
-                enable_observations=template.enable_observations,
-                consolidation_llm_batch_size=template.consolidation_llm_batch_size,
-                consolidation_source_facts_max_tokens=template.consolidation_source_facts_max_tokens,
-                consolidation_source_facts_max_tokens_per_observation=template.consolidation_source_facts_max_tokens_per_observation,
-                disposition_skepticism=template.disposition_skepticism,
-                disposition_literalism=template.disposition_literalism,
-                disposition_empathy=template.disposition_empathy,
-                directive_seeds=[s.model_dump() for s in template.directive_seeds],
-                mental_model_seeds=[s.model_dump() for s in template.mental_model_seeds],
-            )
+            try:
+                rec = await db.upsert_template_from_marketplace(
+                    id=template.name,
+                    scope=request.scope,
+                    owner=owner,
+                    source_name=request.source,
+                    source_url=source.url,
+                    source_revision=None,
+                    schema_version=template.schema_version,
+                    min_hindclaw_version=template.min_hindclaw_version,
+                    min_hindsight_version=template.min_hindsight_version,
+                    version=template.version,
+                    description=template.description,
+                    author=template.author,
+                    tags=template.tags,
+                    retain_mission=template.retain_mission,
+                    reflect_mission=template.reflect_mission,
+                    observations_mission=template.observations_mission,
+                    retain_extraction_mode=template.retain_extraction_mode,
+                    retain_custom_instructions=template.retain_custom_instructions,
+                    retain_chunk_size=template.retain_chunk_size,
+                    retain_default_strategy=template.retain_default_strategy,
+                    retain_strategies=template.retain_strategies,
+                    entity_labels=[l.model_dump() for l in template.entity_labels],
+                    entities_allow_free_form=template.entities_allow_free_form,
+                    enable_observations=template.enable_observations,
+                    consolidation_llm_batch_size=template.consolidation_llm_batch_size,
+                    consolidation_source_facts_max_tokens=template.consolidation_source_facts_max_tokens,
+                    consolidation_source_facts_max_tokens_per_observation=template.consolidation_source_facts_max_tokens_per_observation,
+                    disposition_skepticism=template.disposition_skepticism,
+                    disposition_literalism=template.disposition_literalism,
+                    disposition_empathy=template.disposition_empathy,
+                    directive_seeds=[s.model_dump() for s in template.directive_seeds],
+                    mental_model_seeds=[s.model_dump() for s in template.mental_model_seeds],
+                )
+            except asyncpg.UniqueViolationError:
+                raise HTTPException(
+                    409,
+                    f"Template '{template.name}' already exists in {request.scope} scope",
+                )
             return rec.model_dump()
 
         @router.post(
@@ -1243,7 +1250,6 @@ class HindclawHttp(HttpExtension):
                 raise HTTPException(422, "; ".join(errors))
 
             # 6. Check if newer
-            from hindclaw_ext.version import is_version_compatible
             if installed.version and latest.version:
                 if is_version_compatible(installed.version, latest.version):
                     # installed >= latest — no update needed

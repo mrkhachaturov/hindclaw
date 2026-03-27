@@ -1090,8 +1090,6 @@ async def upsert_template_from_marketplace(
     Returns:
         The upserted TemplateRecord.
     """
-    pool = await get_pool()
-
     # Check if template already exists
     existing = await get_template(id, scope, source_name=source_name, owner=owner)
 
