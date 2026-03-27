@@ -41,7 +41,7 @@ RUN uv sync
 # FlashRank reranker (~50MB, no torch dependency)
 RUN uv pip install "flashrank>=0.2.0"
 
-# Hindclaw server-side access control extensions (includes vendored Hindsight Python client)
+# Hindclaw server-side access control extensions
 RUN uv pip install "hindclaw-extension==0.2.2"
 
 # Copy source and install package

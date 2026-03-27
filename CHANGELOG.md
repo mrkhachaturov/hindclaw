@@ -16,12 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.2] - 2026-03-27
+## [0.2.2] - 2026-03-28
 
 ### Changed
-- Vendor `hindsight_client_api` (Hindsight Python SDK) inside the package — upstream doesn't publish Python clients to PyPI, so we bundle them from the fork
-- Remove `[banks]` optional extra — the Hindsight client is now always included
-- Add vendored client runtime deps to core: `aiohttp-retry`, `python-dateutil`, `urllib3`, `typing-extensions`
+- **Bank bootstrap uses in-process engine** — replaced HTTP loopback with direct `MemoryEngine` calls using `RequestContext(internal=True)`. Bank creation from templates no longer requires auth tokens for internal API calls.
+- Removed `hindsight_client.py` (HTTP client factory) and vendored `hindsight_client_api` — no longer needed
+- Removed `[banks]` optional extra and vendored client dependencies (`aiohttp-retry`, `python-dateutil`, `urllib3`, `typing-extensions`)
+
+### Fixed
+- Bank creation from template no longer blocked by HindclawTenant authentication on internal HTTP calls
 
 ## [0.2.1] - 2026-03-27 [yanked]
 
