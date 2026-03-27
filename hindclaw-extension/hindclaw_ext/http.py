@@ -44,6 +44,7 @@ from hindclaw_ext.http_models import (
     GroupMemberResponse,
     GroupMembershipConfirmation,
     GroupSummaryResponse,
+    InstallTemplateRequest,
     MarketplaceSearchResponse,
     MentalModelSeedResult,
     PolicyAttachmentResponse,
@@ -54,6 +55,7 @@ from hindclaw_ext.http_models import (
     SourceResponse,
     TemplateSummaryResponse,
     TemplateResponse,
+    TemplateUpdateResponse,
     UpdateGroupRequest,
     UpdateTemplateRequest,
     UpdatePolicyRequest,
@@ -1107,6 +1109,190 @@ class HindclawHttp(HttpExtension):
             return MarketplaceSearchResponse(
                 results=all_results,
                 total=len(all_results),
+            )
+
+        # --- Template Install / Update ---
+
+        @router.post(
+            "/templates/install",
+            response_model=TemplateResponse,
+            status_code=201,
+            operation_id="install_template",
+        )
+        async def install_template(
+            request: InstallTemplateRequest,
+            principal=Depends(_require_iam("template:install")),
+        ):
+            """Install a template from a registered marketplace source."""
+            # 1. Resolve source
+            source = await db.get_template_source(request.source)
+            if not source:
+                raise HTTPException(404, f"Source '{request.source}' not found")
+
+            # 2. Fetch template from marketplace
+            template = await marketplace.fetch_template(source, request.name)
+            if not template:
+                raise HTTPException(
+                    404,
+                    f"Template '{request.name}' not found in source '{request.source}'",
+                )
+
+            # 3. Verify name matches request
+            if template.name != request.name:
+                raise HTTPException(
+                    422,
+                    f"Template name mismatch: requested '{request.name}' "
+                    f"but file contains '{template.name}'",
+                )
+
+            # 4. Validate compatibility
+            errors = marketplace.validate_template(template)
+            if errors:
+                raise HTTPException(422, "; ".join(errors))
+
+            # 5. Determine owner
+            owner = principal["user_id"] if request.scope == "personal" else None
+
+            # 6. Upsert into bank_templates
+            rec = await db.upsert_template_from_marketplace(
+                id=template.name,
+                scope=request.scope,
+                owner=owner,
+                source_name=request.source,
+                source_url=source.url,
+                source_revision=None,
+                schema_version=template.schema_version,
+                min_hindclaw_version=template.min_hindclaw_version,
+                min_hindsight_version=template.min_hindsight_version,
+                version=template.version,
+                description=template.description,
+                author=template.author,
+                tags=template.tags,
+                retain_mission=template.retain_mission,
+                reflect_mission=template.reflect_mission,
+                observations_mission=template.observations_mission,
+                retain_extraction_mode=template.retain_extraction_mode,
+                retain_custom_instructions=template.retain_custom_instructions,
+                retain_chunk_size=template.retain_chunk_size,
+                retain_default_strategy=template.retain_default_strategy,
+                retain_strategies=template.retain_strategies,
+                entity_labels=[l.model_dump() for l in template.entity_labels],
+                entities_allow_free_form=template.entities_allow_free_form,
+                enable_observations=template.enable_observations,
+                consolidation_llm_batch_size=template.consolidation_llm_batch_size,
+                consolidation_source_facts_max_tokens=template.consolidation_source_facts_max_tokens,
+                consolidation_source_facts_max_tokens_per_observation=template.consolidation_source_facts_max_tokens_per_observation,
+                disposition_skepticism=template.disposition_skepticism,
+                disposition_literalism=template.disposition_literalism,
+                disposition_empathy=template.disposition_empathy,
+                directive_seeds=[s.model_dump() for s in template.directive_seeds],
+                mental_model_seeds=[s.model_dump() for s in template.mental_model_seeds],
+            )
+            return rec.model_dump()
+
+        @router.post(
+            "/templates/{scope}/{source}/{name}/update",
+            response_model=TemplateUpdateResponse,
+            operation_id="update_template_from_marketplace",
+        )
+        async def update_template_from_marketplace(
+            scope: str,
+            source: str,
+            name: str,
+            principal=Depends(_require_iam("template:manage")),
+        ):
+            """Update an installed template from its marketplace source."""
+            # 1. Look up installed template
+            owner = principal["user_id"] if scope == "personal" else None
+            installed = await db.get_template(
+                name, scope, source_name=source, owner=owner,
+            )
+            if not installed:
+                raise HTTPException(
+                    404,
+                    f"Template '{source}/{name}' not installed in {scope} scope",
+                )
+
+            # 2. Look up the source
+            src = await db.get_template_source(source)
+            if not src:
+                raise HTTPException(
+                    404,
+                    f"Source '{source}' not found. Was it removed?",
+                )
+
+            # 3. Fetch latest from marketplace
+            latest = await marketplace.fetch_template(src, name)
+            if not latest:
+                raise HTTPException(
+                    404,
+                    f"Template '{name}' no longer available in source '{source}'",
+                )
+
+            # 4. Verify name matches
+            if latest.name != name:
+                raise HTTPException(
+                    422,
+                    f"Template name mismatch: requested '{name}' "
+                    f"but file contains '{latest.name}'",
+                )
+
+            # 5. Validate compatibility
+            errors = marketplace.validate_template(latest)
+            if errors:
+                raise HTTPException(422, "; ".join(errors))
+
+            # 6. Check if newer
+            from hindclaw_ext.version import is_version_compatible
+            if installed.version and latest.version:
+                if is_version_compatible(installed.version, latest.version):
+                    # installed >= latest — no update needed
+                    return TemplateUpdateResponse(
+                        updated=False,
+                        previous_version=installed.version,
+                        new_version=latest.version,
+                    )
+
+            # 7. Apply update
+            rec = await db.upsert_template_from_marketplace(
+                id=latest.name,
+                scope=scope,
+                owner=owner,
+                source_name=source,
+                source_url=src.url,
+                source_revision=None,
+                schema_version=latest.schema_version,
+                min_hindclaw_version=latest.min_hindclaw_version,
+                min_hindsight_version=latest.min_hindsight_version,
+                version=latest.version,
+                description=latest.description,
+                author=latest.author,
+                tags=latest.tags,
+                retain_mission=latest.retain_mission,
+                reflect_mission=latest.reflect_mission,
+                observations_mission=latest.observations_mission,
+                retain_extraction_mode=latest.retain_extraction_mode,
+                retain_custom_instructions=latest.retain_custom_instructions,
+                retain_chunk_size=latest.retain_chunk_size,
+                retain_default_strategy=latest.retain_default_strategy,
+                retain_strategies=latest.retain_strategies,
+                entity_labels=[l.model_dump() for l in latest.entity_labels],
+                entities_allow_free_form=latest.entities_allow_free_form,
+                enable_observations=latest.enable_observations,
+                consolidation_llm_batch_size=latest.consolidation_llm_batch_size,
+                consolidation_source_facts_max_tokens=latest.consolidation_source_facts_max_tokens,
+                consolidation_source_facts_max_tokens_per_observation=latest.consolidation_source_facts_max_tokens_per_observation,
+                disposition_skepticism=latest.disposition_skepticism,
+                disposition_literalism=latest.disposition_literalism,
+                disposition_empathy=latest.disposition_empathy,
+                directive_seeds=[s.model_dump() for s in latest.directive_seeds],
+                mental_model_seeds=[s.model_dump() for s in latest.mental_model_seeds],
+            )
+            return TemplateUpdateResponse(
+                updated=True,
+                previous_version=installed.version,
+                new_version=latest.version,
+                template=rec.model_dump(),
             )
 
         return router
