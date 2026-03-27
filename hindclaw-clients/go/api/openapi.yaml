@@ -1581,7 +1581,7 @@ components:
         disposition_empathy: 3
         consolidation_source_facts_max_tokens: 1
         disposition_skepticism: 3
-        consolidation_llm_batch_size: 6
+        consolidation_llm_batch_size: 0
         directive_seeds:
         - is_active: true
           name: name
@@ -1675,6 +1675,7 @@ components:
           type: string
           nullable: true
         retain_chunk_size:
+          minimum: 0.0
           title: Retain Chunk Size
           nullable: true
         retain_default_strategy:
@@ -1695,6 +1696,7 @@ components:
           default: true
           title: Enable Observations
         consolidation_llm_batch_size:
+          minimum: 0.0
           title: Consolidation Llm Batch Size
           nullable: true
         consolidation_source_facts_max_tokens:
@@ -2443,7 +2445,7 @@ components:
         - tags
         - tags
         disposition_skepticism: 3
-        consolidation_llm_batch_size: 6
+        consolidation_llm_batch_size: 0
         directive_seeds:
         - is_active: true
           name: name
@@ -2497,6 +2499,7 @@ components:
           type: string
           nullable: true
         retain_chunk_size:
+          minimum: 0.0
           title: Retain Chunk Size
           nullable: true
         retain_default_strategy:
@@ -2519,6 +2522,7 @@ components:
           title: Enable Observations
           nullable: true
         consolidation_llm_batch_size:
+          minimum: 0.0
           title: Consolidation Llm Batch Size
           nullable: true
         consolidation_source_facts_max_tokens:

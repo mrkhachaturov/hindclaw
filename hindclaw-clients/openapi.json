@@ -2340,8 +2340,9 @@
           "retain_chunk_size": {
             "title": "Retain Chunk Size",
             "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
+            "exclusiveMinimum": true,
+            "nullable": true,
+            "minimum": 0.0
           },
           "retain_default_strategy": {
             "title": "Retain Default Strategy",
@@ -2373,8 +2374,9 @@
           "consolidation_llm_batch_size": {
             "title": "Consolidation Llm Batch Size",
             "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
+            "exclusiveMinimum": true,
+            "nullable": true,
+            "minimum": 0.0
           },
           "consolidation_source_facts_max_tokens": {
             "title": "Consolidation Source Facts Max Tokens",
@@ -3175,8 +3177,9 @@
           "retain_chunk_size": {
             "title": "Retain Chunk Size",
             "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
+            "exclusiveMinimum": true,
+            "nullable": true,
+            "minimum": 0.0
           },
           "retain_default_strategy": {
             "title": "Retain Default Strategy",
@@ -3210,8 +3213,9 @@
           "consolidation_llm_batch_size": {
             "title": "Consolidation Llm Batch Size",
             "type": "integer",
-            "exclusiveMinimum": 0.0,
-            "nullable": true
+            "exclusiveMinimum": true,
+            "nullable": true,
+            "minimum": 0.0
           },
           "consolidation_source_facts_max_tokens": {
             "title": "Consolidation Source Facts Max Tokens",

@@ -62,6 +62,7 @@ def extract() -> dict:
     # on the {"type": "null"} branch. Convert to {"type": "T", "nullable": true}
     # which all generators handle correctly.
     _convert_nullable_anyof(schema)
+    _convert_exclusive_bounds(schema)
 
     return schema
 
@@ -95,6 +96,24 @@ def _convert_nullable_anyof(schema: dict) -> None:
                 del prop_def["anyOf"]
                 prop_def.update(real)
                 prop_def["nullable"] = True
+
+
+def _convert_exclusive_bounds(schema: dict) -> None:
+    """Convert OpenAPI 3.1.0 numeric exclusiveMinimum/Maximum to 3.0.x booleans.
+
+    Pydantic v2's ``Field(gt=0)`` emits ``{"exclusiveMinimum": 0}`` (3.1.0
+    style, numeric value). OpenAPI 3.0.x and progenitor expect a boolean.
+    Convert ``{"exclusiveMinimum": N}`` to ``{"minimum": N, "exclusiveMinimum": true}``.
+
+    Args:
+        schema: OpenAPI spec dict (modified in place).
+    """
+    for comp_schema in schema.get("components", {}).get("schemas", {}).values():
+        for prop_def in comp_schema.get("properties", {}).values():
+            for bound, opposite in [("exclusiveMinimum", "minimum"), ("exclusiveMaximum", "maximum")]:
+                if bound in prop_def and not isinstance(prop_def[bound], bool):
+                    prop_def[opposite] = prop_def[bound]
+                    prop_def[bound] = True
 
 
 if __name__ == "__main__":

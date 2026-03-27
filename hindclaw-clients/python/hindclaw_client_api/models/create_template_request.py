@@ -42,13 +42,13 @@ class CreateTemplateRequest(BaseModel):
     observations_mission: Optional[StrictStr] = None
     retain_extraction_mode: Optional[StrictStr] = 'concise'
     retain_custom_instructions: Optional[StrictStr] = None
-    retain_chunk_size: Optional[StrictInt] = None
+    retain_chunk_size: Optional[Annotated[int, Field(strict=True, ge=0)]] = None
     retain_default_strategy: Optional[StrictStr] = None
     retain_strategies: Optional[Dict[str, Any]] = None
     entity_labels: Optional[List[EntityLabel]] = None
     entities_allow_free_form: Optional[StrictBool] = True
     enable_observations: Optional[StrictBool] = True
-    consolidation_llm_batch_size: Optional[StrictInt] = None
+    consolidation_llm_batch_size: Optional[Annotated[int, Field(strict=True, ge=0)]] = None
     consolidation_source_facts_max_tokens: Optional[StrictInt] = None
     consolidation_source_facts_max_tokens_per_observation: Optional[StrictInt] = None
     disposition_skepticism: Optional[Annotated[int, Field(le=5, strict=True, ge=1)]] = 3
