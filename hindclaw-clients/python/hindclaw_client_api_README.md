@@ -85,6 +85,7 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**create_sa_key**](hindclaw_client_api/docs/DefaultApi.md#create_sa_key) | **POST** /ext/hindclaw/service-accounts/{sa_id}/keys | Create Sa Key
 *DefaultApi* | [**create_service_account**](hindclaw_client_api/docs/DefaultApi.md#create_service_account) | **POST** /ext/hindclaw/service-accounts | Create Service Account
 *DefaultApi* | [**create_template**](hindclaw_client_api/docs/DefaultApi.md#create_template) | **POST** /ext/hindclaw/templates | Create Template
+*DefaultApi* | [**create_template_source**](hindclaw_client_api/docs/DefaultApi.md#create_template_source) | **POST** /ext/hindclaw/admin/template-sources | Create Template Source
 *DefaultApi* | [**create_user**](hindclaw_client_api/docs/DefaultApi.md#create_user) | **POST** /ext/hindclaw/users | Create User
 *DefaultApi* | [**debug_resolve**](hindclaw_client_api/docs/DefaultApi.md#debug_resolve) | **GET** /ext/hindclaw/debug/resolve | Debug Resolve
 *DefaultApi* | [**delete_api_key**](hindclaw_client_api/docs/DefaultApi.md#delete_api_key) | **DELETE** /ext/hindclaw/users/{user_id}/api-keys/{key_id} | Delete Api Key
@@ -95,6 +96,7 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**delete_sa_key**](hindclaw_client_api/docs/DefaultApi.md#delete_sa_key) | **DELETE** /ext/hindclaw/service-accounts/{sa_id}/keys/{key_id} | Delete Sa Key
 *DefaultApi* | [**delete_service_account**](hindclaw_client_api/docs/DefaultApi.md#delete_service_account) | **DELETE** /ext/hindclaw/service-accounts/{sa_id} | Delete Service Account Endpoint
 *DefaultApi* | [**delete_template**](hindclaw_client_api/docs/DefaultApi.md#delete_template) | **DELETE** /ext/hindclaw/templates/{scope}/{name} | Delete Template Endpoint
+*DefaultApi* | [**delete_template_source**](hindclaw_client_api/docs/DefaultApi.md#delete_template_source) | **DELETE** /ext/hindclaw/admin/template-sources/{name} | Delete Template Source
 *DefaultApi* | [**delete_user**](hindclaw_client_api/docs/DefaultApi.md#delete_user) | **DELETE** /ext/hindclaw/users/{user_id} | Delete User
 *DefaultApi* | [**get_bank_policy**](hindclaw_client_api/docs/DefaultApi.md#get_bank_policy) | **GET** /ext/hindclaw/banks/{bank_id}/policy | Get Bank Policy Endpoint
 *DefaultApi* | [**get_group**](hindclaw_client_api/docs/DefaultApi.md#get_group) | **GET** /ext/hindclaw/groups/{group_id} | Get Group
@@ -109,9 +111,11 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**list_policy_attachments**](hindclaw_client_api/docs/DefaultApi.md#list_policy_attachments) | **GET** /ext/hindclaw/policy-attachments | List Attachments
 *DefaultApi* | [**list_sa_keys**](hindclaw_client_api/docs/DefaultApi.md#list_sa_keys) | **GET** /ext/hindclaw/service-accounts/{sa_id}/keys | List Sa Keys
 *DefaultApi* | [**list_service_accounts**](hindclaw_client_api/docs/DefaultApi.md#list_service_accounts) | **GET** /ext/hindclaw/service-accounts | List Service Accounts
+*DefaultApi* | [**list_template_sources**](hindclaw_client_api/docs/DefaultApi.md#list_template_sources) | **GET** /ext/hindclaw/admin/template-sources | List Template Sources
 *DefaultApi* | [**list_templates**](hindclaw_client_api/docs/DefaultApi.md#list_templates) | **GET** /ext/hindclaw/templates | List Templates
 *DefaultApi* | [**list_user_channels**](hindclaw_client_api/docs/DefaultApi.md#list_user_channels) | **GET** /ext/hindclaw/users/{user_id}/channels | List User Channels
 *DefaultApi* | [**list_users**](hindclaw_client_api/docs/DefaultApi.md#list_users) | **GET** /ext/hindclaw/users | List Users
+*DefaultApi* | [**marketplace_search**](hindclaw_client_api/docs/DefaultApi.md#marketplace_search) | **GET** /ext/hindclaw/marketplace/search | Marketplace Search
 *DefaultApi* | [**remove_group_member**](hindclaw_client_api/docs/DefaultApi.md#remove_group_member) | **DELETE** /ext/hindclaw/groups/{group_id}/members/{user_id} | Remove Group Member
 *DefaultApi* | [**remove_user_channel**](hindclaw_client_api/docs/DefaultApi.md#remove_user_channel) | **DELETE** /ext/hindclaw/users/{user_id}/channels/{provider}/{sender_id} | Remove User Channel
 *DefaultApi* | [**update_group**](hindclaw_client_api/docs/DefaultApi.md#update_group) | **PUT** /ext/hindclaw/groups/{group_id} | Update Group
@@ -139,6 +143,7 @@ Class | Method | HTTP request | Description
  - [CreatePolicyRequest](hindclaw_client_api/docs/CreatePolicyRequest.md)
  - [CreateSAKeyRequest](hindclaw_client_api/docs/CreateSAKeyRequest.md)
  - [CreateServiceAccountRequest](hindclaw_client_api/docs/CreateServiceAccountRequest.md)
+ - [CreateSourceRequest](hindclaw_client_api/docs/CreateSourceRequest.md)
  - [CreateTemplateRequest](hindclaw_client_api/docs/CreateTemplateRequest.md)
  - [CreateUserRequest](hindclaw_client_api/docs/CreateUserRequest.md)
  - [DirectiveSeed](hindclaw_client_api/docs/DirectiveSeed.md)
@@ -149,6 +154,8 @@ Class | Method | HTTP request | Description
  - [GroupMembershipConfirmation](hindclaw_client_api/docs/GroupMembershipConfirmation.md)
  - [GroupSummaryResponse](hindclaw_client_api/docs/GroupSummaryResponse.md)
  - [HTTPValidationError](hindclaw_client_api/docs/HTTPValidationError.md)
+ - [MarketplaceSearchResponse](hindclaw_client_api/docs/MarketplaceSearchResponse.md)
+ - [MarketplaceSearchResult](hindclaw_client_api/docs/MarketplaceSearchResult.md)
  - [MentalModelSeed](hindclaw_client_api/docs/MentalModelSeed.md)
  - [MentalModelSeedResult](hindclaw_client_api/docs/MentalModelSeedResult.md)
  - [PolicyAttachmentResponse](hindclaw_client_api/docs/PolicyAttachmentResponse.md)
@@ -156,6 +163,7 @@ Class | Method | HTTP request | Description
  - [SAKeyCreateResponse](hindclaw_client_api/docs/SAKeyCreateResponse.md)
  - [SAKeyResponse](hindclaw_client_api/docs/SAKeyResponse.md)
  - [ServiceAccountResponse](hindclaw_client_api/docs/ServiceAccountResponse.md)
+ - [SourceResponse](hindclaw_client_api/docs/SourceResponse.md)
  - [TemplateResponse](hindclaw_client_api/docs/TemplateResponse.md)
  - [TemplateSummaryResponse](hindclaw_client_api/docs/TemplateSummaryResponse.md)
  - [UpdateGroupRequest](hindclaw_client_api/docs/UpdateGroupRequest.md)

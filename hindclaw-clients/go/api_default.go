@@ -166,6 +166,20 @@ Raises:
 	CreateTemplateExecute(r DefaultAPICreateTemplateRequest) (*TemplateResponse, *http.Response, error)
 
 	/*
+	CreateTemplateSource Create Template Source
+
+	Register a trusted marketplace source.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return DefaultAPICreateTemplateSourceRequest
+	*/
+	CreateTemplateSource(ctx context.Context) DefaultAPICreateTemplateSourceRequest
+
+	// CreateTemplateSourceExecute executes the request
+	//  @return SourceResponse
+	CreateTemplateSourceExecute(r DefaultAPICreateTemplateSourceRequest) (*SourceResponse, *http.Response, error)
+
+	/*
 	CreateUser Create User
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -301,6 +315,20 @@ Raises:
 
 	// DeleteTemplateExecute executes the request
 	DeleteTemplateExecute(r DefaultAPIDeleteTemplateRequest) (*http.Response, error)
+
+	/*
+	DeleteTemplateSource Delete Template Source
+
+	Remove a trusted marketplace source.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param name
+	@return DefaultAPIDeleteTemplateSourceRequest
+	*/
+	DeleteTemplateSource(ctx context.Context, name string) DefaultAPIDeleteTemplateSourceRequest
+
+	// DeleteTemplateSourceExecute executes the request
+	DeleteTemplateSourceExecute(r DefaultAPIDeleteTemplateSourceRequest) (*http.Response, error)
 
 	/*
 	DeleteUser Delete User
@@ -496,6 +524,20 @@ Raises:
 	ListServiceAccountsExecute(r DefaultAPIListServiceAccountsRequest) ([]ServiceAccountResponse, *http.Response, error)
 
 	/*
+	ListTemplateSources List Template Sources
+
+	List all configured marketplace sources.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return DefaultAPIListTemplateSourcesRequest
+	*/
+	ListTemplateSources(ctx context.Context) DefaultAPIListTemplateSourcesRequest
+
+	// ListTemplateSourcesExecute executes the request
+	//  @return []SourceResponse
+	ListTemplateSourcesExecute(r DefaultAPIListTemplateSourcesRequest) ([]SourceResponse, *http.Response, error)
+
+	/*
 	ListTemplates List Templates
 
 	List installed templates filtered by access.
@@ -543,6 +585,20 @@ Returns:
 	// ListUsersExecute executes the request
 	//  @return []UserResponse
 	ListUsersExecute(r DefaultAPIListUsersRequest) ([]UserResponse, *http.Response, error)
+
+	/*
+	MarketplaceSearch Marketplace Search
+
+	Search marketplace templates across configured sources.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return DefaultAPIMarketplaceSearchRequest
+	*/
+	MarketplaceSearch(ctx context.Context) DefaultAPIMarketplaceSearchRequest
+
+	// MarketplaceSearchExecute executes the request
+	//  @return MarketplaceSearchResponse
+	MarketplaceSearchExecute(r DefaultAPIMarketplaceSearchRequest) (*MarketplaceSearchResponse, *http.Response, error)
 
 	/*
 	RemoveGroupMember Remove Group Member
@@ -1794,6 +1850,126 @@ func (a *DefaultAPIService) CreateTemplateExecute(r DefaultAPICreateTemplateRequ
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type DefaultAPICreateTemplateSourceRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	createSourceRequest *CreateSourceRequest
+}
+
+func (r DefaultAPICreateTemplateSourceRequest) CreateSourceRequest(createSourceRequest CreateSourceRequest) DefaultAPICreateTemplateSourceRequest {
+	r.createSourceRequest = &createSourceRequest
+	return r
+}
+
+func (r DefaultAPICreateTemplateSourceRequest) Execute() (*SourceResponse, *http.Response, error) {
+	return r.ApiService.CreateTemplateSourceExecute(r)
+}
+
+/*
+CreateTemplateSource Create Template Source
+
+Register a trusted marketplace source.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return DefaultAPICreateTemplateSourceRequest
+*/
+func (a *DefaultAPIService) CreateTemplateSource(ctx context.Context) DefaultAPICreateTemplateSourceRequest {
+	return DefaultAPICreateTemplateSourceRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return SourceResponse
+func (a *DefaultAPIService) CreateTemplateSourceExecute(r DefaultAPICreateTemplateSourceRequest) (*SourceResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *SourceResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreateTemplateSource")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/admin/template-sources"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.createSourceRequest == nil {
+		return localVarReturnValue, nil, reportError("createSourceRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.createSourceRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type DefaultAPICreateUserRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
@@ -2839,6 +3015,108 @@ func (a *DefaultAPIService) DeleteTemplateExecute(r DefaultAPIDeleteTemplateRequ
 
 	localVarPath := localBasePath + "/ext/hindclaw/templates/{scope}/{name}"
 	localVarPath = strings.Replace(localVarPath, "{"+"scope"+"}", url.PathEscape(parameterValueToString(r.scope, "scope")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"name"+"}", url.PathEscape(parameterValueToString(r.name, "name")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+type DefaultAPIDeleteTemplateSourceRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	name string
+}
+
+func (r DefaultAPIDeleteTemplateSourceRequest) Execute() (*http.Response, error) {
+	return r.ApiService.DeleteTemplateSourceExecute(r)
+}
+
+/*
+DeleteTemplateSource Delete Template Source
+
+Remove a trusted marketplace source.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param name
+ @return DefaultAPIDeleteTemplateSourceRequest
+*/
+func (a *DefaultAPIService) DeleteTemplateSource(ctx context.Context, name string) DefaultAPIDeleteTemplateSourceRequest {
+	return DefaultAPIDeleteTemplateSourceRequest{
+		ApiService: a,
+		ctx: ctx,
+		name: name,
+	}
+}
+
+// Execute executes the request
+func (a *DefaultAPIService) DeleteTemplateSourceExecute(r DefaultAPIDeleteTemplateSourceRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteTemplateSource")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/admin/template-sources/{name}"
 	localVarPath = strings.Replace(localVarPath, "{"+"name"+"}", url.PathEscape(parameterValueToString(r.name, "name")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -4426,6 +4704,105 @@ func (a *DefaultAPIService) ListServiceAccountsExecute(r DefaultAPIListServiceAc
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type DefaultAPIListTemplateSourcesRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+}
+
+func (r DefaultAPIListTemplateSourcesRequest) Execute() ([]SourceResponse, *http.Response, error) {
+	return r.ApiService.ListTemplateSourcesExecute(r)
+}
+
+/*
+ListTemplateSources List Template Sources
+
+List all configured marketplace sources.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return DefaultAPIListTemplateSourcesRequest
+*/
+func (a *DefaultAPIService) ListTemplateSources(ctx context.Context) DefaultAPIListTemplateSourcesRequest {
+	return DefaultAPIListTemplateSourcesRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return []SourceResponse
+func (a *DefaultAPIService) ListTemplateSourcesExecute(r DefaultAPIListTemplateSourcesRequest) ([]SourceResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  []SourceResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListTemplateSources")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/admin/template-sources"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type DefaultAPIListTemplatesRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
@@ -4746,6 +5123,145 @@ func (a *DefaultAPIService) ListUsersExecute(r DefaultAPIListUsersRequest) ([]Us
 		newErr := &GenericOpenAPIError{
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIMarketplaceSearchRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	q *string
+	source *string
+	tag *string
+}
+
+// Search query
+func (r DefaultAPIMarketplaceSearchRequest) Q(q string) DefaultAPIMarketplaceSearchRequest {
+	r.q = &q
+	return r
+}
+
+// Filter by source name
+func (r DefaultAPIMarketplaceSearchRequest) Source(source string) DefaultAPIMarketplaceSearchRequest {
+	r.source = &source
+	return r
+}
+
+// Filter by tag
+func (r DefaultAPIMarketplaceSearchRequest) Tag(tag string) DefaultAPIMarketplaceSearchRequest {
+	r.tag = &tag
+	return r
+}
+
+func (r DefaultAPIMarketplaceSearchRequest) Execute() (*MarketplaceSearchResponse, *http.Response, error) {
+	return r.ApiService.MarketplaceSearchExecute(r)
+}
+
+/*
+MarketplaceSearch Marketplace Search
+
+Search marketplace templates across configured sources.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return DefaultAPIMarketplaceSearchRequest
+*/
+func (a *DefaultAPIService) MarketplaceSearch(ctx context.Context) DefaultAPIMarketplaceSearchRequest {
+	return DefaultAPIMarketplaceSearchRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return MarketplaceSearchResponse
+func (a *DefaultAPIService) MarketplaceSearchExecute(r DefaultAPIMarketplaceSearchRequest) (*MarketplaceSearchResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *MarketplaceSearchResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.MarketplaceSearch")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/marketplace/search"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.q != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "form", "")
+	}
+	if r.source != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "source", r.source, "form", "")
+	}
+	if r.tag != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "tag", r.tag, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

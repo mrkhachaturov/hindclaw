@@ -20,6 +20,7 @@ hindclaw_client_api/models/create_policy_attachment_request.py
 hindclaw_client_api/models/create_policy_request.py
 hindclaw_client_api/models/create_sa_key_request.py
 hindclaw_client_api/models/create_service_account_request.py
+hindclaw_client_api/models/create_source_request.py
 hindclaw_client_api/models/create_template_request.py
 hindclaw_client_api/models/create_user_request.py
 hindclaw_client_api/models/directive_seed.py
@@ -30,6 +31,8 @@ hindclaw_client_api/models/group_member_response.py
 hindclaw_client_api/models/group_membership_confirmation.py
 hindclaw_client_api/models/group_summary_response.py
 hindclaw_client_api/models/http_validation_error.py
+hindclaw_client_api/models/marketplace_search_response.py
+hindclaw_client_api/models/marketplace_search_result.py
 hindclaw_client_api/models/mental_model_seed.py
 hindclaw_client_api/models/mental_model_seed_result.py
 hindclaw_client_api/models/policy_attachment_response.py
@@ -37,6 +40,7 @@ hindclaw_client_api/models/policy_response.py
 hindclaw_client_api/models/sa_key_create_response.py
 hindclaw_client_api/models/sa_key_response.py
 hindclaw_client_api/models/service_account_response.py
+hindclaw_client_api/models/source_response.py
 hindclaw_client_api/models/template_response.py
 hindclaw_client_api/models/template_summary_response.py
 hindclaw_client_api/models/update_group_request.py

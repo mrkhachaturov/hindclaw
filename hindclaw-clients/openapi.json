@@ -2074,6 +2074,204 @@
           }
         ]
       }
+    },
+    "/ext/hindclaw/admin/template-sources": {
+      "get": {
+        "summary": "List Template Sources",
+        "description": "List all configured marketplace sources.",
+        "operationId": "list_template_sources",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SourceResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Template Sources"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create Template Source",
+        "description": "Register a trusted marketplace source.",
+        "operationId": "create_template_source",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/admin/template-sources/{name}": {
+      "delete": {
+        "summary": "Delete Template Source",
+        "description": "Remove a trusted marketplace source.",
+        "operationId": "delete_template_source",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/marketplace/search": {
+      "get": {
+        "summary": "Marketplace Search",
+        "description": "Search marketplace templates across configured sources.",
+        "operationId": "marketplace_search",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search query",
+              "title": "Q"
+            },
+            "description": "Search query"
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by source name",
+              "title": "Source"
+            },
+            "description": "Filter by source name"
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by tag",
+              "title": "Tag"
+            },
+            "description": "Filter by tag"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketplaceSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2401,6 +2599,37 @@
         ],
         "title": "CreateServiceAccountRequest",
         "description": "Request to create a service account."
+      },
+      "CreateSourceRequest": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Url",
+            "description": "Marketplace repository URL"
+          },
+          "alias": {
+            "title": "Alias",
+            "description": "Override auto-derived source name",
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "nullable": true
+          },
+          "auth_token": {
+            "title": "Auth Token",
+            "description": "Auth token for private repositories",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "CreateSourceRequest",
+        "description": "Request to register a marketplace source."
       },
       "CreateTemplateRequest": {
         "properties": {
@@ -2773,6 +3002,85 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "MarketplaceSearchResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/MarketplaceSearchResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results",
+          "total"
+        ],
+        "title": "MarketplaceSearchResponse",
+        "description": "Response for marketplace search."
+      },
+      "MarketplaceSearchResult": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "author": {
+            "type": "string",
+            "title": "Author",
+            "default": ""
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "default": []
+          },
+          "installed": {
+            "type": "boolean",
+            "title": "Installed",
+            "default": false
+          },
+          "installed_version": {
+            "title": "Installed Version",
+            "type": "string",
+            "nullable": true
+          },
+          "installed_scope": {
+            "title": "Installed Scope",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "name",
+          "version"
+        ],
+        "title": "MarketplaceSearchResult",
+        "description": "A template from marketplace search results with install status.\n\nInstall status reflects server-scope first, then the calling user's\npersonal scope. If installed in both, server version is reported."
+      },
       "MentalModelSeed": {
         "properties": {
           "name": {
@@ -2969,6 +3277,35 @@
         ],
         "title": "ServiceAccountResponse",
         "description": "Service account resource."
+      },
+      "SourceResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "has_auth": {
+            "type": "boolean",
+            "title": "Has Auth"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "url",
+          "has_auth",
+          "created_at"
+        ],
+        "title": "SourceResponse",
+        "description": "Response for a registered marketplace source."
       },
       "TemplateResponse": {
         "properties": {

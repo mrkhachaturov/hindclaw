@@ -1399,6 +1399,120 @@ paths:
       security:
       - HTTPBearer: []
       summary: Create Bank From Template
+  /ext/hindclaw/admin/template-sources:
+    get:
+      description: List all configured marketplace sources.
+      operationId: list_template_sources
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SourceResponse'
+                type: array
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: List Template Sources
+    post:
+      description: Register a trusted marketplace source.
+      operationId: create_template_source
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSourceRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create Template Source
+  /ext/hindclaw/admin/template-sources/{name}:
+    delete:
+      description: Remove a trusted marketplace source.
+      operationId: delete_template_source
+      parameters:
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          title: Name
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete Template Source
+  /ext/hindclaw/marketplace/search:
+    get:
+      description: Search marketplace templates across configured sources.
+      operationId: marketplace_search
+      parameters:
+      - description: Search query
+        explode: true
+        in: query
+        name: q
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - description: Filter by source name
+        explode: true
+        in: query
+        name: source
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - description: Filter by tag
+        explode: true
+        in: query
+        name: tag
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketplaceSearchResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Marketplace Search
 components:
   schemas:
     AddChannelRequest:
@@ -1701,6 +1815,34 @@ components:
       - id
       - owner_user_id
       title: CreateServiceAccountRequest
+    CreateSourceRequest:
+      additionalProperties: true
+      description: Request to register a marketplace source.
+      example:
+        alias: alias
+        auth_token: auth_token
+        url: url
+      properties:
+        url:
+          description: Marketplace repository URL
+          minLength: 1
+          title: Url
+          type: string
+        alias:
+          description: Override auto-derived source name
+          maxLength: 128
+          minLength: 1
+          title: Alias
+          type: string
+          nullable: true
+        auth_token:
+          description: Auth token for private repositories
+          title: Auth Token
+          type: string
+          nullable: true
+      required:
+      - url
+      title: CreateSourceRequest
     CreateTemplateRequest:
       additionalProperties: {}
       description: Request to create a custom template.
@@ -2081,6 +2223,103 @@ components:
             $ref: '#/components/schemas/ValidationError'
           type: array
       title: HTTPValidationError
+    MarketplaceSearchResponse:
+      description: Response for marketplace search.
+      example:
+        total: 0
+        results:
+        - installed: false
+          installed_scope: installed_scope
+          author: ""
+          installed_version: installed_version
+          name: name
+          description: ""
+          source: source
+          version: version
+          tags:
+          - tags
+          - tags
+        - installed: false
+          installed_scope: installed_scope
+          author: ""
+          installed_version: installed_version
+          name: name
+          description: ""
+          source: source
+          version: version
+          tags:
+          - tags
+          - tags
+      properties:
+        results:
+          items:
+            $ref: '#/components/schemas/MarketplaceSearchResult'
+          type: array
+        total:
+          title: Total
+          type: integer
+      required:
+      - results
+      - total
+      title: MarketplaceSearchResponse
+    MarketplaceSearchResult:
+      description: |-
+        A template from marketplace search results with install status.
+
+        Install status reflects server-scope first, then the calling user's
+        personal scope. If installed in both, server version is reported.
+      example:
+        installed: false
+        installed_scope: installed_scope
+        author: ""
+        installed_version: installed_version
+        name: name
+        description: ""
+        source: source
+        version: version
+        tags:
+        - tags
+        - tags
+      properties:
+        source:
+          title: Source
+          type: string
+        name:
+          title: Name
+          type: string
+        version:
+          title: Version
+          type: string
+        description:
+          default: ""
+          title: Description
+          type: string
+        author:
+          default: ""
+          title: Author
+          type: string
+        tags:
+          default: []
+          items:
+            type: string
+          type: array
+        installed:
+          default: false
+          title: Installed
+          type: boolean
+        installed_version:
+          title: Installed Version
+          type: string
+          nullable: true
+        installed_scope:
+          title: Installed Scope
+          type: string
+          nullable: true
+      required:
+      - name
+      - source
+      - version
+      title: MarketplaceSearchResult
     MentalModelSeed:
       description: A mental model to create when bootstrapping a bank from a template.
       example:
@@ -2258,6 +2497,32 @@ components:
       - owner_user_id
       - scoping_policy_id
       title: ServiceAccountResponse
+    SourceResponse:
+      description: Response for a registered marketplace source.
+      example:
+        has_auth: true
+        name: name
+        created_at: created_at
+        url: url
+      properties:
+        name:
+          title: Name
+          type: string
+        url:
+          title: Url
+          type: string
+        has_auth:
+          title: Has Auth
+          type: boolean
+        created_at:
+          title: Created At
+          type: string
+      required:
+      - created_at
+      - has_auth
+      - name
+      - url
+      title: SourceResponse
     TemplateResponse:
       description: Full template details.
       example:

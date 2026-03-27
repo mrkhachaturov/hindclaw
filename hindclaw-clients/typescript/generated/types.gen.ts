@@ -265,6 +265,32 @@ export type CreateServiceAccountRequest = {
 };
 
 /**
+ * CreateSourceRequest
+ *
+ * Request to register a marketplace source.
+ */
+export type CreateSourceRequest = {
+    /**
+     * Url
+     *
+     * Marketplace repository URL
+     */
+    url: string;
+    /**
+     * Alias
+     *
+     * Override auto-derived source name
+     */
+    alias?: string;
+    /**
+     * Auth Token
+     *
+     * Auth token for private repositories
+     */
+    auth_token?: string;
+};
+
+/**
  * CreateTemplateRequest
  *
  * Request to create a custom template.
@@ -559,6 +585,69 @@ export type HttpValidationError = {
 };
 
 /**
+ * MarketplaceSearchResponse
+ *
+ * Response for marketplace search.
+ */
+export type MarketplaceSearchResponse = {
+    /**
+     * Results
+     */
+    results: Array<MarketplaceSearchResult>;
+    /**
+     * Total
+     */
+    total: number;
+};
+
+/**
+ * MarketplaceSearchResult
+ *
+ * A template from marketplace search results with install status.
+ *
+ * Install status reflects server-scope first, then the calling user's
+ * personal scope. If installed in both, server version is reported.
+ */
+export type MarketplaceSearchResult = {
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Version
+     */
+    version: string;
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Author
+     */
+    author?: string;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    /**
+     * Installed
+     */
+    installed?: boolean;
+    /**
+     * Installed Version
+     */
+    installed_version?: string;
+    /**
+     * Installed Scope
+     */
+    installed_scope?: string;
+};
+
+/**
  * MentalModelSeed
  *
  * A mental model to create when bootstrapping a bank from a template.
@@ -718,6 +807,30 @@ export type ServiceAccountResponse = {
      * Scoping Policy Id
      */
     scoping_policy_id: string;
+};
+
+/**
+ * SourceResponse
+ *
+ * Response for a registered marketplace source.
+ */
+export type SourceResponse = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Url
+     */
+    url: string;
+    /**
+     * Has Auth
+     */
+    has_auth: boolean;
+    /**
+     * Created At
+     */
+    created_at: string;
 };
 
 /**
@@ -2510,3 +2623,120 @@ export type CreateBankFromTemplateResponses = {
 };
 
 export type CreateBankFromTemplateResponse = CreateBankFromTemplateResponses[keyof CreateBankFromTemplateResponses];
+
+export type ListTemplateSourcesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/admin/template-sources';
+};
+
+export type ListTemplateSourcesResponses = {
+    /**
+     * Response List Template Sources
+     *
+     * Successful Response
+     */
+    200: Array<SourceResponse>;
+};
+
+export type ListTemplateSourcesResponse = ListTemplateSourcesResponses[keyof ListTemplateSourcesResponses];
+
+export type CreateTemplateSourceData = {
+    body: CreateSourceRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/admin/template-sources';
+};
+
+export type CreateTemplateSourceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateTemplateSourceError = CreateTemplateSourceErrors[keyof CreateTemplateSourceErrors];
+
+export type CreateTemplateSourceResponses = {
+    /**
+     * Successful Response
+     */
+    201: SourceResponse;
+};
+
+export type CreateTemplateSourceResponse = CreateTemplateSourceResponses[keyof CreateTemplateSourceResponses];
+
+export type DeleteTemplateSourceData = {
+    body?: never;
+    path: {
+        /**
+         * Name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/admin/template-sources/{name}';
+};
+
+export type DeleteTemplateSourceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteTemplateSourceError = DeleteTemplateSourceErrors[keyof DeleteTemplateSourceErrors];
+
+export type DeleteTemplateSourceResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteTemplateSourceResponse = DeleteTemplateSourceResponses[keyof DeleteTemplateSourceResponses];
+
+export type MarketplaceSearchData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Q
+         *
+         * Search query
+         */
+        q?: string | null;
+        /**
+         * Source
+         *
+         * Filter by source name
+         */
+        source?: string | null;
+        /**
+         * Tag
+         *
+         * Filter by tag
+         */
+        tag?: string | null;
+    };
+    url: '/ext/hindclaw/marketplace/search';
+};
+
+export type MarketplaceSearchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type MarketplaceSearchError = MarketplaceSearchErrors[keyof MarketplaceSearchErrors];
+
+export type MarketplaceSearchResponses = {
+    /**
+     * Successful Response
+     */
+    200: MarketplaceSearchResponse;
+};
+
+export type MarketplaceSearchResponse2 = MarketplaceSearchResponses[keyof MarketplaceSearchResponses];
