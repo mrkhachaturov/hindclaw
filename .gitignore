@@ -5,11 +5,19 @@ dist/
 .env.*
 !.env.example
 
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+
 # Docusaurus
 hindclaw-docs/build/
 hindclaw-docs/.docusaurus/
 hindclaw-docs/node_modules/
-.worktrees/
 
 # Rust
-hindclaw-clients/rust/target
+hindclaw-clients/rust/target/
+
+# Misc
+.worktrees/

@@ -9,3 +9,6 @@
 	path = hindclaw-integrations/openclaw
 	url = git@github.com:mrkhachaturov/hindclaw-openclaw-plugin.git
 	branch = main
+[submodule "hindclaw-templates"]
+	path = hindclaw-templates
+	url = git@github.com:mrkhachaturov/hindclaw-templates-official.git
