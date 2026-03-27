@@ -192,42 +192,6 @@ INSERT INTO hindclaw_policies (id, display_name, document_json, is_builtin) VALU
 ON CONFLICT (id) DO NOTHING;
 """
 
-# Migration: drop old tables replaced by policies + bank policies
-_MIGRATION_V2 = """\
-DROP TABLE IF EXISTS hindclaw_bank_permissions;
-DROP TABLE IF EXISTS hindclaw_strategy_scopes;
-
--- Strip permission columns from groups (idempotent)
-DO $$
-BEGIN
-    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS recall;
-    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS retain;
-    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS retain_roles;
-    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS retain_tags;
-    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS retain_every_n_turns;
-    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS recall_budget;
-    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS recall_max_tokens;
-    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS recall_tag_groups;
-    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS llm_model;
-    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS llm_provider;
-    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS exclude_providers;
-    ALTER TABLE hindclaw_groups DROP COLUMN IF EXISTS retain_strategy;
-END $$;
-
-DELETE FROM hindclaw_groups WHERE id = '_default';
-"""
-
-_MIGRATION_V3 = """\
--- V3: bank_templates table is created in DDL (IF NOT EXISTS).
-SELECT 1;
-"""
-
-_MIGRATION_V4 = """\
--- Add template:source action to template:admin builtin policy
-UPDATE hindclaw_policies
-SET document_json = '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["template:list","template:create","template:install","template:manage","template:source","bank:create"],"banks":["*"]}]}'
-WHERE id = 'template:admin' AND is_builtin = TRUE;
-"""
 
 
 async def get_pool() -> asyncpg.Pool:
@@ -256,13 +220,7 @@ async def get_pool() -> asyncpg.Pool:
         async with _pool.acquire() as conn:
             async with conn.transaction():
                 await conn.execute(_DDL)
-            async with conn.transaction():
-                await conn.execute(_MIGRATION_V2)
-            async with conn.transaction():
-                await conn.execute(_MIGRATION_V3)
-            async with conn.transaction():
-                await conn.execute(_MIGRATION_V4)
-            # Seed root user if env vars are set (outside DDL transaction)
+            # Seed root user if env vars are set
             root_user = os.environ.get("HINDCLAW_ROOT_USER")
             root_key = os.environ.get("HINDCLAW_ROOT_API_KEY")
             if root_user and root_key:

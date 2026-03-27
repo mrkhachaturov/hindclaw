@@ -18,8 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.3] - 2026-03-28
 
+### Changed
+- Remove all database migrations (V2, V3, V4) — no production deployments exist, DB is recreated from scratch each deploy. DDL is the single source of truth.
+
 ### Fixed
-- Fix asyncpg crash on startup caused by comment-only `_MIGRATION_V3` placeholder (asyncpg cannot execute SQL strings with no statements)
+- Fix asyncpg crash on startup caused by comment-only `_MIGRATION_V3` (asyncpg cannot execute SQL strings with no statements)
 
 ## [0.2.2] - 2026-03-28
 
