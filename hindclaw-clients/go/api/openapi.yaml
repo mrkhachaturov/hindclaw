@@ -1396,8 +1396,9 @@ components:
           title: Api Key
           type: string
         description:
-          nullable: true
+          title: Description
           type: string
+          nullable: true
       required:
       - api_key
       - id
@@ -1416,8 +1417,9 @@ components:
           title: Api Key Prefix
           type: string
         description:
-          nullable: true
+          title: Description
           type: string
+          nullable: true
       required:
       - api_key_prefix
       - id
@@ -1461,8 +1463,9 @@ components:
         description: description
       properties:
         description:
-          nullable: true
+          title: Description
           type: string
+          nullable: true
       title: CreateApiKeyRequest
     CreateGroupRequest:
       example:
@@ -1534,8 +1537,9 @@ components:
         description: description
       properties:
         description:
-          nullable: true
+          title: Description
           type: string
+          nullable: true
       title: CreateSAKeyRequest
     CreateServiceAccountRequest:
       description: Request to create a service account.
@@ -1555,8 +1559,9 @@ components:
           title: Display Name
           type: string
         scoping_policy_id:
-          nullable: true
+          title: Scoping Policy Id
           type: string
+          nullable: true
       required:
       - display_name
       - id
@@ -1567,9 +1572,9 @@ components:
       description: Request to create a custom template.
       example:
         disposition_literalism: 1
-        min_hindsight_version: Min_Hindsight_Version
+        min_hindsight_version: min_hindsight_version
         reflect_mission: reflect_mission
-        observations_mission: Observations_Mission
+        observations_mission: observations_mission
         retain_strategies:
           key: ""
         description: ""
@@ -1598,7 +1603,7 @@ components:
         retain_mission: retain_mission
         retain_chunk_size: 0
         author: ""
-        retain_default_strategy: Retain_Default_Strategy
+        retain_default_strategy: retain_default_strategy
         min_hindclaw_version: min_hindclaw_version
         entity_labels:
         - values:
@@ -1625,7 +1630,7 @@ components:
         tags:
         - tags
         - tags
-        retain_custom_instructions: Retain_Custom_Instructions
+        retain_custom_instructions: retain_custom_instructions
         consolidation_source_facts_max_tokens_per_observation: 5
       properties:
         id:
@@ -1649,7 +1654,9 @@ components:
           title: Min Hindclaw Version
           type: string
         min_hindsight_version:
-          $ref: '#/components/schemas/Min_Hindsight_Version'
+          title: Min Hindsight Version
+          type: string
+          nullable: true
         retain_mission:
           title: Retain Mission
           type: string
@@ -1657,16 +1664,23 @@ components:
           title: Reflect Mission
           type: string
         observations_mission:
-          $ref: '#/components/schemas/Observations_Mission'
+          title: Observations Mission
+          type: string
+          nullable: true
         retain_extraction_mode:
           default: concise
           title: Retain Extraction Mode
         retain_custom_instructions:
-          $ref: '#/components/schemas/Retain_Custom_Instructions'
+          title: Retain Custom Instructions
+          type: string
+          nullable: true
         retain_chunk_size:
-          $ref: '#/components/schemas/Retain_Chunk_Size'
+          title: Retain Chunk Size
+          nullable: true
         retain_default_strategy:
-          $ref: '#/components/schemas/Retain_Default_Strategy'
+          title: Retain Default Strategy
+          type: string
+          nullable: true
         retain_strategies:
           additionalProperties: true
           title: Retain Strategies
@@ -1681,11 +1695,16 @@ components:
           default: true
           title: Enable Observations
         consolidation_llm_batch_size:
-          $ref: '#/components/schemas/Consolidation_Llm_Batch_Size'
+          title: Consolidation Llm Batch Size
+          nullable: true
         consolidation_source_facts_max_tokens:
-          $ref: '#/components/schemas/Consolidation_Source_Facts_Max_Tokens'
+          title: Consolidation Source Facts Max Tokens
+          type: integer
+          nullable: true
         consolidation_source_facts_max_tokens_per_observation:
-          $ref: '#/components/schemas/Consolidation_Source_Facts_Max_Tokens_Per_Observation'
+          title: Consolidation Source Facts Max Tokens Per Observation
+          type: integer
+          nullable: true
         disposition_skepticism:
           default: 3
           maximum: 5.0
@@ -1730,8 +1749,9 @@ components:
           title: Display Name
           type: string
         email:
-          nullable: true
+          title: Email
           type: string
+          nullable: true
         is_active:
           default: true
           title: Is Active
@@ -1983,8 +2003,9 @@ components:
           title: Api Key
           type: string
         description:
-          nullable: true
+          title: Description
           type: string
+          nullable: true
       required:
       - api_key
       - description
@@ -2004,8 +2025,9 @@ components:
           title: Api Key Prefix
           type: string
         description:
-          nullable: true
+          title: Description
           type: string
+          nullable: true
       required:
       - api_key_prefix
       - description
@@ -2033,8 +2055,9 @@ components:
           title: Is Active
           type: boolean
         scoping_policy_id:
-          nullable: true
+          title: Scoping Policy Id
           type: string
+          nullable: true
       required:
       - display_name
       - id
@@ -2096,11 +2119,13 @@ components:
           title: Scope
           type: string
         owner:
-          nullable: true
+          title: Owner
           type: string
+          nullable: true
         source_name:
-          nullable: true
+          title: Source Name
           type: string
+          nullable: true
         schema_version:
           title: Schema Version
           type: integer
@@ -2108,17 +2133,21 @@ components:
           title: Min Hindclaw Version
           type: string
         min_hindsight_version:
-          nullable: true
+          title: Min Hindsight Version
           type: string
+          nullable: true
         version:
-          nullable: true
+          title: Version
           type: string
+          nullable: true
         source_url:
-          nullable: true
+          title: Source Url
           type: string
+          nullable: true
         source_revision:
-          nullable: true
+          title: Source Revision
           type: string
+          nullable: true
         description:
           title: Description
           type: string
@@ -2136,20 +2165,24 @@ components:
           title: Reflect Mission
           type: string
         observations_mission:
-          nullable: true
+          title: Observations Mission
           type: string
+          nullable: true
         retain_extraction_mode:
           title: Retain Extraction Mode
           type: string
         retain_custom_instructions:
-          nullable: true
+          title: Retain Custom Instructions
           type: string
+          nullable: true
         retain_chunk_size:
-          nullable: true
+          title: Retain Chunk Size
           type: integer
-        retain_default_strategy:
           nullable: true
+        retain_default_strategy:
+          title: Retain Default Strategy
           type: string
+          nullable: true
         retain_strategies:
           additionalProperties: true
           title: Retain Strategies
@@ -2166,14 +2199,17 @@ components:
           title: Enable Observations
           type: boolean
         consolidation_llm_batch_size:
-          nullable: true
+          title: Consolidation Llm Batch Size
           type: integer
+          nullable: true
         consolidation_source_facts_max_tokens:
-          nullable: true
+          title: Consolidation Source Facts Max Tokens
           type: integer
+          nullable: true
         consolidation_source_facts_max_tokens_per_observation:
-          nullable: true
+          title: Consolidation Source Facts Max Tokens Per Observation
           type: integer
+          nullable: true
         disposition_skepticism:
           title: Disposition Skepticism
           type: integer
@@ -2186,13 +2222,11 @@ components:
         directive_seeds:
           items:
             additionalProperties: true
-            nullable: true
             type: object
           type: array
         mental_model_seeds:
           items:
             additionalProperties: true
-            nullable: true
             type: object
           type: array
         created_at:
@@ -2263,11 +2297,13 @@ components:
           title: Scope
           type: string
         source_name:
-          nullable: true
+          title: Source Name
           type: string
+          nullable: true
         version:
-          nullable: true
+          title: Version
           type: string
+          nullable: true
         description:
           title: Description
           type: string
@@ -2316,8 +2352,9 @@ components:
         display_name: display_name
       properties:
         display_name:
-          nullable: true
+          title: Display Name
           type: string
+          nullable: true
       title: UpdateGroupRequest
     UpdatePolicyRequest:
       description: Request to update an access policy.
@@ -2327,12 +2364,14 @@ components:
         display_name: display_name
       properties:
         display_name:
-          nullable: true
+          title: Display Name
           type: string
+          nullable: true
         document:
           additionalProperties: true
-          nullable: true
+          title: Document
           type: object
+          nullable: true
       title: UpdatePolicyRequest
     UpdateServiceAccountRequest:
       description: Request to update a service account.
@@ -2342,14 +2381,17 @@ components:
         scoping_policy_id: scoping_policy_id
       properties:
         display_name:
-          nullable: true
+          title: Display Name
           type: string
+          nullable: true
         scoping_policy_id:
-          nullable: true
+          title: Scoping Policy Id
           type: string
-        is_active:
           nullable: true
+        is_active:
+          title: Is Active
           type: boolean
+          nullable: true
       title: UpdateServiceAccountRequest
     UpdateTemplateRequest:
       additionalProperties: {}
@@ -2360,19 +2402,19 @@ components:
         cannot be fully checked here because this is a partial update. The endpoint
         must merge with the existing record and validate the final state.
       example:
-        retain_extraction_mode: Retain_Extraction_Mode
-        retain_mission: Retain_Mission
+        retain_extraction_mode: retain_extraction_mode
+        retain_mission: retain_mission
         disposition_literalism: 1
         retain_chunk_size: 0
-        author: Author
-        min_hindsight_version: Min_Hindsight_Version
-        reflect_mission: Reflect_Mission
-        observations_mission: Observations_Mission
-        retain_default_strategy: Retain_Default_Strategy
+        author: author
+        min_hindsight_version: min_hindsight_version
+        reflect_mission: reflect_mission
+        observations_mission: observations_mission
+        retain_default_strategy: retain_default_strategy
         retain_strategies:
           key: ""
-        description: Description
-        min_hindclaw_version: Min_Hindclaw_Version
+        description: description
+        min_hindclaw_version: min_hindclaw_version
         disposition_empathy: 3
         entity_labels:
         - values:
@@ -2398,8 +2440,8 @@ components:
         consolidation_source_facts_max_tokens: 1
         entities_allow_free_form: true
         tags:
-        - Tags
-        - Tags
+        - tags
+        - tags
         disposition_skepticism: 3
         consolidation_llm_batch_size: 6
         directive_seeds:
@@ -2416,58 +2458,102 @@ components:
           name: name
         - source_query: source_query
           name: name
-        retain_custom_instructions: Retain_Custom_Instructions
+        retain_custom_instructions: retain_custom_instructions
         consolidation_source_facts_max_tokens_per_observation: 5
         enable_observations: true
       properties:
         description:
-          $ref: '#/components/schemas/Description'
+          title: Description
+          nullable: true
         author:
-          $ref: '#/components/schemas/Author'
+          title: Author
+          nullable: true
         tags:
-          $ref: '#/components/schemas/Tags'
+          items: {}
+          title: Tags
+          nullable: true
         min_hindclaw_version:
-          $ref: '#/components/schemas/Min_Hindclaw_Version'
+          title: Min Hindclaw Version
+          nullable: true
         min_hindsight_version:
-          $ref: '#/components/schemas/Min_Hindsight_Version'
+          title: Min Hindsight Version
+          type: string
+          nullable: true
         retain_mission:
-          $ref: '#/components/schemas/Retain_Mission'
+          title: Retain Mission
+          nullable: true
         reflect_mission:
-          $ref: '#/components/schemas/Reflect_Mission'
+          title: Reflect Mission
+          nullable: true
         observations_mission:
-          $ref: '#/components/schemas/Observations_Mission'
+          title: Observations Mission
+          type: string
+          nullable: true
         retain_extraction_mode:
-          $ref: '#/components/schemas/Retain_Extraction_Mode'
+          title: Retain Extraction Mode
+          nullable: true
         retain_custom_instructions:
-          $ref: '#/components/schemas/Retain_Custom_Instructions'
+          title: Retain Custom Instructions
+          type: string
+          nullable: true
         retain_chunk_size:
-          $ref: '#/components/schemas/Retain_Chunk_Size'
+          title: Retain Chunk Size
+          nullable: true
         retain_default_strategy:
-          $ref: '#/components/schemas/Retain_Default_Strategy'
+          title: Retain Default Strategy
+          type: string
+          nullable: true
         retain_strategies:
-          $ref: '#/components/schemas/Retain_Strategies'
+          additionalProperties: true
+          title: Retain Strategies
+          nullable: true
         entity_labels:
-          $ref: '#/components/schemas/Entity_Labels'
+          items:
+            $ref: '#/components/schemas/EntityLabel'
+          title: Entity Labels
+          nullable: true
         entities_allow_free_form:
-          $ref: '#/components/schemas/Entities_Allow_Free_Form'
+          title: Entities Allow Free Form
+          nullable: true
         enable_observations:
-          $ref: '#/components/schemas/Enable_Observations'
+          title: Enable Observations
+          nullable: true
         consolidation_llm_batch_size:
-          $ref: '#/components/schemas/Consolidation_Llm_Batch_Size'
+          title: Consolidation Llm Batch Size
+          nullable: true
         consolidation_source_facts_max_tokens:
-          $ref: '#/components/schemas/Consolidation_Source_Facts_Max_Tokens'
+          title: Consolidation Source Facts Max Tokens
+          type: integer
+          nullable: true
         consolidation_source_facts_max_tokens_per_observation:
-          $ref: '#/components/schemas/Consolidation_Source_Facts_Max_Tokens_Per_Observation'
+          title: Consolidation Source Facts Max Tokens Per Observation
+          type: integer
+          nullable: true
         disposition_skepticism:
-          $ref: '#/components/schemas/Disposition_Skepticism'
+          maximum: 5.0
+          minimum: 1.0
+          title: Disposition Skepticism
+          nullable: true
         disposition_literalism:
-          $ref: '#/components/schemas/Disposition_Literalism'
+          maximum: 5.0
+          minimum: 1.0
+          title: Disposition Literalism
+          nullable: true
         disposition_empathy:
-          $ref: '#/components/schemas/Disposition_Empathy'
+          maximum: 5.0
+          minimum: 1.0
+          title: Disposition Empathy
+          nullable: true
         directive_seeds:
-          $ref: '#/components/schemas/Directive_Seeds'
+          items:
+            $ref: '#/components/schemas/DirectiveSeed'
+          title: Directive Seeds
+          nullable: true
         mental_model_seeds:
-          $ref: '#/components/schemas/Mental_Model_Seeds'
+          items:
+            $ref: '#/components/schemas/MentalModelSeed'
+          title: Mental Model Seeds
+          nullable: true
       title: UpdateTemplateRequest
     UpdateUserRequest:
       example:
@@ -2476,14 +2562,17 @@ components:
         email: email
       properties:
         display_name:
-          nullable: true
+          title: Display Name
           type: string
+          nullable: true
         email:
-          nullable: true
+          title: Email
           type: string
-        is_active:
           nullable: true
+        is_active:
+          title: Is Active
           type: boolean
+          nullable: true
       title: UpdateUserRequest
     UpsertBankPolicyRequest:
       description: Request to create/update a bank policy.
@@ -2513,8 +2602,9 @@ components:
           title: Display Name
           type: string
         email:
-          nullable: true
+          title: Email
           type: string
+          nullable: true
         is_active:
           default: true
           title: Is Active
@@ -2556,140 +2646,6 @@ components:
       - msg
       - type
       title: ValidationError
-    Min_Hindsight_Version:
-      anyOf:
-      - nullable: true
-        type: string
-      nullable: true
-      title: Min Hindsight Version
-    Observations_Mission:
-      anyOf:
-      - nullable: true
-        type: string
-      nullable: true
-      title: Observations Mission
-    Retain_Custom_Instructions:
-      anyOf:
-      - nullable: true
-        type: string
-      nullable: true
-      title: Retain Custom Instructions
-    Retain_Chunk_Size:
-      anyOf:
-      - {}
-      - {}
-      title: Retain Chunk Size
-    Retain_Default_Strategy:
-      anyOf:
-      - nullable: true
-        type: string
-      nullable: true
-      title: Retain Default Strategy
-    Consolidation_Llm_Batch_Size:
-      anyOf:
-      - {}
-      - {}
-      title: Consolidation Llm Batch Size
-    Consolidation_Source_Facts_Max_Tokens:
-      anyOf:
-      - nullable: true
-        type: integer
-      nullable: true
-      title: Consolidation Source Facts Max Tokens
-    Consolidation_Source_Facts_Max_Tokens_Per_Observation:
-      anyOf:
-      - nullable: true
-        type: integer
-      nullable: true
-      title: Consolidation Source Facts Max Tokens Per Observation
-    Description:
-      anyOf:
-      - {}
-      - {}
-      title: Description
-    Author:
-      anyOf:
-      - {}
-      - {}
-      title: Author
-    Tags:
-      anyOf:
-      - items: {}
-      - {}
-      title: Tags
-    Min_Hindclaw_Version:
-      anyOf:
-      - {}
-      - {}
-      title: Min Hindclaw Version
-    Retain_Mission:
-      anyOf:
-      - {}
-      - {}
-      title: Retain Mission
-    Reflect_Mission:
-      anyOf:
-      - {}
-      - {}
-      title: Reflect Mission
-    Retain_Extraction_Mode:
-      anyOf:
-      - {}
-      - {}
-      title: Retain Extraction Mode
-    Retain_Strategies:
-      anyOf:
-      - additionalProperties: true
-        nullable: true
-        type: object
-      - nullable: true
-      title: Retain Strategies
-    Entity_Labels:
-      anyOf:
-      - items:
-          $ref: '#/components/schemas/EntityLabel'
-      - {}
-      title: Entity Labels
-    Entities_Allow_Free_Form:
-      anyOf:
-      - {}
-      - {}
-      title: Entities Allow Free Form
-    Enable_Observations:
-      anyOf:
-      - {}
-      - {}
-      title: Enable Observations
-    Disposition_Skepticism:
-      anyOf:
-      - maximum: 5.0
-        minimum: 1.0
-      - {}
-      title: Disposition Skepticism
-    Disposition_Literalism:
-      anyOf:
-      - maximum: 5.0
-        minimum: 1.0
-      - {}
-      title: Disposition Literalism
-    Disposition_Empathy:
-      anyOf:
-      - maximum: 5.0
-        minimum: 1.0
-      - {}
-      title: Disposition Empathy
-    Directive_Seeds:
-      anyOf:
-      - items:
-          $ref: '#/components/schemas/DirectiveSeed'
-      - {}
-      title: Directive Seeds
-    Mental_Model_Seeds:
-      anyOf:
-      - items:
-          $ref: '#/components/schemas/MentalModelSeed'
-      - {}
-      title: Mental Model Seeds
     ValidationError_loc_inner:
       anyOf:
       - type: string

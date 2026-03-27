@@ -23,7 +23,7 @@ var _ MappedNullable = &SAKeyResponse{}
 type SAKeyResponse struct {
 	Id string `json:"id"`
 	ApiKeyPrefix string `json:"api_key_prefix"`
-	Description NullableString `json:"description"`
+	Description string `json:"description"`
 }
 
 type _SAKeyResponse SAKeyResponse
@@ -32,7 +32,7 @@ type _SAKeyResponse SAKeyResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSAKeyResponse(id string, apiKeyPrefix string, description NullableString) *SAKeyResponse {
+func NewSAKeyResponse(id string, apiKeyPrefix string, description string) *SAKeyResponse {
 	this := SAKeyResponse{}
 	this.Id = id
 	this.ApiKeyPrefix = apiKeyPrefix
@@ -97,29 +97,27 @@ func (o *SAKeyResponse) SetApiKeyPrefix(v string) {
 }
 
 // GetDescription returns the Description field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *SAKeyResponse) GetDescription() string {
-	if o == nil || o.Description.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.Description.Get()
+	return o.Description
 }
 
 // GetDescriptionOk returns a tuple with the Description field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *SAKeyResponse) GetDescriptionOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.Description.Get(), o.Description.IsSet()
+	return &o.Description, true
 }
 
 // SetDescription sets field value
 func (o *SAKeyResponse) SetDescription(v string) {
-	o.Description.Set(&v)
+	o.Description = v
 }
 
 func (o SAKeyResponse) MarshalJSON() ([]byte, error) {
@@ -134,7 +132,7 @@ func (o SAKeyResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["api_key_prefix"] = o.ApiKeyPrefix
-	toSerialize["description"] = o.Description.Get()
+	toSerialize["description"] = o.Description
 	return toSerialize, nil
 }
 

@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -28,7 +28,7 @@ class SAKeyCreateResponse(BaseModel):
     """ # noqa: E501
     id: StrictStr
     api_key: StrictStr
-    description: Optional[StrictStr]
+    description: StrictStr
     __properties: ClassVar[List[str]] = ["id", "api_key", "description"]
 
     model_config = ConfigDict(
@@ -70,11 +70,6 @@ class SAKeyCreateResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if description (nullable) is None
-        # and model_fields_set contains the field
-        if self.description is None and "description" in self.model_fields_set:
-            _dict['description'] = None
-
         return _dict
 
     @classmethod

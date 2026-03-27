@@ -23,8 +23,8 @@ var _ MappedNullable = &TemplateSummaryResponse{}
 type TemplateSummaryResponse struct {
 	Id string `json:"id"`
 	Scope string `json:"scope"`
-	SourceName NullableString `json:"source_name"`
-	Version NullableString `json:"version"`
+	SourceName string `json:"source_name"`
+	Version string `json:"version"`
 	Description string `json:"description"`
 	Author string `json:"author"`
 	Tags []string `json:"tags"`
@@ -42,7 +42,7 @@ type _TemplateSummaryResponse TemplateSummaryResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTemplateSummaryResponse(id string, scope string, sourceName NullableString, version NullableString, description string, author string, tags []string, retainExtractionMode string, dispositionSkepticism int32, dispositionLiteralism int32, dispositionEmpathy int32, createdAt string, updatedAt string) *TemplateSummaryResponse {
+func NewTemplateSummaryResponse(id string, scope string, sourceName string, version string, description string, author string, tags []string, retainExtractionMode string, dispositionSkepticism int32, dispositionLiteralism int32, dispositionEmpathy int32, createdAt string, updatedAt string) *TemplateSummaryResponse {
 	this := TemplateSummaryResponse{}
 	this.Id = id
 	this.Scope = scope
@@ -117,55 +117,51 @@ func (o *TemplateSummaryResponse) SetScope(v string) {
 }
 
 // GetSourceName returns the SourceName field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *TemplateSummaryResponse) GetSourceName() string {
-	if o == nil || o.SourceName.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.SourceName.Get()
+	return o.SourceName
 }
 
 // GetSourceNameOk returns a tuple with the SourceName field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateSummaryResponse) GetSourceNameOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.SourceName.Get(), o.SourceName.IsSet()
+	return &o.SourceName, true
 }
 
 // SetSourceName sets field value
 func (o *TemplateSummaryResponse) SetSourceName(v string) {
-	o.SourceName.Set(&v)
+	o.SourceName = v
 }
 
 // GetVersion returns the Version field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *TemplateSummaryResponse) GetVersion() string {
-	if o == nil || o.Version.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.Version.Get()
+	return o.Version
 }
 
 // GetVersionOk returns a tuple with the Version field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateSummaryResponse) GetVersionOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.Version.Get(), o.Version.IsSet()
+	return &o.Version, true
 }
 
 // SetVersion sets field value
 func (o *TemplateSummaryResponse) SetVersion(v string) {
-	o.Version.Set(&v)
+	o.Version = v
 }
 
 // GetDescription returns the Description field value
@@ -396,8 +392,8 @@ func (o TemplateSummaryResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["scope"] = o.Scope
-	toSerialize["source_name"] = o.SourceName.Get()
-	toSerialize["version"] = o.Version.Get()
+	toSerialize["source_name"] = o.SourceName
+	toSerialize["version"] = o.Version
 	toSerialize["description"] = o.Description
 	toSerialize["author"] = o.Author
 	toSerialize["tags"] = o.Tags

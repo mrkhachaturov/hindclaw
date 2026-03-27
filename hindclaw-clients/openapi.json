@@ -2076,15 +2076,9 @@
             "title": "Api Key"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "title": "Description",
+            "type": "string",
+            "nullable": true
           }
         },
         "type": "object",
@@ -2106,15 +2100,9 @@
             "title": "Api Key Prefix"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "title": "Description",
+            "type": "string",
+            "nullable": true
           }
         },
         "type": "object",
@@ -2167,15 +2155,9 @@
       "CreateApiKeyRequest": {
         "properties": {
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "title": "Description",
+            "type": "string",
+            "nullable": true
           }
         },
         "type": "object",
@@ -2256,15 +2238,9 @@
       "CreateSAKeyRequest": {
         "properties": {
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "title": "Description",
+            "type": "string",
+            "nullable": true
           }
         },
         "type": "object",
@@ -2286,15 +2262,9 @@
             "title": "Display Name"
           },
           "scoping_policy_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scoping Policy Id"
+            "title": "Scoping Policy Id",
+            "type": "string",
+            "nullable": true
           }
         },
         "type": "object",
@@ -2340,15 +2310,9 @@
             "title": "Min Hindclaw Version"
           },
           "min_hindsight_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Min Hindsight Version"
+            "title": "Min Hindsight Version",
+            "type": "string",
+            "nullable": true
           },
           "retain_mission": {
             "type": "string",
@@ -2359,15 +2323,9 @@
             "title": "Reflect Mission"
           },
           "observations_mission": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Observations Mission"
+            "title": "Observations Mission",
+            "type": "string",
+            "nullable": true
           },
           "retain_extraction_mode": {
             "type": "string",
@@ -2375,38 +2333,20 @@
             "default": "concise"
           },
           "retain_custom_instructions": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Custom Instructions"
+            "title": "Retain Custom Instructions",
+            "type": "string",
+            "nullable": true
           },
           "retain_chunk_size": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "exclusiveMinimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Chunk Size"
+            "title": "Retain Chunk Size",
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "nullable": true
           },
           "retain_default_strategy": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Default Strategy"
+            "title": "Retain Default Strategy",
+            "type": "string",
+            "nullable": true
           },
           "retain_strategies": {
             "additionalProperties": true,
@@ -2431,38 +2371,20 @@
             "default": true
           },
           "consolidation_llm_batch_size": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "exclusiveMinimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Consolidation Llm Batch Size"
+            "title": "Consolidation Llm Batch Size",
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "nullable": true
           },
           "consolidation_source_facts_max_tokens": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Consolidation Source Facts Max Tokens"
+            "title": "Consolidation Source Facts Max Tokens",
+            "type": "integer",
+            "nullable": true
           },
           "consolidation_source_facts_max_tokens_per_observation": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Consolidation Source Facts Max Tokens Per Observation"
+            "title": "Consolidation Source Facts Max Tokens Per Observation",
+            "type": "integer",
+            "nullable": true
           },
           "disposition_skepticism": {
             "type": "integer",
@@ -2523,15 +2445,9 @@
             "title": "Display Name"
           },
           "email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email"
+            "title": "Email",
+            "type": "string",
+            "nullable": true
           },
           "is_active": {
             "type": "boolean",
@@ -2789,15 +2705,9 @@
             "title": "Api Key"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "title": "Description",
+            "type": "string",
+            "nullable": true
           }
         },
         "type": "object",
@@ -2820,15 +2730,9 @@
             "title": "Api Key Prefix"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "title": "Description",
+            "type": "string",
+            "nullable": true
           }
         },
         "type": "object",
@@ -2859,15 +2763,9 @@
             "title": "Is Active"
           },
           "scoping_policy_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scoping Policy Id"
+            "title": "Scoping Policy Id",
+            "type": "string",
+            "nullable": true
           }
         },
         "type": "object",
@@ -2892,26 +2790,14 @@
             "title": "Scope"
           },
           "owner": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Owner"
+            "title": "Owner",
+            "type": "string",
+            "nullable": true
           },
           "source_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Source Name"
+            "title": "Source Name",
+            "type": "string",
+            "nullable": true
           },
           "schema_version": {
             "type": "integer",
@@ -2922,48 +2808,24 @@
             "title": "Min Hindclaw Version"
           },
           "min_hindsight_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Min Hindsight Version"
+            "title": "Min Hindsight Version",
+            "type": "string",
+            "nullable": true
           },
           "version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Version"
+            "title": "Version",
+            "type": "string",
+            "nullable": true
           },
           "source_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Source Url"
+            "title": "Source Url",
+            "type": "string",
+            "nullable": true
           },
           "source_revision": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Source Revision"
+            "title": "Source Revision",
+            "type": "string",
+            "nullable": true
           },
           "description": {
             "type": "string",
@@ -2989,52 +2851,28 @@
             "title": "Reflect Mission"
           },
           "observations_mission": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Observations Mission"
+            "title": "Observations Mission",
+            "type": "string",
+            "nullable": true
           },
           "retain_extraction_mode": {
             "type": "string",
             "title": "Retain Extraction Mode"
           },
           "retain_custom_instructions": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Custom Instructions"
+            "title": "Retain Custom Instructions",
+            "type": "string",
+            "nullable": true
           },
           "retain_chunk_size": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Chunk Size"
+            "title": "Retain Chunk Size",
+            "type": "integer",
+            "nullable": true
           },
           "retain_default_strategy": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Default Strategy"
+            "title": "Retain Default Strategy",
+            "type": "string",
+            "nullable": true
           },
           "retain_strategies": {
             "additionalProperties": true,
@@ -3058,37 +2896,19 @@
             "title": "Enable Observations"
           },
           "consolidation_llm_batch_size": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Consolidation Llm Batch Size"
+            "title": "Consolidation Llm Batch Size",
+            "type": "integer",
+            "nullable": true
           },
           "consolidation_source_facts_max_tokens": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Consolidation Source Facts Max Tokens"
+            "title": "Consolidation Source Facts Max Tokens",
+            "type": "integer",
+            "nullable": true
           },
           "consolidation_source_facts_max_tokens_per_observation": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Consolidation Source Facts Max Tokens Per Observation"
+            "title": "Consolidation Source Facts Max Tokens Per Observation",
+            "type": "integer",
+            "nullable": true
           },
           "disposition_skepticism": {
             "type": "integer",
@@ -3178,26 +2998,14 @@
             "title": "Scope"
           },
           "source_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Source Name"
+            "title": "Source Name",
+            "type": "string",
+            "nullable": true
           },
           "version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Version"
+            "title": "Version",
+            "type": "string",
+            "nullable": true
           },
           "description": {
             "type": "string",
@@ -3261,15 +3069,9 @@
       "UpdateGroupRequest": {
         "properties": {
           "display_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Display Name"
+            "title": "Display Name",
+            "type": "string",
+            "nullable": true
           }
         },
         "type": "object",
@@ -3278,27 +3080,15 @@
       "UpdatePolicyRequest": {
         "properties": {
           "display_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Display Name"
+            "title": "Display Name",
+            "type": "string",
+            "nullable": true
           },
           "document": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Document"
+            "title": "Document",
+            "additionalProperties": true,
+            "type": "object",
+            "nullable": true
           }
         },
         "type": "object",
@@ -3308,37 +3098,19 @@
       "UpdateServiceAccountRequest": {
         "properties": {
           "display_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Display Name"
+            "title": "Display Name",
+            "type": "string",
+            "nullable": true
           },
           "scoping_policy_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scoping Policy Id"
+            "title": "Scoping Policy Id",
+            "type": "string",
+            "nullable": true
           },
           "is_active": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Is Active"
+            "title": "Is Active",
+            "type": "boolean",
+            "nullable": true
           }
         },
         "type": "object",
@@ -3348,289 +3120,145 @@
       "UpdateTemplateRequest": {
         "properties": {
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
+            "title": "Description",
+            "type": "string",
+            "nullable": true
           },
           "author": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Author"
+            "title": "Author",
+            "type": "string",
+            "nullable": true
           },
           "tags": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tags"
+            "title": "Tags",
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "nullable": true
           },
           "min_hindclaw_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Min Hindclaw Version"
+            "title": "Min Hindclaw Version",
+            "type": "string",
+            "nullable": true
           },
           "min_hindsight_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Min Hindsight Version"
+            "title": "Min Hindsight Version",
+            "type": "string",
+            "nullable": true
           },
           "retain_mission": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Mission"
+            "title": "Retain Mission",
+            "type": "string",
+            "nullable": true
           },
           "reflect_mission": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reflect Mission"
+            "title": "Reflect Mission",
+            "type": "string",
+            "nullable": true
           },
           "observations_mission": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Observations Mission"
+            "title": "Observations Mission",
+            "type": "string",
+            "nullable": true
           },
           "retain_extraction_mode": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Extraction Mode"
+            "title": "Retain Extraction Mode",
+            "type": "string",
+            "nullable": true
           },
           "retain_custom_instructions": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Custom Instructions"
+            "title": "Retain Custom Instructions",
+            "type": "string",
+            "nullable": true
           },
           "retain_chunk_size": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "exclusiveMinimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Chunk Size"
+            "title": "Retain Chunk Size",
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "nullable": true
           },
           "retain_default_strategy": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Default Strategy"
+            "title": "Retain Default Strategy",
+            "type": "string",
+            "nullable": true
           },
           "retain_strategies": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Retain Strategies"
+            "title": "Retain Strategies",
+            "additionalProperties": true,
+            "type": "object",
+            "nullable": true
           },
           "entity_labels": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/EntityLabel"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Entity Labels"
+            "title": "Entity Labels",
+            "items": {
+              "$ref": "#/components/schemas/EntityLabel"
+            },
+            "type": "array",
+            "nullable": true
           },
           "entities_allow_free_form": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Entities Allow Free Form"
+            "title": "Entities Allow Free Form",
+            "type": "boolean",
+            "nullable": true
           },
           "enable_observations": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Enable Observations"
+            "title": "Enable Observations",
+            "type": "boolean",
+            "nullable": true
           },
           "consolidation_llm_batch_size": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "exclusiveMinimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Consolidation Llm Batch Size"
+            "title": "Consolidation Llm Batch Size",
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "nullable": true
           },
           "consolidation_source_facts_max_tokens": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Consolidation Source Facts Max Tokens"
+            "title": "Consolidation Source Facts Max Tokens",
+            "type": "integer",
+            "nullable": true
           },
           "consolidation_source_facts_max_tokens_per_observation": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Consolidation Source Facts Max Tokens Per Observation"
+            "title": "Consolidation Source Facts Max Tokens Per Observation",
+            "type": "integer",
+            "nullable": true
           },
           "disposition_skepticism": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 5.0,
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Disposition Skepticism"
+            "title": "Disposition Skepticism",
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "nullable": true
           },
           "disposition_literalism": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 5.0,
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Disposition Literalism"
+            "title": "Disposition Literalism",
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "nullable": true
           },
           "disposition_empathy": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 5.0,
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Disposition Empathy"
+            "title": "Disposition Empathy",
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "nullable": true
           },
           "directive_seeds": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/DirectiveSeed"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Directive Seeds"
+            "title": "Directive Seeds",
+            "items": {
+              "$ref": "#/components/schemas/DirectiveSeed"
+            },
+            "type": "array",
+            "nullable": true
           },
           "mental_model_seeds": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/MentalModelSeed"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mental Model Seeds"
+            "title": "Mental Model Seeds",
+            "items": {
+              "$ref": "#/components/schemas/MentalModelSeed"
+            },
+            "type": "array",
+            "nullable": true
           }
         },
         "additionalProperties": false,
@@ -3641,37 +3269,19 @@
       "UpdateUserRequest": {
         "properties": {
           "display_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Display Name"
+            "title": "Display Name",
+            "type": "string",
+            "nullable": true
           },
           "email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email"
+            "title": "Email",
+            "type": "string",
+            "nullable": true
           },
           "is_active": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Is Active"
+            "title": "Is Active",
+            "type": "boolean",
+            "nullable": true
           }
         },
         "type": "object",
@@ -3703,15 +3313,9 @@
             "title": "Display Name"
           },
           "email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email"
+            "title": "Email",
+            "type": "string",
+            "nullable": true
           },
           "is_active": {
             "type": "boolean",

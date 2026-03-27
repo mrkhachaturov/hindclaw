@@ -25,7 +25,7 @@ type ServiceAccountResponse struct {
 	OwnerUserId string `json:"owner_user_id"`
 	DisplayName string `json:"display_name"`
 	IsActive bool `json:"is_active"`
-	ScopingPolicyId NullableString `json:"scoping_policy_id"`
+	ScopingPolicyId string `json:"scoping_policy_id"`
 }
 
 type _ServiceAccountResponse ServiceAccountResponse
@@ -34,7 +34,7 @@ type _ServiceAccountResponse ServiceAccountResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewServiceAccountResponse(id string, ownerUserId string, displayName string, isActive bool, scopingPolicyId NullableString) *ServiceAccountResponse {
+func NewServiceAccountResponse(id string, ownerUserId string, displayName string, isActive bool, scopingPolicyId string) *ServiceAccountResponse {
 	this := ServiceAccountResponse{}
 	this.Id = id
 	this.OwnerUserId = ownerUserId
@@ -149,29 +149,27 @@ func (o *ServiceAccountResponse) SetIsActive(v bool) {
 }
 
 // GetScopingPolicyId returns the ScopingPolicyId field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *ServiceAccountResponse) GetScopingPolicyId() string {
-	if o == nil || o.ScopingPolicyId.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.ScopingPolicyId.Get()
+	return o.ScopingPolicyId
 }
 
 // GetScopingPolicyIdOk returns a tuple with the ScopingPolicyId field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ServiceAccountResponse) GetScopingPolicyIdOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.ScopingPolicyId.Get(), o.ScopingPolicyId.IsSet()
+	return &o.ScopingPolicyId, true
 }
 
 // SetScopingPolicyId sets field value
 func (o *ServiceAccountResponse) SetScopingPolicyId(v string) {
-	o.ScopingPolicyId.Set(&v)
+	o.ScopingPolicyId = v
 }
 
 func (o ServiceAccountResponse) MarshalJSON() ([]byte, error) {
@@ -188,7 +186,7 @@ func (o ServiceAccountResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["owner_user_id"] = o.OwnerUserId
 	toSerialize["display_name"] = o.DisplayName
 	toSerialize["is_active"] = o.IsActive
-	toSerialize["scoping_policy_id"] = o.ScopingPolicyId.Get()
+	toSerialize["scoping_policy_id"] = o.ScopingPolicyId
 	return toSerialize, nil
 }
 

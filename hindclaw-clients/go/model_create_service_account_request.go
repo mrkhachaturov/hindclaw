@@ -24,7 +24,7 @@ type CreateServiceAccountRequest struct {
 	Id string `json:"id"`
 	OwnerUserId string `json:"owner_user_id"`
 	DisplayName string `json:"display_name"`
-	ScopingPolicyId NullableString `json:"scoping_policy_id,omitempty"`
+	ScopingPolicyId *string `json:"scoping_policy_id,omitempty"`
 }
 
 type _CreateServiceAccountRequest CreateServiceAccountRequest
@@ -121,46 +121,36 @@ func (o *CreateServiceAccountRequest) SetDisplayName(v string) {
 	o.DisplayName = v
 }
 
-// GetScopingPolicyId returns the ScopingPolicyId field value if set, zero value otherwise (both if not set or set to explicit null).
+// GetScopingPolicyId returns the ScopingPolicyId field value if set, zero value otherwise.
 func (o *CreateServiceAccountRequest) GetScopingPolicyId() string {
-	if o == nil || IsNil(o.ScopingPolicyId.Get()) {
+	if o == nil || IsNil(o.ScopingPolicyId) {
 		var ret string
 		return ret
 	}
-	return *o.ScopingPolicyId.Get()
+	return *o.ScopingPolicyId
 }
 
 // GetScopingPolicyIdOk returns a tuple with the ScopingPolicyId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *CreateServiceAccountRequest) GetScopingPolicyIdOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.ScopingPolicyId) {
 		return nil, false
 	}
-	return o.ScopingPolicyId.Get(), o.ScopingPolicyId.IsSet()
+	return o.ScopingPolicyId, true
 }
 
 // HasScopingPolicyId returns a boolean if a field has been set.
 func (o *CreateServiceAccountRequest) HasScopingPolicyId() bool {
-	if o != nil && o.ScopingPolicyId.IsSet() {
+	if o != nil && !IsNil(o.ScopingPolicyId) {
 		return true
 	}
 
 	return false
 }
 
-// SetScopingPolicyId gets a reference to the given NullableString and assigns it to the ScopingPolicyId field.
+// SetScopingPolicyId gets a reference to the given string and assigns it to the ScopingPolicyId field.
 func (o *CreateServiceAccountRequest) SetScopingPolicyId(v string) {
-	o.ScopingPolicyId.Set(&v)
-}
-// SetScopingPolicyIdNil sets the value for ScopingPolicyId to be an explicit nil
-func (o *CreateServiceAccountRequest) SetScopingPolicyIdNil() {
-	o.ScopingPolicyId.Set(nil)
-}
-
-// UnsetScopingPolicyId ensures that no value is present for ScopingPolicyId, not even an explicit nil
-func (o *CreateServiceAccountRequest) UnsetScopingPolicyId() {
-	o.ScopingPolicyId.Unset()
+	o.ScopingPolicyId = &v
 }
 
 func (o CreateServiceAccountRequest) MarshalJSON() ([]byte, error) {
@@ -176,8 +166,8 @@ func (o CreateServiceAccountRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize["id"] = o.Id
 	toSerialize["owner_user_id"] = o.OwnerUserId
 	toSerialize["display_name"] = o.DisplayName
-	if o.ScopingPolicyId.IsSet() {
-		toSerialize["scoping_policy_id"] = o.ScopingPolicyId.Get()
+	if !IsNil(o.ScopingPolicyId) {
+		toSerialize["scoping_policy_id"] = o.ScopingPolicyId
 	}
 	return toSerialize, nil
 }

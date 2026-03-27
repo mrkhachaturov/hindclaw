@@ -19,7 +19,7 @@ var _ MappedNullable = &UpdatePolicyRequest{}
 
 // UpdatePolicyRequest Request to update an access policy.
 type UpdatePolicyRequest struct {
-	DisplayName NullableString `json:"display_name,omitempty"`
+	DisplayName *string `json:"display_name,omitempty"`
 	Document map[string]interface{} `json:"document,omitempty"`
 }
 
@@ -40,51 +40,41 @@ func NewUpdatePolicyRequestWithDefaults() *UpdatePolicyRequest {
 	return &this
 }
 
-// GetDisplayName returns the DisplayName field value if set, zero value otherwise (both if not set or set to explicit null).
+// GetDisplayName returns the DisplayName field value if set, zero value otherwise.
 func (o *UpdatePolicyRequest) GetDisplayName() string {
-	if o == nil || IsNil(o.DisplayName.Get()) {
+	if o == nil || IsNil(o.DisplayName) {
 		var ret string
 		return ret
 	}
-	return *o.DisplayName.Get()
+	return *o.DisplayName
 }
 
 // GetDisplayNameOk returns a tuple with the DisplayName field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *UpdatePolicyRequest) GetDisplayNameOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.DisplayName) {
 		return nil, false
 	}
-	return o.DisplayName.Get(), o.DisplayName.IsSet()
+	return o.DisplayName, true
 }
 
 // HasDisplayName returns a boolean if a field has been set.
 func (o *UpdatePolicyRequest) HasDisplayName() bool {
-	if o != nil && o.DisplayName.IsSet() {
+	if o != nil && !IsNil(o.DisplayName) {
 		return true
 	}
 
 	return false
 }
 
-// SetDisplayName gets a reference to the given NullableString and assigns it to the DisplayName field.
+// SetDisplayName gets a reference to the given string and assigns it to the DisplayName field.
 func (o *UpdatePolicyRequest) SetDisplayName(v string) {
-	o.DisplayName.Set(&v)
-}
-// SetDisplayNameNil sets the value for DisplayName to be an explicit nil
-func (o *UpdatePolicyRequest) SetDisplayNameNil() {
-	o.DisplayName.Set(nil)
+	o.DisplayName = &v
 }
 
-// UnsetDisplayName ensures that no value is present for DisplayName, not even an explicit nil
-func (o *UpdatePolicyRequest) UnsetDisplayName() {
-	o.DisplayName.Unset()
-}
-
-// GetDocument returns the Document field value if set, zero value otherwise (both if not set or set to explicit null).
+// GetDocument returns the Document field value if set, zero value otherwise.
 func (o *UpdatePolicyRequest) GetDocument() map[string]interface{} {
-	if o == nil {
+	if o == nil || IsNil(o.Document) {
 		var ret map[string]interface{}
 		return ret
 	}
@@ -93,7 +83,6 @@ func (o *UpdatePolicyRequest) GetDocument() map[string]interface{} {
 
 // GetDocumentOk returns a tuple with the Document field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *UpdatePolicyRequest) GetDocumentOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Document) {
 		return map[string]interface{}{}, false
@@ -125,10 +114,10 @@ func (o UpdatePolicyRequest) MarshalJSON() ([]byte, error) {
 
 func (o UpdatePolicyRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.DisplayName.IsSet() {
-		toSerialize["display_name"] = o.DisplayName.Get()
+	if !IsNil(o.DisplayName) {
+		toSerialize["display_name"] = o.DisplayName
 	}
-	if o.Document != nil {
+	if !IsNil(o.Document) {
 		toSerialize["document"] = o.Document
 	}
 	return toSerialize, nil

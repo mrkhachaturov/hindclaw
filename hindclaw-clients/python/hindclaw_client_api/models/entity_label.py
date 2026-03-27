@@ -17,18 +17,23 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from hindclaw_client_api.models.entity_label_value import EntityLabelValue
 from typing import Optional, Set
 from typing_extensions import Self
 
-class UpdatePolicyRequest(BaseModel):
+class EntityLabel(BaseModel):
     """
-    Request to update an access policy.
+    An entity label definition for structured classification.  Hindsight supports three label types: - \"value\": single enum value from the values list - \"multi-values\": multiple enum values from the values list - \"text\": free-form text (no values list needed)  The ``tag`` field controls whether facts with this label also get tagged (enabling tag-based filtering in recall/reflect).
     """ # noqa: E501
-    display_name: Optional[StrictStr] = None
-    document: Optional[Dict[str, Any]] = None
-    __properties: ClassVar[List[str]] = ["display_name", "document"]
+    key: StrictStr
+    description: Optional[StrictStr] = ''
+    type: Optional[StrictStr] = 'value'
+    optional: Optional[StrictBool] = True
+    tag: Optional[StrictBool] = False
+    values: Optional[List[EntityLabelValue]] = None
+    __properties: ClassVar[List[str]] = ["key", "description", "type", "optional", "tag", "values"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -48,7 +53,7 @@ class UpdatePolicyRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of UpdatePolicyRequest from a JSON string"""
+        """Create an instance of EntityLabel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -69,11 +74,18 @@ class UpdatePolicyRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in values (list)
+        _items = []
+        if self.values:
+            for _item_values in self.values:
+                if _item_values:
+                    _items.append(_item_values.to_dict())
+            _dict['values'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of UpdatePolicyRequest from a dict"""
+        """Create an instance of EntityLabel from a dict"""
         if obj is None:
             return None
 
@@ -81,8 +93,12 @@ class UpdatePolicyRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "display_name": obj.get("display_name"),
-            "document": obj.get("document")
+            "key": obj.get("key"),
+            "description": obj.get("description") if obj.get("description") is not None else '',
+            "type": obj.get("type") if obj.get("type") is not None else 'value',
+            "optional": obj.get("optional") if obj.get("optional") is not None else True,
+            "tag": obj.get("tag") if obj.get("tag") is not None else False,
+            "values": [EntityLabelValue.from_dict(_item) for _item in obj["values"]] if obj.get("values") is not None else None
         })
         return _obj
 

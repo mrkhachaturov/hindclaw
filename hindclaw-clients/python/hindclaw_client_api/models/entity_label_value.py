@@ -22,13 +22,13 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class UpdatePolicyRequest(BaseModel):
+class EntityLabelValue(BaseModel):
     """
-    Request to update an access policy.
+    A valid value for a value or multi-values entity label.
     """ # noqa: E501
-    display_name: Optional[StrictStr] = None
-    document: Optional[Dict[str, Any]] = None
-    __properties: ClassVar[List[str]] = ["display_name", "document"]
+    value: StrictStr
+    description: Optional[StrictStr] = ''
+    __properties: ClassVar[List[str]] = ["value", "description"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -48,7 +48,7 @@ class UpdatePolicyRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of UpdatePolicyRequest from a JSON string"""
+        """Create an instance of EntityLabelValue from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -73,7 +73,7 @@ class UpdatePolicyRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of UpdatePolicyRequest from a dict"""
+        """Create an instance of EntityLabelValue from a dict"""
         if obj is None:
             return None
 
@@ -81,8 +81,8 @@ class UpdatePolicyRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "display_name": obj.get("display_name"),
-            "document": obj.get("document")
+            "value": obj.get("value"),
+            "description": obj.get("description") if obj.get("description") is not None else ''
         })
         return _obj
 

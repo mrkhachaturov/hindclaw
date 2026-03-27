@@ -56,7 +56,45 @@ def extract() -> dict:
         props.setdefault("ctx", {"title": "Context", "type": "object"})
         props.setdefault("url", {"title": "URL", "type": "string"})
 
+    # Convert OpenAPI 3.1.0 nullable patterns to 3.0.x style.
+    # FastAPI + Pydantic v2 emits {"anyOf": [{"type": "T"}, {"type": "null"}]}
+    # for `T | None` fields. openapi-generator's Python codegen (v7.x) crashes
+    # on the {"type": "null"} branch. Convert to {"type": "T", "nullable": true}
+    # which all generators handle correctly.
+    _convert_nullable_anyof(schema)
+
     return schema
+
+
+def _convert_nullable_anyof(schema: dict) -> None:
+    """Convert anyOf-null patterns to nullable style throughout the spec.
+
+    Walks all component schemas and converts patterns like:
+        {"anyOf": [{"type": "string"}, {"type": "null"}]}
+    to:
+        {"type": "string", "nullable": true}
+
+    Also handles complex branches (arrays, $ref, constrained integers) by
+    keeping the non-null branch and adding nullable: true.
+
+    Args:
+        schema: OpenAPI spec dict (modified in place).
+    """
+    for comp_schema in schema.get("components", {}).get("schemas", {}).values():
+        for prop_name, prop_def in comp_schema.get("properties", {}).items():
+            if "anyOf" not in prop_def:
+                continue
+            branches = prop_def["anyOf"]
+            null_branches = [b for b in branches if b.get("type") == "null"]
+            non_null_branches = [b for b in branches if b.get("type") != "null"]
+            if not null_branches or not non_null_branches:
+                continue
+            if len(non_null_branches) == 1:
+                # Simple case: one real type + null → flatten
+                real = non_null_branches[0]
+                del prop_def["anyOf"]
+                prop_def.update(real)
+                prop_def["nullable"] = True
 
 
 if __name__ == "__main__":

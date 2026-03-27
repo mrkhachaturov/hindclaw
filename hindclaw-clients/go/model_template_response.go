@@ -23,36 +23,36 @@ var _ MappedNullable = &TemplateResponse{}
 type TemplateResponse struct {
 	Id string `json:"id"`
 	Scope string `json:"scope"`
-	Owner NullableString `json:"owner"`
-	SourceName NullableString `json:"source_name"`
+	Owner string `json:"owner"`
+	SourceName string `json:"source_name"`
 	SchemaVersion int32 `json:"schema_version"`
 	MinHindclawVersion string `json:"min_hindclaw_version"`
-	MinHindsightVersion NullableString `json:"min_hindsight_version"`
-	Version NullableString `json:"version"`
-	SourceUrl NullableString `json:"source_url"`
-	SourceRevision NullableString `json:"source_revision"`
+	MinHindsightVersion string `json:"min_hindsight_version"`
+	Version string `json:"version"`
+	SourceUrl string `json:"source_url"`
+	SourceRevision string `json:"source_revision"`
 	Description string `json:"description"`
 	Author string `json:"author"`
 	Tags []string `json:"tags"`
 	RetainMission string `json:"retain_mission"`
 	ReflectMission string `json:"reflect_mission"`
-	ObservationsMission NullableString `json:"observations_mission"`
+	ObservationsMission string `json:"observations_mission"`
 	RetainExtractionMode string `json:"retain_extraction_mode"`
-	RetainCustomInstructions NullableString `json:"retain_custom_instructions"`
-	RetainChunkSize NullableInt32 `json:"retain_chunk_size"`
-	RetainDefaultStrategy NullableString `json:"retain_default_strategy"`
+	RetainCustomInstructions string `json:"retain_custom_instructions"`
+	RetainChunkSize int32 `json:"retain_chunk_size"`
+	RetainDefaultStrategy string `json:"retain_default_strategy"`
 	RetainStrategies map[string]interface{} `json:"retain_strategies"`
 	EntityLabels []map[string]interface{} `json:"entity_labels"`
 	EntitiesAllowFreeForm bool `json:"entities_allow_free_form"`
 	EnableObservations bool `json:"enable_observations"`
-	ConsolidationLlmBatchSize NullableInt32 `json:"consolidation_llm_batch_size"`
-	ConsolidationSourceFactsMaxTokens NullableInt32 `json:"consolidation_source_facts_max_tokens"`
-	ConsolidationSourceFactsMaxTokensPerObservation NullableInt32 `json:"consolidation_source_facts_max_tokens_per_observation"`
+	ConsolidationLlmBatchSize int32 `json:"consolidation_llm_batch_size"`
+	ConsolidationSourceFactsMaxTokens int32 `json:"consolidation_source_facts_max_tokens"`
+	ConsolidationSourceFactsMaxTokensPerObservation int32 `json:"consolidation_source_facts_max_tokens_per_observation"`
 	DispositionSkepticism int32 `json:"disposition_skepticism"`
 	DispositionLiteralism int32 `json:"disposition_literalism"`
 	DispositionEmpathy int32 `json:"disposition_empathy"`
-	DirectiveSeeds []*map[string]interface{} `json:"directive_seeds"`
-	MentalModelSeeds []*map[string]interface{} `json:"mental_model_seeds"`
+	DirectiveSeeds []map[string]interface{} `json:"directive_seeds"`
+	MentalModelSeeds []map[string]interface{} `json:"mental_model_seeds"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
@@ -63,7 +63,7 @@ type _TemplateResponse TemplateResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTemplateResponse(id string, scope string, owner NullableString, sourceName NullableString, schemaVersion int32, minHindclawVersion string, minHindsightVersion NullableString, version NullableString, sourceUrl NullableString, sourceRevision NullableString, description string, author string, tags []string, retainMission string, reflectMission string, observationsMission NullableString, retainExtractionMode string, retainCustomInstructions NullableString, retainChunkSize NullableInt32, retainDefaultStrategy NullableString, retainStrategies map[string]interface{}, entityLabels []map[string]interface{}, entitiesAllowFreeForm bool, enableObservations bool, consolidationLlmBatchSize NullableInt32, consolidationSourceFactsMaxTokens NullableInt32, consolidationSourceFactsMaxTokensPerObservation NullableInt32, dispositionSkepticism int32, dispositionLiteralism int32, dispositionEmpathy int32, directiveSeeds []*map[string]interface{}, mentalModelSeeds []*map[string]interface{}, createdAt string, updatedAt string) *TemplateResponse {
+func NewTemplateResponse(id string, scope string, owner string, sourceName string, schemaVersion int32, minHindclawVersion string, minHindsightVersion string, version string, sourceUrl string, sourceRevision string, description string, author string, tags []string, retainMission string, reflectMission string, observationsMission string, retainExtractionMode string, retainCustomInstructions string, retainChunkSize int32, retainDefaultStrategy string, retainStrategies map[string]interface{}, entityLabels []map[string]interface{}, entitiesAllowFreeForm bool, enableObservations bool, consolidationLlmBatchSize int32, consolidationSourceFactsMaxTokens int32, consolidationSourceFactsMaxTokensPerObservation int32, dispositionSkepticism int32, dispositionLiteralism int32, dispositionEmpathy int32, directiveSeeds []map[string]interface{}, mentalModelSeeds []map[string]interface{}, createdAt string, updatedAt string) *TemplateResponse {
 	this := TemplateResponse{}
 	this.Id = id
 	this.Scope = scope
@@ -159,55 +159,51 @@ func (o *TemplateResponse) SetScope(v string) {
 }
 
 // GetOwner returns the Owner field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *TemplateResponse) GetOwner() string {
-	if o == nil || o.Owner.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.Owner.Get()
+	return o.Owner
 }
 
 // GetOwnerOk returns a tuple with the Owner field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetOwnerOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.Owner.Get(), o.Owner.IsSet()
+	return &o.Owner, true
 }
 
 // SetOwner sets field value
 func (o *TemplateResponse) SetOwner(v string) {
-	o.Owner.Set(&v)
+	o.Owner = v
 }
 
 // GetSourceName returns the SourceName field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *TemplateResponse) GetSourceName() string {
-	if o == nil || o.SourceName.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.SourceName.Get()
+	return o.SourceName
 }
 
 // GetSourceNameOk returns a tuple with the SourceName field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetSourceNameOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.SourceName.Get(), o.SourceName.IsSet()
+	return &o.SourceName, true
 }
 
 // SetSourceName sets field value
 func (o *TemplateResponse) SetSourceName(v string) {
-	o.SourceName.Set(&v)
+	o.SourceName = v
 }
 
 // GetSchemaVersion returns the SchemaVersion field value
@@ -259,107 +255,99 @@ func (o *TemplateResponse) SetMinHindclawVersion(v string) {
 }
 
 // GetMinHindsightVersion returns the MinHindsightVersion field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *TemplateResponse) GetMinHindsightVersion() string {
-	if o == nil || o.MinHindsightVersion.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.MinHindsightVersion.Get()
+	return o.MinHindsightVersion
 }
 
 // GetMinHindsightVersionOk returns a tuple with the MinHindsightVersion field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetMinHindsightVersionOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.MinHindsightVersion.Get(), o.MinHindsightVersion.IsSet()
+	return &o.MinHindsightVersion, true
 }
 
 // SetMinHindsightVersion sets field value
 func (o *TemplateResponse) SetMinHindsightVersion(v string) {
-	o.MinHindsightVersion.Set(&v)
+	o.MinHindsightVersion = v
 }
 
 // GetVersion returns the Version field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *TemplateResponse) GetVersion() string {
-	if o == nil || o.Version.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.Version.Get()
+	return o.Version
 }
 
 // GetVersionOk returns a tuple with the Version field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetVersionOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.Version.Get(), o.Version.IsSet()
+	return &o.Version, true
 }
 
 // SetVersion sets field value
 func (o *TemplateResponse) SetVersion(v string) {
-	o.Version.Set(&v)
+	o.Version = v
 }
 
 // GetSourceUrl returns the SourceUrl field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *TemplateResponse) GetSourceUrl() string {
-	if o == nil || o.SourceUrl.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.SourceUrl.Get()
+	return o.SourceUrl
 }
 
 // GetSourceUrlOk returns a tuple with the SourceUrl field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetSourceUrlOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.SourceUrl.Get(), o.SourceUrl.IsSet()
+	return &o.SourceUrl, true
 }
 
 // SetSourceUrl sets field value
 func (o *TemplateResponse) SetSourceUrl(v string) {
-	o.SourceUrl.Set(&v)
+	o.SourceUrl = v
 }
 
 // GetSourceRevision returns the SourceRevision field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *TemplateResponse) GetSourceRevision() string {
-	if o == nil || o.SourceRevision.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.SourceRevision.Get()
+	return o.SourceRevision
 }
 
 // GetSourceRevisionOk returns a tuple with the SourceRevision field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetSourceRevisionOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.SourceRevision.Get(), o.SourceRevision.IsSet()
+	return &o.SourceRevision, true
 }
 
 // SetSourceRevision sets field value
 func (o *TemplateResponse) SetSourceRevision(v string) {
-	o.SourceRevision.Set(&v)
+	o.SourceRevision = v
 }
 
 // GetDescription returns the Description field value
@@ -483,29 +471,27 @@ func (o *TemplateResponse) SetReflectMission(v string) {
 }
 
 // GetObservationsMission returns the ObservationsMission field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *TemplateResponse) GetObservationsMission() string {
-	if o == nil || o.ObservationsMission.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.ObservationsMission.Get()
+	return o.ObservationsMission
 }
 
 // GetObservationsMissionOk returns a tuple with the ObservationsMission field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetObservationsMissionOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.ObservationsMission.Get(), o.ObservationsMission.IsSet()
+	return &o.ObservationsMission, true
 }
 
 // SetObservationsMission sets field value
 func (o *TemplateResponse) SetObservationsMission(v string) {
-	o.ObservationsMission.Set(&v)
+	o.ObservationsMission = v
 }
 
 // GetRetainExtractionMode returns the RetainExtractionMode field value
@@ -533,81 +519,75 @@ func (o *TemplateResponse) SetRetainExtractionMode(v string) {
 }
 
 // GetRetainCustomInstructions returns the RetainCustomInstructions field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *TemplateResponse) GetRetainCustomInstructions() string {
-	if o == nil || o.RetainCustomInstructions.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.RetainCustomInstructions.Get()
+	return o.RetainCustomInstructions
 }
 
 // GetRetainCustomInstructionsOk returns a tuple with the RetainCustomInstructions field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetRetainCustomInstructionsOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.RetainCustomInstructions.Get(), o.RetainCustomInstructions.IsSet()
+	return &o.RetainCustomInstructions, true
 }
 
 // SetRetainCustomInstructions sets field value
 func (o *TemplateResponse) SetRetainCustomInstructions(v string) {
-	o.RetainCustomInstructions.Set(&v)
+	o.RetainCustomInstructions = v
 }
 
 // GetRetainChunkSize returns the RetainChunkSize field value
-// If the value is explicit nil, the zero value for int32 will be returned
 func (o *TemplateResponse) GetRetainChunkSize() int32 {
-	if o == nil || o.RetainChunkSize.Get() == nil {
+	if o == nil {
 		var ret int32
 		return ret
 	}
 
-	return *o.RetainChunkSize.Get()
+	return o.RetainChunkSize
 }
 
 // GetRetainChunkSizeOk returns a tuple with the RetainChunkSize field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetRetainChunkSizeOk() (*int32, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.RetainChunkSize.Get(), o.RetainChunkSize.IsSet()
+	return &o.RetainChunkSize, true
 }
 
 // SetRetainChunkSize sets field value
 func (o *TemplateResponse) SetRetainChunkSize(v int32) {
-	o.RetainChunkSize.Set(&v)
+	o.RetainChunkSize = v
 }
 
 // GetRetainDefaultStrategy returns the RetainDefaultStrategy field value
-// If the value is explicit nil, the zero value for string will be returned
 func (o *TemplateResponse) GetRetainDefaultStrategy() string {
-	if o == nil || o.RetainDefaultStrategy.Get() == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return *o.RetainDefaultStrategy.Get()
+	return o.RetainDefaultStrategy
 }
 
 // GetRetainDefaultStrategyOk returns a tuple with the RetainDefaultStrategy field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetRetainDefaultStrategyOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.RetainDefaultStrategy.Get(), o.RetainDefaultStrategy.IsSet()
+	return &o.RetainDefaultStrategy, true
 }
 
 // SetRetainDefaultStrategy sets field value
 func (o *TemplateResponse) SetRetainDefaultStrategy(v string) {
-	o.RetainDefaultStrategy.Set(&v)
+	o.RetainDefaultStrategy = v
 }
 
 // GetRetainStrategies returns the RetainStrategies field value
@@ -707,81 +687,75 @@ func (o *TemplateResponse) SetEnableObservations(v bool) {
 }
 
 // GetConsolidationLlmBatchSize returns the ConsolidationLlmBatchSize field value
-// If the value is explicit nil, the zero value for int32 will be returned
 func (o *TemplateResponse) GetConsolidationLlmBatchSize() int32 {
-	if o == nil || o.ConsolidationLlmBatchSize.Get() == nil {
+	if o == nil {
 		var ret int32
 		return ret
 	}
 
-	return *o.ConsolidationLlmBatchSize.Get()
+	return o.ConsolidationLlmBatchSize
 }
 
 // GetConsolidationLlmBatchSizeOk returns a tuple with the ConsolidationLlmBatchSize field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetConsolidationLlmBatchSizeOk() (*int32, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.ConsolidationLlmBatchSize.Get(), o.ConsolidationLlmBatchSize.IsSet()
+	return &o.ConsolidationLlmBatchSize, true
 }
 
 // SetConsolidationLlmBatchSize sets field value
 func (o *TemplateResponse) SetConsolidationLlmBatchSize(v int32) {
-	o.ConsolidationLlmBatchSize.Set(&v)
+	o.ConsolidationLlmBatchSize = v
 }
 
 // GetConsolidationSourceFactsMaxTokens returns the ConsolidationSourceFactsMaxTokens field value
-// If the value is explicit nil, the zero value for int32 will be returned
 func (o *TemplateResponse) GetConsolidationSourceFactsMaxTokens() int32 {
-	if o == nil || o.ConsolidationSourceFactsMaxTokens.Get() == nil {
+	if o == nil {
 		var ret int32
 		return ret
 	}
 
-	return *o.ConsolidationSourceFactsMaxTokens.Get()
+	return o.ConsolidationSourceFactsMaxTokens
 }
 
 // GetConsolidationSourceFactsMaxTokensOk returns a tuple with the ConsolidationSourceFactsMaxTokens field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetConsolidationSourceFactsMaxTokensOk() (*int32, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.ConsolidationSourceFactsMaxTokens.Get(), o.ConsolidationSourceFactsMaxTokens.IsSet()
+	return &o.ConsolidationSourceFactsMaxTokens, true
 }
 
 // SetConsolidationSourceFactsMaxTokens sets field value
 func (o *TemplateResponse) SetConsolidationSourceFactsMaxTokens(v int32) {
-	o.ConsolidationSourceFactsMaxTokens.Set(&v)
+	o.ConsolidationSourceFactsMaxTokens = v
 }
 
 // GetConsolidationSourceFactsMaxTokensPerObservation returns the ConsolidationSourceFactsMaxTokensPerObservation field value
-// If the value is explicit nil, the zero value for int32 will be returned
 func (o *TemplateResponse) GetConsolidationSourceFactsMaxTokensPerObservation() int32 {
-	if o == nil || o.ConsolidationSourceFactsMaxTokensPerObservation.Get() == nil {
+	if o == nil {
 		var ret int32
 		return ret
 	}
 
-	return *o.ConsolidationSourceFactsMaxTokensPerObservation.Get()
+	return o.ConsolidationSourceFactsMaxTokensPerObservation
 }
 
 // GetConsolidationSourceFactsMaxTokensPerObservationOk returns a tuple with the ConsolidationSourceFactsMaxTokensPerObservation field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetConsolidationSourceFactsMaxTokensPerObservationOk() (*int32, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.ConsolidationSourceFactsMaxTokensPerObservation.Get(), o.ConsolidationSourceFactsMaxTokensPerObservation.IsSet()
+	return &o.ConsolidationSourceFactsMaxTokensPerObservation, true
 }
 
 // SetConsolidationSourceFactsMaxTokensPerObservation sets field value
 func (o *TemplateResponse) SetConsolidationSourceFactsMaxTokensPerObservation(v int32) {
-	o.ConsolidationSourceFactsMaxTokensPerObservation.Set(&v)
+	o.ConsolidationSourceFactsMaxTokensPerObservation = v
 }
 
 // GetDispositionSkepticism returns the DispositionSkepticism field value
@@ -857,9 +831,9 @@ func (o *TemplateResponse) SetDispositionEmpathy(v int32) {
 }
 
 // GetDirectiveSeeds returns the DirectiveSeeds field value
-func (o *TemplateResponse) GetDirectiveSeeds() []*map[string]interface{} {
+func (o *TemplateResponse) GetDirectiveSeeds() []map[string]interface{} {
 	if o == nil {
-		var ret []*map[string]interface{}
+		var ret []map[string]interface{}
 		return ret
 	}
 
@@ -868,7 +842,7 @@ func (o *TemplateResponse) GetDirectiveSeeds() []*map[string]interface{} {
 
 // GetDirectiveSeedsOk returns a tuple with the DirectiveSeeds field value
 // and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetDirectiveSeedsOk() ([]*map[string]interface{}, bool) {
+func (o *TemplateResponse) GetDirectiveSeedsOk() ([]map[string]interface{}, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -876,14 +850,14 @@ func (o *TemplateResponse) GetDirectiveSeedsOk() ([]*map[string]interface{}, boo
 }
 
 // SetDirectiveSeeds sets field value
-func (o *TemplateResponse) SetDirectiveSeeds(v []*map[string]interface{}) {
+func (o *TemplateResponse) SetDirectiveSeeds(v []map[string]interface{}) {
 	o.DirectiveSeeds = v
 }
 
 // GetMentalModelSeeds returns the MentalModelSeeds field value
-func (o *TemplateResponse) GetMentalModelSeeds() []*map[string]interface{} {
+func (o *TemplateResponse) GetMentalModelSeeds() []map[string]interface{} {
 	if o == nil {
-		var ret []*map[string]interface{}
+		var ret []map[string]interface{}
 		return ret
 	}
 
@@ -892,7 +866,7 @@ func (o *TemplateResponse) GetMentalModelSeeds() []*map[string]interface{} {
 
 // GetMentalModelSeedsOk returns a tuple with the MentalModelSeeds field value
 // and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetMentalModelSeedsOk() ([]*map[string]interface{}, bool) {
+func (o *TemplateResponse) GetMentalModelSeedsOk() ([]map[string]interface{}, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -900,7 +874,7 @@ func (o *TemplateResponse) GetMentalModelSeedsOk() ([]*map[string]interface{}, b
 }
 
 // SetMentalModelSeeds sets field value
-func (o *TemplateResponse) SetMentalModelSeeds(v []*map[string]interface{}) {
+func (o *TemplateResponse) SetMentalModelSeeds(v []map[string]interface{}) {
 	o.MentalModelSeeds = v
 }
 
@@ -964,31 +938,31 @@ func (o TemplateResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["scope"] = o.Scope
-	toSerialize["owner"] = o.Owner.Get()
-	toSerialize["source_name"] = o.SourceName.Get()
+	toSerialize["owner"] = o.Owner
+	toSerialize["source_name"] = o.SourceName
 	toSerialize["schema_version"] = o.SchemaVersion
 	toSerialize["min_hindclaw_version"] = o.MinHindclawVersion
-	toSerialize["min_hindsight_version"] = o.MinHindsightVersion.Get()
-	toSerialize["version"] = o.Version.Get()
-	toSerialize["source_url"] = o.SourceUrl.Get()
-	toSerialize["source_revision"] = o.SourceRevision.Get()
+	toSerialize["min_hindsight_version"] = o.MinHindsightVersion
+	toSerialize["version"] = o.Version
+	toSerialize["source_url"] = o.SourceUrl
+	toSerialize["source_revision"] = o.SourceRevision
 	toSerialize["description"] = o.Description
 	toSerialize["author"] = o.Author
 	toSerialize["tags"] = o.Tags
 	toSerialize["retain_mission"] = o.RetainMission
 	toSerialize["reflect_mission"] = o.ReflectMission
-	toSerialize["observations_mission"] = o.ObservationsMission.Get()
+	toSerialize["observations_mission"] = o.ObservationsMission
 	toSerialize["retain_extraction_mode"] = o.RetainExtractionMode
-	toSerialize["retain_custom_instructions"] = o.RetainCustomInstructions.Get()
-	toSerialize["retain_chunk_size"] = o.RetainChunkSize.Get()
-	toSerialize["retain_default_strategy"] = o.RetainDefaultStrategy.Get()
+	toSerialize["retain_custom_instructions"] = o.RetainCustomInstructions
+	toSerialize["retain_chunk_size"] = o.RetainChunkSize
+	toSerialize["retain_default_strategy"] = o.RetainDefaultStrategy
 	toSerialize["retain_strategies"] = o.RetainStrategies
 	toSerialize["entity_labels"] = o.EntityLabels
 	toSerialize["entities_allow_free_form"] = o.EntitiesAllowFreeForm
 	toSerialize["enable_observations"] = o.EnableObservations
-	toSerialize["consolidation_llm_batch_size"] = o.ConsolidationLlmBatchSize.Get()
-	toSerialize["consolidation_source_facts_max_tokens"] = o.ConsolidationSourceFactsMaxTokens.Get()
-	toSerialize["consolidation_source_facts_max_tokens_per_observation"] = o.ConsolidationSourceFactsMaxTokensPerObservation.Get()
+	toSerialize["consolidation_llm_batch_size"] = o.ConsolidationLlmBatchSize
+	toSerialize["consolidation_source_facts_max_tokens"] = o.ConsolidationSourceFactsMaxTokens
+	toSerialize["consolidation_source_facts_max_tokens_per_observation"] = o.ConsolidationSourceFactsMaxTokensPerObservation
 	toSerialize["disposition_skepticism"] = o.DispositionSkepticism
 	toSerialize["disposition_literalism"] = o.DispositionLiteralism
 	toSerialize["disposition_empathy"] = o.DispositionEmpathy

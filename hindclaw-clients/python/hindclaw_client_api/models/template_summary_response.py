@@ -17,18 +17,29 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
-class UpdatePolicyRequest(BaseModel):
+class TemplateSummaryResponse(BaseModel):
     """
-    Request to update an access policy.
+    Summary of a template for list endpoints.
     """ # noqa: E501
-    display_name: Optional[StrictStr] = None
-    document: Optional[Dict[str, Any]] = None
-    __properties: ClassVar[List[str]] = ["display_name", "document"]
+    id: StrictStr
+    scope: StrictStr
+    source_name: StrictStr
+    version: StrictStr
+    description: StrictStr
+    author: StrictStr
+    tags: List[StrictStr]
+    retain_extraction_mode: StrictStr
+    disposition_skepticism: StrictInt
+    disposition_literalism: StrictInt
+    disposition_empathy: StrictInt
+    created_at: StrictStr
+    updated_at: StrictStr
+    __properties: ClassVar[List[str]] = ["id", "scope", "source_name", "version", "description", "author", "tags", "retain_extraction_mode", "disposition_skepticism", "disposition_literalism", "disposition_empathy", "created_at", "updated_at"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -48,7 +59,7 @@ class UpdatePolicyRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of UpdatePolicyRequest from a JSON string"""
+        """Create an instance of TemplateSummaryResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -73,7 +84,7 @@ class UpdatePolicyRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of UpdatePolicyRequest from a dict"""
+        """Create an instance of TemplateSummaryResponse from a dict"""
         if obj is None:
             return None
 
@@ -81,8 +92,19 @@ class UpdatePolicyRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "display_name": obj.get("display_name"),
-            "document": obj.get("document")
+            "id": obj.get("id"),
+            "scope": obj.get("scope"),
+            "source_name": obj.get("source_name"),
+            "version": obj.get("version"),
+            "description": obj.get("description"),
+            "author": obj.get("author"),
+            "tags": obj.get("tags"),
+            "retain_extraction_mode": obj.get("retain_extraction_mode"),
+            "disposition_skepticism": obj.get("disposition_skepticism"),
+            "disposition_literalism": obj.get("disposition_literalism"),
+            "disposition_empathy": obj.get("disposition_empathy"),
+            "created_at": obj.get("created_at"),
+            "updated_at": obj.get("updated_at")
         })
         return _obj
 

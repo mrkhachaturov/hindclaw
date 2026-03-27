@@ -19,9 +19,9 @@ var _ MappedNullable = &UpdateUserRequest{}
 
 // UpdateUserRequest struct for UpdateUserRequest
 type UpdateUserRequest struct {
-	DisplayName NullableString `json:"display_name,omitempty"`
-	Email NullableString `json:"email,omitempty"`
-	IsActive NullableBool `json:"is_active,omitempty"`
+	DisplayName *string `json:"display_name,omitempty"`
+	Email *string `json:"email,omitempty"`
+	IsActive *bool `json:"is_active,omitempty"`
 }
 
 // NewUpdateUserRequest instantiates a new UpdateUserRequest object
@@ -41,130 +41,100 @@ func NewUpdateUserRequestWithDefaults() *UpdateUserRequest {
 	return &this
 }
 
-// GetDisplayName returns the DisplayName field value if set, zero value otherwise (both if not set or set to explicit null).
+// GetDisplayName returns the DisplayName field value if set, zero value otherwise.
 func (o *UpdateUserRequest) GetDisplayName() string {
-	if o == nil || IsNil(o.DisplayName.Get()) {
+	if o == nil || IsNil(o.DisplayName) {
 		var ret string
 		return ret
 	}
-	return *o.DisplayName.Get()
+	return *o.DisplayName
 }
 
 // GetDisplayNameOk returns a tuple with the DisplayName field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *UpdateUserRequest) GetDisplayNameOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.DisplayName) {
 		return nil, false
 	}
-	return o.DisplayName.Get(), o.DisplayName.IsSet()
+	return o.DisplayName, true
 }
 
 // HasDisplayName returns a boolean if a field has been set.
 func (o *UpdateUserRequest) HasDisplayName() bool {
-	if o != nil && o.DisplayName.IsSet() {
+	if o != nil && !IsNil(o.DisplayName) {
 		return true
 	}
 
 	return false
 }
 
-// SetDisplayName gets a reference to the given NullableString and assigns it to the DisplayName field.
+// SetDisplayName gets a reference to the given string and assigns it to the DisplayName field.
 func (o *UpdateUserRequest) SetDisplayName(v string) {
-	o.DisplayName.Set(&v)
-}
-// SetDisplayNameNil sets the value for DisplayName to be an explicit nil
-func (o *UpdateUserRequest) SetDisplayNameNil() {
-	o.DisplayName.Set(nil)
+	o.DisplayName = &v
 }
 
-// UnsetDisplayName ensures that no value is present for DisplayName, not even an explicit nil
-func (o *UpdateUserRequest) UnsetDisplayName() {
-	o.DisplayName.Unset()
-}
-
-// GetEmail returns the Email field value if set, zero value otherwise (both if not set or set to explicit null).
+// GetEmail returns the Email field value if set, zero value otherwise.
 func (o *UpdateUserRequest) GetEmail() string {
-	if o == nil || IsNil(o.Email.Get()) {
+	if o == nil || IsNil(o.Email) {
 		var ret string
 		return ret
 	}
-	return *o.Email.Get()
+	return *o.Email
 }
 
 // GetEmailOk returns a tuple with the Email field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *UpdateUserRequest) GetEmailOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Email) {
 		return nil, false
 	}
-	return o.Email.Get(), o.Email.IsSet()
+	return o.Email, true
 }
 
 // HasEmail returns a boolean if a field has been set.
 func (o *UpdateUserRequest) HasEmail() bool {
-	if o != nil && o.Email.IsSet() {
+	if o != nil && !IsNil(o.Email) {
 		return true
 	}
 
 	return false
 }
 
-// SetEmail gets a reference to the given NullableString and assigns it to the Email field.
+// SetEmail gets a reference to the given string and assigns it to the Email field.
 func (o *UpdateUserRequest) SetEmail(v string) {
-	o.Email.Set(&v)
-}
-// SetEmailNil sets the value for Email to be an explicit nil
-func (o *UpdateUserRequest) SetEmailNil() {
-	o.Email.Set(nil)
+	o.Email = &v
 }
 
-// UnsetEmail ensures that no value is present for Email, not even an explicit nil
-func (o *UpdateUserRequest) UnsetEmail() {
-	o.Email.Unset()
-}
-
-// GetIsActive returns the IsActive field value if set, zero value otherwise (both if not set or set to explicit null).
+// GetIsActive returns the IsActive field value if set, zero value otherwise.
 func (o *UpdateUserRequest) GetIsActive() bool {
-	if o == nil || IsNil(o.IsActive.Get()) {
+	if o == nil || IsNil(o.IsActive) {
 		var ret bool
 		return ret
 	}
-	return *o.IsActive.Get()
+	return *o.IsActive
 }
 
 // GetIsActiveOk returns a tuple with the IsActive field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *UpdateUserRequest) GetIsActiveOk() (*bool, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.IsActive) {
 		return nil, false
 	}
-	return o.IsActive.Get(), o.IsActive.IsSet()
+	return o.IsActive, true
 }
 
 // HasIsActive returns a boolean if a field has been set.
 func (o *UpdateUserRequest) HasIsActive() bool {
-	if o != nil && o.IsActive.IsSet() {
+	if o != nil && !IsNil(o.IsActive) {
 		return true
 	}
 
 	return false
 }
 
-// SetIsActive gets a reference to the given NullableBool and assigns it to the IsActive field.
+// SetIsActive gets a reference to the given bool and assigns it to the IsActive field.
 func (o *UpdateUserRequest) SetIsActive(v bool) {
-	o.IsActive.Set(&v)
-}
-// SetIsActiveNil sets the value for IsActive to be an explicit nil
-func (o *UpdateUserRequest) SetIsActiveNil() {
-	o.IsActive.Set(nil)
-}
-
-// UnsetIsActive ensures that no value is present for IsActive, not even an explicit nil
-func (o *UpdateUserRequest) UnsetIsActive() {
-	o.IsActive.Unset()
+	o.IsActive = &v
 }
 
 func (o UpdateUserRequest) MarshalJSON() ([]byte, error) {
@@ -177,14 +147,14 @@ func (o UpdateUserRequest) MarshalJSON() ([]byte, error) {
 
 func (o UpdateUserRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.DisplayName.IsSet() {
-		toSerialize["display_name"] = o.DisplayName.Get()
+	if !IsNil(o.DisplayName) {
+		toSerialize["display_name"] = o.DisplayName
 	}
-	if o.Email.IsSet() {
-		toSerialize["email"] = o.Email.Get()
+	if !IsNil(o.Email) {
+		toSerialize["email"] = o.Email
 	}
-	if o.IsActive.IsSet() {
-		toSerialize["is_active"] = o.IsActive.Get()
+	if !IsNil(o.IsActive) {
+		toSerialize["is_active"] = o.IsActive
 	}
 	return toSerialize, nil
 }

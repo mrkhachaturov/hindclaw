@@ -17,18 +17,20 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class UpdatePolicyRequest(BaseModel):
+class DirectiveSeed(BaseModel):
     """
-    Request to update an access policy.
+    A directive to create when bootstrapping a bank from a template.
     """ # noqa: E501
-    display_name: Optional[StrictStr] = None
-    document: Optional[Dict[str, Any]] = None
-    __properties: ClassVar[List[str]] = ["display_name", "document"]
+    name: StrictStr
+    content: StrictStr
+    priority: Optional[StrictInt] = 0
+    is_active: Optional[StrictBool] = True
+    __properties: ClassVar[List[str]] = ["name", "content", "priority", "is_active"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -48,7 +50,7 @@ class UpdatePolicyRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of UpdatePolicyRequest from a JSON string"""
+        """Create an instance of DirectiveSeed from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -73,7 +75,7 @@ class UpdatePolicyRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of UpdatePolicyRequest from a dict"""
+        """Create an instance of DirectiveSeed from a dict"""
         if obj is None:
             return None
 
@@ -81,8 +83,10 @@ class UpdatePolicyRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "display_name": obj.get("display_name"),
-            "document": obj.get("document")
+            "name": obj.get("name"),
+            "content": obj.get("content"),
+            "priority": obj.get("priority") if obj.get("priority") is not None else 0,
+            "is_active": obj.get("is_active") if obj.get("is_active") is not None else True
         })
         return _obj
 

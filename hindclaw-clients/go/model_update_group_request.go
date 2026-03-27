@@ -19,7 +19,7 @@ var _ MappedNullable = &UpdateGroupRequest{}
 
 // UpdateGroupRequest struct for UpdateGroupRequest
 type UpdateGroupRequest struct {
-	DisplayName NullableString `json:"display_name,omitempty"`
+	DisplayName *string `json:"display_name,omitempty"`
 }
 
 // NewUpdateGroupRequest instantiates a new UpdateGroupRequest object
@@ -39,46 +39,36 @@ func NewUpdateGroupRequestWithDefaults() *UpdateGroupRequest {
 	return &this
 }
 
-// GetDisplayName returns the DisplayName field value if set, zero value otherwise (both if not set or set to explicit null).
+// GetDisplayName returns the DisplayName field value if set, zero value otherwise.
 func (o *UpdateGroupRequest) GetDisplayName() string {
-	if o == nil || IsNil(o.DisplayName.Get()) {
+	if o == nil || IsNil(o.DisplayName) {
 		var ret string
 		return ret
 	}
-	return *o.DisplayName.Get()
+	return *o.DisplayName
 }
 
 // GetDisplayNameOk returns a tuple with the DisplayName field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *UpdateGroupRequest) GetDisplayNameOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.DisplayName) {
 		return nil, false
 	}
-	return o.DisplayName.Get(), o.DisplayName.IsSet()
+	return o.DisplayName, true
 }
 
 // HasDisplayName returns a boolean if a field has been set.
 func (o *UpdateGroupRequest) HasDisplayName() bool {
-	if o != nil && o.DisplayName.IsSet() {
+	if o != nil && !IsNil(o.DisplayName) {
 		return true
 	}
 
 	return false
 }
 
-// SetDisplayName gets a reference to the given NullableString and assigns it to the DisplayName field.
+// SetDisplayName gets a reference to the given string and assigns it to the DisplayName field.
 func (o *UpdateGroupRequest) SetDisplayName(v string) {
-	o.DisplayName.Set(&v)
-}
-// SetDisplayNameNil sets the value for DisplayName to be an explicit nil
-func (o *UpdateGroupRequest) SetDisplayNameNil() {
-	o.DisplayName.Set(nil)
-}
-
-// UnsetDisplayName ensures that no value is present for DisplayName, not even an explicit nil
-func (o *UpdateGroupRequest) UnsetDisplayName() {
-	o.DisplayName.Unset()
+	o.DisplayName = &v
 }
 
 func (o UpdateGroupRequest) MarshalJSON() ([]byte, error) {
@@ -91,8 +81,8 @@ func (o UpdateGroupRequest) MarshalJSON() ([]byte, error) {
 
 func (o UpdateGroupRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.DisplayName.IsSet() {
-		toSerialize["display_name"] = o.DisplayName.Get()
+	if !IsNil(o.DisplayName) {
+		toSerialize["display_name"] = o.DisplayName
 	}
 	return toSerialize, nil
 }

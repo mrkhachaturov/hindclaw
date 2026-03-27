@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddGroupMemberData, AddGroupMemberErrors, AddGroupMemberResponses, AddUserChannelData, AddUserChannelErrors, AddUserChannelResponses, CreateApiKeyData, CreateApiKeyErrors, CreateApiKeyResponses, CreateGroupData, CreateGroupErrors, CreateGroupResponses, CreatePolicyData, CreatePolicyErrors, CreatePolicyResponses, CreateSaKeyData, CreateSaKeyErrors, CreateSaKeyResponses, CreateServiceAccountData, CreateServiceAccountErrors, CreateServiceAccountResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DebugResolveData, DebugResolveErrors, DebugResolveResponses, DeleteApiKeyData, DeleteApiKeyErrors, DeleteApiKeyResponses, DeleteBankPolicyData, DeleteBankPolicyErrors, DeleteBankPolicyResponses, DeleteGroupData, DeleteGroupErrors, DeleteGroupResponses, DeletePolicyAttachmentData, DeletePolicyAttachmentErrors, DeletePolicyAttachmentResponses, DeletePolicyData, DeletePolicyErrors, DeletePolicyResponses, DeleteSaKeyData, DeleteSaKeyErrors, DeleteSaKeyResponses, DeleteServiceAccountData, DeleteServiceAccountErrors, DeleteServiceAccountResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetBankPolicyData, GetBankPolicyErrors, GetBankPolicyResponses, GetGroupData, GetGroupErrors, GetGroupResponses, GetPolicyData, GetPolicyErrors, GetPolicyResponses, GetServiceAccountData, GetServiceAccountErrors, GetServiceAccountResponses, GetUserData, GetUserErrors, GetUserResponses, ListApiKeysData, ListApiKeysErrors, ListApiKeysResponses, ListGroupMembersData, ListGroupMembersErrors, ListGroupMembersResponses, ListGroupsData, ListGroupsResponses, ListPoliciesData, ListPoliciesResponses, ListPolicyAttachmentsData, ListPolicyAttachmentsErrors, ListPolicyAttachmentsResponses, ListSaKeysData, ListSaKeysErrors, ListSaKeysResponses, ListServiceAccountsData, ListServiceAccountsResponses, ListUserChannelsData, ListUserChannelsErrors, ListUserChannelsResponses, ListUsersData, ListUsersResponses, RemoveGroupMemberData, RemoveGroupMemberErrors, RemoveGroupMemberResponses, RemoveUserChannelData, RemoveUserChannelErrors, RemoveUserChannelResponses, UpdateGroupData, UpdateGroupErrors, UpdateGroupResponses, UpdatePolicyData, UpdatePolicyErrors, UpdatePolicyResponses, UpdateServiceAccountData, UpdateServiceAccountErrors, UpdateServiceAccountResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpsertBankPolicyData, UpsertBankPolicyErrors, UpsertBankPolicyResponses, UpsertPolicyAttachmentData, UpsertPolicyAttachmentErrors, UpsertPolicyAttachmentResponses } from './types.gen';
+import type { AddGroupMemberData, AddGroupMemberErrors, AddGroupMemberResponses, AddUserChannelData, AddUserChannelErrors, AddUserChannelResponses, CreateApiKeyData, CreateApiKeyErrors, CreateApiKeyResponses, CreateGroupData, CreateGroupErrors, CreateGroupResponses, CreatePolicyData, CreatePolicyErrors, CreatePolicyResponses, CreateSaKeyData, CreateSaKeyErrors, CreateSaKeyResponses, CreateServiceAccountData, CreateServiceAccountErrors, CreateServiceAccountResponses, CreateTemplateData, CreateTemplateErrors, CreateTemplateResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DebugResolveData, DebugResolveErrors, DebugResolveResponses, DeleteApiKeyData, DeleteApiKeyErrors, DeleteApiKeyResponses, DeleteBankPolicyData, DeleteBankPolicyErrors, DeleteBankPolicyResponses, DeleteGroupData, DeleteGroupErrors, DeleteGroupResponses, DeletePolicyAttachmentData, DeletePolicyAttachmentErrors, DeletePolicyAttachmentResponses, DeletePolicyData, DeletePolicyErrors, DeletePolicyResponses, DeleteSaKeyData, DeleteSaKeyErrors, DeleteSaKeyResponses, DeleteServiceAccountData, DeleteServiceAccountErrors, DeleteServiceAccountResponses, DeleteTemplateData, DeleteTemplateErrors, DeleteTemplateResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetBankPolicyData, GetBankPolicyErrors, GetBankPolicyResponses, GetGroupData, GetGroupErrors, GetGroupResponses, GetPolicyData, GetPolicyErrors, GetPolicyResponses, GetServiceAccountData, GetServiceAccountErrors, GetServiceAccountResponses, GetTemplateData, GetTemplateErrors, GetTemplateResponses, GetUserData, GetUserErrors, GetUserResponses, ListApiKeysData, ListApiKeysErrors, ListApiKeysResponses, ListGroupMembersData, ListGroupMembersErrors, ListGroupMembersResponses, ListGroupsData, ListGroupsResponses, ListPoliciesData, ListPoliciesResponses, ListPolicyAttachmentsData, ListPolicyAttachmentsErrors, ListPolicyAttachmentsResponses, ListSaKeysData, ListSaKeysErrors, ListSaKeysResponses, ListServiceAccountsData, ListServiceAccountsResponses, ListTemplatesData, ListTemplatesErrors, ListTemplatesResponses, ListUserChannelsData, ListUserChannelsErrors, ListUserChannelsResponses, ListUsersData, ListUsersResponses, RemoveGroupMemberData, RemoveGroupMemberErrors, RemoveGroupMemberResponses, RemoveUserChannelData, RemoveUserChannelErrors, RemoveUserChannelResponses, UpdateGroupData, UpdateGroupErrors, UpdateGroupResponses, UpdatePolicyData, UpdatePolicyErrors, UpdatePolicyResponses, UpdateServiceAccountData, UpdateServiceAccountErrors, UpdateServiceAccountResponses, UpdateTemplateData, UpdateTemplateErrors, UpdateTemplateResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpsertBankPolicyData, UpsertBankPolicyErrors, UpsertBankPolicyResponses, UpsertPolicyAttachmentData, UpsertPolicyAttachmentErrors, UpsertPolicyAttachmentResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -427,4 +427,123 @@ export const debugResolve = <ThrowOnError extends boolean = false>(options: Opti
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/ext/hindclaw/debug/resolve',
     ...options
+});
+
+/**
+ * List Templates
+ *
+ * List installed templates filtered by access.
+ *
+ * When scope is None, returns all server templates plus the caller's
+ * personal templates. When scope is specified, returns only that scope.
+ *
+ * Args:
+ * scope: Optional scope filter ('server' or 'personal').
+ * principal: Authenticated principal from IAM.
+ *
+ * Returns:
+ * List of template summaries.
+ */
+export const listTemplates = <ThrowOnError extends boolean = false>(options?: Options<ListTemplatesData, ThrowOnError>) => (options?.client ?? client).get<ListTemplatesResponses, ListTemplatesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/templates',
+    ...options
+});
+
+/**
+ * Create Template
+ *
+ * Create a custom template (no marketplace source).
+ *
+ * Args:
+ * request: Template creation payload.
+ * principal: Authenticated principal from IAM.
+ *
+ * Returns:
+ * The created template.
+ *
+ * Raises:
+ * HTTPException: 409 if template already exists.
+ */
+export const createTemplate = <ThrowOnError extends boolean = false>(options: Options<CreateTemplateData, ThrowOnError>) => (options.client ?? client).post<CreateTemplateResponses, CreateTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/templates',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Template Endpoint
+ *
+ * Delete a custom template.
+ *
+ * Args:
+ * scope: Template scope ('server' or 'personal').
+ * name: Template name.
+ * principal: Authenticated principal from IAM.
+ *
+ * Raises:
+ * HTTPException: 404 if template not found.
+ */
+export const deleteTemplate = <ThrowOnError extends boolean = false>(options: Options<DeleteTemplateData, ThrowOnError>) => (options.client ?? client).delete<DeleteTemplateResponses, DeleteTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/templates/{scope}/{name}',
+    ...options
+});
+
+/**
+ * Get Template Endpoint
+ *
+ * Get a custom template by scope and name.
+ *
+ * Args:
+ * scope: Template scope ('server' or 'personal').
+ * name: Template name.
+ * principal: Authenticated principal from IAM.
+ *
+ * Returns:
+ * Full template details.
+ *
+ * Raises:
+ * HTTPException: 404 if template not found.
+ */
+export const getTemplate = <ThrowOnError extends boolean = false>(options: Options<GetTemplateData, ThrowOnError>) => (options.client ?? client).get<GetTemplateResponses, GetTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/templates/{scope}/{name}',
+    ...options
+});
+
+/**
+ * Update Template Endpoint
+ *
+ * Update a custom template.
+ *
+ * Performs cross-field validation when extraction mode or custom
+ * instructions are part of the update by merging with the existing
+ * record before applying.
+ *
+ * Args:
+ * scope: Template scope ('server' or 'personal').
+ * name: Template name.
+ * request: Partial update payload.
+ * principal: Authenticated principal from IAM.
+ *
+ * Returns:
+ * The updated template.
+ *
+ * Raises:
+ * HTTPException: 404 if template not found, 422 if cross-field
+ * validation fails.
+ */
+export const updateTemplate = <ThrowOnError extends boolean = false>(options: Options<UpdateTemplateData, ThrowOnError>) => (options.client ?? client).put<UpdateTemplateResponses, UpdateTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/templates/{scope}/{name}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });

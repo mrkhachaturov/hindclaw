@@ -23,7 +23,7 @@ var _ MappedNullable = &CreateUserRequest{}
 type CreateUserRequest struct {
 	Id string `json:"id"`
 	DisplayName string `json:"display_name"`
-	Email NullableString `json:"email,omitempty"`
+	Email *string `json:"email,omitempty"`
 	IsActive *bool `json:"is_active,omitempty"`
 }
 
@@ -100,46 +100,36 @@ func (o *CreateUserRequest) SetDisplayName(v string) {
 	o.DisplayName = v
 }
 
-// GetEmail returns the Email field value if set, zero value otherwise (both if not set or set to explicit null).
+// GetEmail returns the Email field value if set, zero value otherwise.
 func (o *CreateUserRequest) GetEmail() string {
-	if o == nil || IsNil(o.Email.Get()) {
+	if o == nil || IsNil(o.Email) {
 		var ret string
 		return ret
 	}
-	return *o.Email.Get()
+	return *o.Email
 }
 
 // GetEmailOk returns a tuple with the Email field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *CreateUserRequest) GetEmailOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Email) {
 		return nil, false
 	}
-	return o.Email.Get(), o.Email.IsSet()
+	return o.Email, true
 }
 
 // HasEmail returns a boolean if a field has been set.
 func (o *CreateUserRequest) HasEmail() bool {
-	if o != nil && o.Email.IsSet() {
+	if o != nil && !IsNil(o.Email) {
 		return true
 	}
 
 	return false
 }
 
-// SetEmail gets a reference to the given NullableString and assigns it to the Email field.
+// SetEmail gets a reference to the given string and assigns it to the Email field.
 func (o *CreateUserRequest) SetEmail(v string) {
-	o.Email.Set(&v)
-}
-// SetEmailNil sets the value for Email to be an explicit nil
-func (o *CreateUserRequest) SetEmailNil() {
-	o.Email.Set(nil)
-}
-
-// UnsetEmail ensures that no value is present for Email, not even an explicit nil
-func (o *CreateUserRequest) UnsetEmail() {
-	o.Email.Unset()
+	o.Email = &v
 }
 
 // GetIsActive returns the IsActive field value if set, zero value otherwise.
@@ -186,8 +176,8 @@ func (o CreateUserRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["display_name"] = o.DisplayName
-	if o.Email.IsSet() {
-		toSerialize["email"] = o.Email.Get()
+	if !IsNil(o.Email) {
+		toSerialize["email"] = o.Email
 	}
 	if !IsNil(o.IsActive) {
 		toSerialize["is_active"] = o.IsActive

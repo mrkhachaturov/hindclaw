@@ -26,21 +26,21 @@ type CreateTemplateRequest struct {
 	Author *string `json:"author,omitempty"`
 	Tags []string `json:"tags,omitempty"`
 	MinHindclawVersion string `json:"min_hindclaw_version"`
-	MinHindsightVersion NullableMinHindsightVersion `json:"min_hindsight_version,omitempty"`
+	MinHindsightVersion *string `json:"min_hindsight_version,omitempty"`
 	RetainMission string `json:"retain_mission"`
 	ReflectMission string `json:"reflect_mission"`
-	ObservationsMission NullableObservationsMission `json:"observations_mission,omitempty"`
+	ObservationsMission *string `json:"observations_mission,omitempty"`
 	RetainExtractionMode *string `json:"retain_extraction_mode,omitempty"`
-	RetainCustomInstructions NullableRetainCustomInstructions `json:"retain_custom_instructions,omitempty"`
-	RetainChunkSize *RetainChunkSize `json:"retain_chunk_size,omitempty"`
-	RetainDefaultStrategy NullableRetainDefaultStrategy `json:"retain_default_strategy,omitempty"`
+	RetainCustomInstructions *string `json:"retain_custom_instructions,omitempty"`
+	RetainChunkSize *int32 `json:"retain_chunk_size,omitempty"`
+	RetainDefaultStrategy *string `json:"retain_default_strategy,omitempty"`
 	RetainStrategies map[string]interface{} `json:"retain_strategies,omitempty"`
 	EntityLabels []EntityLabel `json:"entity_labels,omitempty"`
 	EntitiesAllowFreeForm *bool `json:"entities_allow_free_form,omitempty"`
 	EnableObservations *bool `json:"enable_observations,omitempty"`
-	ConsolidationLlmBatchSize *ConsolidationLlmBatchSize `json:"consolidation_llm_batch_size,omitempty"`
-	ConsolidationSourceFactsMaxTokens NullableConsolidationSourceFactsMaxTokens `json:"consolidation_source_facts_max_tokens,omitempty"`
-	ConsolidationSourceFactsMaxTokensPerObservation NullableConsolidationSourceFactsMaxTokensPerObservation `json:"consolidation_source_facts_max_tokens_per_observation,omitempty"`
+	ConsolidationLlmBatchSize *int32 `json:"consolidation_llm_batch_size,omitempty"`
+	ConsolidationSourceFactsMaxTokens *int32 `json:"consolidation_source_facts_max_tokens,omitempty"`
+	ConsolidationSourceFactsMaxTokensPerObservation *int32 `json:"consolidation_source_facts_max_tokens_per_observation,omitempty"`
 	DispositionSkepticism *int32 `json:"disposition_skepticism,omitempty"`
 	DispositionLiteralism *int32 `json:"disposition_literalism,omitempty"`
 	DispositionEmpathy *int32 `json:"disposition_empathy,omitempty"`
@@ -273,46 +273,36 @@ func (o *CreateTemplateRequest) SetMinHindclawVersion(v string) {
 	o.MinHindclawVersion = v
 }
 
-// GetMinHindsightVersion returns the MinHindsightVersion field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *CreateTemplateRequest) GetMinHindsightVersion() MinHindsightVersion {
-	if o == nil || IsNil(o.MinHindsightVersion.Get()) {
-		var ret MinHindsightVersion
+// GetMinHindsightVersion returns the MinHindsightVersion field value if set, zero value otherwise.
+func (o *CreateTemplateRequest) GetMinHindsightVersion() string {
+	if o == nil || IsNil(o.MinHindsightVersion) {
+		var ret string
 		return ret
 	}
-	return *o.MinHindsightVersion.Get()
+	return *o.MinHindsightVersion
 }
 
 // GetMinHindsightVersionOk returns a tuple with the MinHindsightVersion field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *CreateTemplateRequest) GetMinHindsightVersionOk() (*MinHindsightVersion, bool) {
-	if o == nil {
+func (o *CreateTemplateRequest) GetMinHindsightVersionOk() (*string, bool) {
+	if o == nil || IsNil(o.MinHindsightVersion) {
 		return nil, false
 	}
-	return o.MinHindsightVersion.Get(), o.MinHindsightVersion.IsSet()
+	return o.MinHindsightVersion, true
 }
 
 // HasMinHindsightVersion returns a boolean if a field has been set.
 func (o *CreateTemplateRequest) HasMinHindsightVersion() bool {
-	if o != nil && o.MinHindsightVersion.IsSet() {
+	if o != nil && !IsNil(o.MinHindsightVersion) {
 		return true
 	}
 
 	return false
 }
 
-// SetMinHindsightVersion gets a reference to the given NullableMinHindsightVersion and assigns it to the MinHindsightVersion field.
-func (o *CreateTemplateRequest) SetMinHindsightVersion(v MinHindsightVersion) {
-	o.MinHindsightVersion.Set(&v)
-}
-// SetMinHindsightVersionNil sets the value for MinHindsightVersion to be an explicit nil
-func (o *CreateTemplateRequest) SetMinHindsightVersionNil() {
-	o.MinHindsightVersion.Set(nil)
-}
-
-// UnsetMinHindsightVersion ensures that no value is present for MinHindsightVersion, not even an explicit nil
-func (o *CreateTemplateRequest) UnsetMinHindsightVersion() {
-	o.MinHindsightVersion.Unset()
+// SetMinHindsightVersion gets a reference to the given string and assigns it to the MinHindsightVersion field.
+func (o *CreateTemplateRequest) SetMinHindsightVersion(v string) {
+	o.MinHindsightVersion = &v
 }
 
 // GetRetainMission returns the RetainMission field value
@@ -363,46 +353,36 @@ func (o *CreateTemplateRequest) SetReflectMission(v string) {
 	o.ReflectMission = v
 }
 
-// GetObservationsMission returns the ObservationsMission field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *CreateTemplateRequest) GetObservationsMission() ObservationsMission {
-	if o == nil || IsNil(o.ObservationsMission.Get()) {
-		var ret ObservationsMission
+// GetObservationsMission returns the ObservationsMission field value if set, zero value otherwise.
+func (o *CreateTemplateRequest) GetObservationsMission() string {
+	if o == nil || IsNil(o.ObservationsMission) {
+		var ret string
 		return ret
 	}
-	return *o.ObservationsMission.Get()
+	return *o.ObservationsMission
 }
 
 // GetObservationsMissionOk returns a tuple with the ObservationsMission field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *CreateTemplateRequest) GetObservationsMissionOk() (*ObservationsMission, bool) {
-	if o == nil {
+func (o *CreateTemplateRequest) GetObservationsMissionOk() (*string, bool) {
+	if o == nil || IsNil(o.ObservationsMission) {
 		return nil, false
 	}
-	return o.ObservationsMission.Get(), o.ObservationsMission.IsSet()
+	return o.ObservationsMission, true
 }
 
 // HasObservationsMission returns a boolean if a field has been set.
 func (o *CreateTemplateRequest) HasObservationsMission() bool {
-	if o != nil && o.ObservationsMission.IsSet() {
+	if o != nil && !IsNil(o.ObservationsMission) {
 		return true
 	}
 
 	return false
 }
 
-// SetObservationsMission gets a reference to the given NullableObservationsMission and assigns it to the ObservationsMission field.
-func (o *CreateTemplateRequest) SetObservationsMission(v ObservationsMission) {
-	o.ObservationsMission.Set(&v)
-}
-// SetObservationsMissionNil sets the value for ObservationsMission to be an explicit nil
-func (o *CreateTemplateRequest) SetObservationsMissionNil() {
-	o.ObservationsMission.Set(nil)
-}
-
-// UnsetObservationsMission ensures that no value is present for ObservationsMission, not even an explicit nil
-func (o *CreateTemplateRequest) UnsetObservationsMission() {
-	o.ObservationsMission.Unset()
+// SetObservationsMission gets a reference to the given string and assigns it to the ObservationsMission field.
+func (o *CreateTemplateRequest) SetObservationsMission(v string) {
+	o.ObservationsMission = &v
 }
 
 // GetRetainExtractionMode returns the RetainExtractionMode field value if set, zero value otherwise.
@@ -437,52 +417,42 @@ func (o *CreateTemplateRequest) SetRetainExtractionMode(v string) {
 	o.RetainExtractionMode = &v
 }
 
-// GetRetainCustomInstructions returns the RetainCustomInstructions field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *CreateTemplateRequest) GetRetainCustomInstructions() RetainCustomInstructions {
-	if o == nil || IsNil(o.RetainCustomInstructions.Get()) {
-		var ret RetainCustomInstructions
+// GetRetainCustomInstructions returns the RetainCustomInstructions field value if set, zero value otherwise.
+func (o *CreateTemplateRequest) GetRetainCustomInstructions() string {
+	if o == nil || IsNil(o.RetainCustomInstructions) {
+		var ret string
 		return ret
 	}
-	return *o.RetainCustomInstructions.Get()
+	return *o.RetainCustomInstructions
 }
 
 // GetRetainCustomInstructionsOk returns a tuple with the RetainCustomInstructions field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *CreateTemplateRequest) GetRetainCustomInstructionsOk() (*RetainCustomInstructions, bool) {
-	if o == nil {
+func (o *CreateTemplateRequest) GetRetainCustomInstructionsOk() (*string, bool) {
+	if o == nil || IsNil(o.RetainCustomInstructions) {
 		return nil, false
 	}
-	return o.RetainCustomInstructions.Get(), o.RetainCustomInstructions.IsSet()
+	return o.RetainCustomInstructions, true
 }
 
 // HasRetainCustomInstructions returns a boolean if a field has been set.
 func (o *CreateTemplateRequest) HasRetainCustomInstructions() bool {
-	if o != nil && o.RetainCustomInstructions.IsSet() {
+	if o != nil && !IsNil(o.RetainCustomInstructions) {
 		return true
 	}
 
 	return false
 }
 
-// SetRetainCustomInstructions gets a reference to the given NullableRetainCustomInstructions and assigns it to the RetainCustomInstructions field.
-func (o *CreateTemplateRequest) SetRetainCustomInstructions(v RetainCustomInstructions) {
-	o.RetainCustomInstructions.Set(&v)
-}
-// SetRetainCustomInstructionsNil sets the value for RetainCustomInstructions to be an explicit nil
-func (o *CreateTemplateRequest) SetRetainCustomInstructionsNil() {
-	o.RetainCustomInstructions.Set(nil)
-}
-
-// UnsetRetainCustomInstructions ensures that no value is present for RetainCustomInstructions, not even an explicit nil
-func (o *CreateTemplateRequest) UnsetRetainCustomInstructions() {
-	o.RetainCustomInstructions.Unset()
+// SetRetainCustomInstructions gets a reference to the given string and assigns it to the RetainCustomInstructions field.
+func (o *CreateTemplateRequest) SetRetainCustomInstructions(v string) {
+	o.RetainCustomInstructions = &v
 }
 
 // GetRetainChunkSize returns the RetainChunkSize field value if set, zero value otherwise.
-func (o *CreateTemplateRequest) GetRetainChunkSize() RetainChunkSize {
+func (o *CreateTemplateRequest) GetRetainChunkSize() int32 {
 	if o == nil || IsNil(o.RetainChunkSize) {
-		var ret RetainChunkSize
+		var ret int32
 		return ret
 	}
 	return *o.RetainChunkSize
@@ -490,7 +460,7 @@ func (o *CreateTemplateRequest) GetRetainChunkSize() RetainChunkSize {
 
 // GetRetainChunkSizeOk returns a tuple with the RetainChunkSize field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CreateTemplateRequest) GetRetainChunkSizeOk() (*RetainChunkSize, bool) {
+func (o *CreateTemplateRequest) GetRetainChunkSizeOk() (*int32, bool) {
 	if o == nil || IsNil(o.RetainChunkSize) {
 		return nil, false
 	}
@@ -506,51 +476,41 @@ func (o *CreateTemplateRequest) HasRetainChunkSize() bool {
 	return false
 }
 
-// SetRetainChunkSize gets a reference to the given RetainChunkSize and assigns it to the RetainChunkSize field.
-func (o *CreateTemplateRequest) SetRetainChunkSize(v RetainChunkSize) {
+// SetRetainChunkSize gets a reference to the given int32 and assigns it to the RetainChunkSize field.
+func (o *CreateTemplateRequest) SetRetainChunkSize(v int32) {
 	o.RetainChunkSize = &v
 }
 
-// GetRetainDefaultStrategy returns the RetainDefaultStrategy field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *CreateTemplateRequest) GetRetainDefaultStrategy() RetainDefaultStrategy {
-	if o == nil || IsNil(o.RetainDefaultStrategy.Get()) {
-		var ret RetainDefaultStrategy
+// GetRetainDefaultStrategy returns the RetainDefaultStrategy field value if set, zero value otherwise.
+func (o *CreateTemplateRequest) GetRetainDefaultStrategy() string {
+	if o == nil || IsNil(o.RetainDefaultStrategy) {
+		var ret string
 		return ret
 	}
-	return *o.RetainDefaultStrategy.Get()
+	return *o.RetainDefaultStrategy
 }
 
 // GetRetainDefaultStrategyOk returns a tuple with the RetainDefaultStrategy field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *CreateTemplateRequest) GetRetainDefaultStrategyOk() (*RetainDefaultStrategy, bool) {
-	if o == nil {
+func (o *CreateTemplateRequest) GetRetainDefaultStrategyOk() (*string, bool) {
+	if o == nil || IsNil(o.RetainDefaultStrategy) {
 		return nil, false
 	}
-	return o.RetainDefaultStrategy.Get(), o.RetainDefaultStrategy.IsSet()
+	return o.RetainDefaultStrategy, true
 }
 
 // HasRetainDefaultStrategy returns a boolean if a field has been set.
 func (o *CreateTemplateRequest) HasRetainDefaultStrategy() bool {
-	if o != nil && o.RetainDefaultStrategy.IsSet() {
+	if o != nil && !IsNil(o.RetainDefaultStrategy) {
 		return true
 	}
 
 	return false
 }
 
-// SetRetainDefaultStrategy gets a reference to the given NullableRetainDefaultStrategy and assigns it to the RetainDefaultStrategy field.
-func (o *CreateTemplateRequest) SetRetainDefaultStrategy(v RetainDefaultStrategy) {
-	o.RetainDefaultStrategy.Set(&v)
-}
-// SetRetainDefaultStrategyNil sets the value for RetainDefaultStrategy to be an explicit nil
-func (o *CreateTemplateRequest) SetRetainDefaultStrategyNil() {
-	o.RetainDefaultStrategy.Set(nil)
-}
-
-// UnsetRetainDefaultStrategy ensures that no value is present for RetainDefaultStrategy, not even an explicit nil
-func (o *CreateTemplateRequest) UnsetRetainDefaultStrategy() {
-	o.RetainDefaultStrategy.Unset()
+// SetRetainDefaultStrategy gets a reference to the given string and assigns it to the RetainDefaultStrategy field.
+func (o *CreateTemplateRequest) SetRetainDefaultStrategy(v string) {
+	o.RetainDefaultStrategy = &v
 }
 
 // GetRetainStrategies returns the RetainStrategies field value if set, zero value otherwise.
@@ -682,9 +642,9 @@ func (o *CreateTemplateRequest) SetEnableObservations(v bool) {
 }
 
 // GetConsolidationLlmBatchSize returns the ConsolidationLlmBatchSize field value if set, zero value otherwise.
-func (o *CreateTemplateRequest) GetConsolidationLlmBatchSize() ConsolidationLlmBatchSize {
+func (o *CreateTemplateRequest) GetConsolidationLlmBatchSize() int32 {
 	if o == nil || IsNil(o.ConsolidationLlmBatchSize) {
-		var ret ConsolidationLlmBatchSize
+		var ret int32
 		return ret
 	}
 	return *o.ConsolidationLlmBatchSize
@@ -692,7 +652,7 @@ func (o *CreateTemplateRequest) GetConsolidationLlmBatchSize() ConsolidationLlmB
 
 // GetConsolidationLlmBatchSizeOk returns a tuple with the ConsolidationLlmBatchSize field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CreateTemplateRequest) GetConsolidationLlmBatchSizeOk() (*ConsolidationLlmBatchSize, bool) {
+func (o *CreateTemplateRequest) GetConsolidationLlmBatchSizeOk() (*int32, bool) {
 	if o == nil || IsNil(o.ConsolidationLlmBatchSize) {
 		return nil, false
 	}
@@ -708,93 +668,73 @@ func (o *CreateTemplateRequest) HasConsolidationLlmBatchSize() bool {
 	return false
 }
 
-// SetConsolidationLlmBatchSize gets a reference to the given ConsolidationLlmBatchSize and assigns it to the ConsolidationLlmBatchSize field.
-func (o *CreateTemplateRequest) SetConsolidationLlmBatchSize(v ConsolidationLlmBatchSize) {
+// SetConsolidationLlmBatchSize gets a reference to the given int32 and assigns it to the ConsolidationLlmBatchSize field.
+func (o *CreateTemplateRequest) SetConsolidationLlmBatchSize(v int32) {
 	o.ConsolidationLlmBatchSize = &v
 }
 
-// GetConsolidationSourceFactsMaxTokens returns the ConsolidationSourceFactsMaxTokens field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *CreateTemplateRequest) GetConsolidationSourceFactsMaxTokens() ConsolidationSourceFactsMaxTokens {
-	if o == nil || IsNil(o.ConsolidationSourceFactsMaxTokens.Get()) {
-		var ret ConsolidationSourceFactsMaxTokens
+// GetConsolidationSourceFactsMaxTokens returns the ConsolidationSourceFactsMaxTokens field value if set, zero value otherwise.
+func (o *CreateTemplateRequest) GetConsolidationSourceFactsMaxTokens() int32 {
+	if o == nil || IsNil(o.ConsolidationSourceFactsMaxTokens) {
+		var ret int32
 		return ret
 	}
-	return *o.ConsolidationSourceFactsMaxTokens.Get()
+	return *o.ConsolidationSourceFactsMaxTokens
 }
 
 // GetConsolidationSourceFactsMaxTokensOk returns a tuple with the ConsolidationSourceFactsMaxTokens field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *CreateTemplateRequest) GetConsolidationSourceFactsMaxTokensOk() (*ConsolidationSourceFactsMaxTokens, bool) {
-	if o == nil {
+func (o *CreateTemplateRequest) GetConsolidationSourceFactsMaxTokensOk() (*int32, bool) {
+	if o == nil || IsNil(o.ConsolidationSourceFactsMaxTokens) {
 		return nil, false
 	}
-	return o.ConsolidationSourceFactsMaxTokens.Get(), o.ConsolidationSourceFactsMaxTokens.IsSet()
+	return o.ConsolidationSourceFactsMaxTokens, true
 }
 
 // HasConsolidationSourceFactsMaxTokens returns a boolean if a field has been set.
 func (o *CreateTemplateRequest) HasConsolidationSourceFactsMaxTokens() bool {
-	if o != nil && o.ConsolidationSourceFactsMaxTokens.IsSet() {
+	if o != nil && !IsNil(o.ConsolidationSourceFactsMaxTokens) {
 		return true
 	}
 
 	return false
 }
 
-// SetConsolidationSourceFactsMaxTokens gets a reference to the given NullableConsolidationSourceFactsMaxTokens and assigns it to the ConsolidationSourceFactsMaxTokens field.
-func (o *CreateTemplateRequest) SetConsolidationSourceFactsMaxTokens(v ConsolidationSourceFactsMaxTokens) {
-	o.ConsolidationSourceFactsMaxTokens.Set(&v)
-}
-// SetConsolidationSourceFactsMaxTokensNil sets the value for ConsolidationSourceFactsMaxTokens to be an explicit nil
-func (o *CreateTemplateRequest) SetConsolidationSourceFactsMaxTokensNil() {
-	o.ConsolidationSourceFactsMaxTokens.Set(nil)
+// SetConsolidationSourceFactsMaxTokens gets a reference to the given int32 and assigns it to the ConsolidationSourceFactsMaxTokens field.
+func (o *CreateTemplateRequest) SetConsolidationSourceFactsMaxTokens(v int32) {
+	o.ConsolidationSourceFactsMaxTokens = &v
 }
 
-// UnsetConsolidationSourceFactsMaxTokens ensures that no value is present for ConsolidationSourceFactsMaxTokens, not even an explicit nil
-func (o *CreateTemplateRequest) UnsetConsolidationSourceFactsMaxTokens() {
-	o.ConsolidationSourceFactsMaxTokens.Unset()
-}
-
-// GetConsolidationSourceFactsMaxTokensPerObservation returns the ConsolidationSourceFactsMaxTokensPerObservation field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *CreateTemplateRequest) GetConsolidationSourceFactsMaxTokensPerObservation() ConsolidationSourceFactsMaxTokensPerObservation {
-	if o == nil || IsNil(o.ConsolidationSourceFactsMaxTokensPerObservation.Get()) {
-		var ret ConsolidationSourceFactsMaxTokensPerObservation
+// GetConsolidationSourceFactsMaxTokensPerObservation returns the ConsolidationSourceFactsMaxTokensPerObservation field value if set, zero value otherwise.
+func (o *CreateTemplateRequest) GetConsolidationSourceFactsMaxTokensPerObservation() int32 {
+	if o == nil || IsNil(o.ConsolidationSourceFactsMaxTokensPerObservation) {
+		var ret int32
 		return ret
 	}
-	return *o.ConsolidationSourceFactsMaxTokensPerObservation.Get()
+	return *o.ConsolidationSourceFactsMaxTokensPerObservation
 }
 
 // GetConsolidationSourceFactsMaxTokensPerObservationOk returns a tuple with the ConsolidationSourceFactsMaxTokensPerObservation field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *CreateTemplateRequest) GetConsolidationSourceFactsMaxTokensPerObservationOk() (*ConsolidationSourceFactsMaxTokensPerObservation, bool) {
-	if o == nil {
+func (o *CreateTemplateRequest) GetConsolidationSourceFactsMaxTokensPerObservationOk() (*int32, bool) {
+	if o == nil || IsNil(o.ConsolidationSourceFactsMaxTokensPerObservation) {
 		return nil, false
 	}
-	return o.ConsolidationSourceFactsMaxTokensPerObservation.Get(), o.ConsolidationSourceFactsMaxTokensPerObservation.IsSet()
+	return o.ConsolidationSourceFactsMaxTokensPerObservation, true
 }
 
 // HasConsolidationSourceFactsMaxTokensPerObservation returns a boolean if a field has been set.
 func (o *CreateTemplateRequest) HasConsolidationSourceFactsMaxTokensPerObservation() bool {
-	if o != nil && o.ConsolidationSourceFactsMaxTokensPerObservation.IsSet() {
+	if o != nil && !IsNil(o.ConsolidationSourceFactsMaxTokensPerObservation) {
 		return true
 	}
 
 	return false
 }
 
-// SetConsolidationSourceFactsMaxTokensPerObservation gets a reference to the given NullableConsolidationSourceFactsMaxTokensPerObservation and assigns it to the ConsolidationSourceFactsMaxTokensPerObservation field.
-func (o *CreateTemplateRequest) SetConsolidationSourceFactsMaxTokensPerObservation(v ConsolidationSourceFactsMaxTokensPerObservation) {
-	o.ConsolidationSourceFactsMaxTokensPerObservation.Set(&v)
-}
-// SetConsolidationSourceFactsMaxTokensPerObservationNil sets the value for ConsolidationSourceFactsMaxTokensPerObservation to be an explicit nil
-func (o *CreateTemplateRequest) SetConsolidationSourceFactsMaxTokensPerObservationNil() {
-	o.ConsolidationSourceFactsMaxTokensPerObservation.Set(nil)
-}
-
-// UnsetConsolidationSourceFactsMaxTokensPerObservation ensures that no value is present for ConsolidationSourceFactsMaxTokensPerObservation, not even an explicit nil
-func (o *CreateTemplateRequest) UnsetConsolidationSourceFactsMaxTokensPerObservation() {
-	o.ConsolidationSourceFactsMaxTokensPerObservation.Unset()
+// SetConsolidationSourceFactsMaxTokensPerObservation gets a reference to the given int32 and assigns it to the ConsolidationSourceFactsMaxTokensPerObservation field.
+func (o *CreateTemplateRequest) SetConsolidationSourceFactsMaxTokensPerObservation(v int32) {
+	o.ConsolidationSourceFactsMaxTokensPerObservation = &v
 }
 
 // GetDispositionSkepticism returns the DispositionSkepticism field value if set, zero value otherwise.
@@ -979,25 +919,25 @@ func (o CreateTemplateRequest) ToMap() (map[string]interface{}, error) {
 		toSerialize["tags"] = o.Tags
 	}
 	toSerialize["min_hindclaw_version"] = o.MinHindclawVersion
-	if o.MinHindsightVersion.IsSet() {
-		toSerialize["min_hindsight_version"] = o.MinHindsightVersion.Get()
+	if !IsNil(o.MinHindsightVersion) {
+		toSerialize["min_hindsight_version"] = o.MinHindsightVersion
 	}
 	toSerialize["retain_mission"] = o.RetainMission
 	toSerialize["reflect_mission"] = o.ReflectMission
-	if o.ObservationsMission.IsSet() {
-		toSerialize["observations_mission"] = o.ObservationsMission.Get()
+	if !IsNil(o.ObservationsMission) {
+		toSerialize["observations_mission"] = o.ObservationsMission
 	}
 	if !IsNil(o.RetainExtractionMode) {
 		toSerialize["retain_extraction_mode"] = o.RetainExtractionMode
 	}
-	if o.RetainCustomInstructions.IsSet() {
-		toSerialize["retain_custom_instructions"] = o.RetainCustomInstructions.Get()
+	if !IsNil(o.RetainCustomInstructions) {
+		toSerialize["retain_custom_instructions"] = o.RetainCustomInstructions
 	}
 	if !IsNil(o.RetainChunkSize) {
 		toSerialize["retain_chunk_size"] = o.RetainChunkSize
 	}
-	if o.RetainDefaultStrategy.IsSet() {
-		toSerialize["retain_default_strategy"] = o.RetainDefaultStrategy.Get()
+	if !IsNil(o.RetainDefaultStrategy) {
+		toSerialize["retain_default_strategy"] = o.RetainDefaultStrategy
 	}
 	if !IsNil(o.RetainStrategies) {
 		toSerialize["retain_strategies"] = o.RetainStrategies
@@ -1014,11 +954,11 @@ func (o CreateTemplateRequest) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.ConsolidationLlmBatchSize) {
 		toSerialize["consolidation_llm_batch_size"] = o.ConsolidationLlmBatchSize
 	}
-	if o.ConsolidationSourceFactsMaxTokens.IsSet() {
-		toSerialize["consolidation_source_facts_max_tokens"] = o.ConsolidationSourceFactsMaxTokens.Get()
+	if !IsNil(o.ConsolidationSourceFactsMaxTokens) {
+		toSerialize["consolidation_source_facts_max_tokens"] = o.ConsolidationSourceFactsMaxTokens
 	}
-	if o.ConsolidationSourceFactsMaxTokensPerObservation.IsSet() {
-		toSerialize["consolidation_source_facts_max_tokens_per_observation"] = o.ConsolidationSourceFactsMaxTokensPerObservation.Get()
+	if !IsNil(o.ConsolidationSourceFactsMaxTokensPerObservation) {
+		toSerialize["consolidation_source_facts_max_tokens_per_observation"] = o.ConsolidationSourceFactsMaxTokensPerObservation
 	}
 	if !IsNil(o.DispositionSkepticism) {
 		toSerialize["disposition_skepticism"] = o.DispositionSkepticism

@@ -45,7 +45,7 @@ export type ApiKeyCreateResponse = {
     /**
      * Description
      */
-    description?: string | null;
+    description?: string;
 };
 
 /**
@@ -65,7 +65,7 @@ export type ApiKeyResponse = {
     /**
      * Description
      */
-    description?: string | null;
+    description?: string;
 };
 
 /**
@@ -109,7 +109,7 @@ export type CreateApiKeyRequest = {
     /**
      * Description
      */
-    description?: string | null;
+    description?: string;
 };
 
 /**
@@ -181,7 +181,7 @@ export type CreateSaKeyRequest = {
     /**
      * Description
      */
-    description?: string | null;
+    description?: string;
 };
 
 /**
@@ -205,7 +205,121 @@ export type CreateServiceAccountRequest = {
     /**
      * Scoping Policy Id
      */
-    scoping_policy_id?: string | null;
+    scoping_policy_id?: string;
+};
+
+/**
+ * CreateTemplateRequest
+ *
+ * Request to create a custom template.
+ */
+export type CreateTemplateRequest = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Scope
+     */
+    scope: string;
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Author
+     */
+    author?: string;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    /**
+     * Min Hindclaw Version
+     */
+    min_hindclaw_version: string;
+    /**
+     * Min Hindsight Version
+     */
+    min_hindsight_version?: string;
+    /**
+     * Retain Mission
+     */
+    retain_mission: string;
+    /**
+     * Reflect Mission
+     */
+    reflect_mission: string;
+    /**
+     * Observations Mission
+     */
+    observations_mission?: string;
+    /**
+     * Retain Extraction Mode
+     */
+    retain_extraction_mode?: string;
+    /**
+     * Retain Custom Instructions
+     */
+    retain_custom_instructions?: string;
+    /**
+     * Retain Chunk Size
+     */
+    retain_chunk_size?: number;
+    /**
+     * Retain Default Strategy
+     */
+    retain_default_strategy?: string;
+    /**
+     * Retain Strategies
+     */
+    retain_strategies?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Entity Labels
+     */
+    entity_labels?: Array<EntityLabel>;
+    /**
+     * Entities Allow Free Form
+     */
+    entities_allow_free_form?: boolean;
+    /**
+     * Enable Observations
+     */
+    enable_observations?: boolean;
+    /**
+     * Consolidation Llm Batch Size
+     */
+    consolidation_llm_batch_size?: number;
+    /**
+     * Consolidation Source Facts Max Tokens
+     */
+    consolidation_source_facts_max_tokens?: number;
+    /**
+     * Consolidation Source Facts Max Tokens Per Observation
+     */
+    consolidation_source_facts_max_tokens_per_observation?: number;
+    /**
+     * Disposition Skepticism
+     */
+    disposition_skepticism?: number;
+    /**
+     * Disposition Literalism
+     */
+    disposition_literalism?: number;
+    /**
+     * Disposition Empathy
+     */
+    disposition_empathy?: number;
+    /**
+     * Directive Seeds
+     */
+    directive_seeds?: Array<DirectiveSeed>;
+    /**
+     * Mental Model Seeds
+     */
+    mental_model_seeds?: Array<MentalModelSeed>;
 };
 
 /**
@@ -223,11 +337,91 @@ export type CreateUserRequest = {
     /**
      * Email
      */
-    email?: string | null;
+    email?: string;
     /**
      * Is Active
      */
     is_active?: boolean;
+};
+
+/**
+ * DirectiveSeed
+ *
+ * A directive to create when bootstrapping a bank from a template.
+ */
+export type DirectiveSeed = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Content
+     */
+    content: string;
+    /**
+     * Priority
+     */
+    priority?: number;
+    /**
+     * Is Active
+     */
+    is_active?: boolean;
+};
+
+/**
+ * EntityLabel
+ *
+ * An entity label definition for structured classification.
+ *
+ * Hindsight supports three label types:
+ * - "value": single enum value from the values list
+ * - "multi-values": multiple enum values from the values list
+ * - "text": free-form text (no values list needed)
+ *
+ * The ``tag`` field controls whether facts with this label also get tagged
+ * (enabling tag-based filtering in recall/reflect).
+ */
+export type EntityLabel = {
+    /**
+     * Key
+     */
+    key: string;
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Type
+     */
+    type?: string;
+    /**
+     * Optional
+     */
+    optional?: boolean;
+    /**
+     * Tag
+     */
+    tag?: boolean;
+    /**
+     * Values
+     */
+    values?: Array<EntityLabelValue>;
+};
+
+/**
+ * EntityLabelValue
+ *
+ * A valid value for a value or multi-values entity label.
+ */
+export type EntityLabelValue = {
+    /**
+     * Value
+     */
+    value: string;
+    /**
+     * Description
+     */
+    description?: string;
 };
 
 /**
@@ -282,6 +476,22 @@ export type HttpValidationError = {
      * Detail
      */
     detail?: Array<ValidationError>;
+};
+
+/**
+ * MentalModelSeed
+ *
+ * A mental model to create when bootstrapping a bank from a template.
+ */
+export type MentalModelSeed = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Source Query
+     */
+    source_query: string;
 };
 
 /**
@@ -351,7 +561,7 @@ export type SaKeyCreateResponse = {
     /**
      * Description
      */
-    description: string | null;
+    description: string;
 };
 
 /**
@@ -371,7 +581,7 @@ export type SaKeyResponse = {
     /**
      * Description
      */
-    description: string | null;
+    description: string;
 };
 
 /**
@@ -399,7 +609,219 @@ export type ServiceAccountResponse = {
     /**
      * Scoping Policy Id
      */
-    scoping_policy_id: string | null;
+    scoping_policy_id: string;
+};
+
+/**
+ * TemplateResponse
+ *
+ * Full template details.
+ */
+export type TemplateResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Scope
+     */
+    scope: string;
+    /**
+     * Owner
+     */
+    owner: string;
+    /**
+     * Source Name
+     */
+    source_name: string;
+    /**
+     * Schema Version
+     */
+    schema_version: number;
+    /**
+     * Min Hindclaw Version
+     */
+    min_hindclaw_version: string;
+    /**
+     * Min Hindsight Version
+     */
+    min_hindsight_version: string;
+    /**
+     * Version
+     */
+    version: string;
+    /**
+     * Source Url
+     */
+    source_url: string;
+    /**
+     * Source Revision
+     */
+    source_revision: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Author
+     */
+    author: string;
+    /**
+     * Tags
+     */
+    tags: Array<string>;
+    /**
+     * Retain Mission
+     */
+    retain_mission: string;
+    /**
+     * Reflect Mission
+     */
+    reflect_mission: string;
+    /**
+     * Observations Mission
+     */
+    observations_mission: string;
+    /**
+     * Retain Extraction Mode
+     */
+    retain_extraction_mode: string;
+    /**
+     * Retain Custom Instructions
+     */
+    retain_custom_instructions: string;
+    /**
+     * Retain Chunk Size
+     */
+    retain_chunk_size: number;
+    /**
+     * Retain Default Strategy
+     */
+    retain_default_strategy: string;
+    /**
+     * Retain Strategies
+     */
+    retain_strategies: {
+        [key: string]: unknown;
+    };
+    /**
+     * Entity Labels
+     */
+    entity_labels: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Entities Allow Free Form
+     */
+    entities_allow_free_form: boolean;
+    /**
+     * Enable Observations
+     */
+    enable_observations: boolean;
+    /**
+     * Consolidation Llm Batch Size
+     */
+    consolidation_llm_batch_size: number;
+    /**
+     * Consolidation Source Facts Max Tokens
+     */
+    consolidation_source_facts_max_tokens: number;
+    /**
+     * Consolidation Source Facts Max Tokens Per Observation
+     */
+    consolidation_source_facts_max_tokens_per_observation: number;
+    /**
+     * Disposition Skepticism
+     */
+    disposition_skepticism: number;
+    /**
+     * Disposition Literalism
+     */
+    disposition_literalism: number;
+    /**
+     * Disposition Empathy
+     */
+    disposition_empathy: number;
+    /**
+     * Directive Seeds
+     */
+    directive_seeds: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Mental Model Seeds
+     */
+    mental_model_seeds: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * TemplateSummaryResponse
+ *
+ * Summary of a template for list endpoints.
+ */
+export type TemplateSummaryResponse = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Scope
+     */
+    scope: string;
+    /**
+     * Source Name
+     */
+    source_name: string;
+    /**
+     * Version
+     */
+    version: string;
+    /**
+     * Description
+     */
+    description: string;
+    /**
+     * Author
+     */
+    author: string;
+    /**
+     * Tags
+     */
+    tags: Array<string>;
+    /**
+     * Retain Extraction Mode
+     */
+    retain_extraction_mode: string;
+    /**
+     * Disposition Skepticism
+     */
+    disposition_skepticism: number;
+    /**
+     * Disposition Literalism
+     */
+    disposition_literalism: number;
+    /**
+     * Disposition Empathy
+     */
+    disposition_empathy: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
 };
 
 /**
@@ -409,7 +831,7 @@ export type UpdateGroupRequest = {
     /**
      * Display Name
      */
-    display_name?: string | null;
+    display_name?: string;
 };
 
 /**
@@ -421,13 +843,13 @@ export type UpdatePolicyRequest = {
     /**
      * Display Name
      */
-    display_name?: string | null;
+    display_name?: string;
     /**
      * Document
      */
     document?: {
         [key: string]: unknown;
-    } | null;
+    };
 };
 
 /**
@@ -439,15 +861,125 @@ export type UpdateServiceAccountRequest = {
     /**
      * Display Name
      */
-    display_name?: string | null;
+    display_name?: string;
     /**
      * Scoping Policy Id
      */
-    scoping_policy_id?: string | null;
+    scoping_policy_id?: string;
     /**
      * Is Active
      */
-    is_active?: boolean | null;
+    is_active?: boolean;
+};
+
+/**
+ * UpdateTemplateRequest
+ *
+ * Request to update an existing template. All fields optional.
+ *
+ * Note: cross-field validation (e.g. custom mode requires custom instructions)
+ * cannot be fully checked here because this is a partial update. The endpoint
+ * must merge with the existing record and validate the final state.
+ */
+export type UpdateTemplateRequest = {
+    /**
+     * Description
+     */
+    description?: string;
+    /**
+     * Author
+     */
+    author?: string;
+    /**
+     * Tags
+     */
+    tags?: Array<string>;
+    /**
+     * Min Hindclaw Version
+     */
+    min_hindclaw_version?: string;
+    /**
+     * Min Hindsight Version
+     */
+    min_hindsight_version?: string;
+    /**
+     * Retain Mission
+     */
+    retain_mission?: string;
+    /**
+     * Reflect Mission
+     */
+    reflect_mission?: string;
+    /**
+     * Observations Mission
+     */
+    observations_mission?: string;
+    /**
+     * Retain Extraction Mode
+     */
+    retain_extraction_mode?: string;
+    /**
+     * Retain Custom Instructions
+     */
+    retain_custom_instructions?: string;
+    /**
+     * Retain Chunk Size
+     */
+    retain_chunk_size?: number;
+    /**
+     * Retain Default Strategy
+     */
+    retain_default_strategy?: string;
+    /**
+     * Retain Strategies
+     */
+    retain_strategies?: {
+        [key: string]: unknown;
+    };
+    /**
+     * Entity Labels
+     */
+    entity_labels?: Array<EntityLabel>;
+    /**
+     * Entities Allow Free Form
+     */
+    entities_allow_free_form?: boolean;
+    /**
+     * Enable Observations
+     */
+    enable_observations?: boolean;
+    /**
+     * Consolidation Llm Batch Size
+     */
+    consolidation_llm_batch_size?: number;
+    /**
+     * Consolidation Source Facts Max Tokens
+     */
+    consolidation_source_facts_max_tokens?: number;
+    /**
+     * Consolidation Source Facts Max Tokens Per Observation
+     */
+    consolidation_source_facts_max_tokens_per_observation?: number;
+    /**
+     * Disposition Skepticism
+     */
+    disposition_skepticism?: number;
+    /**
+     * Disposition Literalism
+     */
+    disposition_literalism?: number;
+    /**
+     * Disposition Empathy
+     */
+    disposition_empathy?: number;
+    /**
+     * Directive Seeds
+     */
+    directive_seeds?: Array<DirectiveSeed>;
+    /**
+     * Mental Model Seeds
+     */
+    mental_model_seeds?: Array<MentalModelSeed>;
 };
 
 /**
@@ -457,15 +989,15 @@ export type UpdateUserRequest = {
     /**
      * Display Name
      */
-    display_name?: string | null;
+    display_name?: string;
     /**
      * Email
      */
-    email?: string | null;
+    email?: string;
     /**
      * Is Active
      */
-    is_active?: boolean | null;
+    is_active?: boolean;
 };
 
 /**
@@ -499,7 +1031,7 @@ export type UserResponse = {
     /**
      * Email
      */
-    email?: string | null;
+    email?: string;
     /**
      * Is Active
      */
@@ -532,6 +1064,10 @@ export type ValidationError = {
     ctx?: {
         [key: string]: unknown;
     };
+    /**
+     * URL
+     */
+    url?: string;
 };
 
 export type ListUsersData = {
@@ -1682,3 +2218,162 @@ export type DebugResolveResponses = {
      */
     200: unknown;
 };
+
+export type ListTemplatesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Scope
+         */
+        scope?: string | null;
+    };
+    url: '/ext/hindclaw/templates';
+};
+
+export type ListTemplatesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListTemplatesError = ListTemplatesErrors[keyof ListTemplatesErrors];
+
+export type ListTemplatesResponses = {
+    /**
+     * Response List Templates
+     *
+     * Successful Response
+     */
+    200: Array<TemplateSummaryResponse>;
+};
+
+export type ListTemplatesResponse = ListTemplatesResponses[keyof ListTemplatesResponses];
+
+export type CreateTemplateData = {
+    body: CreateTemplateRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/templates';
+};
+
+export type CreateTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateTemplateError = CreateTemplateErrors[keyof CreateTemplateErrors];
+
+export type CreateTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    201: TemplateResponse;
+};
+
+export type CreateTemplateResponse = CreateTemplateResponses[keyof CreateTemplateResponses];
+
+export type DeleteTemplateData = {
+    body?: never;
+    path: {
+        /**
+         * Scope
+         */
+        scope: string;
+        /**
+         * Name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/templates/{scope}/{name}';
+};
+
+export type DeleteTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteTemplateError = DeleteTemplateErrors[keyof DeleteTemplateErrors];
+
+export type DeleteTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteTemplateResponse = DeleteTemplateResponses[keyof DeleteTemplateResponses];
+
+export type GetTemplateData = {
+    body?: never;
+    path: {
+        /**
+         * Scope
+         */
+        scope: string;
+        /**
+         * Name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/templates/{scope}/{name}';
+};
+
+export type GetTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetTemplateError = GetTemplateErrors[keyof GetTemplateErrors];
+
+export type GetTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: TemplateResponse;
+};
+
+export type GetTemplateResponse = GetTemplateResponses[keyof GetTemplateResponses];
+
+export type UpdateTemplateData = {
+    body: UpdateTemplateRequest;
+    path: {
+        /**
+         * Scope
+         */
+        scope: string;
+        /**
+         * Name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/templates/{scope}/{name}';
+};
+
+export type UpdateTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateTemplateError = UpdateTemplateErrors[keyof UpdateTemplateErrors];
+
+export type UpdateTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: TemplateResponse;
+};
+
+export type UpdateTemplateResponse = UpdateTemplateResponses[keyof UpdateTemplateResponses];
