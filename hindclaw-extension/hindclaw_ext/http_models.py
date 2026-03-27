@@ -443,3 +443,68 @@ class BankCreationResponse(BaseModel):
     directives: list[DirectiveSeedResult]
     mental_models: list[MentalModelSeedResult]
     errors: list[str]
+
+
+# --- Template Source Models ---
+
+
+class CreateSourceRequest(BaseModel):
+    """Request to register a marketplace source."""
+
+    url: str = Field(min_length=1, description="Marketplace repository URL")
+    alias: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=128,
+        description="Override auto-derived source name",
+    )
+    auth_token: str | None = Field(
+        default=None,
+        description="Auth token for private repositories",
+    )
+
+    model_config = {"extra": "forbid"}
+
+
+class SourceResponse(BaseModel):
+    """Response for a registered marketplace source."""
+
+    name: str
+    url: str
+    has_auth: bool
+    created_at: str
+
+
+class MarketplaceTemplateEntry(BaseModel):
+    """A single template entry from a marketplace index."""
+
+    name: str
+    version: str
+    description: str = ""
+    author: str = ""
+    tags: list[str] = []
+
+
+class MarketplaceSearchResult(BaseModel):
+    """A template from marketplace search results with install status.
+
+    Install status reflects server-scope first, then the calling user's
+    personal scope. If installed in both, server version is reported.
+    """
+
+    source: str
+    name: str
+    version: str
+    description: str = ""
+    author: str = ""
+    tags: list[str] = []
+    installed: bool = False
+    installed_version: str | None = None
+    installed_scope: str | None = None
+
+
+class MarketplaceSearchResponse(BaseModel):
+    """Response for marketplace search."""
+
+    results: list[MarketplaceSearchResult]
+    total: int
