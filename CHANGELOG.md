@@ -16,10 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.1] - 2026-03-27
+## [0.2.2] - 2026-03-27
+
+### Changed
+- Vendor `hindsight_client_api` (Hindsight Python SDK) inside the package — upstream doesn't publish Python clients to PyPI, so we bundle them from the fork
+- Remove `[banks]` optional extra — the Hindsight client is now always included
+- Add vendored client runtime deps to core: `aiohttp-retry`, `python-dateutil`, `urllib3`, `typing-extensions`
+
+## [0.2.1] - 2026-03-27 [yanked]
 
 ### Fixed
-- Docker image installs `hindsight-client-api` from upstream source and `hindclaw-extension[banks]` to satisfy bank creation dependency
+- Attempted to move `hindsight-client-api` to core deps — broke PyPI installs since the package isn't published
 
 ### Added
 - **Template marketplace sources** — register trusted marketplace repos, browse and search templates across sources (`POST/GET/DELETE /admin/template-sources`, `GET /marketplace/search`)

@@ -1,12 +1,14 @@
 """Tests for bank creation from template endpoint."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from hindclaw_ext.bank_bootstrap import BankBootstrapResult
 from hindclaw_ext.http import HindclawHttp
+from hindclaw_ext.http_models import DirectiveSeedResult, MentalModelSeedResult
 from hindclaw_ext.models import TemplateRecord
 
 
@@ -137,34 +139,25 @@ class TestCreateBankFromTemplate:
     def test_successful_creation(self, client):
         template = _make_template()
 
-        mock_bank_profile = MagicMock()
-        mock_bank_profile.bank_id = "agent-alpha"
-        mock_config_response = MagicMock()
-        mock_directive_response = MagicMock()
-        mock_directive_response.id = "dir-001"
-        mock_mm_response = MagicMock()
-        mock_mm_response.mental_model_id = "mm-001"
-        mock_mm_response.operation_id = "op-001"
+        bootstrap_result = BankBootstrapResult(
+            bank_created=True,
+            config_applied=True,
+            directives=[
+                DirectiveSeedResult(name="No PII Storage", created=True, directive_id="dir-001"),
+            ],
+            mental_models=[
+                MentalModelSeedResult(
+                    name="Python Best Practices", created=True,
+                    mental_model_id="mm-001", operation_id="op-001",
+                ),
+            ],
+            errors=[],
+        )
 
         with (
             patch("hindclaw_ext.http.db.get_template", new_callable=AsyncMock, return_value=template),
-            patch("hindclaw_ext.http.get_banks_api") as mock_banks_factory,
-            patch("hindclaw_ext.http.get_directives_api") as mock_dir_factory,
-            patch("hindclaw_ext.http.get_mental_models_api") as mock_mm_factory,
+            patch("hindclaw_ext.http.bootstrap_bank_from_template", new_callable=AsyncMock, return_value=bootstrap_result) as mock_bootstrap,
         ):
-            mock_banks_api = AsyncMock()
-            mock_banks_api.create_or_update_bank.return_value = mock_bank_profile
-            mock_banks_api.update_bank_config.return_value = mock_config_response
-            mock_banks_factory.return_value = mock_banks_api
-
-            mock_dir_api = AsyncMock()
-            mock_dir_api.create_directive.return_value = mock_directive_response
-            mock_dir_factory.return_value = mock_dir_api
-
-            mock_mm_api = AsyncMock()
-            mock_mm_api.create_mental_model.return_value = mock_mm_response
-            mock_mm_factory.return_value = mock_mm_api
-
             resp = client.post(
                 "/ext/hindclaw/banks",
                 json={
@@ -187,17 +180,20 @@ class TestCreateBankFromTemplate:
         assert body["mental_models"][0]["operation_id"] == "op-001"
         assert body["errors"] == []
 
+        # Verify bootstrap was called with the right arguments
+        mock_bootstrap.assert_called_once()
+        call_kwargs = mock_bootstrap.call_args.kwargs
+        assert call_kwargs["bank_id"] == "agent-alpha"
+        assert call_kwargs["requesting_user_id"] == "test-admin"
+        assert call_kwargs["bank_name"] is None
+
     def test_bank_creation_failure(self, client):
         template = _make_template()
 
         with (
             patch("hindclaw_ext.http.db.get_template", new_callable=AsyncMock, return_value=template),
-            patch("hindclaw_ext.http.get_banks_api") as mock_banks_factory,
+            patch("hindclaw_ext.http.bootstrap_bank_from_template", new_callable=AsyncMock, side_effect=Exception("DB connection failed")),
         ):
-            mock_banks_api = AsyncMock()
-            mock_banks_api.create_or_update_bank.side_effect = Exception("Connection refused")
-            mock_banks_factory.return_value = mock_banks_api
-
             resp = client.post(
                 "/ext/hindclaw/banks",
                 json={
@@ -213,32 +209,25 @@ class TestCreateBankFromTemplate:
     def test_config_failure_partial_success(self, client):
         template = _make_template()
 
-        mock_bank_profile = MagicMock()
-        mock_directive_response = MagicMock()
-        mock_directive_response.id = "dir-001"
-        mock_mm_response = MagicMock()
-        mock_mm_response.mental_model_id = "mm-001"
-        mock_mm_response.operation_id = "op-001"
+        bootstrap_result = BankBootstrapResult(
+            bank_created=True,
+            config_applied=False,
+            directives=[
+                DirectiveSeedResult(name="No PII Storage", created=True, directive_id="dir-001"),
+            ],
+            mental_models=[
+                MentalModelSeedResult(
+                    name="Python Best Practices", created=True,
+                    mental_model_id="mm-001", operation_id="op-001",
+                ),
+            ],
+            errors=["Config update failed: Config API error"],
+        )
 
         with (
             patch("hindclaw_ext.http.db.get_template", new_callable=AsyncMock, return_value=template),
-            patch("hindclaw_ext.http.get_banks_api") as mock_banks_factory,
-            patch("hindclaw_ext.http.get_directives_api") as mock_dir_factory,
-            patch("hindclaw_ext.http.get_mental_models_api") as mock_mm_factory,
+            patch("hindclaw_ext.http.bootstrap_bank_from_template", new_callable=AsyncMock, return_value=bootstrap_result),
         ):
-            mock_banks_api = AsyncMock()
-            mock_banks_api.create_or_update_bank.return_value = mock_bank_profile
-            mock_banks_api.update_bank_config.side_effect = Exception("Config API error")
-            mock_banks_factory.return_value = mock_banks_api
-
-            mock_dir_api = AsyncMock()
-            mock_dir_api.create_directive.return_value = mock_directive_response
-            mock_dir_factory.return_value = mock_dir_api
-
-            mock_mm_api = AsyncMock()
-            mock_mm_api.create_mental_model.return_value = mock_mm_response
-            mock_mm_factory.return_value = mock_mm_api
-
             resp = client.post(
                 "/ext/hindclaw/banks",
                 json={
@@ -260,31 +249,25 @@ class TestCreateBankFromTemplate:
     def test_directive_seed_failure(self, client):
         template = _make_template()
 
-        mock_bank_profile = MagicMock()
-        mock_config_response = MagicMock()
-        mock_mm_response = MagicMock()
-        mock_mm_response.mental_model_id = "mm-001"
-        mock_mm_response.operation_id = "op-001"
+        bootstrap_result = BankBootstrapResult(
+            bank_created=True,
+            config_applied=True,
+            directives=[
+                DirectiveSeedResult(name="No PII Storage", created=False, error="Directive API error"),
+            ],
+            mental_models=[
+                MentalModelSeedResult(
+                    name="Python Best Practices", created=True,
+                    mental_model_id="mm-001", operation_id="op-001",
+                ),
+            ],
+            errors=["Directive 'No PII Storage' failed: Directive API error"],
+        )
 
         with (
             patch("hindclaw_ext.http.db.get_template", new_callable=AsyncMock, return_value=template),
-            patch("hindclaw_ext.http.get_banks_api") as mock_banks_factory,
-            patch("hindclaw_ext.http.get_directives_api") as mock_dir_factory,
-            patch("hindclaw_ext.http.get_mental_models_api") as mock_mm_factory,
+            patch("hindclaw_ext.http.bootstrap_bank_from_template", new_callable=AsyncMock, return_value=bootstrap_result),
         ):
-            mock_banks_api = AsyncMock()
-            mock_banks_api.create_or_update_bank.return_value = mock_bank_profile
-            mock_banks_api.update_bank_config.return_value = mock_config_response
-            mock_banks_factory.return_value = mock_banks_api
-
-            mock_dir_api = AsyncMock()
-            mock_dir_api.create_directive.side_effect = Exception("Directive API error")
-            mock_dir_factory.return_value = mock_dir_api
-
-            mock_mm_api = AsyncMock()
-            mock_mm_api.create_mental_model.return_value = mock_mm_response
-            mock_mm_factory.return_value = mock_mm_api
-
             resp = client.post(
                 "/ext/hindclaw/banks",
                 json={
@@ -308,22 +291,18 @@ class TestCreateBankFromTemplate:
     def test_with_custom_name(self, client):
         template = _make_template(directive_seeds=[], mental_model_seeds=[])
 
-        mock_bank_profile = MagicMock()
-        mock_config_response = MagicMock()
+        bootstrap_result = BankBootstrapResult(
+            bank_created=True,
+            config_applied=True,
+            directives=[],
+            mental_models=[],
+            errors=[],
+        )
 
         with (
             patch("hindclaw_ext.http.db.get_template", new_callable=AsyncMock, return_value=template),
-            patch("hindclaw_ext.http.get_banks_api") as mock_banks_factory,
-            patch("hindclaw_ext.http.get_directives_api") as mock_dir_factory,
-            patch("hindclaw_ext.http.get_mental_models_api") as mock_mm_factory,
+            patch("hindclaw_ext.http.bootstrap_bank_from_template", new_callable=AsyncMock, return_value=bootstrap_result) as mock_bootstrap,
         ):
-            mock_banks_api = AsyncMock()
-            mock_banks_api.create_or_update_bank.return_value = mock_bank_profile
-            mock_banks_api.update_bank_config.return_value = mock_config_response
-            mock_banks_factory.return_value = mock_banks_api
-            mock_dir_factory.return_value = AsyncMock()
-            mock_mm_factory.return_value = AsyncMock()
-
             resp = client.post(
                 "/ext/hindclaw/banks",
                 json={
@@ -335,29 +314,24 @@ class TestCreateBankFromTemplate:
             )
 
         assert resp.status_code == 201
-        call_args = mock_banks_api.create_or_update_bank.call_args
-        create_req = call_args.kwargs.get("create_bank_request") or call_args[1].get("create_bank_request") or call_args[0][1]
-        assert create_req.name == "Alpha Agent"
+        call_kwargs = mock_bootstrap.call_args.kwargs
+        assert call_kwargs["bank_name"] == "Alpha Agent"
 
     def test_custom_template_no_source(self, client):
         template = _make_template(source_name=None, directive_seeds=[], mental_model_seeds=[])
 
-        mock_bank_profile = MagicMock()
-        mock_config_response = MagicMock()
+        bootstrap_result = BankBootstrapResult(
+            bank_created=True,
+            config_applied=True,
+            directives=[],
+            mental_models=[],
+            errors=[],
+        )
 
         with (
             patch("hindclaw_ext.http.db.get_template", new_callable=AsyncMock, return_value=template),
-            patch("hindclaw_ext.http.get_banks_api") as mock_banks_factory,
-            patch("hindclaw_ext.http.get_directives_api") as mock_dir_factory,
-            patch("hindclaw_ext.http.get_mental_models_api") as mock_mm_factory,
+            patch("hindclaw_ext.http.bootstrap_bank_from_template", new_callable=AsyncMock, return_value=bootstrap_result),
         ):
-            mock_banks_api = AsyncMock()
-            mock_banks_api.create_or_update_bank.return_value = mock_bank_profile
-            mock_banks_api.update_bank_config.return_value = mock_config_response
-            mock_banks_factory.return_value = mock_banks_api
-            mock_dir_factory.return_value = AsyncMock()
-            mock_mm_factory.return_value = AsyncMock()
-
             resp = client.post(
                 "/ext/hindclaw/banks",
                 json={

@@ -41,12 +41,8 @@ RUN uv sync
 # FlashRank reranker (~50MB, no torch dependency)
 RUN uv pip install "flashrank>=0.2.0"
 
-# Hindsight Python client (generated SDK, not on PyPI — install from upstream source)
-COPY hindsight-clients/python /tmp/hindsight-client
-RUN uv pip install /tmp/hindsight-client && rm -rf /tmp/hindsight-client
-
-# Hindclaw server-side access control extensions
-RUN uv pip install "hindclaw-extension[banks]==0.2.1"
+# Hindclaw server-side access control extensions (includes vendored Hindsight Python client)
+RUN uv pip install "hindclaw-extension==0.2.2"
 
 # Copy source and install package
 COPY hindsight-api-slim/hindsight_api ./hindsight_api

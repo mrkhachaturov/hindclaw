@@ -18,7 +18,7 @@ from hindsight_api.extensions import AuthenticationError, HttpExtension
 
 from hindclaw_ext import db, marketplace
 from hindclaw_ext.auth import decode_jwt
-from hindclaw_ext.hindsight_client import get_banks_api, get_directives_api, get_mental_models_api
+from hindclaw_ext.bank_bootstrap import bootstrap_bank_from_template
 from hindclaw_ext.marketplace import derive_source_name
 from hindclaw_ext.version import is_version_compatible
 from hindclaw_ext.policy_engine import AccessResult, apply_sa_scoping, evaluate_access, intersect_sa_policy
@@ -196,12 +196,13 @@ class HindclawHttp(HttpExtension):
         """Return FastAPI router with all hindclaw management endpoints.
 
         Args:
-            memory: MemoryEngine instance (not used directly — we use our own
-                DB pool from ``db.get_pool()`` for consistency).
+            memory: MemoryEngine instance passed to bootstrap_bank_from_template
+                for in-process bank creation.
 
         Returns:
             APIRouter mounted at ``/ext/hindclaw/`` by the Hindsight server.
         """
+        _memory = memory
         router = APIRouter(prefix="/hindclaw")
 
         # --- Users ---
@@ -794,186 +795,42 @@ class HindclawHttp(HttpExtension):
             request: CreateBankFromTemplateRequest,
             principal=Depends(_require_iam("bank:create")),
         ):
-            """Create a Hindsight bank from an installed template.
-
-            Resolves the template from the database, then calls the Hindsight API
-            to create the bank, apply configuration, seed directives, and seed
-            mental models. Returns a structured response with the status of each
-            step. If the initial bank creation fails, returns 502 immediately. If
-            subsequent steps fail, returns 201 with partial success and errors.
-
-            Args:
-                request: Bank creation payload with bank_id and template reference.
-                principal: Authenticated principal from IAM.
-
-            Returns:
-                BankCreationResponse with status of each step.
-
-            Raises:
-                HTTPException: 422 if template reference is invalid, 404 if
-                    template not installed, 502 if bank creation fails.
-            """
-            from hindsight_client_api.models.create_bank_request import CreateBankRequest
-            from hindsight_client_api.models.bank_config_update import BankConfigUpdate
-            from hindsight_client_api.models.create_directive_request import CreateDirectiveRequest
-            from hindsight_client_api.models.create_mental_model_request import CreateMentalModelRequest
-
-            # 1. Parse template reference
+            """Create a bank from an installed template."""
             try:
                 ref = parse_template_ref(request.template)
             except ValueError as e:
                 raise HTTPException(status_code=422, detail=str(e))
-
-            # 2. Look up template in database
             owner = principal["user_id"] if ref.scope == "personal" else None
             template = await db.get_template(
                 ref.name, ref.scope, source_name=ref.source, owner=owner,
             )
             if template is None:
-                source_hint = f"{ref.source}/" if ref.source else ""
                 raise HTTPException(
                     status_code=404,
-                    detail=(
-                        f"Template not installed: {request.template}. "
-                        f"Run 'hindclaw template install {source_hint}{ref.name}' first."
-                    ),
+                    detail=f"Template not installed. Install with: "
+                    f"hindclaw template install {ref.source}/{ref.name}" if ref.source
+                    else f"Template '{ref.name}' not found in {ref.scope} scope",
                 )
 
-            errors: list[str] = []
-
-            # 3. Create bank via Hindsight API
-            bank_name = request.name or f"{template.id}"
-            create_req = CreateBankRequest(
-                name=bank_name,
-                mission=template.retain_mission,
-                reflect_mission=template.reflect_mission,
-                retain_mission=template.retain_mission,
-                retain_extraction_mode=template.retain_extraction_mode,
-                retain_custom_instructions=template.retain_custom_instructions,
-                retain_chunk_size=template.retain_chunk_size,
-                enable_observations=template.enable_observations,
-                observations_mission=template.observations_mission,
-                disposition_skepticism=template.disposition_skepticism,
-                disposition_literalism=template.disposition_literalism,
-                disposition_empathy=template.disposition_empathy,
-            )
-
-            banks_api = get_banks_api()
             try:
-                await banks_api.create_or_update_bank(
+                result = await bootstrap_bank_from_template(
+                    memory=_memory,
                     bank_id=request.bank_id,
-                    create_bank_request=create_req,
+                    template=template,
+                    requesting_user_id=principal["user_id"],
+                    bank_name=request.name,
                 )
-                bank_created = True
             except Exception as e:
-                logger.error("Bank creation failed for %s: %s", request.bank_id, e)
-                raise HTTPException(
-                    status_code=502,
-                    detail=f"Bank creation failed: {e}",
-                )
-
-            # 4. Apply config via Hindsight API
-            config_updates: dict = {}
-
-            # Entity labels: template stores flat list, Hindsight expects {"attributes": [...]}
-            if template.entity_labels:
-                config_updates["entity_labels"] = {"attributes": template.entity_labels}
-
-            # entities_allow_free_form is always set (bool, not nullable)
-            config_updates["entities_allow_free_form"] = template.entities_allow_free_form
-
-            if template.retain_default_strategy:
-                config_updates["retain_default_strategy"] = template.retain_default_strategy
-
-            if template.retain_strategies:
-                config_updates["retain_strategies"] = template.retain_strategies
-
-            if template.consolidation_llm_batch_size is not None:
-                config_updates["consolidation_llm_batch_size"] = template.consolidation_llm_batch_size
-
-            if template.consolidation_source_facts_max_tokens is not None:
-                config_updates["consolidation_source_facts_max_tokens"] = template.consolidation_source_facts_max_tokens
-
-            if template.consolidation_source_facts_max_tokens_per_observation is not None:
-                config_updates["consolidation_source_facts_max_tokens_per_observation"] = template.consolidation_source_facts_max_tokens_per_observation
-
-            config_applied = True
-            if config_updates:
-                try:
-                    await banks_api.update_bank_config(
-                        bank_id=request.bank_id,
-                        bank_config_update=BankConfigUpdate(updates=config_updates),
-                    )
-                except Exception as e:
-                    logger.error("Config update failed for %s: %s", request.bank_id, e)
-                    errors.append(f"Config update failed: {e}")
-                    config_applied = False
-
-            # 5. Create directives from seeds
-            directive_results: list[DirectiveSeedResult] = []
-            if template.directive_seeds:
-                directives_api = get_directives_api()
-                for seed in template.directive_seeds:
-                    try:
-                        dir_resp = await directives_api.create_directive(
-                            bank_id=request.bank_id,
-                            create_directive_request=CreateDirectiveRequest(
-                                name=seed.get("name", ""),
-                                content=seed.get("content", ""),
-                                priority=seed.get("priority", 0),
-                                is_active=seed.get("is_active", True),
-                            ),
-                        )
-                        directive_results.append(DirectiveSeedResult(
-                            name=seed.get("name", ""),
-                            created=True,
-                            directive_id=dir_resp.id,
-                        ))
-                    except Exception as e:
-                        logger.error("Directive creation failed for %s/%s: %s", request.bank_id, seed.get("name"), e)
-                        errors.append(f"Directive '{seed.get('name')}' failed: {e}")
-                        directive_results.append(DirectiveSeedResult(
-                            name=seed.get("name", ""),
-                            created=False,
-                            error=str(e),
-                        ))
-
-            # 6. Create mental models from seeds
-            mm_results: list[MentalModelSeedResult] = []
-            if template.mental_model_seeds:
-                mm_api = get_mental_models_api()
-                for seed in template.mental_model_seeds:
-                    try:
-                        mm_resp = await mm_api.create_mental_model(
-                            bank_id=request.bank_id,
-                            create_mental_model_request=CreateMentalModelRequest(
-                                name=seed.get("name", ""),
-                                source_query=seed.get("source_query", ""),
-                            ),
-                        )
-                        mm_results.append(MentalModelSeedResult(
-                            name=seed.get("name", ""),
-                            created=True,
-                            mental_model_id=mm_resp.mental_model_id,
-                            operation_id=mm_resp.operation_id,
-                        ))
-                    except Exception as e:
-                        logger.error("Mental model creation failed for %s/%s: %s", request.bank_id, seed.get("name"), e)
-                        errors.append(f"Mental model '{seed.get('name')}' failed: {e}")
-                        mm_results.append(MentalModelSeedResult(
-                            name=seed.get("name", ""),
-                            created=False,
-                            error=str(e),
-                        ))
+                raise HTTPException(status_code=502, detail=f"Bank creation failed: {e}")
 
             return BankCreationResponse(
                 bank_id=request.bank_id,
                 template=request.template,
-                bank_created=bank_created,
-                config_applied=config_applied,
-                directives=directive_results,
-                mental_models=mm_results,
-                errors=errors,
+                bank_created=result.bank_created,
+                config_applied=result.config_applied,
+                directives=result.directives,
+                mental_models=result.mental_models,
+                errors=result.errors,
             )
 
         # --- Template Source Admin ---
