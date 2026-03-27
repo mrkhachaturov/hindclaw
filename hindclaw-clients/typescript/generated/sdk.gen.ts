@@ -551,24 +551,7 @@ export const updateTemplate = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Create Bank From Template
  *
- * Create a Hindsight bank from an installed template.
- *
- * Resolves the template from the database, then calls the Hindsight API
- * to create the bank, apply configuration, seed directives, and seed
- * mental models. Returns a structured response with the status of each
- * step. If the initial bank creation fails, returns 502 immediately. If
- * subsequent steps fail, returns 201 with partial success and errors.
- *
- * Args:
- * request: Bank creation payload with bank_id and template reference.
- * principal: Authenticated principal from IAM.
- *
- * Returns:
- * BankCreationResponse with status of each step.
- *
- * Raises:
- * HTTPException: 422 if template reference is invalid, 404 if
- * template not installed, 502 if bank creation fails.
+ * Create a bank from an installed template.
  */
 export const createBankFromTemplate = <ThrowOnError extends boolean = false>(options: Options<CreateBankFromTemplateData, ThrowOnError>) => (options.client ?? client).post<CreateBankFromTemplateResponses, CreateBankFromTemplateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

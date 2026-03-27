@@ -2034,7 +2034,7 @@
     "/ext/hindclaw/banks": {
       "post": {
         "summary": "Create Bank From Template",
-        "description": "Create a Hindsight bank from an installed template.\n\nResolves the template from the database, then calls the Hindsight API\nto create the bank, apply configuration, seed directives, and seed\nmental models. Returns a structured response with the status of each\nstep. If the initial bank creation fails, returns 502 immediately. If\nsubsequent steps fail, returns 201 with partial success and errors.\n\nArgs:\n    request: Bank creation payload with bank_id and template reference.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    BankCreationResponse with status of each step.\n\nRaises:\n    HTTPException: 422 if template reference is invalid, 404 if\n        template not installed, 502 if bank creation fails.",
+        "description": "Create a bank from an installed template.",
         "operationId": "create_bank_from_template",
         "requestBody": {
           "content": {
