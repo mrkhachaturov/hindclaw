@@ -19,8 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.1] - 2026-03-27
 
 ### Fixed
-- Move `hindsight-client-api` from optional `[banks]` extra to core dependency — required at import time since bank creation from template (0.2.0) imports it unconditionally
-- Remove empty `[banks]` optional dependency group
+- Docker image installs `hindsight-client-api` from upstream source and `hindclaw-extension[banks]` to satisfy bank creation dependency
 
 ### Added
 - **Template marketplace sources** — register trusted marketplace repos, browse and search templates across sources (`POST/GET/DELETE /admin/template-sources`, `GET /marketplace/search`)
