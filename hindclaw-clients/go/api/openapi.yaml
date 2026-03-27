@@ -1513,6 +1513,77 @@ paths:
       security:
       - HTTPBearer: []
       summary: Marketplace Search
+  /ext/hindclaw/templates/install:
+    post:
+      description: Install a template from a registered marketplace source.
+      operationId: install_template
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallTemplateRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Install Template
+  /ext/hindclaw/templates/{scope}/{source}/{name}/update:
+    post:
+      description: Update an installed template from its marketplace source.
+      operationId: update_template_from_marketplace
+      parameters:
+      - explode: false
+        in: path
+        name: scope
+        required: true
+        schema:
+          title: Scope
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: source
+        required: true
+        schema:
+          title: Source
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          title: Name
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateUpdateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Update Template From Marketplace
 components:
   schemas:
     AddChannelRequest:
@@ -2223,6 +2294,33 @@ components:
             $ref: '#/components/schemas/ValidationError'
           type: array
       title: HTTPValidationError
+    InstallTemplateRequest:
+      additionalProperties: true
+      description: Request to install a template from a marketplace source.
+      example:
+        scope: scope
+        name: name
+        source: source
+      properties:
+        source:
+          description: Marketplace source name
+          minLength: 1
+          title: Source
+          type: string
+        name:
+          description: Template name within the source
+          minLength: 1
+          title: Name
+          type: string
+        scope:
+          description: '''server'' or ''personal'''
+          title: Scope
+          type: string
+      required:
+      - name
+      - scope
+      - source
+      title: InstallTemplateRequest
     MarketplaceSearchResponse:
       description: Response for marketplace search.
       example:
@@ -2805,6 +2903,75 @@ components:
       - updated_at
       - version
       title: TemplateSummaryResponse
+    TemplateUpdateResponse:
+      description: Response for template update from marketplace.
+      example:
+        template:
+          source_revision: source_revision
+          disposition_literalism: 7
+          min_hindsight_version: min_hindsight_version
+          reflect_mission: reflect_mission
+          observations_mission: observations_mission
+          retain_strategies:
+            key: ""
+          description: description
+          created_at: created_at
+          disposition_empathy: 9
+          consolidation_source_facts_max_tokens: 5
+          source_url: source_url
+          schema_version: 0
+          disposition_skepticism: 2
+          consolidation_llm_batch_size: 1
+          directive_seeds:
+          - key: ""
+          - key: ""
+          updated_at: updated_at
+          mental_model_seeds:
+          - key: ""
+          - key: ""
+          scope: scope
+          id: id
+          source_name: source_name
+          enable_observations: true
+          owner: owner
+          retain_extraction_mode: retain_extraction_mode
+          retain_mission: retain_mission
+          retain_chunk_size: 6
+          author: author
+          retain_default_strategy: retain_default_strategy
+          min_hindclaw_version: min_hindclaw_version
+          entity_labels:
+          - key: ""
+          - key: ""
+          version: version
+          entities_allow_free_form: true
+          tags:
+          - tags
+          - tags
+          retain_custom_instructions: retain_custom_instructions
+          consolidation_source_facts_max_tokens_per_observation: 5
+        previous_version: previous_version
+        new_version: new_version
+        updated: true
+      properties:
+        updated:
+          title: Updated
+          type: boolean
+        previous_version:
+          title: Previous Version
+          type: string
+          nullable: true
+        new_version:
+          title: New Version
+          type: string
+          nullable: true
+        template:
+          $ref: '#/components/schemas/TemplateResponse'
+      required:
+      - new_version
+      - previous_version
+      - updated
+      title: TemplateUpdateResponse
     UpdateGroupRequest:
       example:
         display_name: display_name

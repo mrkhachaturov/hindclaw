@@ -585,6 +585,32 @@ export type HttpValidationError = {
 };
 
 /**
+ * InstallTemplateRequest
+ *
+ * Request to install a template from a marketplace source.
+ */
+export type InstallTemplateRequest = {
+    /**
+     * Source
+     *
+     * Marketplace source name
+     */
+    source: string;
+    /**
+     * Name
+     *
+     * Template name within the source
+     */
+    name: string;
+    /**
+     * Scope
+     *
+     * 'server' or 'personal'
+     */
+    scope: string;
+};
+
+/**
  * MarketplaceSearchResponse
  *
  * Response for marketplace search.
@@ -1043,6 +1069,27 @@ export type TemplateSummaryResponse = {
      * Updated At
      */
     updated_at: string;
+};
+
+/**
+ * TemplateUpdateResponse
+ *
+ * Response for template update from marketplace.
+ */
+export type TemplateUpdateResponse = {
+    /**
+     * Updated
+     */
+    updated: boolean;
+    /**
+     * Previous Version
+     */
+    previous_version: string;
+    /**
+     * New Version
+     */
+    new_version: string;
+    template?: TemplateResponse;
 };
 
 /**
@@ -2740,3 +2787,66 @@ export type MarketplaceSearchResponses = {
 };
 
 export type MarketplaceSearchResponse2 = MarketplaceSearchResponses[keyof MarketplaceSearchResponses];
+
+export type InstallTemplateData = {
+    body: InstallTemplateRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/templates/install';
+};
+
+export type InstallTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type InstallTemplateError = InstallTemplateErrors[keyof InstallTemplateErrors];
+
+export type InstallTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    201: TemplateResponse;
+};
+
+export type InstallTemplateResponse = InstallTemplateResponses[keyof InstallTemplateResponses];
+
+export type UpdateTemplateFromMarketplaceData = {
+    body?: never;
+    path: {
+        /**
+         * Scope
+         */
+        scope: string;
+        /**
+         * Source
+         */
+        source: string;
+        /**
+         * Name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/templates/{scope}/{source}/{name}/update';
+};
+
+export type UpdateTemplateFromMarketplaceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateTemplateFromMarketplaceError = UpdateTemplateFromMarketplaceErrors[keyof UpdateTemplateFromMarketplaceErrors];
+
+export type UpdateTemplateFromMarketplaceResponses = {
+    /**
+     * Successful Response
+     */
+    200: TemplateUpdateResponse;
+};
+
+export type UpdateTemplateFromMarketplaceResponse = UpdateTemplateFromMarketplaceResponses[keyof UpdateTemplateFromMarketplaceResponses];

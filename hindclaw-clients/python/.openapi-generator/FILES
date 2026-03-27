@@ -31,6 +31,7 @@ hindclaw_client_api/models/group_member_response.py
 hindclaw_client_api/models/group_membership_confirmation.py
 hindclaw_client_api/models/group_summary_response.py
 hindclaw_client_api/models/http_validation_error.py
+hindclaw_client_api/models/install_template_request.py
 hindclaw_client_api/models/marketplace_search_response.py
 hindclaw_client_api/models/marketplace_search_result.py
 hindclaw_client_api/models/mental_model_seed.py
@@ -43,6 +44,7 @@ hindclaw_client_api/models/service_account_response.py
 hindclaw_client_api/models/source_response.py
 hindclaw_client_api/models/template_response.py
 hindclaw_client_api/models/template_summary_response.py
+hindclaw_client_api/models/template_update_response.py
 hindclaw_client_api/models/update_group_request.py
 hindclaw_client_api/models/update_policy_request.py
 hindclaw_client_api/models/update_service_account_request.py

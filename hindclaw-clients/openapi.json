@@ -2272,6 +2272,113 @@
           }
         }
       }
+    },
+    "/ext/hindclaw/templates/install": {
+      "post": {
+        "summary": "Install Template",
+        "description": "Install a template from a registered marketplace source.",
+        "operationId": "install_template",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/templates/{scope}/{source}/{name}/update": {
+      "post": {
+        "summary": "Update Template From Marketplace",
+        "description": "Update an installed template from its marketplace source.",
+        "operationId": "update_template_from_marketplace",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scope"
+            }
+          },
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3002,6 +3109,36 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "InstallTemplateRequest": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source",
+            "description": "Marketplace source name"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name",
+            "description": "Template name within the source"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "description": "'server' or 'personal'"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "name",
+          "scope"
+        ],
+        "title": "InstallTemplateRequest",
+        "description": "Request to install a template from a marketplace source."
+      },
       "MarketplaceSearchResponse": {
         "properties": {
           "results": {
@@ -3593,6 +3730,36 @@
         ],
         "title": "TemplateSummaryResponse",
         "description": "Summary of a template for list endpoints."
+      },
+      "TemplateUpdateResponse": {
+        "properties": {
+          "updated": {
+            "type": "boolean",
+            "title": "Updated"
+          },
+          "previous_version": {
+            "title": "Previous Version",
+            "type": "string",
+            "nullable": true
+          },
+          "new_version": {
+            "title": "New Version",
+            "type": "string",
+            "nullable": true
+          },
+          "template": {
+            "$ref": "#/components/schemas/TemplateResponse",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "updated",
+          "previous_version",
+          "new_version"
+        ],
+        "title": "TemplateUpdateResponse",
+        "description": "Response for template update from marketplace."
       },
       "UpdateGroupRequest": {
         "properties": {

@@ -104,6 +104,7 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**get_service_account**](hindclaw_client_api/docs/DefaultApi.md#get_service_account) | **GET** /ext/hindclaw/service-accounts/{sa_id} | Get Service Account Endpoint
 *DefaultApi* | [**get_template**](hindclaw_client_api/docs/DefaultApi.md#get_template) | **GET** /ext/hindclaw/templates/{scope}/{name} | Get Template Endpoint
 *DefaultApi* | [**get_user**](hindclaw_client_api/docs/DefaultApi.md#get_user) | **GET** /ext/hindclaw/users/{user_id} | Get User
+*DefaultApi* | [**install_template**](hindclaw_client_api/docs/DefaultApi.md#install_template) | **POST** /ext/hindclaw/templates/install | Install Template
 *DefaultApi* | [**list_api_keys**](hindclaw_client_api/docs/DefaultApi.md#list_api_keys) | **GET** /ext/hindclaw/users/{user_id}/api-keys | List Api Keys
 *DefaultApi* | [**list_group_members**](hindclaw_client_api/docs/DefaultApi.md#list_group_members) | **GET** /ext/hindclaw/groups/{group_id}/members | List Group Members
 *DefaultApi* | [**list_groups**](hindclaw_client_api/docs/DefaultApi.md#list_groups) | **GET** /ext/hindclaw/groups | List Groups
@@ -122,6 +123,7 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**update_policy**](hindclaw_client_api/docs/DefaultApi.md#update_policy) | **PUT** /ext/hindclaw/policies/{policy_id} | Update Policy Endpoint
 *DefaultApi* | [**update_service_account**](hindclaw_client_api/docs/DefaultApi.md#update_service_account) | **PUT** /ext/hindclaw/service-accounts/{sa_id} | Update Service Account Endpoint
 *DefaultApi* | [**update_template**](hindclaw_client_api/docs/DefaultApi.md#update_template) | **PUT** /ext/hindclaw/templates/{scope}/{name} | Update Template Endpoint
+*DefaultApi* | [**update_template_from_marketplace**](hindclaw_client_api/docs/DefaultApi.md#update_template_from_marketplace) | **POST** /ext/hindclaw/templates/{scope}/{source}/{name}/update | Update Template From Marketplace
 *DefaultApi* | [**update_user**](hindclaw_client_api/docs/DefaultApi.md#update_user) | **PUT** /ext/hindclaw/users/{user_id} | Update User
 *DefaultApi* | [**upsert_bank_policy**](hindclaw_client_api/docs/DefaultApi.md#upsert_bank_policy) | **PUT** /ext/hindclaw/banks/{bank_id}/policy | Upsert Bank Policy Endpoint
 *DefaultApi* | [**upsert_policy_attachment**](hindclaw_client_api/docs/DefaultApi.md#upsert_policy_attachment) | **PUT** /ext/hindclaw/policy-attachments | Upsert Attachment
@@ -154,6 +156,7 @@ Class | Method | HTTP request | Description
  - [GroupMembershipConfirmation](hindclaw_client_api/docs/GroupMembershipConfirmation.md)
  - [GroupSummaryResponse](hindclaw_client_api/docs/GroupSummaryResponse.md)
  - [HTTPValidationError](hindclaw_client_api/docs/HTTPValidationError.md)
+ - [InstallTemplateRequest](hindclaw_client_api/docs/InstallTemplateRequest.md)
  - [MarketplaceSearchResponse](hindclaw_client_api/docs/MarketplaceSearchResponse.md)
  - [MarketplaceSearchResult](hindclaw_client_api/docs/MarketplaceSearchResult.md)
  - [MentalModelSeed](hindclaw_client_api/docs/MentalModelSeed.md)
@@ -166,6 +169,7 @@ Class | Method | HTTP request | Description
  - [SourceResponse](hindclaw_client_api/docs/SourceResponse.md)
  - [TemplateResponse](hindclaw_client_api/docs/TemplateResponse.md)
  - [TemplateSummaryResponse](hindclaw_client_api/docs/TemplateSummaryResponse.md)
+ - [TemplateUpdateResponse](hindclaw_client_api/docs/TemplateUpdateResponse.md)
  - [UpdateGroupRequest](hindclaw_client_api/docs/UpdateGroupRequest.md)
  - [UpdatePolicyRequest](hindclaw_client_api/docs/UpdatePolicyRequest.md)
  - [UpdateServiceAccountRequest](hindclaw_client_api/docs/UpdateServiceAccountRequest.md)
