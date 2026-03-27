@@ -12,9 +12,12 @@ from hindclaw_ext.marketplace import (
     _resolve_file_url,
     clear_cache,
     fetch_index,
+    fetch_template,
     search_marketplace,
+    validate_template,
 )
 from hindclaw_ext.models import TemplateSourceRecord
+from hindclaw_ext.template_models import MarketplaceTemplate
 
 
 # --- URL derivation tests ---
@@ -279,3 +282,175 @@ class TestSearchMarketplace:
         results = search_marketplace(index, source_name="astrateam")
         for r in results:
             assert r.source == "astrateam"
+
+
+# --- Template fetch and validation tests ---
+
+
+def _sample_template_json() -> dict:
+    """Return a valid marketplace template JSON."""
+    return {
+        "schema_version": 1,
+        "min_hindclaw_version": "0.2.0",
+        "min_hindsight_version": None,
+        "name": "backend-python",
+        "version": "2.1.0",
+        "description": "Backend patterns for Python projects",
+        "author": "community",
+        "tags": ["python", "backend"],
+        "retain_mission": "Extract backend patterns.",
+        "reflect_mission": "You are a backend engineer.",
+        "observations_mission": None,
+        "retain_extraction_mode": "verbose",
+        "retain_custom_instructions": None,
+        "retain_chunk_size": None,
+        "retain_default_strategy": None,
+        "retain_strategies": {},
+        "entity_labels": [],
+        "entities_allow_free_form": True,
+        "enable_observations": True,
+        "consolidation_llm_batch_size": None,
+        "consolidation_source_facts_max_tokens": None,
+        "consolidation_source_facts_max_tokens_per_observation": None,
+        "disposition_skepticism": 3,
+        "disposition_literalism": 3,
+        "disposition_empathy": 3,
+        "directive_seeds": [],
+        "mental_model_seeds": [],
+    }
+
+
+class TestFetchTemplate:
+    @pytest.fixture(autouse=True)
+    def _clear(self):
+        clear_cache()
+        yield
+        clear_cache()
+
+    @pytest.mark.asyncio
+    async def test_fetches_and_parses_template(self):
+        mock_response = AsyncMock()
+        mock_response.status = 200
+        mock_response.json = AsyncMock(return_value=_sample_template_json())
+
+        mock_session = AsyncMock()
+        mock_session.get = MagicMock(return_value=AsyncMock(
+            __aenter__=AsyncMock(return_value=mock_response),
+            __aexit__=AsyncMock(return_value=False),
+        ))
+
+        source = TemplateSourceRecord(
+            name="hindclaw",
+            url="https://github.com/hindclaw/community-templates",
+            auth_token=None,
+            created_at="2026-03-25T12:00:00+00:00",
+        )
+
+        result = await fetch_template(source, "backend-python", session=mock_session)
+        assert isinstance(result, MarketplaceTemplate)
+        assert result.name == "backend-python"
+        assert result.version == "2.1.0"
+
+    @pytest.mark.asyncio
+    async def test_returns_none_on_404(self):
+        mock_response = AsyncMock()
+        mock_response.status = 404
+        mock_response.text = AsyncMock(return_value="Not Found")
+
+        mock_session = AsyncMock()
+        mock_session.get = MagicMock(return_value=AsyncMock(
+            __aenter__=AsyncMock(return_value=mock_response),
+            __aexit__=AsyncMock(return_value=False),
+        ))
+
+        source = TemplateSourceRecord(
+            name="hindclaw",
+            url="https://github.com/hindclaw/community-templates",
+            auth_token=None,
+            created_at="2026-03-25T12:00:00+00:00",
+        )
+
+        result = await fetch_template(source, "nonexistent", session=mock_session)
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_returns_none_on_invalid_json(self):
+        mock_response = AsyncMock()
+        mock_response.status = 200
+        mock_response.json = AsyncMock(return_value={"name": "incomplete"})
+
+        mock_session = AsyncMock()
+        mock_session.get = MagicMock(return_value=AsyncMock(
+            __aenter__=AsyncMock(return_value=mock_response),
+            __aexit__=AsyncMock(return_value=False),
+        ))
+
+        source = TemplateSourceRecord(
+            name="hindclaw",
+            url="https://github.com/hindclaw/community-templates",
+            auth_token=None,
+            created_at="2026-03-25T12:00:00+00:00",
+        )
+
+        result = await fetch_template(source, "broken", session=mock_session)
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_sends_auth_header(self):
+        mock_response = AsyncMock()
+        mock_response.status = 200
+        mock_response.json = AsyncMock(return_value=_sample_template_json())
+
+        mock_session = AsyncMock()
+        mock_session.get = MagicMock(return_value=AsyncMock(
+            __aenter__=AsyncMock(return_value=mock_response),
+            __aexit__=AsyncMock(return_value=False),
+        ))
+
+        source = TemplateSourceRecord(
+            name="private",
+            url="https://github.com/astrateam/templates",
+            auth_token="ghp_secret",
+            created_at="2026-03-25T12:00:00+00:00",
+        )
+
+        await fetch_template(source, "backend-python", session=mock_session)
+        call_kwargs = mock_session.get.call_args[1]
+        assert call_kwargs["headers"]["Authorization"] == "Bearer ghp_secret"
+
+
+class TestValidateTemplate:
+    def test_valid_template_passes(self):
+        t = MarketplaceTemplate(**_sample_template_json())
+        errors = validate_template(t)
+        assert errors == []
+
+    def test_unsupported_schema_version(self):
+        t = MarketplaceTemplate(**_sample_template_json())
+        t = t.model_copy(update={"schema_version": 99})
+        errors = validate_template(t)
+        assert any("schema_version" in e for e in errors)
+
+    def test_hindclaw_version_too_new(self):
+        t = MarketplaceTemplate(**_sample_template_json())
+        t = t.model_copy(update={"min_hindclaw_version": "99.0.0"})
+        errors = validate_template(t)
+        assert any("hindclaw" in e.lower() for e in errors)
+
+    def test_hindclaw_version_compatible(self):
+        t = MarketplaceTemplate(**_sample_template_json())
+        t = t.model_copy(update={"min_hindclaw_version": "0.1.0"})
+        errors = validate_template(t)
+        assert errors == []
+
+    def test_hindsight_version_too_new(self):
+        t = MarketplaceTemplate(**_sample_template_json())
+        t = t.model_copy(update={"min_hindsight_version": "99.0.0"})
+        errors = validate_template(t)
+        assert any("hindsight" in e.lower() for e in errors)
+
+    def test_hindsight_version_none_skips_check(self):
+        t = MarketplaceTemplate(**_sample_template_json())
+        t = t.model_copy(update={"min_hindsight_version": None})
+        errors = validate_template(t)
+        assert not any("hindsight" in e.lower() for e in errors)

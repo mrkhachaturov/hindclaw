@@ -6,14 +6,19 @@ Handles remote operations for template marketplace sources:
 - Full-text search across templates by name, description, and tags
 """
 
+import importlib.metadata
 import logging
 import os
 import time
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
+from pydantic import ValidationError as PydanticValidationError
+
 from hindclaw_ext.http_models import MarketplaceSearchResult
 from hindclaw_ext.models import TemplateSourceRecord
+from hindclaw_ext.template_models import MarketplaceTemplate
+from hindclaw_ext.version import HINDCLAW_VERSION, SUPPORTED_SCHEMA_VERSIONS, is_version_compatible
 
 logger = logging.getLogger(__name__)
 
@@ -204,3 +209,115 @@ def search_marketplace(
         ))
 
     return results
+
+
+def _get_hindsight_version() -> str | None:
+    """Read the running Hindsight server version from package metadata.
+
+    Returns:
+        Version string (e.g., "0.4.20"), or None if not installed
+        (e.g., in test environments without hindsight-api).
+    """
+    try:
+        return importlib.metadata.version("hindsight-api")
+    except importlib.metadata.PackageNotFoundError:
+        try:
+            return importlib.metadata.version("hindsight-api-slim")
+        except importlib.metadata.PackageNotFoundError:
+            return None
+
+
+async def fetch_template(
+    source: TemplateSourceRecord,
+    name: str,
+    *,
+    session=None,
+) -> "MarketplaceTemplate | None":
+    """Fetch and validate an individual template from a marketplace source.
+
+    Downloads the template JSON file from the source, parses it into a
+    MarketplaceTemplate model, and returns the validated instance. Does
+    not check compatibility — call validate_template() separately.
+
+    Args:
+        source: The marketplace source to fetch from.
+        name: Template name (used to construct the file path).
+        session: Optional aiohttp.ClientSession (created if not provided).
+
+    Returns:
+        MarketplaceTemplate if fetch and parse succeed, None on failure.
+    """
+    url = _resolve_file_url(source.url, f"templates/{name}.json")
+    headers = {}
+    if source.auth_token:
+        headers["Authorization"] = f"Bearer {source.auth_token}"
+
+    owns_session = session is None
+    if owns_session:
+        import aiohttp
+        session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30))
+
+    try:
+        async with session.get(url, headers=headers) as resp:
+            if resp.status != 200:
+                text = await resp.text()
+                logger.warning(
+                    "Failed to fetch template '%s' from %s: HTTP %d — %s",
+                    name, source.name, resp.status, text[:200],
+                )
+                return None
+
+            data = await resp.json()
+            return MarketplaceTemplate(**data)
+    except PydanticValidationError as e:
+        logger.warning(
+            "Template '%s' from %s failed validation: %s",
+            name, source.name, str(e)[:500],
+        )
+        return None
+    except Exception:
+        logger.exception("Error fetching template '%s' from %s", name, source.name)
+        return None
+    finally:
+        if owns_session:
+            await session.close()
+
+
+def validate_template(template: "MarketplaceTemplate") -> list[str]:
+    """Validate a marketplace template for compatibility with this server.
+
+    Checks (fail closed — all must pass):
+    1. schema_version is in SUPPORTED_SCHEMA_VERSIONS
+    2. min_hindclaw_version <= HINDCLAW_VERSION
+    3. min_hindsight_version <= running Hindsight version (if specified)
+
+    Args:
+        template: The parsed marketplace template.
+
+    Returns:
+        List of error strings. Empty list means compatible.
+    """
+    errors = []
+    if template.schema_version not in SUPPORTED_SCHEMA_VERSIONS:
+        errors.append(
+            f"Unsupported schema_version {template.schema_version}. "
+            f"Supported: {sorted(SUPPORTED_SCHEMA_VERSIONS)}"
+        )
+    if not is_version_compatible(HINDCLAW_VERSION, template.min_hindclaw_version):
+        errors.append(
+            f"Requires hindclaw >= {template.min_hindclaw_version}, "
+            f"but this server runs {HINDCLAW_VERSION}"
+        )
+    if template.min_hindsight_version:
+        hs_version = _get_hindsight_version()
+        if hs_version is None:
+            errors.append(
+                f"Template requires hindsight >= {template.min_hindsight_version}, "
+                "but hindsight version could not be determined"
+            )
+        elif not is_version_compatible(hs_version, template.min_hindsight_version):
+            errors.append(
+                f"Requires hindsight >= {template.min_hindsight_version}, "
+                f"but this server runs {hs_version}"
+            )
+    return errors
