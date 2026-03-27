@@ -16,13 +16,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.3] - 2026-03-28
+## [0.2.4] - 2026-03-28
 
 ### Changed
-- Remove all database migrations (V2, V3, V4) — no production deployments exist, DB is recreated from scratch each deploy. DDL is the single source of truth.
+- **Bank bootstrap uses in-process engine** — replaced HTTP loopback with direct `MemoryEngine` calls using `RequestContext(internal=True)`, fixing auth wall on internal API calls
+- Validate marketplace JSON content type before parsing — accept `application/json`, `text/plain` (GitHub raw), `application/octet-stream`; reject unexpected types
+- Remove all database migrations (V2, V3, V4) — DDL is the single source of truth
+- Remove `hindsight_client.py` and vendored `hindsight_client_api` — no longer needed
+- Remove extra dependencies (`aiohttp-retry`, `python-dateutil`, `urllib3`, `typing-extensions`)
+
+## [0.2.3] - 2026-03-28 [yanked]
 
 ### Fixed
-- Fix asyncpg crash on startup caused by comment-only `_MIGRATION_V3` (asyncpg cannot execute SQL strings with no statements)
+- Attempted to fix migration V3 crash but still had broken migration infrastructure
+
+## [0.2.2] - 2026-03-28 [yanked]
+
+### Fixed
+- Attempted in-process bank bootstrap but shipped with broken migration V3
 
 ## [0.2.2] - 2026-03-28
 
