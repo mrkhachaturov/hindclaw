@@ -19,7 +19,7 @@ from hindsight_api.extensions import AuthenticationError, HttpExtension
 from hindclaw_ext import db, marketplace
 from hindclaw_ext.auth import decode_jwt
 from hindclaw_ext.hindsight_client import get_banks_api, get_directives_api, get_mental_models_api
-from hindclaw_ext.marketplace import _derive_source_name
+from hindclaw_ext.marketplace import derive_source_name
 from hindclaw_ext.policy_engine import AccessResult, apply_sa_scoping, evaluate_access, intersect_sa_policy
 from hindclaw_ext.template_ref import parse_template_ref
 from hindclaw_ext.http_models import (
@@ -986,7 +986,10 @@ class HindclawHttp(HttpExtension):
             _auth=Depends(_require_iam("template:source")),
         ):
             """Register a trusted marketplace source."""
-            name = request.alias or _derive_source_name(request.url)
+            try:
+                name = request.alias or derive_source_name(request.url)
+            except ValueError as e:
+                raise HTTPException(422, str(e))
             try:
                 rec = await db.create_template_source(
                     name=name,
@@ -1047,7 +1050,7 @@ class HindclawHttp(HttpExtension):
             q: str | None = Query(None, description="Search query"),
             source: str | None = Query(None, description="Filter by source name"),
             tag: str | None = Query(None, description="Filter by tag"),
-            _auth=Depends(_require_iam("template:list")),
+            principal=Depends(_require_iam("template:list")),
         ):
             """Search marketplace templates across configured sources."""
             sources = await db.list_template_sources()
@@ -1061,7 +1064,7 @@ class HindclawHttp(HttpExtension):
             # Only check server-scope templates (visible to all) and the
             # calling user's personal templates — never leak other users'
             # personal install state.
-            user_id = _auth.get("user_id")
+            user_id = principal.get("user_id")
             server_installed = await db.list_templates(scope="server")
             personal_installed = (
                 await db.list_templates(scope="personal", owner=user_id)

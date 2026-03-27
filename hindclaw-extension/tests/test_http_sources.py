@@ -129,6 +129,15 @@ class TestCreateSource:
         )
         assert resp.status_code == 422
 
+    def test_create_bare_host_url_rejected(self, client):
+        resp = client.post(
+            "/ext/hindclaw/admin/template-sources",
+            json={"url": "https://example.com/"},
+            headers=_AUTH_HEADER,
+        )
+        assert resp.status_code == 422
+        assert "cannot derive source name" in resp.json()["detail"].lower()
+
 
 class TestListSources:
     def test_list_empty(self, client):

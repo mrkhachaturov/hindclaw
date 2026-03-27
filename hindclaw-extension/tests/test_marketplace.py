@@ -8,7 +8,7 @@ import pytest
 
 from hindclaw_ext.marketplace import (
     MarketplaceIndex,
-    _derive_source_name,
+    derive_source_name,
     _resolve_file_url,
     clear_cache,
     fetch_index,
@@ -22,22 +22,30 @@ from hindclaw_ext.models import TemplateSourceRecord
 
 class TestDeriveSourceName:
     def test_github_org(self):
-        assert _derive_source_name("https://github.com/hindclaw/community-templates") == "hindclaw"
+        assert derive_source_name("https://github.com/hindclaw/community-templates") == "hindclaw"
 
     def test_github_user(self):
-        assert _derive_source_name("https://github.com/mrkhachaturov/templates") == "mrkhachaturov"
+        assert derive_source_name("https://github.com/mrkhachaturov/templates") == "mrkhachaturov"
 
     def test_gitlab(self):
-        assert _derive_source_name("https://gitlab.com/myorg/templates") == "myorg"
+        assert derive_source_name("https://gitlab.com/myorg/templates") == "myorg"
 
     def test_self_hosted(self):
-        assert _derive_source_name("https://git.internal.company.com/engineering/templates") == "engineering"
+        assert derive_source_name("https://git.internal.company.com/engineering/templates") == "engineering"
 
     def test_trailing_slash(self):
-        assert _derive_source_name("https://github.com/hindclaw/templates/") == "hindclaw"
+        assert derive_source_name("https://github.com/hindclaw/templates/") == "hindclaw"
 
     def test_dot_git_suffix(self):
-        assert _derive_source_name("https://github.com/hindclaw/templates.git") == "hindclaw"
+        assert derive_source_name("https://github.com/hindclaw/templates.git") == "hindclaw"
+
+    def test_bare_host_raises(self):
+        with pytest.raises(ValueError, match="Cannot derive source name"):
+            derive_source_name("https://example.com/")
+
+    def test_bare_host_no_path_raises(self):
+        with pytest.raises(ValueError, match="Cannot derive source name"):
+            derive_source_name("https://example.com")
 
 
 class TestResolveFileUrl:
@@ -237,42 +245,36 @@ class TestFetchIndex:
 
 
 class TestSearchMarketplace:
-    @pytest.mark.asyncio
-    async def test_search_by_query(self):
+    def test_search_by_query(self):
         index = MarketplaceIndex(templates=_sample_index()["templates"])
         results = search_marketplace(index, source_name="hindclaw", query="python")
         assert len(results) == 1
         assert results[0].name == "backend-python"
         assert results[0].source == "hindclaw"
 
-    @pytest.mark.asyncio
-    async def test_search_by_tag(self):
+    def test_search_by_tag(self):
         index = MarketplaceIndex(templates=_sample_index()["templates"])
         results = search_marketplace(index, source_name="hindclaw", tag="react")
         assert len(results) == 1
         assert results[0].name == "frontend-react"
 
-    @pytest.mark.asyncio
-    async def test_search_matches_description(self):
+    def test_search_matches_description(self):
         index = MarketplaceIndex(templates=_sample_index()["templates"])
         results = search_marketplace(index, source_name="hindclaw", query="frontend")
         assert len(results) == 1
         assert results[0].name == "frontend-react"
 
-    @pytest.mark.asyncio
-    async def test_search_no_match(self):
+    def test_search_no_match(self):
         index = MarketplaceIndex(templates=_sample_index()["templates"])
         results = search_marketplace(index, source_name="hindclaw", query="golang")
         assert len(results) == 0
 
-    @pytest.mark.asyncio
-    async def test_search_no_filters_returns_all(self):
+    def test_search_no_filters_returns_all(self):
         index = MarketplaceIndex(templates=_sample_index()["templates"])
         results = search_marketplace(index, source_name="hindclaw")
         assert len(results) == 2
 
-    @pytest.mark.asyncio
-    async def test_search_result_has_source(self):
+    def test_search_result_has_source(self):
         index = MarketplaceIndex(templates=_sample_index()["templates"])
         results = search_marketplace(index, source_name="astrateam")
         for r in results:

@@ -31,7 +31,7 @@ class MarketplaceIndex:
     templates: list[dict] = field(default_factory=list)
 
 
-def _derive_source_name(url: str) -> str:
+def derive_source_name(url: str) -> str:
     """Derive a source name from a git URL.
 
     Extracts the org/user segment from the URL path. For GitHub, GitLab,
@@ -42,15 +42,21 @@ def _derive_source_name(url: str) -> str:
 
     Returns:
         Derived source name (e.g., "hindclaw").
+
+    Raises:
+        ValueError: If no source name can be derived from the URL.
     """
     parsed = urlparse(url.rstrip("/"))
     path = parsed.path.rstrip("/")
     if path.endswith(".git"):
         path = path[:-4]
     segments = [s for s in path.split("/") if s]
-    if len(segments) >= 1:
-        return segments[0]
-    return path
+    if not segments:
+        raise ValueError(
+            f"Cannot derive source name from '{url}'. "
+            "Use the 'alias' field to specify a name explicitly."
+        )
+    return segments[0]
 
 
 def _resolve_file_url(base_url: str, file_path: str) -> str:
