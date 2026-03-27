@@ -113,7 +113,8 @@ class TestFetchIndex:
     async def test_fetches_and_parses_index(self):
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.json = AsyncMock(return_value=_sample_index())
+        mock_response.content_type = "application/json"
+        mock_response.text = AsyncMock(return_value=json.dumps(_sample_index()))
 
         mock_session = AsyncMock()
         mock_session.get = MagicMock(return_value=AsyncMock(
@@ -137,7 +138,8 @@ class TestFetchIndex:
     async def test_returns_cached_on_second_call(self):
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.json = AsyncMock(return_value=_sample_index())
+        mock_response.content_type = "application/json"
+        mock_response.text = AsyncMock(return_value=json.dumps(_sample_index()))
 
         mock_session = AsyncMock()
         mock_session.get = MagicMock(return_value=AsyncMock(
@@ -162,7 +164,8 @@ class TestFetchIndex:
     async def test_sends_auth_header(self):
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.json = AsyncMock(return_value=_sample_index())
+        mock_response.content_type = "application/json"
+        mock_response.text = AsyncMock(return_value=json.dumps(_sample_index()))
 
         mock_session = AsyncMock()
         mock_session.get = MagicMock(return_value=AsyncMock(
@@ -208,7 +211,8 @@ class TestFetchIndex:
         """If cache exists but is expired, return stale data on fetch failure."""
         mock_response_ok = AsyncMock()
         mock_response_ok.status = 200
-        mock_response_ok.json = AsyncMock(return_value=_sample_index())
+        mock_response_ok.content_type = "application/json"
+        mock_response_ok.text = AsyncMock(return_value=json.dumps(_sample_index()))
 
         mock_response_err = AsyncMock()
         mock_response_err.status = 500
@@ -331,7 +335,8 @@ class TestFetchTemplate:
     async def test_fetches_and_parses_template(self):
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.json = AsyncMock(return_value=_sample_template_json())
+        mock_response.content_type = "application/json"
+        mock_response.text = AsyncMock(return_value=json.dumps(_sample_template_json()))
 
         mock_session = AsyncMock()
         mock_session.get = MagicMock(return_value=AsyncMock(
@@ -377,7 +382,8 @@ class TestFetchTemplate:
     async def test_returns_none_on_invalid_json(self):
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.json = AsyncMock(return_value={"name": "incomplete"})
+        mock_response.content_type = "application/json"
+        mock_response.text = AsyncMock(return_value=json.dumps({"name": "incomplete"}))
 
         mock_session = AsyncMock()
         mock_session.get = MagicMock(return_value=AsyncMock(
@@ -399,7 +405,8 @@ class TestFetchTemplate:
     async def test_sends_auth_header(self):
         mock_response = AsyncMock()
         mock_response.status = 200
-        mock_response.json = AsyncMock(return_value=_sample_template_json())
+        mock_response.content_type = "application/json"
+        mock_response.text = AsyncMock(return_value=json.dumps(_sample_template_json()))
 
         mock_session = AsyncMock()
         mock_session.get = MagicMock(return_value=AsyncMock(

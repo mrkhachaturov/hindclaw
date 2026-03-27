@@ -7,10 +7,12 @@ Handles remote operations for template marketplace sources:
 """
 
 import importlib.metadata
+import json
 import logging
 import os
 import time
 from dataclasses import dataclass, field
+from typing import Any
 from urllib.parse import urlparse
 
 from pydantic import ValidationError as PydanticValidationError
@@ -96,6 +98,37 @@ def clear_cache() -> None:
     _index_cache.clear()
 
 
+# Content types accepted from marketplace sources. GitHub raw serves JSON
+# as text/plain; other hosts may use application/json or octet-stream.
+_ACCEPTED_JSON_TYPES = {"application/json", "text/plain", "application/octet-stream"}
+
+
+async def _parse_json_response(resp, *, context: str) -> dict[str, Any] | None:
+    """Parse a JSON response body after validating the content type.
+
+    Accepts application/json, text/plain (GitHub raw), and
+    application/octet-stream. Rejects other types (e.g., text/html from
+    error pages) with a warning instead of attempting to parse garbage.
+
+    Args:
+        resp: The aiohttp response object.
+        context: Description for log messages (e.g., "index from hindclaw").
+
+    Returns:
+        Parsed dict, or None if the content type is unexpected.
+    """
+    content_type = resp.content_type or ""
+    if content_type not in _ACCEPTED_JSON_TYPES:
+        text = await resp.text()
+        logger.warning(
+            "Unexpected content type '%s' for %s — expected JSON. Body: %s",
+            content_type, context, text[:200],
+        )
+        return None
+    text = await resp.text()
+    return json.loads(text)
+
+
 async def fetch_index(
     source: TemplateSourceRecord,
     *,
@@ -145,7 +178,12 @@ async def fetch_index(
                     return cached[0]
                 return None
 
-            data = await resp.json()
+            data = await _parse_json_response(resp, context=f"index from {source.name}")
+            if data is None:
+                if cached:
+                    logger.warning("Returning stale cache for %s", source.name)
+                    return cached[0]
+                return None
             index = MarketplaceIndex(templates=data.get("templates", []))
             _index_cache[source.name] = (index, now)
             return index
@@ -267,7 +305,11 @@ async def fetch_template(
                 )
                 return None
 
-            data = await resp.json()
+            data = await _parse_json_response(
+                resp, context=f"template '{name}' from {source.name}",
+            )
+            if data is None:
+                return None
             return MarketplaceTemplate(**data)
     except PydanticValidationError as e:
         logger.warning(
