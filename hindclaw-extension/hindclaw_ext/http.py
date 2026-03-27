@@ -16,9 +16,10 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from hindsight_api.extensions import AuthenticationError, HttpExtension
 
-from hindclaw_ext import db
+from hindclaw_ext import db, marketplace
 from hindclaw_ext.auth import decode_jwt
 from hindclaw_ext.hindsight_client import get_banks_api, get_directives_api, get_mental_models_api
+from hindclaw_ext.marketplace import _derive_source_name
 from hindclaw_ext.policy_engine import AccessResult, apply_sa_scoping, evaluate_access, intersect_sa_policy
 from hindclaw_ext.template_ref import parse_template_ref
 from hindclaw_ext.http_models import (
@@ -36,18 +37,21 @@ from hindclaw_ext.http_models import (
     CreatePolicyRequest,
     CreateSAKeyRequest,
     CreateServiceAccountRequest,
+    CreateSourceRequest,
     CreateTemplateRequest,
     CreateUserRequest,
     DirectiveSeedResult,
     GroupMemberResponse,
     GroupMembershipConfirmation,
     GroupSummaryResponse,
+    MarketplaceSearchResponse,
     MentalModelSeedResult,
     PolicyAttachmentResponse,
     PolicyResponse,
     SAKeyCreateResponse,
     SAKeyResponse,
     ServiceAccountResponse,
+    SourceResponse,
     TemplateSummaryResponse,
     TemplateResponse,
     UpdateGroupRequest,
@@ -967,6 +971,139 @@ class HindclawHttp(HttpExtension):
                 directives=directive_results,
                 mental_models=mm_results,
                 errors=errors,
+            )
+
+        # --- Template Source Admin ---
+
+        @router.post(
+            "/admin/template-sources",
+            response_model=SourceResponse,
+            status_code=201,
+            operation_id="create_template_source",
+        )
+        async def create_template_source(
+            request: CreateSourceRequest,
+            _auth=Depends(_require_iam("template:source")),
+        ):
+            """Register a trusted marketplace source."""
+            name = request.alias or _derive_source_name(request.url)
+            try:
+                rec = await db.create_template_source(
+                    name=name,
+                    url=request.url,
+                    auth_token=request.auth_token,
+                )
+            except asyncpg.UniqueViolationError:
+                raise HTTPException(409, f"Source '{name}' already exists")
+            return SourceResponse(
+                name=rec.name,
+                url=rec.url,
+                has_auth=rec.auth_token is not None,
+                created_at=str(rec.created_at),
+            )
+
+        @router.get(
+            "/admin/template-sources",
+            response_model=list[SourceResponse],
+            operation_id="list_template_sources",
+        )
+        async def list_template_sources(
+            _auth=Depends(_require_iam("template:source")),
+        ):
+            """List all configured marketplace sources."""
+            sources = await db.list_template_sources()
+            return [
+                SourceResponse(
+                    name=s.name,
+                    url=s.url,
+                    has_auth=s.auth_token is not None,
+                    created_at=str(s.created_at),
+                )
+                for s in sources
+            ]
+
+        @router.delete(
+            "/admin/template-sources/{name}",
+            status_code=204,
+            operation_id="delete_template_source",
+        )
+        async def delete_template_source(
+            name: str,
+            _auth=Depends(_require_iam("template:source")),
+        ):
+            """Remove a trusted marketplace source."""
+            deleted = await db.delete_template_source(name)
+            if not deleted:
+                raise HTTPException(404, f"Source '{name}' not found")
+
+        # --- Marketplace Search ---
+
+        @router.get(
+            "/marketplace/search",
+            response_model=MarketplaceSearchResponse,
+            operation_id="marketplace_search",
+        )
+        async def marketplace_search(
+            q: str | None = Query(None, description="Search query"),
+            source: str | None = Query(None, description="Filter by source name"),
+            tag: str | None = Query(None, description="Filter by tag"),
+            _auth=Depends(_require_iam("template:list")),
+        ):
+            """Search marketplace templates across configured sources."""
+            sources = await db.list_template_sources()
+            if source:
+                sources = [s for s in sources if s.name == source]
+
+            if not sources:
+                return MarketplaceSearchResponse(results=[], total=0)
+
+            # Fetch installed templates for "installed" flag.
+            # Only check server-scope templates (visible to all) and the
+            # calling user's personal templates — never leak other users'
+            # personal install state.
+            user_id = _auth.get("user_id")
+            server_installed = await db.list_templates(scope="server")
+            personal_installed = (
+                await db.list_templates(scope="personal", owner=user_id)
+                if user_id
+                else []
+            )
+            # Build installed map keyed by (source_name, id).
+            # Server-scope takes precedence over personal — if installed
+            # in both scopes, the server version is reported.
+            installed_map: dict[tuple[str, str], tuple[str | None, str]] = {}
+            for t in personal_installed:
+                if t.source_name:
+                    installed_map[(t.source_name, t.id)] = (t.version, "personal")
+            for t in server_installed:
+                if t.source_name:
+                    # Server overwrites personal — server takes precedence
+                    installed_map[(t.source_name, t.id)] = (t.version, "server")
+
+            all_results = []
+            for src in sources:
+                index = await marketplace.fetch_index(src)
+                if not index:
+                    continue
+                results = marketplace.search_marketplace(
+                    index,
+                    source_name=src.name,
+                    query=q,
+                    tag=tag,
+                )
+                # Mark installed status
+                for r in results:
+                    key = (r.source, r.name)
+                    if key in installed_map:
+                        version, scope = installed_map[key]
+                        r.installed = True
+                        r.installed_version = version
+                        r.installed_scope = scope
+                all_results.extend(results)
+
+            return MarketplaceSearchResponse(
+                results=all_results,
+                total=len(all_results),
             )
 
         return router
