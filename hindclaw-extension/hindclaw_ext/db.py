@@ -219,8 +219,7 @@ DELETE FROM hindclaw_groups WHERE id = '_default';
 
 _MIGRATION_V3 = """\
 -- V3: bank_templates table is created in DDL (IF NOT EXISTS).
--- This migration exists as a placeholder for future schema changes.
--- The DDL handles table creation idempotently.
+SELECT 1;
 """
 
 _MIGRATION_V4 = """\
