@@ -1771,6 +1771,265 @@
           }
         }
       }
+    },
+    "/ext/hindclaw/templates": {
+      "get": {
+        "summary": "List Templates",
+        "description": "List installed templates filtered by access.\n\nWhen scope is None, returns all server templates plus the caller's\npersonal templates. When scope is specified, returns only that scope.\n\nArgs:\n    scope: Optional scope filter ('server' or 'personal').\n    principal: Authenticated principal from IAM.\n\nReturns:\n    List of template summaries.",
+        "operationId": "list_templates",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scope"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateSummaryResponse"
+                  },
+                  "title": "Response List Templates"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Template",
+        "description": "Create a custom template (no marketplace source).\n\nArgs:\n    request: Template creation payload.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    The created template.\n\nRaises:\n    HTTPException: 409 if template already exists.",
+        "operationId": "create_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/templates/{scope}/{name}": {
+      "get": {
+        "summary": "Get Template Endpoint",
+        "description": "Get a custom template by scope and name.\n\nArgs:\n    scope: Template scope ('server' or 'personal').\n    name: Template name.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    Full template details.\n\nRaises:\n    HTTPException: 404 if template not found.",
+        "operationId": "get_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scope"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Template Endpoint",
+        "description": "Update a custom template.\n\nPerforms cross-field validation when extraction mode or custom\ninstructions are part of the update by merging with the existing\nrecord before applying.\n\nArgs:\n    scope: Template scope ('server' or 'personal').\n    name: Template name.\n    request: Partial update payload.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    The updated template.\n\nRaises:\n    HTTPException: 404 if template not found, 422 if cross-field\n        validation fails.",
+        "operationId": "update_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scope"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Template Endpoint",
+        "description": "Delete a custom template.\n\nArgs:\n    scope: Template scope ('server' or 'personal').\n    name: Template name.\n    principal: Authenticated principal from IAM.\n\nRaises:\n    HTTPException: 404 if template not found.",
+        "operationId": "delete_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scope"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2047,6 +2306,212 @@
         "title": "CreateServiceAccountRequest",
         "description": "Request to create a service account."
       },
+      "CreateTemplateRequest": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "author": {
+            "type": "string",
+            "title": "Author",
+            "default": ""
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "min_hindclaw_version": {
+            "type": "string",
+            "title": "Min Hindclaw Version"
+          },
+          "min_hindsight_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Hindsight Version"
+          },
+          "retain_mission": {
+            "type": "string",
+            "title": "Retain Mission"
+          },
+          "reflect_mission": {
+            "type": "string",
+            "title": "Reflect Mission"
+          },
+          "observations_mission": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observations Mission"
+          },
+          "retain_extraction_mode": {
+            "type": "string",
+            "title": "Retain Extraction Mode",
+            "default": "concise"
+          },
+          "retain_custom_instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Custom Instructions"
+          },
+          "retain_chunk_size": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Chunk Size"
+          },
+          "retain_default_strategy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Default Strategy"
+          },
+          "retain_strategies": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Retain Strategies"
+          },
+          "entity_labels": {
+            "items": {
+              "$ref": "#/components/schemas/EntityLabel"
+            },
+            "type": "array",
+            "title": "Entity Labels"
+          },
+          "entities_allow_free_form": {
+            "type": "boolean",
+            "title": "Entities Allow Free Form",
+            "default": true
+          },
+          "enable_observations": {
+            "type": "boolean",
+            "title": "Enable Observations",
+            "default": true
+          },
+          "consolidation_llm_batch_size": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consolidation Llm Batch Size"
+          },
+          "consolidation_source_facts_max_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consolidation Source Facts Max Tokens"
+          },
+          "consolidation_source_facts_max_tokens_per_observation": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consolidation Source Facts Max Tokens Per Observation"
+          },
+          "disposition_skepticism": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Disposition Skepticism",
+            "default": 3
+          },
+          "disposition_literalism": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Disposition Literalism",
+            "default": 3
+          },
+          "disposition_empathy": {
+            "type": "integer",
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Disposition Empathy",
+            "default": 3
+          },
+          "directive_seeds": {
+            "items": {
+              "$ref": "#/components/schemas/DirectiveSeed"
+            },
+            "type": "array",
+            "title": "Directive Seeds"
+          },
+          "mental_model_seeds": {
+            "items": {
+              "$ref": "#/components/schemas/MentalModelSeed"
+            },
+            "type": "array",
+            "title": "Mental Model Seeds"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "scope",
+          "min_hindclaw_version",
+          "retain_mission",
+          "reflect_mission"
+        ],
+        "title": "CreateTemplateRequest",
+        "description": "Request to create a custom template."
+      },
       "CreateUserRequest": {
         "properties": {
           "id": {
@@ -2080,6 +2545,95 @@
           "display_name"
         ],
         "title": "CreateUserRequest"
+      },
+      "DirectiveSeed": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "priority": {
+            "type": "integer",
+            "title": "Priority",
+            "default": 0
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "content"
+        ],
+        "title": "DirectiveSeed",
+        "description": "A directive to create when bootstrapping a bank from a template."
+      },
+      "EntityLabel": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "default": "value"
+          },
+          "optional": {
+            "type": "boolean",
+            "title": "Optional",
+            "default": true
+          },
+          "tag": {
+            "type": "boolean",
+            "title": "Tag",
+            "default": false
+          },
+          "values": {
+            "items": {
+              "$ref": "#/components/schemas/EntityLabelValue"
+            },
+            "type": "array",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "title": "EntityLabel",
+        "description": "An entity label definition for structured classification.\n\nHindsight supports three label types:\n- \"value\": single enum value from the values list\n- \"multi-values\": multiple enum values from the values list\n- \"text\": free-form text (no values list needed)\n\nThe ``tag`` field controls whether facts with this label also get tagged\n(enabling tag-based filtering in recall/reflect)."
+      },
+      "EntityLabelValue": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "title": "EntityLabelValue",
+        "description": "A valid value for a value or multi-values entity label."
       },
       "GroupMemberResponse": {
         "properties": {
@@ -2145,6 +2699,25 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "MentalModelSeed": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "source_query": {
+            "type": "string",
+            "title": "Source Query"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "source_query"
+        ],
+        "title": "MentalModelSeed",
+        "description": "A mental model to create when bootstrapping a bank from a template."
       },
       "PolicyAttachmentResponse": {
         "properties": {
@@ -2308,6 +2881,383 @@
         "title": "ServiceAccountResponse",
         "description": "Service account resource."
       },
+      "TemplateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "source_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Name"
+          },
+          "schema_version": {
+            "type": "integer",
+            "title": "Schema Version"
+          },
+          "min_hindclaw_version": {
+            "type": "string",
+            "title": "Min Hindclaw Version"
+          },
+          "min_hindsight_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Hindsight Version"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "source_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Revision"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "author": {
+            "type": "string",
+            "title": "Author"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "retain_mission": {
+            "type": "string",
+            "title": "Retain Mission"
+          },
+          "reflect_mission": {
+            "type": "string",
+            "title": "Reflect Mission"
+          },
+          "observations_mission": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observations Mission"
+          },
+          "retain_extraction_mode": {
+            "type": "string",
+            "title": "Retain Extraction Mode"
+          },
+          "retain_custom_instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Custom Instructions"
+          },
+          "retain_chunk_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Chunk Size"
+          },
+          "retain_default_strategy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Default Strategy"
+          },
+          "retain_strategies": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Retain Strategies"
+          },
+          "entity_labels": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Entity Labels"
+          },
+          "entities_allow_free_form": {
+            "type": "boolean",
+            "title": "Entities Allow Free Form"
+          },
+          "enable_observations": {
+            "type": "boolean",
+            "title": "Enable Observations"
+          },
+          "consolidation_llm_batch_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consolidation Llm Batch Size"
+          },
+          "consolidation_source_facts_max_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consolidation Source Facts Max Tokens"
+          },
+          "consolidation_source_facts_max_tokens_per_observation": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consolidation Source Facts Max Tokens Per Observation"
+          },
+          "disposition_skepticism": {
+            "type": "integer",
+            "title": "Disposition Skepticism"
+          },
+          "disposition_literalism": {
+            "type": "integer",
+            "title": "Disposition Literalism"
+          },
+          "disposition_empathy": {
+            "type": "integer",
+            "title": "Disposition Empathy"
+          },
+          "directive_seeds": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Directive Seeds"
+          },
+          "mental_model_seeds": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Mental Model Seeds"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "scope",
+          "owner",
+          "source_name",
+          "schema_version",
+          "min_hindclaw_version",
+          "min_hindsight_version",
+          "version",
+          "source_url",
+          "source_revision",
+          "description",
+          "author",
+          "tags",
+          "retain_mission",
+          "reflect_mission",
+          "observations_mission",
+          "retain_extraction_mode",
+          "retain_custom_instructions",
+          "retain_chunk_size",
+          "retain_default_strategy",
+          "retain_strategies",
+          "entity_labels",
+          "entities_allow_free_form",
+          "enable_observations",
+          "consolidation_llm_batch_size",
+          "consolidation_source_facts_max_tokens",
+          "consolidation_source_facts_max_tokens_per_observation",
+          "disposition_skepticism",
+          "disposition_literalism",
+          "disposition_empathy",
+          "directive_seeds",
+          "mental_model_seeds",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TemplateResponse",
+        "description": "Full template details."
+      },
+      "TemplateSummaryResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "source_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Name"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "author": {
+            "type": "string",
+            "title": "Author"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "retain_extraction_mode": {
+            "type": "string",
+            "title": "Retain Extraction Mode"
+          },
+          "disposition_skepticism": {
+            "type": "integer",
+            "title": "Disposition Skepticism"
+          },
+          "disposition_literalism": {
+            "type": "integer",
+            "title": "Disposition Literalism"
+          },
+          "disposition_empathy": {
+            "type": "integer",
+            "title": "Disposition Empathy"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "scope",
+          "source_name",
+          "version",
+          "description",
+          "author",
+          "tags",
+          "retain_extraction_mode",
+          "disposition_skepticism",
+          "disposition_literalism",
+          "disposition_empathy",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TemplateSummaryResponse",
+        "description": "Summary of a template for list endpoints."
+      },
       "UpdateGroupRequest": {
         "properties": {
           "display_name": {
@@ -2394,6 +3344,299 @@
         "type": "object",
         "title": "UpdateServiceAccountRequest",
         "description": "Request to update a service account."
+      },
+      "UpdateTemplateRequest": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "min_hindclaw_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Hindclaw Version"
+          },
+          "min_hindsight_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Hindsight Version"
+          },
+          "retain_mission": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Mission"
+          },
+          "reflect_mission": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reflect Mission"
+          },
+          "observations_mission": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observations Mission"
+          },
+          "retain_extraction_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Extraction Mode"
+          },
+          "retain_custom_instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Custom Instructions"
+          },
+          "retain_chunk_size": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Chunk Size"
+          },
+          "retain_default_strategy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Default Strategy"
+          },
+          "retain_strategies": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Strategies"
+          },
+          "entity_labels": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/EntityLabel"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Labels"
+          },
+          "entities_allow_free_form": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entities Allow Free Form"
+          },
+          "enable_observations": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable Observations"
+          },
+          "consolidation_llm_batch_size": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consolidation Llm Batch Size"
+          },
+          "consolidation_source_facts_max_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consolidation Source Facts Max Tokens"
+          },
+          "consolidation_source_facts_max_tokens_per_observation": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consolidation Source Facts Max Tokens Per Observation"
+          },
+          "disposition_skepticism": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disposition Skepticism"
+          },
+          "disposition_literalism": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disposition Literalism"
+          },
+          "disposition_empathy": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disposition Empathy"
+          },
+          "directive_seeds": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/DirectiveSeed"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Directive Seeds"
+          },
+          "mental_model_seeds": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MentalModelSeed"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mental Model Seeds"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UpdateTemplateRequest",
+        "description": "Request to update an existing template. All fields optional.\n\nNote: cross-field validation (e.g. custom mode requires custom instructions)\ncannot be fully checked here because this is a partial update. The endpoint\nmust merge with the existing record and validate the final state."
       },
       "UpdateUserRequest": {
         "properties": {

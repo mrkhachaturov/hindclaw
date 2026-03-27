@@ -135,3 +135,37 @@ def test_bank_policy_public_access_default():
     assert doc.public_access.default is not None
     assert doc.public_access.default.actions == ["bank:recall"]
     assert doc.public_access.default.recall_budget == "low"
+
+
+class TestTemplateActions:
+    """Template actions should be accepted in policy statements."""
+
+    def test_template_actions_valid_in_policy(self):
+        from hindclaw_ext.policy_models import PolicyDocument, PolicyStatement
+
+        doc = PolicyDocument(
+            version="2026-03-24",
+            statements=[
+                PolicyStatement(
+                    effect="allow",
+                    actions=["template:list", "template:create", "template:install", "template:manage"],
+                    banks=["*"],
+                )
+            ],
+        )
+        assert len(doc.statements[0].actions) == 4
+
+    def test_template_wildcard_in_policy(self):
+        from hindclaw_ext.policy_models import PolicyDocument, PolicyStatement
+
+        doc = PolicyDocument(
+            version="2026-03-24",
+            statements=[
+                PolicyStatement(
+                    effect="allow",
+                    actions=["template:*"],
+                    banks=["*"],
+                )
+            ],
+        )
+        assert doc.statements[0].actions == ["template:*"]

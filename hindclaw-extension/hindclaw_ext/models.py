@@ -82,3 +82,42 @@ class AttachedPolicyRecord(BaseModel):
     principal_type: str
     principal_id: str
     priority: int = 0
+
+
+class TemplateRecord(BaseModel):
+    """A bank template stored in the database."""
+
+    id: str
+    scope: str
+    owner: str | None
+    source_name: str | None
+    schema_version: int
+    min_hindclaw_version: str
+    min_hindsight_version: str | None
+    version: str | None
+    source_url: str | None
+    source_revision: str | None
+    description: str
+    author: str
+    tags: list[str]
+    retain_mission: str
+    reflect_mission: str
+    observations_mission: str | None
+    retain_extraction_mode: str
+    retain_custom_instructions: str | None
+    retain_chunk_size: int | None
+    retain_default_strategy: str | None
+    retain_strategies: dict
+    entity_labels: list[dict]
+    entities_allow_free_form: bool
+    enable_observations: bool
+    consolidation_llm_batch_size: int | None
+    consolidation_source_facts_max_tokens: int | None
+    consolidation_source_facts_max_tokens_per_observation: int | None
+    disposition_skepticism: int
+    disposition_literalism: int
+    disposition_empathy: int
+    directive_seeds: list[dict]
+    mental_model_seeds: list[dict]
+    created_at: str
+    updated_at: str

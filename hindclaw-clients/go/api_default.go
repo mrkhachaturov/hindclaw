@@ -111,6 +111,30 @@ type DefaultAPI interface {
 	CreateServiceAccountExecute(r DefaultAPICreateServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error)
 
 	/*
+	CreateTemplate Create Template
+
+	Create a custom template (no marketplace source).
+
+Args:
+    request: Template creation payload.
+    principal: Authenticated principal from IAM.
+
+Returns:
+    The created template.
+
+Raises:
+    HTTPException: 409 if template already exists.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return DefaultAPICreateTemplateRequest
+	*/
+	CreateTemplate(ctx context.Context) DefaultAPICreateTemplateRequest
+
+	// CreateTemplateExecute executes the request
+	//  @return TemplateResponse
+	CreateTemplateExecute(r DefaultAPICreateTemplateRequest) (*TemplateResponse, *http.Response, error)
+
+	/*
 	CreateUser Create User
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -225,6 +249,29 @@ type DefaultAPI interface {
 	DeleteServiceAccountExecute(r DefaultAPIDeleteServiceAccountRequest) (*http.Response, error)
 
 	/*
+	DeleteTemplate Delete Template Endpoint
+
+	Delete a custom template.
+
+Args:
+    scope: Template scope ('server' or 'personal').
+    name: Template name.
+    principal: Authenticated principal from IAM.
+
+Raises:
+    HTTPException: 404 if template not found.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param scope
+	@param name
+	@return DefaultAPIDeleteTemplateRequest
+	*/
+	DeleteTemplate(ctx context.Context, scope string, name string) DefaultAPIDeleteTemplateRequest
+
+	// DeleteTemplateExecute executes the request
+	DeleteTemplateExecute(r DefaultAPIDeleteTemplateRequest) (*http.Response, error)
+
+	/*
 	DeleteUser Delete User
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -287,6 +334,33 @@ type DefaultAPI interface {
 	// GetServiceAccountExecute executes the request
 	//  @return ServiceAccountResponse
 	GetServiceAccountExecute(r DefaultAPIGetServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error)
+
+	/*
+	GetTemplate Get Template Endpoint
+
+	Get a custom template by scope and name.
+
+Args:
+    scope: Template scope ('server' or 'personal').
+    name: Template name.
+    principal: Authenticated principal from IAM.
+
+Returns:
+    Full template details.
+
+Raises:
+    HTTPException: 404 if template not found.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param scope
+	@param name
+	@return DefaultAPIGetTemplateRequest
+	*/
+	GetTemplate(ctx context.Context, scope string, name string) DefaultAPIGetTemplateRequest
+
+	// GetTemplateExecute executes the request
+	//  @return TemplateResponse
+	GetTemplateExecute(r DefaultAPIGetTemplateRequest) (*TemplateResponse, *http.Response, error)
 
 	/*
 	GetUser Get User
@@ -391,6 +465,30 @@ type DefaultAPI interface {
 	ListServiceAccountsExecute(r DefaultAPIListServiceAccountsRequest) ([]ServiceAccountResponse, *http.Response, error)
 
 	/*
+	ListTemplates List Templates
+
+	List installed templates filtered by access.
+
+When scope is None, returns all server templates plus the caller's
+personal templates. When scope is specified, returns only that scope.
+
+Args:
+    scope: Optional scope filter ('server' or 'personal').
+    principal: Authenticated principal from IAM.
+
+Returns:
+    List of template summaries.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return DefaultAPIListTemplatesRequest
+	*/
+	ListTemplates(ctx context.Context) DefaultAPIListTemplatesRequest
+
+	// ListTemplatesExecute executes the request
+	//  @return []TemplateSummaryResponse
+	ListTemplatesExecute(r DefaultAPIListTemplatesRequest) ([]TemplateSummaryResponse, *http.Response, error)
+
+	/*
 	ListUserChannels List User Channels
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -480,6 +578,39 @@ type DefaultAPI interface {
 	// UpdateServiceAccountExecute executes the request
 	//  @return ServiceAccountResponse
 	UpdateServiceAccountExecute(r DefaultAPIUpdateServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error)
+
+	/*
+	UpdateTemplate Update Template Endpoint
+
+	Update a custom template.
+
+Performs cross-field validation when extraction mode or custom
+instructions are part of the update by merging with the existing
+record before applying.
+
+Args:
+    scope: Template scope ('server' or 'personal').
+    name: Template name.
+    request: Partial update payload.
+    principal: Authenticated principal from IAM.
+
+Returns:
+    The updated template.
+
+Raises:
+    HTTPException: 404 if template not found, 422 if cross-field
+        validation fails.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param scope
+	@param name
+	@return DefaultAPIUpdateTemplateRequest
+	*/
+	UpdateTemplate(ctx context.Context, scope string, name string) DefaultAPIUpdateTemplateRequest
+
+	// UpdateTemplateExecute executes the request
+	//  @return TemplateResponse
+	UpdateTemplateExecute(r DefaultAPIUpdateTemplateRequest) (*TemplateResponse, *http.Response, error)
 
 	/*
 	UpdateUser Update User
@@ -1318,6 +1449,136 @@ func (a *DefaultAPIService) CreateServiceAccountExecute(r DefaultAPICreateServic
 	}
 	// body params
 	localVarPostBody = r.createServiceAccountRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPICreateTemplateRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	createTemplateRequest *CreateTemplateRequest
+}
+
+func (r DefaultAPICreateTemplateRequest) CreateTemplateRequest(createTemplateRequest CreateTemplateRequest) DefaultAPICreateTemplateRequest {
+	r.createTemplateRequest = &createTemplateRequest
+	return r
+}
+
+func (r DefaultAPICreateTemplateRequest) Execute() (*TemplateResponse, *http.Response, error) {
+	return r.ApiService.CreateTemplateExecute(r)
+}
+
+/*
+CreateTemplate Create Template
+
+Create a custom template (no marketplace source).
+
+Args:
+    request: Template creation payload.
+    principal: Authenticated principal from IAM.
+
+Returns:
+    The created template.
+
+Raises:
+    HTTPException: 409 if template already exists.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return DefaultAPICreateTemplateRequest
+*/
+func (a *DefaultAPIService) CreateTemplate(ctx context.Context) DefaultAPICreateTemplateRequest {
+	return DefaultAPICreateTemplateRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return TemplateResponse
+func (a *DefaultAPIService) CreateTemplateExecute(r DefaultAPICreateTemplateRequest) (*TemplateResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *TemplateResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreateTemplate")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/templates"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.createTemplateRequest == nil {
+		return localVarReturnValue, nil, reportError("createTemplateRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.createTemplateRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -2357,6 +2618,120 @@ func (a *DefaultAPIService) DeleteServiceAccountExecute(r DefaultAPIDeleteServic
 	return localVarHTTPResponse, nil
 }
 
+type DefaultAPIDeleteTemplateRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	scope string
+	name string
+}
+
+func (r DefaultAPIDeleteTemplateRequest) Execute() (*http.Response, error) {
+	return r.ApiService.DeleteTemplateExecute(r)
+}
+
+/*
+DeleteTemplate Delete Template Endpoint
+
+Delete a custom template.
+
+Args:
+    scope: Template scope ('server' or 'personal').
+    name: Template name.
+    principal: Authenticated principal from IAM.
+
+Raises:
+    HTTPException: 404 if template not found.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param scope
+ @param name
+ @return DefaultAPIDeleteTemplateRequest
+*/
+func (a *DefaultAPIService) DeleteTemplate(ctx context.Context, scope string, name string) DefaultAPIDeleteTemplateRequest {
+	return DefaultAPIDeleteTemplateRequest{
+		ApiService: a,
+		ctx: ctx,
+		scope: scope,
+		name: name,
+	}
+}
+
+// Execute executes the request
+func (a *DefaultAPIService) DeleteTemplateExecute(r DefaultAPIDeleteTemplateRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteTemplate")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/templates/{scope}/{name}"
+	localVarPath = strings.Replace(localVarPath, "{"+"scope"+"}", url.PathEscape(parameterValueToString(r.scope, "scope")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"name"+"}", url.PathEscape(parameterValueToString(r.name, "name")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
 type DefaultAPIDeleteUserRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
@@ -2832,6 +3207,134 @@ func (a *DefaultAPIService) GetServiceAccountExecute(r DefaultAPIGetServiceAccou
 
 	localVarPath := localBasePath + "/ext/hindclaw/service-accounts/{sa_id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIGetTemplateRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	scope string
+	name string
+}
+
+func (r DefaultAPIGetTemplateRequest) Execute() (*TemplateResponse, *http.Response, error) {
+	return r.ApiService.GetTemplateExecute(r)
+}
+
+/*
+GetTemplate Get Template Endpoint
+
+Get a custom template by scope and name.
+
+Args:
+    scope: Template scope ('server' or 'personal').
+    name: Template name.
+    principal: Authenticated principal from IAM.
+
+Returns:
+    Full template details.
+
+Raises:
+    HTTPException: 404 if template not found.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param scope
+ @param name
+ @return DefaultAPIGetTemplateRequest
+*/
+func (a *DefaultAPIService) GetTemplate(ctx context.Context, scope string, name string) DefaultAPIGetTemplateRequest {
+	return DefaultAPIGetTemplateRequest{
+		ApiService: a,
+		ctx: ctx,
+		scope: scope,
+		name: name,
+	}
+}
+
+// Execute executes the request
+//  @return TemplateResponse
+func (a *DefaultAPIService) GetTemplateExecute(r DefaultAPIGetTemplateRequest) (*TemplateResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *TemplateResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetTemplate")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/templates/{scope}/{name}"
+	localVarPath = strings.Replace(localVarPath, "{"+"scope"+"}", url.PathEscape(parameterValueToString(r.scope, "scope")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"name"+"}", url.PathEscape(parameterValueToString(r.name, "name")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -3755,6 +4258,134 @@ func (a *DefaultAPIService) ListServiceAccountsExecute(r DefaultAPIListServiceAc
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type DefaultAPIListTemplatesRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	scope *string
+}
+
+func (r DefaultAPIListTemplatesRequest) Scope(scope string) DefaultAPIListTemplatesRequest {
+	r.scope = &scope
+	return r
+}
+
+func (r DefaultAPIListTemplatesRequest) Execute() ([]TemplateSummaryResponse, *http.Response, error) {
+	return r.ApiService.ListTemplatesExecute(r)
+}
+
+/*
+ListTemplates List Templates
+
+List installed templates filtered by access.
+
+When scope is None, returns all server templates plus the caller's
+personal templates. When scope is specified, returns only that scope.
+
+Args:
+    scope: Optional scope filter ('server' or 'personal').
+    principal: Authenticated principal from IAM.
+
+Returns:
+    List of template summaries.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return DefaultAPIListTemplatesRequest
+*/
+func (a *DefaultAPIService) ListTemplates(ctx context.Context) DefaultAPIListTemplatesRequest {
+	return DefaultAPIListTemplatesRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return []TemplateSummaryResponse
+func (a *DefaultAPIService) ListTemplatesExecute(r DefaultAPIListTemplatesRequest) ([]TemplateSummaryResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  []TemplateSummaryResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListTemplates")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/templates"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.scope != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "scope", r.scope, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type DefaultAPIListUserChannelsRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
@@ -4494,6 +5125,151 @@ func (a *DefaultAPIService) UpdateServiceAccountExecute(r DefaultAPIUpdateServic
 	}
 	// body params
 	localVarPostBody = r.updateServiceAccountRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIUpdateTemplateRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	scope string
+	name string
+	updateTemplateRequest *UpdateTemplateRequest
+}
+
+func (r DefaultAPIUpdateTemplateRequest) UpdateTemplateRequest(updateTemplateRequest UpdateTemplateRequest) DefaultAPIUpdateTemplateRequest {
+	r.updateTemplateRequest = &updateTemplateRequest
+	return r
+}
+
+func (r DefaultAPIUpdateTemplateRequest) Execute() (*TemplateResponse, *http.Response, error) {
+	return r.ApiService.UpdateTemplateExecute(r)
+}
+
+/*
+UpdateTemplate Update Template Endpoint
+
+Update a custom template.
+
+Performs cross-field validation when extraction mode or custom
+instructions are part of the update by merging with the existing
+record before applying.
+
+Args:
+    scope: Template scope ('server' or 'personal').
+    name: Template name.
+    request: Partial update payload.
+    principal: Authenticated principal from IAM.
+
+Returns:
+    The updated template.
+
+Raises:
+    HTTPException: 404 if template not found, 422 if cross-field
+        validation fails.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param scope
+ @param name
+ @return DefaultAPIUpdateTemplateRequest
+*/
+func (a *DefaultAPIService) UpdateTemplate(ctx context.Context, scope string, name string) DefaultAPIUpdateTemplateRequest {
+	return DefaultAPIUpdateTemplateRequest{
+		ApiService: a,
+		ctx: ctx,
+		scope: scope,
+		name: name,
+	}
+}
+
+// Execute executes the request
+//  @return TemplateResponse
+func (a *DefaultAPIService) UpdateTemplateExecute(r DefaultAPIUpdateTemplateRequest) (*TemplateResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPut
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *TemplateResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpdateTemplate")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/templates/{scope}/{name}"
+	localVarPath = strings.Replace(localVarPath, "{"+"scope"+"}", url.PathEscape(parameterValueToString(r.scope, "scope")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"name"+"}", url.PathEscape(parameterValueToString(r.name, "name")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.updateTemplateRequest == nil {
+		return localVarReturnValue, nil, reportError("updateTemplateRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.updateTemplateRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

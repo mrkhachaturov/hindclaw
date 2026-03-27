@@ -1127,6 +1127,234 @@ paths:
       security:
       - HTTPBearer: []
       summary: Debug Resolve
+  /ext/hindclaw/templates:
+    get:
+      description: |-
+        List installed templates filtered by access.
+
+        When scope is None, returns all server templates plus the caller's
+        personal templates. When scope is specified, returns only that scope.
+
+        Args:
+            scope: Optional scope filter ('server' or 'personal').
+            principal: Authenticated principal from IAM.
+
+        Returns:
+            List of template summaries.
+      operationId: list_templates
+      parameters:
+      - explode: true
+        in: query
+        name: scope
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TemplateSummaryResponse'
+                type: array
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: List Templates
+    post:
+      description: |-
+        Create a custom template (no marketplace source).
+
+        Args:
+            request: Template creation payload.
+            principal: Authenticated principal from IAM.
+
+        Returns:
+            The created template.
+
+        Raises:
+            HTTPException: 409 if template already exists.
+      operationId: create_template
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create Template
+  /ext/hindclaw/templates/{scope}/{name}:
+    delete:
+      description: |-
+        Delete a custom template.
+
+        Args:
+            scope: Template scope ('server' or 'personal').
+            name: Template name.
+            principal: Authenticated principal from IAM.
+
+        Raises:
+            HTTPException: 404 if template not found.
+      operationId: delete_template
+      parameters:
+      - explode: false
+        in: path
+        name: scope
+        required: true
+        schema:
+          title: Scope
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          title: Name
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete Template Endpoint
+    get:
+      description: |-
+        Get a custom template by scope and name.
+
+        Args:
+            scope: Template scope ('server' or 'personal').
+            name: Template name.
+            principal: Authenticated principal from IAM.
+
+        Returns:
+            Full template details.
+
+        Raises:
+            HTTPException: 404 if template not found.
+      operationId: get_template
+      parameters:
+      - explode: false
+        in: path
+        name: scope
+        required: true
+        schema:
+          title: Scope
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          title: Name
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Get Template Endpoint
+    put:
+      description: |-
+        Update a custom template.
+
+        Performs cross-field validation when extraction mode or custom
+        instructions are part of the update by merging with the existing
+        record before applying.
+
+        Args:
+            scope: Template scope ('server' or 'personal').
+            name: Template name.
+            request: Partial update payload.
+            principal: Authenticated principal from IAM.
+
+        Returns:
+            The updated template.
+
+        Raises:
+            HTTPException: 404 if template not found, 422 if cross-field
+                validation fails.
+      operationId: update_template
+      parameters:
+      - explode: false
+        in: path
+        name: scope
+        required: true
+        schema:
+          title: Scope
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          title: Name
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Update Template Endpoint
 components:
   schemas:
     AddChannelRequest:
@@ -1334,6 +1562,160 @@ components:
       - id
       - owner_user_id
       title: CreateServiceAccountRequest
+    CreateTemplateRequest:
+      additionalProperties: {}
+      description: Request to create a custom template.
+      example:
+        disposition_literalism: 1
+        min_hindsight_version: Min_Hindsight_Version
+        reflect_mission: reflect_mission
+        observations_mission: Observations_Mission
+        retain_strategies:
+          key: ""
+        description: ""
+        disposition_empathy: 3
+        consolidation_source_facts_max_tokens: 1
+        disposition_skepticism: 3
+        consolidation_llm_batch_size: 6
+        directive_seeds:
+        - is_active: true
+          name: name
+          priority: 9
+          content: content
+        - is_active: true
+          name: name
+          priority: 9
+          content: content
+        mental_model_seeds:
+        - source_query: source_query
+          name: name
+        - source_query: source_query
+          name: name
+        scope: scope
+        id: id
+        enable_observations: true
+        retain_extraction_mode: concise
+        retain_mission: retain_mission
+        retain_chunk_size: 0
+        author: ""
+        retain_default_strategy: Retain_Default_Strategy
+        min_hindclaw_version: min_hindclaw_version
+        entity_labels:
+        - values:
+          - description: ""
+            value: value
+          - description: ""
+            value: value
+          description: ""
+          optional: true
+          tag: false
+          type: value
+          key: key
+        - values:
+          - description: ""
+            value: value
+          - description: ""
+            value: value
+          description: ""
+          optional: true
+          tag: false
+          type: value
+          key: key
+        entities_allow_free_form: true
+        tags:
+        - tags
+        - tags
+        retain_custom_instructions: Retain_Custom_Instructions
+        consolidation_source_facts_max_tokens_per_observation: 5
+      properties:
+        id:
+          maxLength: 128
+          minLength: 1
+          title: Id
+        scope:
+          title: Scope
+          type: string
+        description:
+          default: ""
+          title: Description
+        author:
+          default: ""
+          title: Author
+        tags:
+          items:
+            type: string
+          title: Tags
+        min_hindclaw_version:
+          title: Min Hindclaw Version
+          type: string
+        min_hindsight_version:
+          $ref: '#/components/schemas/Min_Hindsight_Version'
+        retain_mission:
+          title: Retain Mission
+          type: string
+        reflect_mission:
+          title: Reflect Mission
+          type: string
+        observations_mission:
+          $ref: '#/components/schemas/Observations_Mission'
+        retain_extraction_mode:
+          default: concise
+          title: Retain Extraction Mode
+        retain_custom_instructions:
+          $ref: '#/components/schemas/Retain_Custom_Instructions'
+        retain_chunk_size:
+          $ref: '#/components/schemas/Retain_Chunk_Size'
+        retain_default_strategy:
+          $ref: '#/components/schemas/Retain_Default_Strategy'
+        retain_strategies:
+          additionalProperties: true
+          title: Retain Strategies
+        entity_labels:
+          items:
+            $ref: '#/components/schemas/EntityLabel'
+          title: Entity Labels
+        entities_allow_free_form:
+          default: true
+          title: Entities Allow Free Form
+        enable_observations:
+          default: true
+          title: Enable Observations
+        consolidation_llm_batch_size:
+          $ref: '#/components/schemas/Consolidation_Llm_Batch_Size'
+        consolidation_source_facts_max_tokens:
+          $ref: '#/components/schemas/Consolidation_Source_Facts_Max_Tokens'
+        consolidation_source_facts_max_tokens_per_observation:
+          $ref: '#/components/schemas/Consolidation_Source_Facts_Max_Tokens_Per_Observation'
+        disposition_skepticism:
+          default: 3
+          maximum: 5.0
+          minimum: 1.0
+          title: Disposition Skepticism
+        disposition_literalism:
+          default: 3
+          maximum: 5.0
+          minimum: 1.0
+          title: Disposition Literalism
+        disposition_empathy:
+          default: 3
+          maximum: 5.0
+          minimum: 1.0
+          title: Disposition Empathy
+        directive_seeds:
+          items:
+            $ref: '#/components/schemas/DirectiveSeed'
+          title: Directive Seeds
+        mental_model_seeds:
+          items:
+            $ref: '#/components/schemas/MentalModelSeed'
+          title: Mental Model Seeds
+      required:
+      - id
+      - min_hindclaw_version
+      - reflect_mission
+      - retain_mission
+      - scope
+      title: CreateTemplateRequest
     CreateUserRequest:
       example:
         is_active: true
@@ -1358,6 +1740,97 @@ components:
       - display_name
       - id
       title: CreateUserRequest
+    DirectiveSeed:
+      description: A directive to create when bootstrapping a bank from a template.
+      example:
+        is_active: true
+        name: name
+        priority: 9
+        content: content
+      properties:
+        name:
+          title: Name
+          type: string
+        content:
+          title: Content
+          type: string
+        priority:
+          default: 0
+          title: Priority
+          type: integer
+        is_active:
+          default: true
+          title: Is Active
+          type: boolean
+      required:
+      - content
+      - name
+      title: DirectiveSeed
+    EntityLabel:
+      description: |-
+        An entity label definition for structured classification.
+
+        Hindsight supports three label types:
+        - "value": single enum value from the values list
+        - "multi-values": multiple enum values from the values list
+        - "text": free-form text (no values list needed)
+
+        The ``tag`` field controls whether facts with this label also get tagged
+        (enabling tag-based filtering in recall/reflect).
+      example:
+        values:
+        - description: ""
+          value: value
+        - description: ""
+          value: value
+        description: ""
+        optional: true
+        tag: false
+        type: value
+        key: key
+      properties:
+        key:
+          title: Key
+          type: string
+        description:
+          default: ""
+          title: Description
+          type: string
+        type:
+          default: value
+          title: Type
+          type: string
+        optional:
+          default: true
+          title: Optional
+          type: boolean
+        tag:
+          default: false
+          title: Tag
+          type: boolean
+        values:
+          items:
+            $ref: '#/components/schemas/EntityLabelValue'
+          type: array
+      required:
+      - key
+      title: EntityLabel
+    EntityLabelValue:
+      description: A valid value for a value or multi-values entity label.
+      example:
+        description: ""
+        value: value
+      properties:
+        value:
+          title: Value
+          type: string
+        description:
+          default: ""
+          title: Description
+          type: string
+      required:
+      - value
+      title: EntityLabelValue
     GroupMemberResponse:
       description: Group membership entry.
       example:
@@ -1426,6 +1899,22 @@ components:
             $ref: '#/components/schemas/ValidationError'
           type: array
       title: HTTPValidationError
+    MentalModelSeed:
+      description: A mental model to create when bootstrapping a bank from a template.
+      example:
+        source_query: source_query
+        name: name
+      properties:
+        name:
+          title: Name
+          type: string
+        source_query:
+          title: Source Query
+          type: string
+      required:
+      - name
+      - source_query
+      title: MentalModelSeed
     PolicyAttachmentResponse:
       description: Policy attachment resource.
       example:
@@ -1553,6 +2042,275 @@ components:
       - owner_user_id
       - scoping_policy_id
       title: ServiceAccountResponse
+    TemplateResponse:
+      description: Full template details.
+      example:
+        source_revision: source_revision
+        disposition_literalism: 7
+        min_hindsight_version: min_hindsight_version
+        reflect_mission: reflect_mission
+        observations_mission: observations_mission
+        retain_strategies:
+          key: ""
+        description: description
+        created_at: created_at
+        disposition_empathy: 9
+        consolidation_source_facts_max_tokens: 5
+        source_url: source_url
+        schema_version: 0
+        disposition_skepticism: 2
+        consolidation_llm_batch_size: 1
+        directive_seeds:
+        - key: ""
+        - key: ""
+        updated_at: updated_at
+        mental_model_seeds:
+        - key: ""
+        - key: ""
+        scope: scope
+        id: id
+        source_name: source_name
+        enable_observations: true
+        owner: owner
+        retain_extraction_mode: retain_extraction_mode
+        retain_mission: retain_mission
+        retain_chunk_size: 6
+        author: author
+        retain_default_strategy: retain_default_strategy
+        min_hindclaw_version: min_hindclaw_version
+        entity_labels:
+        - key: ""
+        - key: ""
+        version: version
+        entities_allow_free_form: true
+        tags:
+        - tags
+        - tags
+        retain_custom_instructions: retain_custom_instructions
+        consolidation_source_facts_max_tokens_per_observation: 5
+      properties:
+        id:
+          title: Id
+          type: string
+        scope:
+          title: Scope
+          type: string
+        owner:
+          nullable: true
+          type: string
+        source_name:
+          nullable: true
+          type: string
+        schema_version:
+          title: Schema Version
+          type: integer
+        min_hindclaw_version:
+          title: Min Hindclaw Version
+          type: string
+        min_hindsight_version:
+          nullable: true
+          type: string
+        version:
+          nullable: true
+          type: string
+        source_url:
+          nullable: true
+          type: string
+        source_revision:
+          nullable: true
+          type: string
+        description:
+          title: Description
+          type: string
+        author:
+          title: Author
+          type: string
+        tags:
+          items:
+            type: string
+          type: array
+        retain_mission:
+          title: Retain Mission
+          type: string
+        reflect_mission:
+          title: Reflect Mission
+          type: string
+        observations_mission:
+          nullable: true
+          type: string
+        retain_extraction_mode:
+          title: Retain Extraction Mode
+          type: string
+        retain_custom_instructions:
+          nullable: true
+          type: string
+        retain_chunk_size:
+          nullable: true
+          type: integer
+        retain_default_strategy:
+          nullable: true
+          type: string
+        retain_strategies:
+          additionalProperties: true
+          title: Retain Strategies
+          type: object
+        entity_labels:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+        entities_allow_free_form:
+          title: Entities Allow Free Form
+          type: boolean
+        enable_observations:
+          title: Enable Observations
+          type: boolean
+        consolidation_llm_batch_size:
+          nullable: true
+          type: integer
+        consolidation_source_facts_max_tokens:
+          nullable: true
+          type: integer
+        consolidation_source_facts_max_tokens_per_observation:
+          nullable: true
+          type: integer
+        disposition_skepticism:
+          title: Disposition Skepticism
+          type: integer
+        disposition_literalism:
+          title: Disposition Literalism
+          type: integer
+        disposition_empathy:
+          title: Disposition Empathy
+          type: integer
+        directive_seeds:
+          items:
+            additionalProperties: true
+            nullable: true
+            type: object
+          type: array
+        mental_model_seeds:
+          items:
+            additionalProperties: true
+            nullable: true
+            type: object
+          type: array
+        created_at:
+          title: Created At
+          type: string
+        updated_at:
+          title: Updated At
+          type: string
+      required:
+      - author
+      - consolidation_llm_batch_size
+      - consolidation_source_facts_max_tokens
+      - consolidation_source_facts_max_tokens_per_observation
+      - created_at
+      - description
+      - directive_seeds
+      - disposition_empathy
+      - disposition_literalism
+      - disposition_skepticism
+      - enable_observations
+      - entities_allow_free_form
+      - entity_labels
+      - id
+      - mental_model_seeds
+      - min_hindclaw_version
+      - min_hindsight_version
+      - observations_mission
+      - owner
+      - reflect_mission
+      - retain_chunk_size
+      - retain_custom_instructions
+      - retain_default_strategy
+      - retain_extraction_mode
+      - retain_mission
+      - retain_strategies
+      - schema_version
+      - scope
+      - source_name
+      - source_revision
+      - source_url
+      - tags
+      - updated_at
+      - version
+      title: TemplateResponse
+    TemplateSummaryResponse:
+      description: Summary of a template for list endpoints.
+      example:
+        retain_extraction_mode: retain_extraction_mode
+        disposition_literalism: 6
+        author: author
+        description: description
+        created_at: created_at
+        disposition_empathy: 1
+        version: version
+        tags:
+        - tags
+        - tags
+        disposition_skepticism: 0
+        updated_at: updated_at
+        scope: scope
+        id: id
+        source_name: source_name
+      properties:
+        id:
+          title: Id
+          type: string
+        scope:
+          title: Scope
+          type: string
+        source_name:
+          nullable: true
+          type: string
+        version:
+          nullable: true
+          type: string
+        description:
+          title: Description
+          type: string
+        author:
+          title: Author
+          type: string
+        tags:
+          items:
+            type: string
+          type: array
+        retain_extraction_mode:
+          title: Retain Extraction Mode
+          type: string
+        disposition_skepticism:
+          title: Disposition Skepticism
+          type: integer
+        disposition_literalism:
+          title: Disposition Literalism
+          type: integer
+        disposition_empathy:
+          title: Disposition Empathy
+          type: integer
+        created_at:
+          title: Created At
+          type: string
+        updated_at:
+          title: Updated At
+          type: string
+      required:
+      - author
+      - created_at
+      - description
+      - disposition_empathy
+      - disposition_literalism
+      - disposition_skepticism
+      - id
+      - retain_extraction_mode
+      - scope
+      - source_name
+      - tags
+      - updated_at
+      - version
+      title: TemplateSummaryResponse
     UpdateGroupRequest:
       example:
         display_name: display_name
@@ -1593,6 +2351,124 @@ components:
           nullable: true
           type: boolean
       title: UpdateServiceAccountRequest
+    UpdateTemplateRequest:
+      additionalProperties: {}
+      description: |-
+        Request to update an existing template. All fields optional.
+
+        Note: cross-field validation (e.g. custom mode requires custom instructions)
+        cannot be fully checked here because this is a partial update. The endpoint
+        must merge with the existing record and validate the final state.
+      example:
+        retain_extraction_mode: Retain_Extraction_Mode
+        retain_mission: Retain_Mission
+        disposition_literalism: 1
+        retain_chunk_size: 0
+        author: Author
+        min_hindsight_version: Min_Hindsight_Version
+        reflect_mission: Reflect_Mission
+        observations_mission: Observations_Mission
+        retain_default_strategy: Retain_Default_Strategy
+        retain_strategies:
+          key: ""
+        description: Description
+        min_hindclaw_version: Min_Hindclaw_Version
+        disposition_empathy: 3
+        entity_labels:
+        - values:
+          - description: ""
+            value: value
+          - description: ""
+            value: value
+          description: ""
+          optional: true
+          tag: false
+          type: value
+          key: key
+        - values:
+          - description: ""
+            value: value
+          - description: ""
+            value: value
+          description: ""
+          optional: true
+          tag: false
+          type: value
+          key: key
+        consolidation_source_facts_max_tokens: 1
+        entities_allow_free_form: true
+        tags:
+        - Tags
+        - Tags
+        disposition_skepticism: 3
+        consolidation_llm_batch_size: 6
+        directive_seeds:
+        - is_active: true
+          name: name
+          priority: 9
+          content: content
+        - is_active: true
+          name: name
+          priority: 9
+          content: content
+        mental_model_seeds:
+        - source_query: source_query
+          name: name
+        - source_query: source_query
+          name: name
+        retain_custom_instructions: Retain_Custom_Instructions
+        consolidation_source_facts_max_tokens_per_observation: 5
+        enable_observations: true
+      properties:
+        description:
+          $ref: '#/components/schemas/Description'
+        author:
+          $ref: '#/components/schemas/Author'
+        tags:
+          $ref: '#/components/schemas/Tags'
+        min_hindclaw_version:
+          $ref: '#/components/schemas/Min_Hindclaw_Version'
+        min_hindsight_version:
+          $ref: '#/components/schemas/Min_Hindsight_Version'
+        retain_mission:
+          $ref: '#/components/schemas/Retain_Mission'
+        reflect_mission:
+          $ref: '#/components/schemas/Reflect_Mission'
+        observations_mission:
+          $ref: '#/components/schemas/Observations_Mission'
+        retain_extraction_mode:
+          $ref: '#/components/schemas/Retain_Extraction_Mode'
+        retain_custom_instructions:
+          $ref: '#/components/schemas/Retain_Custom_Instructions'
+        retain_chunk_size:
+          $ref: '#/components/schemas/Retain_Chunk_Size'
+        retain_default_strategy:
+          $ref: '#/components/schemas/Retain_Default_Strategy'
+        retain_strategies:
+          $ref: '#/components/schemas/Retain_Strategies'
+        entity_labels:
+          $ref: '#/components/schemas/Entity_Labels'
+        entities_allow_free_form:
+          $ref: '#/components/schemas/Entities_Allow_Free_Form'
+        enable_observations:
+          $ref: '#/components/schemas/Enable_Observations'
+        consolidation_llm_batch_size:
+          $ref: '#/components/schemas/Consolidation_Llm_Batch_Size'
+        consolidation_source_facts_max_tokens:
+          $ref: '#/components/schemas/Consolidation_Source_Facts_Max_Tokens'
+        consolidation_source_facts_max_tokens_per_observation:
+          $ref: '#/components/schemas/Consolidation_Source_Facts_Max_Tokens_Per_Observation'
+        disposition_skepticism:
+          $ref: '#/components/schemas/Disposition_Skepticism'
+        disposition_literalism:
+          $ref: '#/components/schemas/Disposition_Literalism'
+        disposition_empathy:
+          $ref: '#/components/schemas/Disposition_Empathy'
+        directive_seeds:
+          $ref: '#/components/schemas/Directive_Seeds'
+        mental_model_seeds:
+          $ref: '#/components/schemas/Mental_Model_Seeds'
+      title: UpdateTemplateRequest
     UpdateUserRequest:
       example:
         is_active: true
@@ -1680,6 +2556,140 @@ components:
       - msg
       - type
       title: ValidationError
+    Min_Hindsight_Version:
+      anyOf:
+      - nullable: true
+        type: string
+      nullable: true
+      title: Min Hindsight Version
+    Observations_Mission:
+      anyOf:
+      - nullable: true
+        type: string
+      nullable: true
+      title: Observations Mission
+    Retain_Custom_Instructions:
+      anyOf:
+      - nullable: true
+        type: string
+      nullable: true
+      title: Retain Custom Instructions
+    Retain_Chunk_Size:
+      anyOf:
+      - {}
+      - {}
+      title: Retain Chunk Size
+    Retain_Default_Strategy:
+      anyOf:
+      - nullable: true
+        type: string
+      nullable: true
+      title: Retain Default Strategy
+    Consolidation_Llm_Batch_Size:
+      anyOf:
+      - {}
+      - {}
+      title: Consolidation Llm Batch Size
+    Consolidation_Source_Facts_Max_Tokens:
+      anyOf:
+      - nullable: true
+        type: integer
+      nullable: true
+      title: Consolidation Source Facts Max Tokens
+    Consolidation_Source_Facts_Max_Tokens_Per_Observation:
+      anyOf:
+      - nullable: true
+        type: integer
+      nullable: true
+      title: Consolidation Source Facts Max Tokens Per Observation
+    Description:
+      anyOf:
+      - {}
+      - {}
+      title: Description
+    Author:
+      anyOf:
+      - {}
+      - {}
+      title: Author
+    Tags:
+      anyOf:
+      - items: {}
+      - {}
+      title: Tags
+    Min_Hindclaw_Version:
+      anyOf:
+      - {}
+      - {}
+      title: Min Hindclaw Version
+    Retain_Mission:
+      anyOf:
+      - {}
+      - {}
+      title: Retain Mission
+    Reflect_Mission:
+      anyOf:
+      - {}
+      - {}
+      title: Reflect Mission
+    Retain_Extraction_Mode:
+      anyOf:
+      - {}
+      - {}
+      title: Retain Extraction Mode
+    Retain_Strategies:
+      anyOf:
+      - additionalProperties: true
+        nullable: true
+        type: object
+      - nullable: true
+      title: Retain Strategies
+    Entity_Labels:
+      anyOf:
+      - items:
+          $ref: '#/components/schemas/EntityLabel'
+      - {}
+      title: Entity Labels
+    Entities_Allow_Free_Form:
+      anyOf:
+      - {}
+      - {}
+      title: Entities Allow Free Form
+    Enable_Observations:
+      anyOf:
+      - {}
+      - {}
+      title: Enable Observations
+    Disposition_Skepticism:
+      anyOf:
+      - maximum: 5.0
+        minimum: 1.0
+      - {}
+      title: Disposition Skepticism
+    Disposition_Literalism:
+      anyOf:
+      - maximum: 5.0
+        minimum: 1.0
+      - {}
+      title: Disposition Literalism
+    Disposition_Empathy:
+      anyOf:
+      - maximum: 5.0
+        minimum: 1.0
+      - {}
+      title: Disposition Empathy
+    Directive_Seeds:
+      anyOf:
+      - items:
+          $ref: '#/components/schemas/DirectiveSeed'
+      - {}
+      title: Directive Seeds
+    Mental_Model_Seeds:
+      anyOf:
+      - items:
+          $ref: '#/components/schemas/MentalModelSeed'
+      - {}
+      title: Mental Model Seeds
     ValidationError_loc_inner:
       anyOf:
       - type: string

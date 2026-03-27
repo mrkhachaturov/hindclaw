@@ -1,6 +1,8 @@
 """Pydantic request and response models for HindclawHttp API endpoints."""
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from hindclaw_ext.template_models import DirectiveSeed, EntityLabel, MentalModelSeed
 
 
 # --- Users ---
@@ -235,3 +237,165 @@ class DebugResolveResponse(BaseModel):
     principal_type: str
     access: dict
     bank_policy: dict | None
+
+
+# --- Templates ---
+
+
+_VALID_SCOPES = ("server", "personal")
+_VALID_EXTRACTION_MODES = ("concise", "verbose", "custom", "verbatim", "chunks")
+
+
+class CreateTemplateRequest(BaseModel):
+    """Request to create a custom template."""
+
+    model_config = {"extra": "forbid"}
+
+    id: str = Field(min_length=1, max_length=128)
+    scope: str
+    description: str = ""
+    author: str = ""
+    tags: list[str] = Field(default_factory=list)
+    min_hindclaw_version: str
+    min_hindsight_version: str | None = None
+    retain_mission: str
+    reflect_mission: str
+    observations_mission: str | None = None
+    retain_extraction_mode: str = "concise"
+    retain_custom_instructions: str | None = None
+    retain_chunk_size: int | None = Field(default=None, gt=0)
+    retain_default_strategy: str | None = None
+    retain_strategies: dict = Field(default_factory=dict)
+    entity_labels: list[EntityLabel] = Field(default_factory=list)
+    entities_allow_free_form: bool = True
+    enable_observations: bool = True
+    consolidation_llm_batch_size: int | None = Field(default=None, gt=0)
+    consolidation_source_facts_max_tokens: int | None = None
+    consolidation_source_facts_max_tokens_per_observation: int | None = None
+    disposition_skepticism: int = Field(default=3, ge=1, le=5)
+    disposition_literalism: int = Field(default=3, ge=1, le=5)
+    disposition_empathy: int = Field(default=3, ge=1, le=5)
+    directive_seeds: list[DirectiveSeed] = Field(default_factory=list)
+    mental_model_seeds: list[MentalModelSeed] = Field(default_factory=list)
+
+    @field_validator("scope")
+    @classmethod
+    def _validate_scope(cls, v: str) -> str:
+        if v not in _VALID_SCOPES:
+            raise ValueError(f"scope must be one of {_VALID_SCOPES}")
+        return v
+
+    @field_validator("retain_extraction_mode")
+    @classmethod
+    def _validate_extraction_mode(cls, v: str) -> str:
+        if v not in _VALID_EXTRACTION_MODES:
+            raise ValueError(f"retain_extraction_mode must be one of {_VALID_EXTRACTION_MODES}")
+        return v
+
+    @model_validator(mode="after")
+    def _validate_cross_fields(self) -> "CreateTemplateRequest":
+        if self.retain_extraction_mode == "custom" and not self.retain_custom_instructions:
+            raise ValueError("retain_custom_instructions required when retain_extraction_mode is 'custom'")
+        if self.retain_extraction_mode != "custom" and self.retain_custom_instructions is not None:
+            raise ValueError("retain_custom_instructions only valid when retain_extraction_mode is 'custom'")
+        return self
+
+
+class UpdateTemplateRequest(BaseModel):
+    """Request to update an existing template. All fields optional.
+
+    Note: cross-field validation (e.g. custom mode requires custom instructions)
+    cannot be fully checked here because this is a partial update. The endpoint
+    must merge with the existing record and validate the final state.
+    """
+
+    model_config = {"extra": "forbid"}
+
+    description: str | None = None
+    author: str | None = None
+    tags: list[str] | None = None
+    min_hindclaw_version: str | None = None
+    min_hindsight_version: str | None = None
+    retain_mission: str | None = None
+    reflect_mission: str | None = None
+    observations_mission: str | None = None
+    retain_extraction_mode: str | None = None
+    retain_custom_instructions: str | None = None
+    retain_chunk_size: int | None = Field(default=None, gt=0)
+    retain_default_strategy: str | None = None
+    retain_strategies: dict | None = None
+    entity_labels: list[EntityLabel] | None = None
+    entities_allow_free_form: bool | None = None
+    enable_observations: bool | None = None
+    consolidation_llm_batch_size: int | None = Field(default=None, gt=0)
+    consolidation_source_facts_max_tokens: int | None = None
+    consolidation_source_facts_max_tokens_per_observation: int | None = None
+    disposition_skepticism: int | None = Field(default=None, ge=1, le=5)
+    disposition_literalism: int | None = Field(default=None, ge=1, le=5)
+    disposition_empathy: int | None = Field(default=None, ge=1, le=5)
+    directive_seeds: list[DirectiveSeed] | None = None
+    mental_model_seeds: list[MentalModelSeed] | None = None
+
+    @field_validator("retain_extraction_mode")
+    @classmethod
+    def _validate_extraction_mode(cls, v: str | None) -> str | None:
+        if v is not None and v not in _VALID_EXTRACTION_MODES:
+            raise ValueError(f"retain_extraction_mode must be one of {_VALID_EXTRACTION_MODES}")
+        return v
+
+
+class TemplateSummaryResponse(BaseModel):
+    """Summary of a template for list endpoints."""
+
+    id: str
+    scope: str
+    source_name: str | None
+    version: str | None
+    description: str
+    author: str
+    tags: list[str]
+    retain_extraction_mode: str
+    disposition_skepticism: int
+    disposition_literalism: int
+    disposition_empathy: int
+    created_at: str
+    updated_at: str
+
+
+class TemplateResponse(BaseModel):
+    """Full template details."""
+
+    id: str
+    scope: str
+    owner: str | None
+    source_name: str | None
+    schema_version: int
+    min_hindclaw_version: str
+    min_hindsight_version: str | None
+    version: str | None
+    source_url: str | None
+    source_revision: str | None
+    description: str
+    author: str
+    tags: list[str]
+    retain_mission: str
+    reflect_mission: str
+    observations_mission: str | None
+    retain_extraction_mode: str
+    retain_custom_instructions: str | None
+    retain_chunk_size: int | None
+    retain_default_strategy: str | None
+    retain_strategies: dict
+    entity_labels: list[dict]
+    entities_allow_free_form: bool
+    enable_observations: bool
+    consolidation_llm_batch_size: int | None
+    consolidation_source_facts_max_tokens: int | None
+    consolidation_source_facts_max_tokens_per_observation: int | None
+    disposition_skepticism: int
+    disposition_literalism: int
+    disposition_empathy: int
+    directive_seeds: list[dict]
+    mental_model_seeds: list[dict]
+    created_at: str
+    updated_at: str

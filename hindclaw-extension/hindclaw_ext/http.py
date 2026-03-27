@@ -47,6 +47,10 @@ from hindclaw_ext.http_models import (
     UpdateUserRequest,
     UpsertBankPolicyRequest,
     UserResponse,
+    CreateTemplateRequest,
+    UpdateTemplateRequest,
+    TemplateResponse,
+    TemplateSummaryResponse,
 )
 from hindclaw_ext.policy_models import BankPolicyDocument, PolicyDocument
 
@@ -572,5 +576,202 @@ class HindclawHttp(HttpExtension):
                 "access": access.model_dump(),
                 "bank_policy": bank_policy_dict,
             }
+
+        # --- Templates ---
+
+        @router.get("/templates", response_model=list[TemplateSummaryResponse], operation_id="list_templates")
+        async def list_templates(
+            scope: str | None = None,
+            principal=Depends(_require_iam("template:list")),
+        ):
+            """List installed templates filtered by access.
+
+            When scope is None, returns all server templates plus the caller's
+            personal templates. When scope is specified, returns only that scope.
+
+            Args:
+                scope: Optional scope filter ('server' or 'personal').
+                principal: Authenticated principal from IAM.
+
+            Returns:
+                List of template summaries.
+            """
+            user_id = principal["user_id"]
+            if scope == "server":
+                rows = await db.list_templates(scope="server")
+            elif scope == "personal":
+                rows = await db.list_templates(scope="personal", owner=user_id)
+            else:
+                server = await db.list_templates(scope="server")
+                personal = await db.list_templates(scope="personal", owner=user_id)
+                rows = server + personal
+            return [r.model_dump() for r in rows]
+
+        @router.post("/templates", response_model=TemplateResponse, status_code=201, operation_id="create_template")
+        async def create_template(
+            request: CreateTemplateRequest,
+            principal=Depends(_require_iam("template:create")),
+        ):
+            """Create a custom template (no marketplace source).
+
+            Args:
+                request: Template creation payload.
+                principal: Authenticated principal from IAM.
+
+            Returns:
+                The created template.
+
+            Raises:
+                HTTPException: 409 if template already exists.
+            """
+            owner = principal["user_id"] if request.scope == "personal" else None
+            try:
+                rec = await db.create_template(
+                    id=request.id,
+                    scope=request.scope,
+                    owner=owner,
+                    source_name=None,
+                    schema_version=1,
+                    min_hindclaw_version=request.min_hindclaw_version,
+                    min_hindsight_version=request.min_hindsight_version,
+                    description=request.description,
+                    author=request.author,
+                    tags=request.tags,
+                    retain_mission=request.retain_mission,
+                    reflect_mission=request.reflect_mission,
+                    observations_mission=request.observations_mission,
+                    retain_extraction_mode=request.retain_extraction_mode,
+                    retain_custom_instructions=request.retain_custom_instructions,
+                    retain_chunk_size=request.retain_chunk_size,
+                    retain_default_strategy=request.retain_default_strategy,
+                    retain_strategies=request.retain_strategies,
+                    entity_labels=[l.model_dump() for l in request.entity_labels],
+                    entities_allow_free_form=request.entities_allow_free_form,
+                    enable_observations=request.enable_observations,
+                    consolidation_llm_batch_size=request.consolidation_llm_batch_size,
+                    consolidation_source_facts_max_tokens=request.consolidation_source_facts_max_tokens,
+                    consolidation_source_facts_max_tokens_per_observation=request.consolidation_source_facts_max_tokens_per_observation,
+                    disposition_skepticism=request.disposition_skepticism,
+                    disposition_literalism=request.disposition_literalism,
+                    disposition_empathy=request.disposition_empathy,
+                    directive_seeds=[s.model_dump() for s in request.directive_seeds],
+                    mental_model_seeds=[s.model_dump() for s in request.mental_model_seeds],
+                )
+            except asyncpg.UniqueViolationError:
+                raise HTTPException(status_code=409, detail="Template already exists")
+            return rec.model_dump()
+
+        @router.get("/templates/{scope}/{name}", response_model=TemplateResponse, operation_id="get_template")
+        async def get_template_endpoint(
+            scope: str,
+            name: str,
+            principal=Depends(_require_iam("template:list")),
+        ):
+            """Get a custom template by scope and name.
+
+            Args:
+                scope: Template scope ('server' or 'personal').
+                name: Template name.
+                principal: Authenticated principal from IAM.
+
+            Returns:
+                Full template details.
+
+            Raises:
+                HTTPException: 404 if template not found.
+            """
+            owner = principal["user_id"] if scope == "personal" else None
+            rec = await db.get_template(name, scope, source_name=None, owner=owner)
+            if rec is None:
+                raise HTTPException(status_code=404, detail="Template not found")
+            return rec.model_dump()
+
+        @router.put("/templates/{scope}/{name}", response_model=TemplateResponse, operation_id="update_template")
+        async def update_template_endpoint(
+            scope: str,
+            name: str,
+            request: UpdateTemplateRequest,
+            principal=Depends(_require_iam("template:manage")),
+        ):
+            """Update a custom template.
+
+            Performs cross-field validation when extraction mode or custom
+            instructions are part of the update by merging with the existing
+            record before applying.
+
+            Args:
+                scope: Template scope ('server' or 'personal').
+                name: Template name.
+                request: Partial update payload.
+                principal: Authenticated principal from IAM.
+
+            Returns:
+                The updated template.
+
+            Raises:
+                HTTPException: 404 if template not found, 422 if cross-field
+                    validation fails.
+            """
+            owner = principal["user_id"] if scope == "personal" else None
+            updates = request.model_dump(exclude_unset=True)
+            if "directive_seeds" in updates:
+                updates["directive_seeds"] = [
+                    s.model_dump() if hasattr(s, "model_dump") else s
+                    for s in updates["directive_seeds"]
+                ]
+            if "mental_model_seeds" in updates:
+                updates["mental_model_seeds"] = [
+                    s.model_dump() if hasattr(s, "model_dump") else s
+                    for s in updates["mental_model_seeds"]
+                ]
+            if "entity_labels" in updates:
+                updates["entity_labels"] = [
+                    l.model_dump() if hasattr(l, "model_dump") else l
+                    for l in updates["entity_labels"]
+                ]
+
+            # Cross-field validation: merge with existing record to check final state.
+            if "retain_extraction_mode" in updates or "retain_custom_instructions" in updates:
+                existing = await db.get_template(name, scope, source_name=None, owner=owner)
+                if existing is None:
+                    raise HTTPException(status_code=404, detail="Template not found")
+                merged_mode = updates.get("retain_extraction_mode", existing.retain_extraction_mode)
+                merged_instructions = updates.get("retain_custom_instructions", existing.retain_custom_instructions)
+                if merged_mode == "custom" and not merged_instructions:
+                    raise HTTPException(
+                        status_code=422,
+                        detail="retain_custom_instructions required when retain_extraction_mode is 'custom'",
+                    )
+                if merged_mode != "custom" and merged_instructions is not None:
+                    raise HTTPException(
+                        status_code=422,
+                        detail="retain_custom_instructions only valid when retain_extraction_mode is 'custom'",
+                    )
+
+            rec = await db.update_template(name, scope, source_name=None, owner=owner, updates=updates)
+            if rec is None:
+                raise HTTPException(status_code=404, detail="Template not found")
+            return rec.model_dump()
+
+        @router.delete("/templates/{scope}/{name}", status_code=204, operation_id="delete_template")
+        async def delete_template_endpoint(
+            scope: str,
+            name: str,
+            principal=Depends(_require_iam("template:manage")),
+        ):
+            """Delete a custom template.
+
+            Args:
+                scope: Template scope ('server' or 'personal').
+                name: Template name.
+                principal: Authenticated principal from IAM.
+
+            Raises:
+                HTTPException: 404 if template not found.
+            """
+            owner = principal["user_id"] if scope == "personal" else None
+            deleted = await db.delete_template(name, scope, source_name=None, owner=owner)
+            if not deleted:
+                raise HTTPException(status_code=404, detail="Template not found")
 
         return router

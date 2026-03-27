@@ -23,6 +23,7 @@ from hindclaw_ext.models import (
     PolicyRecord,
     ServiceAccountKeyRecord,
     ServiceAccountRecord,
+    TemplateRecord,
     UserRecord,
 )
 
@@ -111,6 +112,56 @@ CREATE TABLE IF NOT EXISTS hindclaw_bank_policies (
     updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS bank_templates (
+    id TEXT NOT NULL,
+    scope TEXT NOT NULL CHECK (scope IN ('server', 'personal')),
+    owner TEXT REFERENCES hindclaw_users(id) ON DELETE CASCADE,
+    source_name TEXT,
+    schema_version INTEGER NOT NULL DEFAULT 1,
+    min_hindclaw_version TEXT NOT NULL,
+    min_hindsight_version TEXT,
+    version TEXT,
+    source_url TEXT,
+    source_revision TEXT,
+    description TEXT NOT NULL DEFAULT '',
+    author TEXT NOT NULL DEFAULT '',
+    tags JSONB NOT NULL DEFAULT '[]',
+    retain_mission TEXT NOT NULL DEFAULT '',
+    reflect_mission TEXT NOT NULL DEFAULT '',
+    observations_mission TEXT,
+    retain_extraction_mode TEXT NOT NULL DEFAULT 'concise'
+        CHECK (retain_extraction_mode IN ('concise', 'verbose', 'custom', 'verbatim', 'chunks')),
+    retain_custom_instructions TEXT,
+    retain_chunk_size INTEGER,
+    retain_default_strategy TEXT,
+    retain_strategies JSONB NOT NULL DEFAULT '{}',
+    entity_labels JSONB NOT NULL DEFAULT '[]',
+    entities_allow_free_form BOOLEAN NOT NULL DEFAULT true,
+    enable_observations BOOLEAN NOT NULL DEFAULT true,
+    consolidation_llm_batch_size INTEGER,
+    consolidation_source_facts_max_tokens INTEGER,
+    consolidation_source_facts_max_tokens_per_observation INTEGER,
+    disposition_skepticism INTEGER NOT NULL DEFAULT 3 CHECK (disposition_skepticism BETWEEN 1 AND 5),
+    disposition_literalism INTEGER NOT NULL DEFAULT 3 CHECK (disposition_literalism BETWEEN 1 AND 5),
+    disposition_empathy INTEGER NOT NULL DEFAULT 3 CHECK (disposition_empathy BETWEEN 1 AND 5),
+    directive_seeds JSONB NOT NULL DEFAULT '[]',
+    mental_model_seeds JSONB NOT NULL DEFAULT '[]',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (
+        (scope = 'server' AND owner IS NULL) OR
+        (scope = 'personal' AND owner IS NOT NULL)
+    )
+);
+-- Sourced templates: unique by (id, scope, source_name, owner)
+CREATE UNIQUE INDEX IF NOT EXISTS bank_templates_sourced_uniq
+    ON bank_templates (id, scope, source_name, COALESCE(owner, ''))
+    WHERE source_name IS NOT NULL;
+-- Custom templates (no source): unique by (id, scope, owner)
+CREATE UNIQUE INDEX IF NOT EXISTS bank_templates_custom_uniq
+    ON bank_templates (id, scope, COALESCE(owner, ''))
+    WHERE source_name IS NULL;
+
 -- Add is_active to existing users table (idempotent)
 DO $$
 BEGIN
@@ -128,7 +179,8 @@ INSERT INTO hindclaw_policies (id, display_name, document_json, is_builtin) VALU
     ('bank:readonly', 'Bank Read-Only', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:recall","bank:reflect"],"banks":["*"]}]}', TRUE),
     ('bank:retain-only', 'Bank Retain-Only', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:retain"],"banks":["*"]}]}', TRUE),
     ('bank:admin', 'Bank Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:*"],"banks":["*"]}]}', TRUE),
-    ('iam:admin', 'IAM Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["iam:*"],"banks":["*"]}]}', TRUE)
+    ('iam:admin', 'IAM Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["iam:*"],"banks":["*"]}]}', TRUE),
+    ('template:admin', 'Template Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["template:list","template:create","template:install","template:manage"],"banks":["*"]}]}', TRUE)
 ON CONFLICT (id) DO NOTHING;
 """
 
@@ -155,6 +207,12 @@ BEGIN
 END $$;
 
 DELETE FROM hindclaw_groups WHERE id = '_default';
+"""
+
+_MIGRATION_V3 = """\
+-- V3: bank_templates table is created in DDL (IF NOT EXISTS).
+-- This migration exists as a placeholder for future schema changes.
+-- The DDL handles table creation idempotently.
 """
 
 
@@ -186,6 +244,8 @@ async def get_pool() -> asyncpg.Pool:
                 await conn.execute(_DDL)
             async with conn.transaction():
                 await conn.execute(_MIGRATION_V2)
+            async with conn.transaction():
+                await conn.execute(_MIGRATION_V3)
             # Seed root user if env vars are set (outside DDL transaction)
             root_user = os.environ.get("HINDCLAW_ROOT_USER")
             root_key = os.environ.get("HINDCLAW_ROOT_API_KEY")
@@ -634,3 +694,329 @@ async def delete_bank_policy(bank_id: str) -> None:
     """Delete a bank policy."""
     pool = await get_pool()
     await pool.execute("DELETE FROM hindclaw_bank_policies WHERE bank_id = $1", bank_id)
+
+
+# --- Template queries ---
+
+
+def _row_to_template(row) -> TemplateRecord:
+    """Convert an asyncpg Record to a TemplateRecord.
+
+    Args:
+        row: asyncpg Record from bank_templates table.
+
+    Returns:
+        TemplateRecord with JSONB fields parsed.
+    """
+    d = dict(row)
+    return TemplateRecord(
+        id=d["id"],
+        scope=d["scope"],
+        owner=d.get("owner"),
+        source_name=d.get("source_name"),
+        schema_version=d["schema_version"],
+        min_hindclaw_version=d["min_hindclaw_version"],
+        min_hindsight_version=d.get("min_hindsight_version"),
+        version=d.get("version"),
+        source_url=d.get("source_url"),
+        source_revision=d.get("source_revision"),
+        description=d["description"],
+        author=d.get("author", ""),
+        tags=_parse_json(d["tags"]),
+        retain_mission=d["retain_mission"],
+        reflect_mission=d["reflect_mission"],
+        observations_mission=d.get("observations_mission"),
+        retain_extraction_mode=d["retain_extraction_mode"],
+        retain_custom_instructions=d.get("retain_custom_instructions"),
+        retain_chunk_size=d.get("retain_chunk_size"),
+        retain_default_strategy=d.get("retain_default_strategy"),
+        retain_strategies=_parse_json(d["retain_strategies"]),
+        entity_labels=_parse_json(d["entity_labels"]),
+        entities_allow_free_form=d["entities_allow_free_form"],
+        enable_observations=d["enable_observations"],
+        consolidation_llm_batch_size=d.get("consolidation_llm_batch_size"),
+        consolidation_source_facts_max_tokens=d.get("consolidation_source_facts_max_tokens"),
+        consolidation_source_facts_max_tokens_per_observation=d.get("consolidation_source_facts_max_tokens_per_observation"),
+        disposition_skepticism=d["disposition_skepticism"],
+        disposition_literalism=d["disposition_literalism"],
+        disposition_empathy=d["disposition_empathy"],
+        directive_seeds=_parse_json(d["directive_seeds"]),
+        mental_model_seeds=_parse_json(d["mental_model_seeds"]),
+        created_at=str(d["created_at"]),
+        updated_at=str(d["updated_at"]),
+    )
+
+
+async def create_template(
+    *,
+    id: str,
+    scope: str,
+    owner: str | None,
+    source_name: str | None,
+    schema_version: int,
+    min_hindclaw_version: str,
+    min_hindsight_version: str | None = None,
+    version: str | None = None,
+    source_url: str | None = None,
+    source_revision: str | None = None,
+    description: str,
+    author: str = "",
+    tags: list[str],
+    retain_mission: str,
+    reflect_mission: str,
+    observations_mission: str | None = None,
+    retain_extraction_mode: str,
+    retain_custom_instructions: str | None = None,
+    retain_chunk_size: int | None = None,
+    retain_default_strategy: str | None = None,
+    retain_strategies: dict | None = None,
+    entity_labels: list[dict] | None = None,
+    entities_allow_free_form: bool = True,
+    enable_observations: bool = True,
+    consolidation_llm_batch_size: int | None = None,
+    consolidation_source_facts_max_tokens: int | None = None,
+    consolidation_source_facts_max_tokens_per_observation: int | None = None,
+    disposition_skepticism: int = 3,
+    disposition_literalism: int = 3,
+    disposition_empathy: int = 3,
+    directive_seeds: list[dict] | None = None,
+    mental_model_seeds: list[dict] | None = None,
+) -> TemplateRecord:
+    """Insert a new bank template.
+
+    Args:
+        id: Template name.
+        scope: 'server' or 'personal'.
+        owner: User ID for personal scope, None for server.
+        source_name: Marketplace source name (None if custom).
+        schema_version: Template schema version.
+        min_hindclaw_version: Minimum compatible Hindclaw version.
+        min_hindsight_version: Minimum compatible Hindsight version.
+        version: Semantic version from marketplace.
+        source_url: Marketplace URL this was installed from.
+        source_revision: Commit SHA or tag from marketplace.
+        description: Human-readable description.
+        author: Template author.
+        tags: Searchable tags.
+        retain_mission: Mission for retain operations.
+        reflect_mission: Mission for reflect operations.
+        observations_mission: Mission for observations.
+        retain_extraction_mode: Extraction mode.
+        retain_custom_instructions: Custom extraction prompt.
+        retain_chunk_size: Max characters per chunk.
+        retain_default_strategy: Default named strategy.
+        retain_strategies: Named strategies with config overrides.
+        entity_labels: Structured label vocabulary.
+        entities_allow_free_form: Extract regular named entities.
+        enable_observations: Toggle observation synthesis.
+        consolidation_llm_batch_size: Facts per LLM call.
+        consolidation_source_facts_max_tokens: Total token budget.
+        consolidation_source_facts_max_tokens_per_observation: Per-observation budget.
+        disposition_skepticism: 1-5 skepticism score.
+        disposition_literalism: 1-5 literalism score.
+        disposition_empathy: 1-5 empathy score.
+        directive_seeds: Directive seeds list.
+        mental_model_seeds: Mental model seeds list.
+
+    Returns:
+        The inserted row as a TemplateRecord.
+    """
+    pool = await get_pool()
+    row = await pool.fetchrow(
+        """
+        INSERT INTO bank_templates (
+            id, scope, owner, source_name, schema_version,
+            min_hindclaw_version, min_hindsight_version, version,
+            source_url, source_revision, description, author, tags,
+            retain_mission, reflect_mission, observations_mission,
+            retain_extraction_mode, retain_custom_instructions,
+            retain_chunk_size, retain_default_strategy, retain_strategies,
+            entity_labels, entities_allow_free_form, enable_observations,
+            consolidation_llm_batch_size,
+            consolidation_source_facts_max_tokens,
+            consolidation_source_facts_max_tokens_per_observation,
+            disposition_skepticism, disposition_literalism, disposition_empathy,
+            directive_seeds, mental_model_seeds
+        ) VALUES (
+            $1, $2, $3, $4, $5,
+            $6, $7, $8,
+            $9, $10, $11, $12, $13::jsonb,
+            $14, $15, $16,
+            $17, $18,
+            $19, $20, $21::jsonb,
+            $22::jsonb, $23, $24,
+            $25, $26, $27,
+            $28, $29, $30,
+            $31::jsonb, $32::jsonb
+        ) RETURNING *
+        """,
+        id, scope, owner, source_name, schema_version,
+        min_hindclaw_version, min_hindsight_version, version,
+        source_url, source_revision, description, author, json.dumps(tags),
+        retain_mission, reflect_mission, observations_mission,
+        retain_extraction_mode, retain_custom_instructions,
+        retain_chunk_size, retain_default_strategy, json.dumps(retain_strategies or {}),
+        json.dumps(entity_labels or []), entities_allow_free_form, enable_observations,
+        consolidation_llm_batch_size,
+        consolidation_source_facts_max_tokens,
+        consolidation_source_facts_max_tokens_per_observation,
+        disposition_skepticism, disposition_literalism, disposition_empathy,
+        json.dumps(directive_seeds or []), json.dumps(mental_model_seeds or []),
+    )
+    return _row_to_template(row)
+
+
+async def get_template(
+    id: str,
+    scope: str,
+    *,
+    source_name: str | None,
+    owner: str | None,
+) -> TemplateRecord | None:
+    """Fetch a single template by its composite key.
+
+    Args:
+        id: Template name.
+        scope: 'server' or 'personal'.
+        source_name: Marketplace source name (None for custom).
+        owner: User ID for personal scope.
+
+    Returns:
+        TemplateRecord or None if not found.
+    """
+    pool = await get_pool()
+    if source_name is not None:
+        row = await pool.fetchrow(
+            "SELECT * FROM bank_templates WHERE id = $1 AND scope = $2 AND source_name = $3 AND owner IS NOT DISTINCT FROM $4",
+            id, scope, source_name, owner,
+        )
+    else:
+        row = await pool.fetchrow(
+            "SELECT * FROM bank_templates WHERE id = $1 AND scope = $2 AND source_name IS NULL AND owner IS NOT DISTINCT FROM $3",
+            id, scope, owner,
+        )
+    return _row_to_template(row) if row else None
+
+
+async def list_templates(
+    *,
+    scope: str | None = None,
+    owner: str | None = None,
+    source_name: str | None = None,
+) -> list[TemplateRecord]:
+    """List templates with optional filters.
+
+    Args:
+        scope: Filter by scope ('server' or 'personal').
+        owner: Filter by owner user ID.
+        source_name: Filter by marketplace source name.
+
+    Returns:
+        List of TemplateRecord instances.
+    """
+    pool = await get_pool()
+    conditions = []
+    params = []
+    idx = 1
+    if scope is not None:
+        conditions.append(f"scope = ${idx}")
+        params.append(scope)
+        idx += 1
+    if owner is not None:
+        conditions.append(f"owner = ${idx}")
+        params.append(owner)
+        idx += 1
+    if source_name is not None:
+        conditions.append(f"source_name = ${idx}")
+        params.append(source_name)
+        idx += 1
+    where = " WHERE " + " AND ".join(conditions) if conditions else ""
+    rows = await pool.fetch(
+        f"SELECT * FROM bank_templates{where} ORDER BY source_name, id",
+        *params,
+    )
+    return [_row_to_template(r) for r in rows]
+
+
+async def update_template(
+    id: str,
+    scope: str,
+    *,
+    source_name: str | None,
+    owner: str | None,
+    updates: dict,
+) -> TemplateRecord | None:
+    """Update a template's fields.
+
+    Args:
+        id: Template name.
+        scope: 'server' or 'personal'.
+        source_name: Marketplace source name.
+        owner: User ID for personal scope.
+        updates: Dict of column names to new values.
+
+    Returns:
+        The updated TemplateRecord, or None if not found.
+    """
+    if not updates:
+        return await get_template(id, scope, source_name=source_name, owner=owner)
+
+    pool = await get_pool()
+    set_clauses = []
+    params = []
+    idx = 1
+    jsonb_cols = {"tags", "retain_strategies", "entity_labels", "directive_seeds", "mental_model_seeds"}
+    for col, val in updates.items():
+        if col in jsonb_cols:
+            set_clauses.append(f"{col} = ${idx}::jsonb")
+            params.append(json.dumps(val))
+        else:
+            set_clauses.append(f"{col} = ${idx}")
+            params.append(val)
+        idx += 1
+    set_clauses.append("updated_at = now()")
+
+    if source_name is not None:
+        where = f"id = ${idx} AND scope = ${idx+1} AND source_name = ${idx+2} AND owner IS NOT DISTINCT FROM ${idx+3}"
+        params.extend([id, scope, source_name, owner])
+    else:
+        where = f"id = ${idx} AND scope = ${idx+1} AND source_name IS NULL AND owner IS NOT DISTINCT FROM ${idx+2}"
+        params.extend([id, scope, owner])
+
+    row = await pool.fetchrow(
+        f"UPDATE bank_templates SET {', '.join(set_clauses)} WHERE {where} RETURNING *",
+        *params,
+    )
+    return _row_to_template(row) if row else None
+
+
+async def delete_template(
+    id: str,
+    scope: str,
+    *,
+    source_name: str | None,
+    owner: str | None,
+) -> bool:
+    """Delete a template.
+
+    Args:
+        id: Template name.
+        scope: 'server' or 'personal'.
+        source_name: Marketplace source name.
+        owner: User ID for personal scope.
+
+    Returns:
+        True if a row was deleted, False if not found.
+    """
+    pool = await get_pool()
+    if source_name is not None:
+        result = await pool.execute(
+            "DELETE FROM bank_templates WHERE id = $1 AND scope = $2 AND source_name = $3 AND owner IS NOT DISTINCT FROM $4",
+            id, scope, source_name, owner,
+        )
+    else:
+        result = await pool.execute(
+            "DELETE FROM bank_templates WHERE id = $1 AND scope = $2 AND source_name IS NULL AND owner IS NOT DISTINCT FROM $3",
+            id, scope, owner,
+        )
+    return result == "DELETE 1"
