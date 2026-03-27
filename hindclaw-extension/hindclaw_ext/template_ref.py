@@ -77,6 +77,10 @@ def parse_template_ref(ref: str) -> TemplateRef:
     if len(parts) == 3:
         source = parts[1]
         name = parts[2]
+        if not source:
+            raise ValueError(
+                f"Invalid template reference {ref!r}: source must not be empty"
+            )
     else:
         source = None
         name = parts[1]

@@ -257,6 +257,54 @@ class TestCreateBankFromTemplate:
         assert len(body["directives"]) == 1
         assert len(body["mental_models"]) == 1
 
+    def test_directive_seed_failure(self, client):
+        template = _make_template()
+
+        mock_bank_profile = MagicMock()
+        mock_config_response = MagicMock()
+        mock_mm_response = MagicMock()
+        mock_mm_response.mental_model_id = "mm-001"
+        mock_mm_response.operation_id = "op-001"
+
+        with (
+            patch("hindclaw_ext.http.db.get_template", new_callable=AsyncMock, return_value=template),
+            patch("hindclaw_ext.http.get_banks_api") as mock_banks_factory,
+            patch("hindclaw_ext.http.get_directives_api") as mock_dir_factory,
+            patch("hindclaw_ext.http.get_mental_models_api") as mock_mm_factory,
+        ):
+            mock_banks_api = AsyncMock()
+            mock_banks_api.create_or_update_bank.return_value = mock_bank_profile
+            mock_banks_api.update_bank_config.return_value = mock_config_response
+            mock_banks_factory.return_value = mock_banks_api
+
+            mock_dir_api = AsyncMock()
+            mock_dir_api.create_directive.side_effect = Exception("Directive API error")
+            mock_dir_factory.return_value = mock_dir_api
+
+            mock_mm_api = AsyncMock()
+            mock_mm_api.create_mental_model.return_value = mock_mm_response
+            mock_mm_factory.return_value = mock_mm_api
+
+            resp = client.post(
+                "/ext/hindclaw/banks",
+                json={
+                    "bank_id": "agent-alpha",
+                    "template": "server/hindclaw/backend-python",
+                },
+                headers=_AUTH_HEADER,
+            )
+
+        assert resp.status_code == 201
+        body = resp.json()
+        assert body["bank_created"] is True
+        assert body["config_applied"] is True
+        assert len(body["directives"]) == 1
+        assert body["directives"][0]["created"] is False
+        assert body["directives"][0]["error"] is not None
+        # Mental models still attempted despite directive failure
+        assert len(body["mental_models"]) == 1
+        assert body["mental_models"][0]["created"] is True
+
     def test_with_custom_name(self, client):
         template = _make_template(directive_seeds=[], mental_model_seeds=[])
 

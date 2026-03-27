@@ -51,8 +51,12 @@ class TestParseTemplateRef:
             parse_template_ref("server/")
 
     def test_empty_source_and_name(self):
-        with pytest.raises(ValueError, match="name"):
+        with pytest.raises(ValueError, match="source"):
             parse_template_ref("server//")
+
+    def test_empty_source_with_name(self):
+        with pytest.raises(ValueError, match="source"):
+            parse_template_ref("server//backend-python")
 
     def test_name_with_hyphens_and_numbers(self):
         ref = parse_template_ref("server/hindclaw/backend-python-3")
