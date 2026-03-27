@@ -79,6 +79,7 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**add_group_member**](hindclaw_client_api/docs/DefaultApi.md#add_group_member) | **POST** /ext/hindclaw/groups/{group_id}/members | Add Group Member
 *DefaultApi* | [**add_user_channel**](hindclaw_client_api/docs/DefaultApi.md#add_user_channel) | **POST** /ext/hindclaw/users/{user_id}/channels | Add User Channel
 *DefaultApi* | [**create_api_key**](hindclaw_client_api/docs/DefaultApi.md#create_api_key) | **POST** /ext/hindclaw/users/{user_id}/api-keys | Create Api Key
+*DefaultApi* | [**create_bank_from_template**](hindclaw_client_api/docs/DefaultApi.md#create_bank_from_template) | **POST** /ext/hindclaw/banks | Create Bank From Template
 *DefaultApi* | [**create_group**](hindclaw_client_api/docs/DefaultApi.md#create_group) | **POST** /ext/hindclaw/groups | Create Group
 *DefaultApi* | [**create_policy**](hindclaw_client_api/docs/DefaultApi.md#create_policy) | **POST** /ext/hindclaw/policies | Create Policy
 *DefaultApi* | [**create_sa_key**](hindclaw_client_api/docs/DefaultApi.md#create_sa_key) | **POST** /ext/hindclaw/service-accounts/{sa_id}/keys | Create Sa Key
@@ -128,9 +129,11 @@ Class | Method | HTTP request | Description
  - [AddMemberRequest](hindclaw_client_api/docs/AddMemberRequest.md)
  - [ApiKeyCreateResponse](hindclaw_client_api/docs/ApiKeyCreateResponse.md)
  - [ApiKeyResponse](hindclaw_client_api/docs/ApiKeyResponse.md)
+ - [BankCreationResponse](hindclaw_client_api/docs/BankCreationResponse.md)
  - [BankPolicyResponse](hindclaw_client_api/docs/BankPolicyResponse.md)
  - [ChannelResponse](hindclaw_client_api/docs/ChannelResponse.md)
  - [CreateApiKeyRequest](hindclaw_client_api/docs/CreateApiKeyRequest.md)
+ - [CreateBankFromTemplateRequest](hindclaw_client_api/docs/CreateBankFromTemplateRequest.md)
  - [CreateGroupRequest](hindclaw_client_api/docs/CreateGroupRequest.md)
  - [CreatePolicyAttachmentRequest](hindclaw_client_api/docs/CreatePolicyAttachmentRequest.md)
  - [CreatePolicyRequest](hindclaw_client_api/docs/CreatePolicyRequest.md)
@@ -139,6 +142,7 @@ Class | Method | HTTP request | Description
  - [CreateTemplateRequest](hindclaw_client_api/docs/CreateTemplateRequest.md)
  - [CreateUserRequest](hindclaw_client_api/docs/CreateUserRequest.md)
  - [DirectiveSeed](hindclaw_client_api/docs/DirectiveSeed.md)
+ - [DirectiveSeedResult](hindclaw_client_api/docs/DirectiveSeedResult.md)
  - [EntityLabel](hindclaw_client_api/docs/EntityLabel.md)
  - [EntityLabelValue](hindclaw_client_api/docs/EntityLabelValue.md)
  - [GroupMemberResponse](hindclaw_client_api/docs/GroupMemberResponse.md)
@@ -146,6 +150,7 @@ Class | Method | HTTP request | Description
  - [GroupSummaryResponse](hindclaw_client_api/docs/GroupSummaryResponse.md)
  - [HTTPValidationError](hindclaw_client_api/docs/HTTPValidationError.md)
  - [MentalModelSeed](hindclaw_client_api/docs/MentalModelSeed.md)
+ - [MentalModelSeedResult](hindclaw_client_api/docs/MentalModelSeedResult.md)
  - [PolicyAttachmentResponse](hindclaw_client_api/docs/PolicyAttachmentResponse.md)
  - [PolicyResponse](hindclaw_client_api/docs/PolicyResponse.md)
  - [SAKeyCreateResponse](hindclaw_client_api/docs/SAKeyCreateResponse.md)

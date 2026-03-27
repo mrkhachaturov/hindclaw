@@ -2030,6 +2030,50 @@
           }
         }
       }
+    },
+    "/ext/hindclaw/banks": {
+      "post": {
+        "summary": "Create Bank From Template",
+        "description": "Create a Hindsight bank from an installed template.\n\nResolves the template from the database, then calls the Hindsight API\nto create the bank, apply configuration, seed directives, and seed\nmental models. Returns a structured response with the status of each\nstep. If the initial bank creation fails, returns 502 immediately. If\nsubsequent steps fail, returns 201 with partial success and errors.\n\nArgs:\n    request: Bank creation payload with bank_id and template reference.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    BankCreationResponse with status of each step.\n\nRaises:\n    HTTPException: 422 if template reference is invalid, 404 if\n        template not installed, 502 if bank creation fails.",
+        "operationId": "create_bank_from_template",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBankFromTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankCreationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2113,6 +2157,59 @@
         "title": "ApiKeyResponse",
         "description": "API key in list view \u2014 key is masked after creation."
       },
+      "BankCreationResponse": {
+        "properties": {
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "template": {
+            "type": "string",
+            "title": "Template"
+          },
+          "bank_created": {
+            "type": "boolean",
+            "title": "Bank Created"
+          },
+          "config_applied": {
+            "type": "boolean",
+            "title": "Config Applied"
+          },
+          "directives": {
+            "items": {
+              "$ref": "#/components/schemas/DirectiveSeedResult"
+            },
+            "type": "array",
+            "title": "Directives"
+          },
+          "mental_models": {
+            "items": {
+              "$ref": "#/components/schemas/MentalModelSeedResult"
+            },
+            "type": "array",
+            "title": "Mental Models"
+          },
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Errors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_id",
+          "template",
+          "bank_created",
+          "config_applied",
+          "directives",
+          "mental_models",
+          "errors"
+        ],
+        "title": "BankCreationResponse",
+        "description": "Response from POST /ext/hindclaw/banks \u2014 bank creation from template."
+      },
       "BankPolicyResponse": {
         "properties": {
           "bank_id": {
@@ -2162,6 +2259,35 @@
         },
         "type": "object",
         "title": "CreateApiKeyRequest"
+      },
+      "CreateBankFromTemplateRequest": {
+        "properties": {
+          "bank_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Bank Id"
+          },
+          "template": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Template"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "bank_id",
+          "template"
+        ],
+        "title": "CreateBankFromTemplateRequest",
+        "description": "Request to create a bank from an installed template."
       },
       "CreateGroupRequest": {
         "properties": {
@@ -2493,6 +2619,35 @@
         "title": "DirectiveSeed",
         "description": "A directive to create when bootstrapping a bank from a template."
       },
+      "DirectiveSeedResult": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "created": {
+            "type": "boolean",
+            "title": "Created"
+          },
+          "directive_id": {
+            "title": "Directive Id",
+            "type": "string",
+            "nullable": true
+          },
+          "error": {
+            "title": "Error",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "created"
+        ],
+        "title": "DirectiveSeedResult",
+        "description": "Result of creating a single directive from a template seed."
+      },
       "EntityLabel": {
         "properties": {
           "key": {
@@ -2636,6 +2791,40 @@
         ],
         "title": "MentalModelSeed",
         "description": "A mental model to create when bootstrapping a bank from a template."
+      },
+      "MentalModelSeedResult": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "created": {
+            "type": "boolean",
+            "title": "Created"
+          },
+          "mental_model_id": {
+            "title": "Mental Model Id",
+            "type": "string",
+            "nullable": true
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string",
+            "nullable": true
+          },
+          "error": {
+            "title": "Error",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "created"
+        ],
+        "title": "MentalModelSeedResult",
+        "description": "Result of creating a single mental model from a template seed."
       },
       "PolicyAttachmentResponse": {
         "properties": {

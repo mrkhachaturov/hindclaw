@@ -399,3 +399,47 @@ class TemplateResponse(BaseModel):
     mental_model_seeds: list[dict]
     created_at: str
     updated_at: str
+
+
+# --- Bank Creation from Template ---
+
+
+class CreateBankFromTemplateRequest(BaseModel):
+    """Request to create a bank from an installed template."""
+
+    model_config = {"extra": "forbid"}
+
+    bank_id: str = Field(min_length=1, max_length=128)
+    template: str = Field(min_length=1, max_length=256)
+    name: str | None = None
+
+
+class DirectiveSeedResult(BaseModel):
+    """Result of creating a single directive from a template seed."""
+
+    name: str
+    created: bool
+    directive_id: str | None = None
+    error: str | None = None
+
+
+class MentalModelSeedResult(BaseModel):
+    """Result of creating a single mental model from a template seed."""
+
+    name: str
+    created: bool
+    mental_model_id: str | None = None
+    operation_id: str | None = None
+    error: str | None = None
+
+
+class BankCreationResponse(BaseModel):
+    """Response from POST /ext/hindclaw/banks — bank creation from template."""
+
+    bank_id: str
+    template: str
+    bank_created: bool
+    config_applied: bool
+    directives: list[DirectiveSeedResult]
+    mental_models: list[MentalModelSeedResult]
+    errors: list[str]

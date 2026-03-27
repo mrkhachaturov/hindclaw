@@ -62,6 +62,37 @@ type DefaultAPI interface {
 	CreateApiKeyExecute(r DefaultAPICreateApiKeyRequest) (*ApiKeyCreateResponse, *http.Response, error)
 
 	/*
+	CreateBankFromTemplate Create Bank From Template
+
+	Create a Hindsight bank from an installed template.
+
+Resolves the template from the database, then calls the Hindsight API
+to create the bank, apply configuration, seed directives, and seed
+mental models. Returns a structured response with the status of each
+step. If the initial bank creation fails, returns 502 immediately. If
+subsequent steps fail, returns 201 with partial success and errors.
+
+Args:
+    request: Bank creation payload with bank_id and template reference.
+    principal: Authenticated principal from IAM.
+
+Returns:
+    BankCreationResponse with status of each step.
+
+Raises:
+    HTTPException: 422 if template reference is invalid, 404 if
+        template not installed, 502 if bank creation fails.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return DefaultAPICreateBankFromTemplateRequest
+	*/
+	CreateBankFromTemplate(ctx context.Context) DefaultAPICreateBankFromTemplateRequest
+
+	// CreateBankFromTemplateExecute executes the request
+	//  @return BankCreationResponse
+	CreateBankFromTemplateExecute(r DefaultAPICreateBankFromTemplateRequest) (*BankCreationResponse, *http.Response, error)
+
+	/*
 	CreateGroup Create Group
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -973,6 +1004,143 @@ func (a *DefaultAPIService) CreateApiKeyExecute(r DefaultAPICreateApiKeyRequest)
 	}
 	// body params
 	localVarPostBody = r.createApiKeyRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPICreateBankFromTemplateRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	createBankFromTemplateRequest *CreateBankFromTemplateRequest
+}
+
+func (r DefaultAPICreateBankFromTemplateRequest) CreateBankFromTemplateRequest(createBankFromTemplateRequest CreateBankFromTemplateRequest) DefaultAPICreateBankFromTemplateRequest {
+	r.createBankFromTemplateRequest = &createBankFromTemplateRequest
+	return r
+}
+
+func (r DefaultAPICreateBankFromTemplateRequest) Execute() (*BankCreationResponse, *http.Response, error) {
+	return r.ApiService.CreateBankFromTemplateExecute(r)
+}
+
+/*
+CreateBankFromTemplate Create Bank From Template
+
+Create a Hindsight bank from an installed template.
+
+Resolves the template from the database, then calls the Hindsight API
+to create the bank, apply configuration, seed directives, and seed
+mental models. Returns a structured response with the status of each
+step. If the initial bank creation fails, returns 502 immediately. If
+subsequent steps fail, returns 201 with partial success and errors.
+
+Args:
+    request: Bank creation payload with bank_id and template reference.
+    principal: Authenticated principal from IAM.
+
+Returns:
+    BankCreationResponse with status of each step.
+
+Raises:
+    HTTPException: 422 if template reference is invalid, 404 if
+        template not installed, 502 if bank creation fails.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return DefaultAPICreateBankFromTemplateRequest
+*/
+func (a *DefaultAPIService) CreateBankFromTemplate(ctx context.Context) DefaultAPICreateBankFromTemplateRequest {
+	return DefaultAPICreateBankFromTemplateRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return BankCreationResponse
+func (a *DefaultAPIService) CreateBankFromTemplateExecute(r DefaultAPICreateBankFromTemplateRequest) (*BankCreationResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *BankCreationResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreateBankFromTemplate")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/banks"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.createBankFromTemplateRequest == nil {
+		return localVarReturnValue, nil, reportError("createBankFromTemplateRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.createBankFromTemplateRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

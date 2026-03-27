@@ -1355,6 +1355,50 @@ paths:
       security:
       - HTTPBearer: []
       summary: Update Template Endpoint
+  /ext/hindclaw/banks:
+    post:
+      description: |-
+        Create a Hindsight bank from an installed template.
+
+        Resolves the template from the database, then calls the Hindsight API
+        to create the bank, apply configuration, seed directives, and seed
+        mental models. Returns a structured response with the status of each
+        step. If the initial bank creation fails, returns 502 immediately. If
+        subsequent steps fail, returns 201 with partial success and errors.
+
+        Args:
+            request: Bank creation payload with bank_id and template reference.
+            principal: Authenticated principal from IAM.
+
+        Returns:
+            BankCreationResponse with status of each step.
+
+        Raises:
+            HTTPException: 422 if template reference is invalid, 404 if
+                template not installed, 502 if bank creation fails.
+      operationId: create_bank_from_template
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBankFromTemplateRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankCreationResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create Bank From Template
 components:
   schemas:
     AddChannelRequest:
@@ -1424,6 +1468,70 @@ components:
       - api_key_prefix
       - id
       title: ApiKeyResponse
+    BankCreationResponse:
+      description: Response from POST /ext/hindclaw/banks — bank creation from template.
+      example:
+        template: template
+        mental_models:
+        - created: true
+          name: name
+          operation_id: operation_id
+          mental_model_id: mental_model_id
+          error: error
+        - created: true
+          name: name
+          operation_id: operation_id
+          mental_model_id: mental_model_id
+          error: error
+        bank_created: true
+        directives:
+        - directive_id: directive_id
+          created: true
+          name: name
+          error: error
+        - directive_id: directive_id
+          created: true
+          name: name
+          error: error
+        bank_id: bank_id
+        config_applied: true
+        errors:
+        - errors
+        - errors
+      properties:
+        bank_id:
+          title: Bank Id
+          type: string
+        template:
+          title: Template
+          type: string
+        bank_created:
+          title: Bank Created
+          type: boolean
+        config_applied:
+          title: Config Applied
+          type: boolean
+        directives:
+          items:
+            $ref: '#/components/schemas/DirectiveSeedResult'
+          type: array
+        mental_models:
+          items:
+            $ref: '#/components/schemas/MentalModelSeedResult'
+          type: array
+        errors:
+          items:
+            type: string
+          type: array
+      required:
+      - bank_created
+      - bank_id
+      - config_applied
+      - directives
+      - errors
+      - mental_models
+      - template
+      title: BankCreationResponse
     BankPolicyResponse:
       description: Bank policy resource.
       example:
@@ -1467,6 +1575,32 @@ components:
           type: string
           nullable: true
       title: CreateApiKeyRequest
+    CreateBankFromTemplateRequest:
+      additionalProperties: true
+      description: Request to create a bank from an installed template.
+      example:
+        template: template
+        bank_id: bank_id
+        name: name
+      properties:
+        bank_id:
+          maxLength: 128
+          minLength: 1
+          title: Bank Id
+          type: string
+        template:
+          maxLength: 256
+          minLength: 1
+          title: Template
+          type: string
+        name:
+          title: Name
+          type: string
+          nullable: true
+      required:
+      - bank_id
+      - template
+      title: CreateBankFromTemplateRequest
     CreateGroupRequest:
       example:
         id: id
@@ -1788,6 +1922,32 @@ components:
       - content
       - name
       title: DirectiveSeed
+    DirectiveSeedResult:
+      description: Result of creating a single directive from a template seed.
+      example:
+        directive_id: directive_id
+        created: true
+        name: name
+        error: error
+      properties:
+        name:
+          title: Name
+          type: string
+        created:
+          title: Created
+          type: boolean
+        directive_id:
+          title: Directive Id
+          type: string
+          nullable: true
+        error:
+          title: Error
+          type: string
+          nullable: true
+      required:
+      - created
+      - name
+      title: DirectiveSeedResult
     EntityLabel:
       description: |-
         An entity label definition for structured classification.
@@ -1937,6 +2097,37 @@ components:
       - name
       - source_query
       title: MentalModelSeed
+    MentalModelSeedResult:
+      description: Result of creating a single mental model from a template seed.
+      example:
+        created: true
+        name: name
+        operation_id: operation_id
+        mental_model_id: mental_model_id
+        error: error
+      properties:
+        name:
+          title: Name
+          type: string
+        created:
+          title: Created
+          type: boolean
+        mental_model_id:
+          title: Mental Model Id
+          type: string
+          nullable: true
+        operation_id:
+          title: Operation Id
+          type: string
+          nullable: true
+        error:
+          title: Error
+          type: string
+          nullable: true
+      required:
+      - created
+      - name
+      title: MentalModelSeedResult
     PolicyAttachmentResponse:
       description: Policy attachment resource.
       example:

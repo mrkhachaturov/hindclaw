@@ -69,6 +69,42 @@ export type ApiKeyResponse = {
 };
 
 /**
+ * BankCreationResponse
+ *
+ * Response from POST /ext/hindclaw/banks — bank creation from template.
+ */
+export type BankCreationResponse = {
+    /**
+     * Bank Id
+     */
+    bank_id: string;
+    /**
+     * Template
+     */
+    template: string;
+    /**
+     * Bank Created
+     */
+    bank_created: boolean;
+    /**
+     * Config Applied
+     */
+    config_applied: boolean;
+    /**
+     * Directives
+     */
+    directives: Array<DirectiveSeedResult>;
+    /**
+     * Mental Models
+     */
+    mental_models: Array<MentalModelSeedResult>;
+    /**
+     * Errors
+     */
+    errors: Array<string>;
+};
+
+/**
  * BankPolicyResponse
  *
  * Bank policy resource.
@@ -110,6 +146,26 @@ export type CreateApiKeyRequest = {
      * Description
      */
     description?: string;
+};
+
+/**
+ * CreateBankFromTemplateRequest
+ *
+ * Request to create a bank from an installed template.
+ */
+export type CreateBankFromTemplateRequest = {
+    /**
+     * Bank Id
+     */
+    bank_id: string;
+    /**
+     * Template
+     */
+    template: string;
+    /**
+     * Name
+     */
+    name?: string;
 };
 
 /**
@@ -369,6 +425,30 @@ export type DirectiveSeed = {
 };
 
 /**
+ * DirectiveSeedResult
+ *
+ * Result of creating a single directive from a template seed.
+ */
+export type DirectiveSeedResult = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Created
+     */
+    created: boolean;
+    /**
+     * Directive Id
+     */
+    directive_id?: string;
+    /**
+     * Error
+     */
+    error?: string;
+};
+
+/**
  * EntityLabel
  *
  * An entity label definition for structured classification.
@@ -492,6 +572,34 @@ export type MentalModelSeed = {
      * Source Query
      */
     source_query: string;
+};
+
+/**
+ * MentalModelSeedResult
+ *
+ * Result of creating a single mental model from a template seed.
+ */
+export type MentalModelSeedResult = {
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Created
+     */
+    created: boolean;
+    /**
+     * Mental Model Id
+     */
+    mental_model_id?: string;
+    /**
+     * Operation Id
+     */
+    operation_id?: string;
+    /**
+     * Error
+     */
+    error?: string;
 };
 
 /**
@@ -2377,3 +2485,28 @@ export type UpdateTemplateResponses = {
 };
 
 export type UpdateTemplateResponse = UpdateTemplateResponses[keyof UpdateTemplateResponses];
+
+export type CreateBankFromTemplateData = {
+    body: CreateBankFromTemplateRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/banks';
+};
+
+export type CreateBankFromTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateBankFromTemplateError = CreateBankFromTemplateErrors[keyof CreateBankFromTemplateErrors];
+
+export type CreateBankFromTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    201: BankCreationResponse;
+};
+
+export type CreateBankFromTemplateResponse = CreateBankFromTemplateResponses[keyof CreateBankFromTemplateResponses];

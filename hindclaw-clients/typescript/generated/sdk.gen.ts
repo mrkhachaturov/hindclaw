@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddGroupMemberData, AddGroupMemberErrors, AddGroupMemberResponses, AddUserChannelData, AddUserChannelErrors, AddUserChannelResponses, CreateApiKeyData, CreateApiKeyErrors, CreateApiKeyResponses, CreateGroupData, CreateGroupErrors, CreateGroupResponses, CreatePolicyData, CreatePolicyErrors, CreatePolicyResponses, CreateSaKeyData, CreateSaKeyErrors, CreateSaKeyResponses, CreateServiceAccountData, CreateServiceAccountErrors, CreateServiceAccountResponses, CreateTemplateData, CreateTemplateErrors, CreateTemplateResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DebugResolveData, DebugResolveErrors, DebugResolveResponses, DeleteApiKeyData, DeleteApiKeyErrors, DeleteApiKeyResponses, DeleteBankPolicyData, DeleteBankPolicyErrors, DeleteBankPolicyResponses, DeleteGroupData, DeleteGroupErrors, DeleteGroupResponses, DeletePolicyAttachmentData, DeletePolicyAttachmentErrors, DeletePolicyAttachmentResponses, DeletePolicyData, DeletePolicyErrors, DeletePolicyResponses, DeleteSaKeyData, DeleteSaKeyErrors, DeleteSaKeyResponses, DeleteServiceAccountData, DeleteServiceAccountErrors, DeleteServiceAccountResponses, DeleteTemplateData, DeleteTemplateErrors, DeleteTemplateResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetBankPolicyData, GetBankPolicyErrors, GetBankPolicyResponses, GetGroupData, GetGroupErrors, GetGroupResponses, GetPolicyData, GetPolicyErrors, GetPolicyResponses, GetServiceAccountData, GetServiceAccountErrors, GetServiceAccountResponses, GetTemplateData, GetTemplateErrors, GetTemplateResponses, GetUserData, GetUserErrors, GetUserResponses, ListApiKeysData, ListApiKeysErrors, ListApiKeysResponses, ListGroupMembersData, ListGroupMembersErrors, ListGroupMembersResponses, ListGroupsData, ListGroupsResponses, ListPoliciesData, ListPoliciesResponses, ListPolicyAttachmentsData, ListPolicyAttachmentsErrors, ListPolicyAttachmentsResponses, ListSaKeysData, ListSaKeysErrors, ListSaKeysResponses, ListServiceAccountsData, ListServiceAccountsResponses, ListTemplatesData, ListTemplatesErrors, ListTemplatesResponses, ListUserChannelsData, ListUserChannelsErrors, ListUserChannelsResponses, ListUsersData, ListUsersResponses, RemoveGroupMemberData, RemoveGroupMemberErrors, RemoveGroupMemberResponses, RemoveUserChannelData, RemoveUserChannelErrors, RemoveUserChannelResponses, UpdateGroupData, UpdateGroupErrors, UpdateGroupResponses, UpdatePolicyData, UpdatePolicyErrors, UpdatePolicyResponses, UpdateServiceAccountData, UpdateServiceAccountErrors, UpdateServiceAccountResponses, UpdateTemplateData, UpdateTemplateErrors, UpdateTemplateResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpsertBankPolicyData, UpsertBankPolicyErrors, UpsertBankPolicyResponses, UpsertPolicyAttachmentData, UpsertPolicyAttachmentErrors, UpsertPolicyAttachmentResponses } from './types.gen';
+import type { AddGroupMemberData, AddGroupMemberErrors, AddGroupMemberResponses, AddUserChannelData, AddUserChannelErrors, AddUserChannelResponses, CreateApiKeyData, CreateApiKeyErrors, CreateApiKeyResponses, CreateBankFromTemplateData, CreateBankFromTemplateErrors, CreateBankFromTemplateResponses, CreateGroupData, CreateGroupErrors, CreateGroupResponses, CreatePolicyData, CreatePolicyErrors, CreatePolicyResponses, CreateSaKeyData, CreateSaKeyErrors, CreateSaKeyResponses, CreateServiceAccountData, CreateServiceAccountErrors, CreateServiceAccountResponses, CreateTemplateData, CreateTemplateErrors, CreateTemplateResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DebugResolveData, DebugResolveErrors, DebugResolveResponses, DeleteApiKeyData, DeleteApiKeyErrors, DeleteApiKeyResponses, DeleteBankPolicyData, DeleteBankPolicyErrors, DeleteBankPolicyResponses, DeleteGroupData, DeleteGroupErrors, DeleteGroupResponses, DeletePolicyAttachmentData, DeletePolicyAttachmentErrors, DeletePolicyAttachmentResponses, DeletePolicyData, DeletePolicyErrors, DeletePolicyResponses, DeleteSaKeyData, DeleteSaKeyErrors, DeleteSaKeyResponses, DeleteServiceAccountData, DeleteServiceAccountErrors, DeleteServiceAccountResponses, DeleteTemplateData, DeleteTemplateErrors, DeleteTemplateResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetBankPolicyData, GetBankPolicyErrors, GetBankPolicyResponses, GetGroupData, GetGroupErrors, GetGroupResponses, GetPolicyData, GetPolicyErrors, GetPolicyResponses, GetServiceAccountData, GetServiceAccountErrors, GetServiceAccountResponses, GetTemplateData, GetTemplateErrors, GetTemplateResponses, GetUserData, GetUserErrors, GetUserResponses, ListApiKeysData, ListApiKeysErrors, ListApiKeysResponses, ListGroupMembersData, ListGroupMembersErrors, ListGroupMembersResponses, ListGroupsData, ListGroupsResponses, ListPoliciesData, ListPoliciesResponses, ListPolicyAttachmentsData, ListPolicyAttachmentsErrors, ListPolicyAttachmentsResponses, ListSaKeysData, ListSaKeysErrors, ListSaKeysResponses, ListServiceAccountsData, ListServiceAccountsResponses, ListTemplatesData, ListTemplatesErrors, ListTemplatesResponses, ListUserChannelsData, ListUserChannelsErrors, ListUserChannelsResponses, ListUsersData, ListUsersResponses, RemoveGroupMemberData, RemoveGroupMemberErrors, RemoveGroupMemberResponses, RemoveUserChannelData, RemoveUserChannelErrors, RemoveUserChannelResponses, UpdateGroupData, UpdateGroupErrors, UpdateGroupResponses, UpdatePolicyData, UpdatePolicyErrors, UpdatePolicyResponses, UpdateServiceAccountData, UpdateServiceAccountErrors, UpdateServiceAccountResponses, UpdateTemplateData, UpdateTemplateErrors, UpdateTemplateResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpsertBankPolicyData, UpsertBankPolicyErrors, UpsertBankPolicyResponses, UpsertPolicyAttachmentData, UpsertPolicyAttachmentErrors, UpsertPolicyAttachmentResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -541,6 +541,38 @@ export const getTemplate = <ThrowOnError extends boolean = false>(options: Optio
 export const updateTemplate = <ThrowOnError extends boolean = false>(options: Options<UpdateTemplateData, ThrowOnError>) => (options.client ?? client).put<UpdateTemplateResponses, UpdateTemplateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/ext/hindclaw/templates/{scope}/{name}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Create Bank From Template
+ *
+ * Create a Hindsight bank from an installed template.
+ *
+ * Resolves the template from the database, then calls the Hindsight API
+ * to create the bank, apply configuration, seed directives, and seed
+ * mental models. Returns a structured response with the status of each
+ * step. If the initial bank creation fails, returns 502 immediately. If
+ * subsequent steps fail, returns 201 with partial success and errors.
+ *
+ * Args:
+ * request: Bank creation payload with bank_id and template reference.
+ * principal: Authenticated principal from IAM.
+ *
+ * Returns:
+ * BankCreationResponse with status of each step.
+ *
+ * Raises:
+ * HTTPException: 422 if template reference is invalid, 404 if
+ * template not installed, 502 if bank creation fails.
+ */
+export const createBankFromTemplate = <ThrowOnError extends boolean = false>(options: Options<CreateBankFromTemplateData, ThrowOnError>) => (options.client ?? client).post<CreateBankFromTemplateResponses, CreateBankFromTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/banks',
     ...options,
     headers: {
         'Content-Type': 'application/json',
