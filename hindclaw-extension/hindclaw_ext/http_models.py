@@ -508,3 +508,32 @@ class MarketplaceSearchResponse(BaseModel):
 
     results: list[MarketplaceSearchResult]
     total: int
+
+
+# --- Install / Update ---
+
+
+class InstallTemplateRequest(BaseModel):
+    """Request to install a template from a marketplace source."""
+
+    source: str = Field(min_length=1, description="Marketplace source name")
+    name: str = Field(min_length=1, description="Template name within the source")
+    scope: str = Field(description="'server' or 'personal'")
+
+    model_config = {"extra": "forbid"}
+
+    @field_validator("scope")
+    @classmethod
+    def _validate_scope(cls, v: str) -> str:
+        if v not in _VALID_SCOPES:
+            raise ValueError(f"scope must be one of {_VALID_SCOPES}")
+        return v
+
+
+class TemplateUpdateResponse(BaseModel):
+    """Response for template update from marketplace."""
+
+    updated: bool
+    previous_version: str | None
+    new_version: str | None
+    template: TemplateResponse | None = None

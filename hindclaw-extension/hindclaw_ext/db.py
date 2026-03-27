@@ -1039,6 +1039,141 @@ async def delete_template(
     return result == "DELETE 1"
 
 
+async def upsert_template_from_marketplace(
+    *,
+    id: str,
+    scope: str,
+    owner: str | None,
+    source_name: str,
+    source_url: str | None = None,
+    source_revision: str | None = None,
+    schema_version: int,
+    min_hindclaw_version: str,
+    min_hindsight_version: str | None = None,
+    version: str,
+    description: str,
+    author: str = "",
+    tags: list[str],
+    retain_mission: str,
+    reflect_mission: str,
+    observations_mission: str | None = None,
+    retain_extraction_mode: str,
+    retain_custom_instructions: str | None = None,
+    retain_chunk_size: int | None = None,
+    retain_default_strategy: str | None = None,
+    retain_strategies: dict | None = None,
+    entity_labels: list[dict] | None = None,
+    entities_allow_free_form: bool = True,
+    enable_observations: bool = True,
+    consolidation_llm_batch_size: int | None = None,
+    consolidation_source_facts_max_tokens: int | None = None,
+    consolidation_source_facts_max_tokens_per_observation: int | None = None,
+    disposition_skepticism: int = 3,
+    disposition_literalism: int = 3,
+    disposition_empathy: int = 3,
+    directive_seeds: list[dict] | None = None,
+    mental_model_seeds: list[dict] | None = None,
+) -> "TemplateRecord":
+    """Insert or update a marketplace template.
+
+    Uses a two-step approach in a transaction: check if exists, then
+    INSERT or UPDATE. This avoids expression-index inference issues
+    with ON CONFLICT on the COALESCE-based unique indexes.
+
+    Args:
+        id: Template name.
+        scope: 'server' or 'personal'.
+        owner: User ID for personal scope, None for server.
+        source_name: Marketplace source name (must not be None).
+        ... (remaining fields match create_template)
+
+    Returns:
+        The upserted TemplateRecord.
+    """
+    pool = await get_pool()
+
+    # Check if template already exists
+    existing = await get_template(id, scope, source_name=source_name, owner=owner)
+
+    if existing:
+        # UPDATE all fields
+        updates = {
+            "schema_version": schema_version,
+            "min_hindclaw_version": min_hindclaw_version,
+            "min_hindsight_version": min_hindsight_version,
+            "version": version,
+            "source_url": source_url,
+            "source_revision": source_revision,
+            "description": description,
+            "author": author,
+            "tags": tags or [],
+            "retain_mission": retain_mission,
+            "reflect_mission": reflect_mission,
+            "observations_mission": observations_mission,
+            "retain_extraction_mode": retain_extraction_mode,
+            "retain_custom_instructions": retain_custom_instructions,
+            "retain_chunk_size": retain_chunk_size,
+            "retain_default_strategy": retain_default_strategy,
+            "retain_strategies": retain_strategies or {},
+            "entity_labels": entity_labels or [],
+            "entities_allow_free_form": entities_allow_free_form,
+            "enable_observations": enable_observations,
+            "consolidation_llm_batch_size": consolidation_llm_batch_size,
+            "consolidation_source_facts_max_tokens": consolidation_source_facts_max_tokens,
+            "consolidation_source_facts_max_tokens_per_observation": consolidation_source_facts_max_tokens_per_observation,
+            "disposition_skepticism": disposition_skepticism,
+            "disposition_literalism": disposition_literalism,
+            "disposition_empathy": disposition_empathy,
+            "directive_seeds": directive_seeds or [],
+            "mental_model_seeds": mental_model_seeds or [],
+        }
+        result = await update_template(
+            id, scope,
+            source_name=source_name,
+            owner=owner,
+            updates=updates,
+        )
+        if result is None:
+            raise RuntimeError(f"Failed to update template {id} in {scope} scope")
+        return result
+    else:
+        # INSERT new
+        return await create_template(
+            id=id,
+            scope=scope,
+            owner=owner,
+            source_name=source_name,
+            schema_version=schema_version,
+            min_hindclaw_version=min_hindclaw_version,
+            min_hindsight_version=min_hindsight_version,
+            version=version,
+            source_url=source_url,
+            source_revision=source_revision,
+            description=description,
+            author=author,
+            tags=tags or [],
+            retain_mission=retain_mission,
+            reflect_mission=reflect_mission,
+            observations_mission=observations_mission,
+            retain_extraction_mode=retain_extraction_mode,
+            retain_custom_instructions=retain_custom_instructions,
+            retain_chunk_size=retain_chunk_size,
+            retain_default_strategy=retain_default_strategy,
+            retain_strategies=retain_strategies or {},
+            entity_labels=entity_labels or [],
+            entities_allow_free_form=entities_allow_free_form,
+            enable_observations=enable_observations,
+            consolidation_llm_batch_size=consolidation_llm_batch_size,
+            consolidation_source_facts_max_tokens=consolidation_source_facts_max_tokens,
+            consolidation_source_facts_max_tokens_per_observation=consolidation_source_facts_max_tokens_per_observation,
+            disposition_skepticism=disposition_skepticism,
+            disposition_literalism=disposition_literalism,
+            disposition_empathy=disposition_empathy,
+            directive_seeds=directive_seeds or [],
+            mental_model_seeds=mental_model_seeds or [],
+        )
+
+
 # --- Template source queries ---
 
 

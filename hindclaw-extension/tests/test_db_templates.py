@@ -207,3 +207,70 @@ class TestDeleteTemplate:
         with patch.object(db, "_pool", mock_pool):
             result = await db.delete_template("backend-python", "server", source_name=None, owner=None)
         assert result is False
+
+
+class TestUpsertTemplateFromMarketplace:
+    @pytest.mark.asyncio
+    async def test_upsert_inserts_new(self, mock_pool):
+        """When template doesn't exist, delegates to create_template."""
+        # get_template returns None (not found)
+        mock_pool.fetchrow.side_effect = [
+            None,  # get_template lookup
+            _fake_template_row(source_name="hindclaw", version="2.1.0"),  # create_template INSERT
+        ]
+        with patch.object(db, "_pool", mock_pool):
+            result = await db.upsert_template_from_marketplace(
+                id="backend-python",
+                scope="server",
+                owner=None,
+                source_name="hindclaw",
+                source_url="https://github.com/hindclaw/community-templates",
+                source_revision=None,
+                schema_version=1,
+                min_hindclaw_version="0.2.0",
+                min_hindsight_version="0.4.20",
+                version="2.1.0",
+                description="Backend patterns",
+                author="community",
+                tags=["python"],
+                retain_mission="Extract backend patterns.",
+                reflect_mission="You are a backend engineer.",
+                retain_extraction_mode="verbose",
+                entity_labels=[],
+                directive_seeds=[],
+                mental_model_seeds=[],
+            )
+        assert isinstance(result, TemplateRecord)
+
+    @pytest.mark.asyncio
+    async def test_upsert_updates_existing(self, mock_pool):
+        """When template exists, delegates to update_template."""
+        existing_row = _fake_template_row(source_name="hindclaw", version="2.0.0")
+        updated_row = _fake_template_row(source_name="hindclaw", version="3.0.0")
+        mock_pool.fetchrow.side_effect = [
+            existing_row,  # get_template finds existing
+            updated_row,   # update_template RETURNING
+        ]
+        with patch.object(db, "_pool", mock_pool):
+            result = await db.upsert_template_from_marketplace(
+                id="backend-python",
+                scope="server",
+                owner=None,
+                source_name="hindclaw",
+                source_url="https://github.com/hindclaw/community-templates",
+                source_revision=None,
+                schema_version=1,
+                min_hindclaw_version="0.2.0",
+                version="3.0.0",
+                description="Updated patterns",
+                author="community",
+                tags=["python"],
+                retain_mission="Extract patterns.",
+                reflect_mission="You are an engineer.",
+                retain_extraction_mode="verbose",
+                entity_labels=[],
+                directive_seeds=[],
+                mental_model_seeds=[],
+            )
+        assert isinstance(result, TemplateRecord)
+        assert result.version == "3.0.0"
