@@ -6,7 +6,7 @@ mod commands;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand, ValueEnum};
-use commands::{group::GroupCommands, user::UserCommands};
+use commands::{group::GroupCommands, policy::PolicyCommands, user::UserCommands};
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum Format {
@@ -60,6 +60,10 @@ enum AdminCommands {
     /// Manage groups
     #[command(subcommand)]
     Group(GroupCommands),
+
+    /// Manage policies
+    #[command(subcommand)]
+    Policy(PolicyCommands),
 }
 
 #[tokio::main]
@@ -74,6 +78,7 @@ async fn main() -> Result<()> {
             match admin_cmd {
                 AdminCommands::User(cmd) => commands::user::run(cmd, conn, format, cli.yes).await,
                 AdminCommands::Group(cmd) => commands::group::run(cmd, conn, format, cli.yes).await,
+                AdminCommands::Policy(cmd) => commands::policy::run(cmd, conn, format, cli.yes).await,
             }
         }
     }
