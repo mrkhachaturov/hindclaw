@@ -3,10 +3,10 @@ from unittest.mock import patch, AsyncMock
 
 import pytest
 
-from hindclaw_ext.validator import HindclawValidator, _resolve_user_access, _resolve_public_access
+from hindclaw_ext.validator import HindclawValidator, _resolve_user_access, _resolve_public_access, _TOOL_ACTION_MAP
 from hindclaw_ext.tenant import _jwt_claims
 from hindclaw_ext.policy_engine import AccessResult
-from tests.helpers import FakeRecallContext, FakeRetainContext, FakeReflectContext
+from tests.helpers import FakeRecallContext, FakeRetainContext, FakeReflectContext, FakeRequestContext
 
 
 @pytest.fixture(autouse=True)
@@ -310,3 +310,49 @@ def test_internal_check_true_when_no_auth():
     assert validator._is_internal_server_call(
         FakeRequestContext(api_key=None, tenant_id=None)
     )
+
+
+# --- filter_mcp_tools ---
+
+@pytest.mark.asyncio
+async def test_filter_mcp_tools_recall_only():
+    """User with only bank:recall sees read tools, not write or admin."""
+    validator = HindclawValidator({})
+    ctx = FakeRequestContext(tenant_id="alice")
+
+    all_tools = frozenset({
+        "recall", "retain", "reflect",
+        "list_memories", "get_memory", "delete_memory",
+        "list_mental_models", "create_mental_model",
+        "get_bank", "update_bank",
+    })
+
+    recall_allowed = AccessResult(allowed=True)
+    retain_denied = AccessResult(allowed=False)
+    reflect_denied = AccessResult(allowed=False)
+    admin_denied = AccessResult(allowed=False)
+
+    async def mock_resolve(tenant_id, action, bank_id):
+        if action == "bank:recall":
+            return recall_allowed
+        if action == "bank:retain":
+            return retain_denied
+        if action == "bank:reflect":
+            return reflect_denied
+        if action == "bank:admin":
+            return admin_denied
+        return AccessResult(allowed=False)
+
+    with patch("hindclaw_ext.validator._resolve_user_access", side_effect=mock_resolve):
+        result = await validator.filter_mcp_tools("test-bank", ctx, all_tools)
+
+    assert "recall" in result
+    assert "list_memories" in result
+    assert "get_memory" in result
+    assert "list_mental_models" in result
+    assert "get_bank" in result
+    assert "retain" not in result
+    assert "delete_memory" not in result
+    assert "create_mental_model" not in result
+    assert "reflect" not in result
+    assert "update_bank" not in result

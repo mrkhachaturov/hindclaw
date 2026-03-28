@@ -35,6 +35,42 @@ _tag_group_adapter = TypeAdapter(list[TagGroup])
 
 logger = logging.getLogger(__name__)
 
+_TOOL_ACTION_MAP: dict[str, str] = {
+    # bank:recall — read operations
+    "recall": "bank:recall",
+    "list_memories": "bank:recall",
+    "get_memory": "bank:recall",
+    "list_mental_models": "bank:recall",
+    "get_mental_model": "bank:recall",
+    "list_directives": "bank:recall",
+    "list_documents": "bank:recall",
+    "get_document": "bank:recall",
+    "list_operations": "bank:recall",
+    "get_operation": "bank:recall",
+    "list_tags": "bank:recall",
+    "get_bank": "bank:recall",
+    "get_bank_stats": "bank:recall",
+    "list_banks": "bank:recall",
+    # bank:retain — write/mutate operations
+    "retain": "bank:retain",
+    "delete_memory": "bank:retain",
+    "clear_memories": "bank:retain",
+    "create_mental_model": "bank:retain",
+    "update_mental_model": "bank:retain",
+    "delete_mental_model": "bank:retain",
+    "refresh_mental_model": "bank:retain",
+    "create_directive": "bank:retain",
+    "delete_directive": "bank:retain",
+    "delete_document": "bank:retain",
+    "cancel_operation": "bank:retain",
+    # bank:reflect — reasoning
+    "reflect": "bank:reflect",
+    # bank:admin — bank-level management
+    "update_bank": "bank:admin",
+    "delete_bank": "bank:admin",
+    "create_bank": "bank:admin",
+}
+
 
 async def _resolve_user_access(user_id: str, action: str, bank_id: str) -> AccessResult:
     """Resolve a user's effective access for an action on a bank.
@@ -283,3 +319,44 @@ class HindclawValidator(OperationValidatorExtension):
             return ValidationResult.reject(f"reflect denied for {tenant_id} on {ctx.bank_id}")
 
         return ValidationResult.accept()
+
+    async def filter_mcp_tools(
+        self,
+        bank_id: str,
+        request_context,
+        tools: frozenset[str],
+    ) -> frozenset[str]:
+        """
+        Filter MCP tools based on user's policy access.
+
+        Maps each tool to a policy action and checks access. Caches
+        per-action to minimize policy evaluations (3-4 calls, not 30).
+        Unknown tools pass through (fail-open).
+
+        Args:
+            bank_id: Target bank ID.
+            request_context: Authenticated context with tenant_id.
+            tools: Tools to filter.
+
+        Returns:
+            Subset of tools the user is allowed to use.
+        """
+        tenant_id = getattr(request_context, "tenant_id", None)
+        if not tenant_id:
+            return tools
+
+        access_cache: dict[str, bool] = {}
+        visible: set[str] = set()
+
+        for tool in tools:
+            action = _TOOL_ACTION_MAP.get(tool)
+            if action is None:
+                visible.add(tool)
+                continue
+            if action not in access_cache:
+                result = await self._resolve_access(tenant_id, action, bank_id)
+                access_cache[action] = result.allowed
+            if access_cache[action]:
+                visible.add(tool)
+
+        return frozenset(visible)
