@@ -1,6 +1,7 @@
 mod api;
 mod config;
 mod output;
+mod template_ref;
 mod ui;
 mod commands;
 
@@ -8,7 +9,8 @@ use anyhow::Result;
 use clap::{Parser, Subcommand, ValueEnum};
 use commands::{
     group::GroupCommands, policy::PolicyCommands, resolve::ResolveArgs,
-    sa::SaCommands, bank_policy::BankPolicyCommands, user::UserCommands,
+    sa::SaCommands, bank_policy::BankPolicyCommands, source::SourceCommands,
+    template::TemplateCommands, user::UserCommands,
 };
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -49,6 +51,10 @@ enum Commands {
     #[command(subcommand)]
     Alias(commands::alias::AliasCommands),
 
+    /// Manage templates (list, search, install, apply, ...)
+    #[command(subcommand)]
+    Template(TemplateCommands),
+
     /// Admin operations (users, groups, policies, ...)
     #[command(subcommand)]
     Admin(AdminCommands),
@@ -78,6 +84,10 @@ enum AdminCommands {
 
     /// Debug access resolution
     Resolve(ResolveArgs),
+
+    /// Manage marketplace sources
+    #[command(subcommand)]
+    Source(SourceCommands),
 }
 
 #[tokio::main]
@@ -87,6 +97,10 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Commands::Alias(cmd) => commands::alias::run(cmd, format, cli.yes).await,
+        Commands::Template(cmd) => {
+            let conn = config::resolve_connection(cli.alias.as_deref())?;
+            commands::template::run(cmd, conn, format, cli.yes).await
+        }
         Commands::Admin(admin_cmd) => {
             let conn = config::resolve_connection(cli.alias.as_deref())?;
             match admin_cmd {
@@ -96,6 +110,7 @@ async fn main() -> Result<()> {
                 AdminCommands::Sa(cmd) => commands::sa::run(cmd, conn, format, cli.yes).await,
                 AdminCommands::BankPolicy(cmd) => commands::bank_policy::run(cmd, conn, format, cli.yes).await,
                 AdminCommands::Resolve(args) => commands::resolve::run(args, conn, format).await,
+                AdminCommands::Source(cmd) => commands::source::run(cmd, conn, format, cli.yes).await,
             }
         }
     }
