@@ -1,5 +1,7 @@
 """Tests for response model imports and field shapes."""
 
+import pytest
+
 from hindclaw_ext.http_models import (
     UserResponse,
     ChannelResponse,
@@ -107,3 +109,42 @@ def test_debug_resolve_response():
     from hindclaw_ext.http_models import DebugResolveResponse
     r = DebugResolveResponse(tenant_id="alice", principal_type="user", access={"allowed": True, "recall_budget": "high"}, bank_policy=None)
     assert r.principal_type == "user"
+
+
+def test_create_self_service_account_request_no_owner():
+    """CreateSelfServiceAccountRequest has no owner_user_id field."""
+    from hindclaw_ext.http_models import CreateSelfServiceAccountRequest
+
+    req = CreateSelfServiceAccountRequest(id="my-sa", display_name="My SA")
+    assert req.id == "my-sa"
+    assert req.display_name == "My SA"
+    assert req.scoping_policy_id is None
+    assert "owner_user_id" not in CreateSelfServiceAccountRequest.model_fields
+
+
+def test_create_self_service_account_request_rejects_extra_fields():
+    """CreateSelfServiceAccountRequest rejects unknown fields."""
+    from pydantic import ValidationError
+    from hindclaw_ext.http_models import CreateSelfServiceAccountRequest
+
+    with pytest.raises(ValidationError, match="extra"):
+        CreateSelfServiceAccountRequest(id="sa", display_name="SA", owner_user_id="bob")
+
+
+def test_update_self_service_account_request_display_name_only():
+    """UpdateSelfServiceAccountRequest only accepts display_name."""
+    from hindclaw_ext.http_models import UpdateSelfServiceAccountRequest
+
+    req = UpdateSelfServiceAccountRequest(display_name="New Name")
+    assert req.display_name == "New Name"
+    assert "scoping_policy_id" not in UpdateSelfServiceAccountRequest.model_fields
+    assert "is_active" not in UpdateSelfServiceAccountRequest.model_fields
+
+
+def test_update_self_service_account_request_rejects_extra_fields():
+    """UpdateSelfServiceAccountRequest rejects unknown fields."""
+    from pydantic import ValidationError
+    from hindclaw_ext.http_models import UpdateSelfServiceAccountRequest
+
+    with pytest.raises(ValidationError, match="extra"):
+        UpdateSelfServiceAccountRequest(display_name="OK", scoping_policy_id="nope")

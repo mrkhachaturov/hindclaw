@@ -176,6 +176,30 @@ class UpdateServiceAccountRequest(BaseModel):
     is_active: bool | None = None
 
 
+class CreateSelfServiceAccountRequest(BaseModel):
+    """Self-service SA creation — owner is always the authenticated caller."""
+
+    model_config = {"extra": "forbid"}
+
+    id: str
+    display_name: str
+    scoping_policy_id: str | None = None
+
+
+class UpdateSelfServiceAccountRequest(BaseModel):
+    """Self-service SA update — only display_name is mutable.
+
+    Scoping policy and activation state are admin-only operations.
+    An SA authenticates as its owner, so without this restriction an SA
+    could remove its own scoping policy and escalate to the parent user's
+    full permissions.
+    """
+
+    model_config = {"extra": "forbid"}
+
+    display_name: str
+
+
 class ServiceAccountResponse(BaseModel):
     """Service account resource."""
 
