@@ -241,6 +241,26 @@ export type CreateSaKeyRequest = {
 };
 
 /**
+ * CreateSelfServiceAccountRequest
+ *
+ * Self-service SA creation — owner is always the authenticated caller.
+ */
+export type CreateSelfServiceAccountRequest = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Display Name
+     */
+    display_name: string;
+    /**
+     * Scoping Policy Id
+     */
+    scoping_policy_id?: string;
+};
+
+/**
  * CreateServiceAccountRequest
  *
  * Request to create a service account.
@@ -1118,6 +1138,23 @@ export type UpdatePolicyRequest = {
     document?: {
         [key: string]: unknown;
     };
+};
+
+/**
+ * UpdateSelfServiceAccountRequest
+ *
+ * Self-service SA update — only display_name is mutable.
+ *
+ * Scoping policy and activation state are admin-only operations.
+ * An SA authenticates as its owner, so without this restriction an SA
+ * could remove its own scoping policy and escalate to the parent user's
+ * full permissions.
+ */
+export type UpdateSelfServiceAccountRequest = {
+    /**
+     * Display Name
+     */
+    display_name: string;
 };
 
 /**
@@ -2123,6 +2160,235 @@ export type DeletePolicyAttachmentResponses = {
 };
 
 export type DeletePolicyAttachmentResponse = DeletePolicyAttachmentResponses[keyof DeletePolicyAttachmentResponses];
+
+export type ListMyServiceAccountsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/me/service-accounts';
+};
+
+export type ListMyServiceAccountsResponses = {
+    /**
+     * Response List My Service Accounts
+     *
+     * Successful Response
+     */
+    200: Array<ServiceAccountResponse>;
+};
+
+export type ListMyServiceAccountsResponse = ListMyServiceAccountsResponses[keyof ListMyServiceAccountsResponses];
+
+export type CreateMyServiceAccountData = {
+    body: CreateSelfServiceAccountRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/me/service-accounts';
+};
+
+export type CreateMyServiceAccountErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateMyServiceAccountError = CreateMyServiceAccountErrors[keyof CreateMyServiceAccountErrors];
+
+export type CreateMyServiceAccountResponses = {
+    /**
+     * Successful Response
+     */
+    201: ServiceAccountResponse;
+};
+
+export type CreateMyServiceAccountResponse = CreateMyServiceAccountResponses[keyof CreateMyServiceAccountResponses];
+
+export type DeleteMyServiceAccountData = {
+    body?: never;
+    path: {
+        /**
+         * Sa Id
+         */
+        sa_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/me/service-accounts/{sa_id}';
+};
+
+export type DeleteMyServiceAccountErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteMyServiceAccountError = DeleteMyServiceAccountErrors[keyof DeleteMyServiceAccountErrors];
+
+export type DeleteMyServiceAccountResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteMyServiceAccountResponse = DeleteMyServiceAccountResponses[keyof DeleteMyServiceAccountResponses];
+
+export type GetMyServiceAccountData = {
+    body?: never;
+    path: {
+        /**
+         * Sa Id
+         */
+        sa_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/me/service-accounts/{sa_id}';
+};
+
+export type GetMyServiceAccountErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetMyServiceAccountError = GetMyServiceAccountErrors[keyof GetMyServiceAccountErrors];
+
+export type GetMyServiceAccountResponses = {
+    /**
+     * Successful Response
+     */
+    200: ServiceAccountResponse;
+};
+
+export type GetMyServiceAccountResponse = GetMyServiceAccountResponses[keyof GetMyServiceAccountResponses];
+
+export type UpdateMyServiceAccountData = {
+    body: UpdateSelfServiceAccountRequest;
+    path: {
+        /**
+         * Sa Id
+         */
+        sa_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/me/service-accounts/{sa_id}';
+};
+
+export type UpdateMyServiceAccountErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateMyServiceAccountError = UpdateMyServiceAccountErrors[keyof UpdateMyServiceAccountErrors];
+
+export type UpdateMyServiceAccountResponses = {
+    /**
+     * Successful Response
+     */
+    200: ServiceAccountResponse;
+};
+
+export type UpdateMyServiceAccountResponse = UpdateMyServiceAccountResponses[keyof UpdateMyServiceAccountResponses];
+
+export type ListMySaKeysData = {
+    body?: never;
+    path: {
+        /**
+         * Sa Id
+         */
+        sa_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/me/service-accounts/{sa_id}/keys';
+};
+
+export type ListMySaKeysErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListMySaKeysError = ListMySaKeysErrors[keyof ListMySaKeysErrors];
+
+export type ListMySaKeysResponses = {
+    /**
+     * Response List My Sa Keys
+     *
+     * Successful Response
+     */
+    200: Array<SaKeyResponse>;
+};
+
+export type ListMySaKeysResponse = ListMySaKeysResponses[keyof ListMySaKeysResponses];
+
+export type CreateMySaKeyData = {
+    body: CreateSaKeyRequest;
+    path: {
+        /**
+         * Sa Id
+         */
+        sa_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/me/service-accounts/{sa_id}/keys';
+};
+
+export type CreateMySaKeyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateMySaKeyError = CreateMySaKeyErrors[keyof CreateMySaKeyErrors];
+
+export type CreateMySaKeyResponses = {
+    /**
+     * Successful Response
+     */
+    201: SaKeyCreateResponse;
+};
+
+export type CreateMySaKeyResponse = CreateMySaKeyResponses[keyof CreateMySaKeyResponses];
+
+export type DeleteMySaKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Sa Id
+         */
+        sa_id: string;
+        /**
+         * Key Id
+         */
+        key_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/me/service-accounts/{sa_id}/keys/{key_id}';
+};
+
+export type DeleteMySaKeyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteMySaKeyError = DeleteMySaKeyErrors[keyof DeleteMySaKeyErrors];
+
+export type DeleteMySaKeyResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteMySaKeyResponse = DeleteMySaKeyResponses[keyof DeleteMySaKeyResponses];
 
 export type ListServiceAccountsData = {
     body?: never;

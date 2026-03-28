@@ -88,6 +88,31 @@ type DefaultAPI interface {
 	CreateGroupExecute(r DefaultAPICreateGroupRequest) (*GroupSummaryResponse, *http.Response, error)
 
 	/*
+	CreateMySaKey Create My Sa Key
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param saId
+	@return DefaultAPICreateMySaKeyRequest
+	*/
+	CreateMySaKey(ctx context.Context, saId string) DefaultAPICreateMySaKeyRequest
+
+	// CreateMySaKeyExecute executes the request
+	//  @return SAKeyCreateResponse
+	CreateMySaKeyExecute(r DefaultAPICreateMySaKeyRequest) (*SAKeyCreateResponse, *http.Response, error)
+
+	/*
+	CreateMyServiceAccount Create My Service Account
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return DefaultAPICreateMyServiceAccountRequest
+	*/
+	CreateMyServiceAccount(ctx context.Context) DefaultAPICreateMyServiceAccountRequest
+
+	// CreateMyServiceAccountExecute executes the request
+	//  @return ServiceAccountResponse
+	CreateMyServiceAccountExecute(r DefaultAPICreateMyServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error)
+
+	/*
 	CreatePolicy Create Policy
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -226,6 +251,31 @@ Raises:
 	DeleteGroupExecute(r DefaultAPIDeleteGroupRequest) (*http.Response, error)
 
 	/*
+	DeleteMySaKey Delete My Sa Key
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param saId
+	@param keyId
+	@return DefaultAPIDeleteMySaKeyRequest
+	*/
+	DeleteMySaKey(ctx context.Context, saId string, keyId string) DefaultAPIDeleteMySaKeyRequest
+
+	// DeleteMySaKeyExecute executes the request
+	DeleteMySaKeyExecute(r DefaultAPIDeleteMySaKeyRequest) (*http.Response, error)
+
+	/*
+	DeleteMyServiceAccount Delete My Service Account
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param saId
+	@return DefaultAPIDeleteMyServiceAccountRequest
+	*/
+	DeleteMyServiceAccount(ctx context.Context, saId string) DefaultAPIDeleteMyServiceAccountRequest
+
+	// DeleteMyServiceAccountExecute executes the request
+	DeleteMyServiceAccountExecute(r DefaultAPIDeleteMyServiceAccountRequest) (*http.Response, error)
+
+	/*
 	DeletePolicy Delete Policy Endpoint
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -352,6 +402,19 @@ Raises:
 	GetGroupExecute(r DefaultAPIGetGroupRequest) (*GroupSummaryResponse, *http.Response, error)
 
 	/*
+	GetMyServiceAccount Get My Service Account
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param saId
+	@return DefaultAPIGetMyServiceAccountRequest
+	*/
+	GetMyServiceAccount(ctx context.Context, saId string) DefaultAPIGetMyServiceAccountRequest
+
+	// GetMyServiceAccountExecute executes the request
+	//  @return ServiceAccountResponse
+	GetMyServiceAccountExecute(r DefaultAPIGetMyServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error)
+
+	/*
 	GetPolicy Get Policy Endpoint
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
@@ -380,7 +443,10 @@ Raises:
 	/*
 	GetTemplate Get Template Endpoint
 
-	Get a custom template by scope and name.
+	Get a template by scope and name.
+
+Finds any template matching (scope, name) regardless of source.
+This covers both custom templates and marketplace-installed ones.
 
 Args:
     scope: Template scope ('server' or 'personal').
@@ -470,6 +536,31 @@ Raises:
 	// ListGroupsExecute executes the request
 	//  @return []GroupSummaryResponse
 	ListGroupsExecute(r DefaultAPIListGroupsRequest) ([]GroupSummaryResponse, *http.Response, error)
+
+	/*
+	ListMySaKeys List My Sa Keys
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param saId
+	@return DefaultAPIListMySaKeysRequest
+	*/
+	ListMySaKeys(ctx context.Context, saId string) DefaultAPIListMySaKeysRequest
+
+	// ListMySaKeysExecute executes the request
+	//  @return []SAKeyResponse
+	ListMySaKeysExecute(r DefaultAPIListMySaKeysRequest) ([]SAKeyResponse, *http.Response, error)
+
+	/*
+	ListMyServiceAccounts List My Service Accounts
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return DefaultAPIListMyServiceAccountsRequest
+	*/
+	ListMyServiceAccounts(ctx context.Context) DefaultAPIListMyServiceAccountsRequest
+
+	// ListMyServiceAccountsExecute executes the request
+	//  @return []ServiceAccountResponse
+	ListMyServiceAccountsExecute(r DefaultAPIListMyServiceAccountsRequest) ([]ServiceAccountResponse, *http.Response, error)
 
 	/*
 	ListPolicies List Policies
@@ -636,6 +727,19 @@ Returns:
 	// UpdateGroupExecute executes the request
 	//  @return GroupSummaryResponse
 	UpdateGroupExecute(r DefaultAPIUpdateGroupRequest) (*GroupSummaryResponse, *http.Response, error)
+
+	/*
+	UpdateMyServiceAccount Update My Service Account
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param saId
+	@return DefaultAPIUpdateMyServiceAccountRequest
+	*/
+	UpdateMyServiceAccount(ctx context.Context, saId string) DefaultAPIUpdateMyServiceAccountRequest
+
+	// UpdateMyServiceAccountExecute executes the request
+	//  @return ServiceAccountResponse
+	UpdateMyServiceAccountExecute(r DefaultAPIUpdateMyServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error)
 
 	/*
 	UpdatePolicy Update Policy Endpoint
@@ -1312,6 +1416,246 @@ func (a *DefaultAPIService) CreateGroupExecute(r DefaultAPICreateGroupRequest) (
 	}
 	// body params
 	localVarPostBody = r.createGroupRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPICreateMySaKeyRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	saId string
+	createSAKeyRequest *CreateSAKeyRequest
+}
+
+func (r DefaultAPICreateMySaKeyRequest) CreateSAKeyRequest(createSAKeyRequest CreateSAKeyRequest) DefaultAPICreateMySaKeyRequest {
+	r.createSAKeyRequest = &createSAKeyRequest
+	return r
+}
+
+func (r DefaultAPICreateMySaKeyRequest) Execute() (*SAKeyCreateResponse, *http.Response, error) {
+	return r.ApiService.CreateMySaKeyExecute(r)
+}
+
+/*
+CreateMySaKey Create My Sa Key
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param saId
+ @return DefaultAPICreateMySaKeyRequest
+*/
+func (a *DefaultAPIService) CreateMySaKey(ctx context.Context, saId string) DefaultAPICreateMySaKeyRequest {
+	return DefaultAPICreateMySaKeyRequest{
+		ApiService: a,
+		ctx: ctx,
+		saId: saId,
+	}
+}
+
+// Execute executes the request
+//  @return SAKeyCreateResponse
+func (a *DefaultAPIService) CreateMySaKeyExecute(r DefaultAPICreateMySaKeyRequest) (*SAKeyCreateResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *SAKeyCreateResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreateMySaKey")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/me/service-accounts/{sa_id}/keys"
+	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.createSAKeyRequest == nil {
+		return localVarReturnValue, nil, reportError("createSAKeyRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.createSAKeyRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPICreateMyServiceAccountRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	createSelfServiceAccountRequest *CreateSelfServiceAccountRequest
+}
+
+func (r DefaultAPICreateMyServiceAccountRequest) CreateSelfServiceAccountRequest(createSelfServiceAccountRequest CreateSelfServiceAccountRequest) DefaultAPICreateMyServiceAccountRequest {
+	r.createSelfServiceAccountRequest = &createSelfServiceAccountRequest
+	return r
+}
+
+func (r DefaultAPICreateMyServiceAccountRequest) Execute() (*ServiceAccountResponse, *http.Response, error) {
+	return r.ApiService.CreateMyServiceAccountExecute(r)
+}
+
+/*
+CreateMyServiceAccount Create My Service Account
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return DefaultAPICreateMyServiceAccountRequest
+*/
+func (a *DefaultAPIService) CreateMyServiceAccount(ctx context.Context) DefaultAPICreateMyServiceAccountRequest {
+	return DefaultAPICreateMyServiceAccountRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return ServiceAccountResponse
+func (a *DefaultAPIService) CreateMyServiceAccountExecute(r DefaultAPICreateMyServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ServiceAccountResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.CreateMyServiceAccount")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/me/service-accounts"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.createSelfServiceAccountRequest == nil {
+		return localVarReturnValue, nil, reportError("createSelfServiceAccountRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.createSelfServiceAccountRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -2547,6 +2891,210 @@ func (a *DefaultAPIService) DeleteGroupExecute(r DefaultAPIDeleteGroupRequest) (
 	return localVarHTTPResponse, nil
 }
 
+type DefaultAPIDeleteMySaKeyRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	saId string
+	keyId string
+}
+
+func (r DefaultAPIDeleteMySaKeyRequest) Execute() (*http.Response, error) {
+	return r.ApiService.DeleteMySaKeyExecute(r)
+}
+
+/*
+DeleteMySaKey Delete My Sa Key
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param saId
+ @param keyId
+ @return DefaultAPIDeleteMySaKeyRequest
+*/
+func (a *DefaultAPIService) DeleteMySaKey(ctx context.Context, saId string, keyId string) DefaultAPIDeleteMySaKeyRequest {
+	return DefaultAPIDeleteMySaKeyRequest{
+		ApiService: a,
+		ctx: ctx,
+		saId: saId,
+		keyId: keyId,
+	}
+}
+
+// Execute executes the request
+func (a *DefaultAPIService) DeleteMySaKeyExecute(r DefaultAPIDeleteMySaKeyRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteMySaKey")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/me/service-accounts/{sa_id}/keys/{key_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"key_id"+"}", url.PathEscape(parameterValueToString(r.keyId, "keyId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+type DefaultAPIDeleteMyServiceAccountRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	saId string
+}
+
+func (r DefaultAPIDeleteMyServiceAccountRequest) Execute() (*http.Response, error) {
+	return r.ApiService.DeleteMyServiceAccountExecute(r)
+}
+
+/*
+DeleteMyServiceAccount Delete My Service Account
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param saId
+ @return DefaultAPIDeleteMyServiceAccountRequest
+*/
+func (a *DefaultAPIService) DeleteMyServiceAccount(ctx context.Context, saId string) DefaultAPIDeleteMyServiceAccountRequest {
+	return DefaultAPIDeleteMyServiceAccountRequest{
+		ApiService: a,
+		ctx: ctx,
+		saId: saId,
+	}
+}
+
+// Execute executes the request
+func (a *DefaultAPIService) DeleteMyServiceAccountExecute(r DefaultAPIDeleteMyServiceAccountRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.DeleteMyServiceAccount")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/me/service-accounts/{sa_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
 type DefaultAPIDeletePolicyRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
@@ -3497,6 +4045,117 @@ func (a *DefaultAPIService) GetGroupExecute(r DefaultAPIGetGroupRequest) (*Group
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type DefaultAPIGetMyServiceAccountRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	saId string
+}
+
+func (r DefaultAPIGetMyServiceAccountRequest) Execute() (*ServiceAccountResponse, *http.Response, error) {
+	return r.ApiService.GetMyServiceAccountExecute(r)
+}
+
+/*
+GetMyServiceAccount Get My Service Account
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param saId
+ @return DefaultAPIGetMyServiceAccountRequest
+*/
+func (a *DefaultAPIService) GetMyServiceAccount(ctx context.Context, saId string) DefaultAPIGetMyServiceAccountRequest {
+	return DefaultAPIGetMyServiceAccountRequest{
+		ApiService: a,
+		ctx: ctx,
+		saId: saId,
+	}
+}
+
+// Execute executes the request
+//  @return ServiceAccountResponse
+func (a *DefaultAPIService) GetMyServiceAccountExecute(r DefaultAPIGetMyServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ServiceAccountResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.GetMyServiceAccount")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/me/service-accounts/{sa_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type DefaultAPIGetPolicyRequest struct {
 	ctx context.Context
 	ApiService DefaultAPI
@@ -3733,7 +4392,10 @@ func (r DefaultAPIGetTemplateRequest) Execute() (*TemplateResponse, *http.Respon
 /*
 GetTemplate Get Template Endpoint
 
-Get a custom template by scope and name.
+Get a template by scope and name.
+
+Finds any template matching (scope, name) regardless of source.
+This covers both custom templates and marketplace-installed ones.
 
 Args:
     scope: Template scope ('server' or 'personal').
@@ -4340,6 +5002,214 @@ func (a *DefaultAPIService) ListGroupsExecute(r DefaultAPIListGroupsRequest) ([]
 	}
 
 	localVarPath := localBasePath + "/ext/hindclaw/groups"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIListMySaKeysRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	saId string
+}
+
+func (r DefaultAPIListMySaKeysRequest) Execute() ([]SAKeyResponse, *http.Response, error) {
+	return r.ApiService.ListMySaKeysExecute(r)
+}
+
+/*
+ListMySaKeys List My Sa Keys
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param saId
+ @return DefaultAPIListMySaKeysRequest
+*/
+func (a *DefaultAPIService) ListMySaKeys(ctx context.Context, saId string) DefaultAPIListMySaKeysRequest {
+	return DefaultAPIListMySaKeysRequest{
+		ApiService: a,
+		ctx: ctx,
+		saId: saId,
+	}
+}
+
+// Execute executes the request
+//  @return []SAKeyResponse
+func (a *DefaultAPIService) ListMySaKeysExecute(r DefaultAPIListMySaKeysRequest) ([]SAKeyResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  []SAKeyResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListMySaKeys")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/me/service-accounts/{sa_id}/keys"
+	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIListMyServiceAccountsRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+}
+
+func (r DefaultAPIListMyServiceAccountsRequest) Execute() ([]ServiceAccountResponse, *http.Response, error) {
+	return r.ApiService.ListMyServiceAccountsExecute(r)
+}
+
+/*
+ListMyServiceAccounts List My Service Accounts
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return DefaultAPIListMyServiceAccountsRequest
+*/
+func (a *DefaultAPIService) ListMyServiceAccounts(ctx context.Context) DefaultAPIListMyServiceAccountsRequest {
+	return DefaultAPIListMyServiceAccountsRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return []ServiceAccountResponse
+func (a *DefaultAPIService) ListMyServiceAccountsExecute(r DefaultAPIListMyServiceAccountsRequest) ([]ServiceAccountResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  []ServiceAccountResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.ListMyServiceAccounts")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/me/service-accounts"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -5682,6 +6552,128 @@ func (a *DefaultAPIService) UpdateGroupExecute(r DefaultAPIUpdateGroupRequest) (
 	}
 	// body params
 	localVarPostBody = r.updateGroupRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type DefaultAPIUpdateMyServiceAccountRequest struct {
+	ctx context.Context
+	ApiService DefaultAPI
+	saId string
+	updateSelfServiceAccountRequest *UpdateSelfServiceAccountRequest
+}
+
+func (r DefaultAPIUpdateMyServiceAccountRequest) UpdateSelfServiceAccountRequest(updateSelfServiceAccountRequest UpdateSelfServiceAccountRequest) DefaultAPIUpdateMyServiceAccountRequest {
+	r.updateSelfServiceAccountRequest = &updateSelfServiceAccountRequest
+	return r
+}
+
+func (r DefaultAPIUpdateMyServiceAccountRequest) Execute() (*ServiceAccountResponse, *http.Response, error) {
+	return r.ApiService.UpdateMyServiceAccountExecute(r)
+}
+
+/*
+UpdateMyServiceAccount Update My Service Account
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param saId
+ @return DefaultAPIUpdateMyServiceAccountRequest
+*/
+func (a *DefaultAPIService) UpdateMyServiceAccount(ctx context.Context, saId string) DefaultAPIUpdateMyServiceAccountRequest {
+	return DefaultAPIUpdateMyServiceAccountRequest{
+		ApiService: a,
+		ctx: ctx,
+		saId: saId,
+	}
+}
+
+// Execute executes the request
+//  @return ServiceAccountResponse
+func (a *DefaultAPIService) UpdateMyServiceAccountExecute(r DefaultAPIUpdateMyServiceAccountRequest) (*ServiceAccountResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPut
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *ServiceAccountResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DefaultAPIService.UpdateMyServiceAccount")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/ext/hindclaw/me/service-accounts/{sa_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"sa_id"+"}", url.PathEscape(parameterValueToString(r.saId, "saId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.updateSelfServiceAccountRequest == nil {
+		return localVarReturnValue, nil, reportError("updateSelfServiceAccountRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.updateSelfServiceAccountRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

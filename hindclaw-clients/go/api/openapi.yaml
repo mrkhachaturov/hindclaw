@@ -763,6 +763,224 @@ paths:
       security:
       - HTTPBearer: []
       summary: Delete Attachment
+  /ext/hindclaw/me/service-accounts:
+    get:
+      operationId: list_my_service_accounts
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ServiceAccountResponse'
+                type: array
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: List My Service Accounts
+    post:
+      operationId: create_my_service_account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSelfServiceAccountRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAccountResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create My Service Account
+  /ext/hindclaw/me/service-accounts/{sa_id}:
+    delete:
+      operationId: delete_my_service_account
+      parameters:
+      - explode: false
+        in: path
+        name: sa_id
+        required: true
+        schema:
+          title: Sa Id
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete My Service Account
+    get:
+      operationId: get_my_service_account
+      parameters:
+      - explode: false
+        in: path
+        name: sa_id
+        required: true
+        schema:
+          title: Sa Id
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAccountResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Get My Service Account
+    put:
+      operationId: update_my_service_account
+      parameters:
+      - explode: false
+        in: path
+        name: sa_id
+        required: true
+        schema:
+          title: Sa Id
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSelfServiceAccountRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAccountResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Update My Service Account
+  /ext/hindclaw/me/service-accounts/{sa_id}/keys:
+    get:
+      operationId: list_my_sa_keys
+      parameters:
+      - explode: false
+        in: path
+        name: sa_id
+        required: true
+        schema:
+          title: Sa Id
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SAKeyResponse'
+                type: array
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: List My Sa Keys
+    post:
+      operationId: create_my_sa_key
+      parameters:
+      - explode: false
+        in: path
+        name: sa_id
+        required: true
+        schema:
+          title: Sa Id
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSAKeyRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SAKeyCreateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create My Sa Key
+  /ext/hindclaw/me/service-accounts/{sa_id}/keys/{key_id}:
+    delete:
+      operationId: delete_my_sa_key
+      parameters:
+      - explode: false
+        in: path
+        name: sa_id
+        required: true
+        schema:
+          title: Sa Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: key_id
+        required: true
+        schema:
+          title: Key Id
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete My Sa Key
   /ext/hindclaw/service-accounts:
     get:
       operationId: list_service_accounts
@@ -1249,7 +1467,10 @@ paths:
       summary: Delete Template Endpoint
     get:
       description: |-
-        Get a custom template by scope and name.
+        Get a template by scope and name.
+
+        Finds any template matching (scope, name) regardless of source.
+        This covers both custom templates and marketplace-installed ones.
 
         Args:
             scope: Template scope ('server' or 'personal').
@@ -1842,6 +2063,28 @@ components:
           type: string
           nullable: true
       title: CreateSAKeyRequest
+    CreateSelfServiceAccountRequest:
+      additionalProperties: true
+      description: Self-service SA creation — owner is always the authenticated caller.
+      example:
+        id: id
+        display_name: display_name
+        scoping_policy_id: scoping_policy_id
+      properties:
+        id:
+          title: Id
+          type: string
+        display_name:
+          title: Display Name
+          type: string
+        scoping_policy_id:
+          title: Scoping Policy Id
+          type: string
+          nullable: true
+      required:
+      - display_name
+      - id
+      title: CreateSelfServiceAccountRequest
     CreateServiceAccountRequest:
       description: Request to create a service account.
       example:
@@ -2980,6 +3223,24 @@ components:
           type: object
           nullable: true
       title: UpdatePolicyRequest
+    UpdateSelfServiceAccountRequest:
+      additionalProperties: true
+      description: |-
+        Self-service SA update — only display_name is mutable.
+
+        Scoping policy and activation state are admin-only operations.
+        An SA authenticates as its owner, so without this restriction an SA
+        could remove its own scoping policy and escalate to the parent user's
+        full permissions.
+      example:
+        display_name: display_name
+      properties:
+        display_name:
+          title: Display Name
+          type: string
+      required:
+      - display_name
+      title: UpdateSelfServiceAccountRequest
     UpdateServiceAccountRequest:
       description: Request to update a service account.
       example:

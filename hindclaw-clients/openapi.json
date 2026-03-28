@@ -1195,6 +1195,351 @@
         }
       }
     },
+    "/ext/hindclaw/me/service-accounts": {
+      "get": {
+        "summary": "List My Service Accounts",
+        "operationId": "list_my_service_accounts",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ServiceAccountResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List My Service Accounts"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create My Service Account",
+        "operationId": "create_my_service_account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSelfServiceAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/me/service-accounts/{sa_id}": {
+      "get": {
+        "summary": "Get My Service Account",
+        "operationId": "get_my_service_account",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sa Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update My Service Account",
+        "operationId": "update_my_service_account",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sa Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSelfServiceAccountRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceAccountResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete My Service Account",
+        "operationId": "delete_my_service_account",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sa Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/me/service-accounts/{sa_id}/keys": {
+      "get": {
+        "summary": "List My Sa Keys",
+        "operationId": "list_my_sa_keys",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sa Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SAKeyResponse"
+                  },
+                  "title": "Response List My Sa Keys"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create My Sa Key",
+        "operationId": "create_my_sa_key",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sa Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSAKeyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SAKeyCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/me/service-accounts/{sa_id}/keys/{key_id}": {
+      "delete": {
+        "summary": "Delete My Sa Key",
+        "operationId": "delete_my_sa_key",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sa_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sa Id"
+            }
+          },
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/ext/hindclaw/service-accounts": {
       "get": {
         "summary": "List Service Accounts",
@@ -1873,7 +2218,7 @@
     "/ext/hindclaw/templates/{scope}/{name}": {
       "get": {
         "summary": "Get Template Endpoint",
-        "description": "Get a custom template by scope and name.\n\nArgs:\n    scope: Template scope ('server' or 'personal').\n    name: Template name.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    Full template details.\n\nRaises:\n    HTTPException: 404 if template not found.",
+        "description": "Get a template by scope and name.\n\nFinds any template matching (scope, name) regardless of source.\nThis covers both custom templates and marketplace-installed ones.\n\nArgs:\n    scope: Template scope ('server' or 'personal').\n    name: Template name.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    Full template details.\n\nRaises:\n    HTTPException: 404 if template not found.",
         "operationId": "get_template",
         "security": [
           {
@@ -2677,6 +3022,31 @@
         "type": "object",
         "title": "CreateSAKeyRequest",
         "description": "Request to create an SA API key."
+      },
+      "CreateSelfServiceAccountRequest": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "scoping_policy_id": {
+            "title": "Scoping Policy Id",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "display_name"
+        ],
+        "title": "CreateSelfServiceAccountRequest",
+        "description": "Self-service SA creation \u2014 owner is always the authenticated caller."
       },
       "CreateServiceAccountRequest": {
         "properties": {
@@ -3789,6 +4159,21 @@
         "type": "object",
         "title": "UpdatePolicyRequest",
         "description": "Request to update an access policy."
+      },
+      "UpdateSelfServiceAccountRequest": {
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "display_name"
+        ],
+        "title": "UpdateSelfServiceAccountRequest",
+        "description": "Self-service SA update \u2014 only display_name is mutable.\n\nScoping policy and activation state are admin-only operations.\nAn SA authenticates as its owner, so without this restriction an SA\ncould remove its own scoping policy and escalate to the parent user's\nfull permissions."
       },
       "UpdateServiceAccountRequest": {
         "properties": {

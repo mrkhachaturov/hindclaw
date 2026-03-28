@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddGroupMemberData, AddGroupMemberErrors, AddGroupMemberResponses, AddUserChannelData, AddUserChannelErrors, AddUserChannelResponses, CreateApiKeyData, CreateApiKeyErrors, CreateApiKeyResponses, CreateBankFromTemplateData, CreateBankFromTemplateErrors, CreateBankFromTemplateResponses, CreateGroupData, CreateGroupErrors, CreateGroupResponses, CreatePolicyData, CreatePolicyErrors, CreatePolicyResponses, CreateSaKeyData, CreateSaKeyErrors, CreateSaKeyResponses, CreateServiceAccountData, CreateServiceAccountErrors, CreateServiceAccountResponses, CreateTemplateData, CreateTemplateErrors, CreateTemplateResponses, CreateTemplateSourceData, CreateTemplateSourceErrors, CreateTemplateSourceResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DebugResolveData, DebugResolveErrors, DebugResolveResponses, DeleteApiKeyData, DeleteApiKeyErrors, DeleteApiKeyResponses, DeleteBankPolicyData, DeleteBankPolicyErrors, DeleteBankPolicyResponses, DeleteGroupData, DeleteGroupErrors, DeleteGroupResponses, DeletePolicyAttachmentData, DeletePolicyAttachmentErrors, DeletePolicyAttachmentResponses, DeletePolicyData, DeletePolicyErrors, DeletePolicyResponses, DeleteSaKeyData, DeleteSaKeyErrors, DeleteSaKeyResponses, DeleteServiceAccountData, DeleteServiceAccountErrors, DeleteServiceAccountResponses, DeleteTemplateData, DeleteTemplateErrors, DeleteTemplateResponses, DeleteTemplateSourceData, DeleteTemplateSourceErrors, DeleteTemplateSourceResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetBankPolicyData, GetBankPolicyErrors, GetBankPolicyResponses, GetGroupData, GetGroupErrors, GetGroupResponses, GetPolicyData, GetPolicyErrors, GetPolicyResponses, GetServiceAccountData, GetServiceAccountErrors, GetServiceAccountResponses, GetTemplateData, GetTemplateErrors, GetTemplateResponses, GetUserData, GetUserErrors, GetUserResponses, InstallTemplateData, InstallTemplateErrors, InstallTemplateResponses, ListApiKeysData, ListApiKeysErrors, ListApiKeysResponses, ListGroupMembersData, ListGroupMembersErrors, ListGroupMembersResponses, ListGroupsData, ListGroupsResponses, ListPoliciesData, ListPoliciesResponses, ListPolicyAttachmentsData, ListPolicyAttachmentsErrors, ListPolicyAttachmentsResponses, ListSaKeysData, ListSaKeysErrors, ListSaKeysResponses, ListServiceAccountsData, ListServiceAccountsResponses, ListTemplatesData, ListTemplatesErrors, ListTemplateSourcesData, ListTemplateSourcesResponses, ListTemplatesResponses, ListUserChannelsData, ListUserChannelsErrors, ListUserChannelsResponses, ListUsersData, ListUsersResponses, MarketplaceSearchData, MarketplaceSearchErrors, MarketplaceSearchResponses, RemoveGroupMemberData, RemoveGroupMemberErrors, RemoveGroupMemberResponses, RemoveUserChannelData, RemoveUserChannelErrors, RemoveUserChannelResponses, UpdateGroupData, UpdateGroupErrors, UpdateGroupResponses, UpdatePolicyData, UpdatePolicyErrors, UpdatePolicyResponses, UpdateServiceAccountData, UpdateServiceAccountErrors, UpdateServiceAccountResponses, UpdateTemplateData, UpdateTemplateErrors, UpdateTemplateFromMarketplaceData, UpdateTemplateFromMarketplaceErrors, UpdateTemplateFromMarketplaceResponses, UpdateTemplateResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpsertBankPolicyData, UpsertBankPolicyErrors, UpsertBankPolicyResponses, UpsertPolicyAttachmentData, UpsertPolicyAttachmentErrors, UpsertPolicyAttachmentResponses } from './types.gen';
+import type { AddGroupMemberData, AddGroupMemberErrors, AddGroupMemberResponses, AddUserChannelData, AddUserChannelErrors, AddUserChannelResponses, CreateApiKeyData, CreateApiKeyErrors, CreateApiKeyResponses, CreateBankFromTemplateData, CreateBankFromTemplateErrors, CreateBankFromTemplateResponses, CreateGroupData, CreateGroupErrors, CreateGroupResponses, CreateMySaKeyData, CreateMySaKeyErrors, CreateMySaKeyResponses, CreateMyServiceAccountData, CreateMyServiceAccountErrors, CreateMyServiceAccountResponses, CreatePolicyData, CreatePolicyErrors, CreatePolicyResponses, CreateSaKeyData, CreateSaKeyErrors, CreateSaKeyResponses, CreateServiceAccountData, CreateServiceAccountErrors, CreateServiceAccountResponses, CreateTemplateData, CreateTemplateErrors, CreateTemplateResponses, CreateTemplateSourceData, CreateTemplateSourceErrors, CreateTemplateSourceResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DebugResolveData, DebugResolveErrors, DebugResolveResponses, DeleteApiKeyData, DeleteApiKeyErrors, DeleteApiKeyResponses, DeleteBankPolicyData, DeleteBankPolicyErrors, DeleteBankPolicyResponses, DeleteGroupData, DeleteGroupErrors, DeleteGroupResponses, DeleteMySaKeyData, DeleteMySaKeyErrors, DeleteMySaKeyResponses, DeleteMyServiceAccountData, DeleteMyServiceAccountErrors, DeleteMyServiceAccountResponses, DeletePolicyAttachmentData, DeletePolicyAttachmentErrors, DeletePolicyAttachmentResponses, DeletePolicyData, DeletePolicyErrors, DeletePolicyResponses, DeleteSaKeyData, DeleteSaKeyErrors, DeleteSaKeyResponses, DeleteServiceAccountData, DeleteServiceAccountErrors, DeleteServiceAccountResponses, DeleteTemplateData, DeleteTemplateErrors, DeleteTemplateResponses, DeleteTemplateSourceData, DeleteTemplateSourceErrors, DeleteTemplateSourceResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetBankPolicyData, GetBankPolicyErrors, GetBankPolicyResponses, GetGroupData, GetGroupErrors, GetGroupResponses, GetMyServiceAccountData, GetMyServiceAccountErrors, GetMyServiceAccountResponses, GetPolicyData, GetPolicyErrors, GetPolicyResponses, GetServiceAccountData, GetServiceAccountErrors, GetServiceAccountResponses, GetTemplateData, GetTemplateErrors, GetTemplateResponses, GetUserData, GetUserErrors, GetUserResponses, InstallTemplateData, InstallTemplateErrors, InstallTemplateResponses, ListApiKeysData, ListApiKeysErrors, ListApiKeysResponses, ListGroupMembersData, ListGroupMembersErrors, ListGroupMembersResponses, ListGroupsData, ListGroupsResponses, ListMySaKeysData, ListMySaKeysErrors, ListMySaKeysResponses, ListMyServiceAccountsData, ListMyServiceAccountsResponses, ListPoliciesData, ListPoliciesResponses, ListPolicyAttachmentsData, ListPolicyAttachmentsErrors, ListPolicyAttachmentsResponses, ListSaKeysData, ListSaKeysErrors, ListSaKeysResponses, ListServiceAccountsData, ListServiceAccountsResponses, ListTemplatesData, ListTemplatesErrors, ListTemplateSourcesData, ListTemplateSourcesResponses, ListTemplatesResponses, ListUserChannelsData, ListUserChannelsErrors, ListUserChannelsResponses, ListUsersData, ListUsersResponses, MarketplaceSearchData, MarketplaceSearchErrors, MarketplaceSearchResponses, RemoveGroupMemberData, RemoveGroupMemberErrors, RemoveGroupMemberResponses, RemoveUserChannelData, RemoveUserChannelErrors, RemoveUserChannelResponses, UpdateGroupData, UpdateGroupErrors, UpdateGroupResponses, UpdateMyServiceAccountData, UpdateMyServiceAccountErrors, UpdateMyServiceAccountResponses, UpdatePolicyData, UpdatePolicyErrors, UpdatePolicyResponses, UpdateServiceAccountData, UpdateServiceAccountErrors, UpdateServiceAccountResponses, UpdateTemplateData, UpdateTemplateErrors, UpdateTemplateFromMarketplaceData, UpdateTemplateFromMarketplaceErrors, UpdateTemplateFromMarketplaceResponses, UpdateTemplateResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpsertBankPolicyData, UpsertBankPolicyErrors, UpsertBankPolicyResponses, UpsertPolicyAttachmentData, UpsertPolicyAttachmentErrors, UpsertPolicyAttachmentResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -304,6 +304,90 @@ export const deletePolicyAttachment = <ThrowOnError extends boolean = false>(opt
 });
 
 /**
+ * List My Service Accounts
+ */
+export const listMyServiceAccounts = <ThrowOnError extends boolean = false>(options?: Options<ListMyServiceAccountsData, ThrowOnError>) => (options?.client ?? client).get<ListMyServiceAccountsResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/service-accounts',
+    ...options
+});
+
+/**
+ * Create My Service Account
+ */
+export const createMyServiceAccount = <ThrowOnError extends boolean = false>(options: Options<CreateMyServiceAccountData, ThrowOnError>) => (options.client ?? client).post<CreateMyServiceAccountResponses, CreateMyServiceAccountErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/service-accounts',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete My Service Account
+ */
+export const deleteMyServiceAccount = <ThrowOnError extends boolean = false>(options: Options<DeleteMyServiceAccountData, ThrowOnError>) => (options.client ?? client).delete<DeleteMyServiceAccountResponses, DeleteMyServiceAccountErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/service-accounts/{sa_id}',
+    ...options
+});
+
+/**
+ * Get My Service Account
+ */
+export const getMyServiceAccount = <ThrowOnError extends boolean = false>(options: Options<GetMyServiceAccountData, ThrowOnError>) => (options.client ?? client).get<GetMyServiceAccountResponses, GetMyServiceAccountErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/service-accounts/{sa_id}',
+    ...options
+});
+
+/**
+ * Update My Service Account
+ */
+export const updateMyServiceAccount = <ThrowOnError extends boolean = false>(options: Options<UpdateMyServiceAccountData, ThrowOnError>) => (options.client ?? client).put<UpdateMyServiceAccountResponses, UpdateMyServiceAccountErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/service-accounts/{sa_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List My Sa Keys
+ */
+export const listMySaKeys = <ThrowOnError extends boolean = false>(options: Options<ListMySaKeysData, ThrowOnError>) => (options.client ?? client).get<ListMySaKeysResponses, ListMySaKeysErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/service-accounts/{sa_id}/keys',
+    ...options
+});
+
+/**
+ * Create My Sa Key
+ */
+export const createMySaKey = <ThrowOnError extends boolean = false>(options: Options<CreateMySaKeyData, ThrowOnError>) => (options.client ?? client).post<CreateMySaKeyResponses, CreateMySaKeyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/service-accounts/{sa_id}/keys',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete My Sa Key
+ */
+export const deleteMySaKey = <ThrowOnError extends boolean = false>(options: Options<DeleteMySaKeyData, ThrowOnError>) => (options.client ?? client).delete<DeleteMySaKeyResponses, DeleteMySaKeyErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/service-accounts/{sa_id}/keys/{key_id}',
+    ...options
+});
+
+/**
  * List Service Accounts
  */
 export const listServiceAccounts = <ThrowOnError extends boolean = false>(options?: Options<ListServiceAccountsData, ThrowOnError>) => (options?.client ?? client).get<ListServiceAccountsResponses, unknown, ThrowOnError>({
@@ -497,7 +581,10 @@ export const deleteTemplate = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Get Template Endpoint
  *
- * Get a custom template by scope and name.
+ * Get a template by scope and name.
+ *
+ * Finds any template matching (scope, name) regardless of source.
+ * This covers both custom templates and marketplace-installed ones.
  *
  * Args:
  * scope: Template scope ('server' or 'personal').

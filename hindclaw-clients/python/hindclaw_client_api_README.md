@@ -81,6 +81,8 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**create_api_key**](hindclaw_client_api/docs/DefaultApi.md#create_api_key) | **POST** /ext/hindclaw/users/{user_id}/api-keys | Create Api Key
 *DefaultApi* | [**create_bank_from_template**](hindclaw_client_api/docs/DefaultApi.md#create_bank_from_template) | **POST** /ext/hindclaw/banks | Create Bank From Template
 *DefaultApi* | [**create_group**](hindclaw_client_api/docs/DefaultApi.md#create_group) | **POST** /ext/hindclaw/groups | Create Group
+*DefaultApi* | [**create_my_sa_key**](hindclaw_client_api/docs/DefaultApi.md#create_my_sa_key) | **POST** /ext/hindclaw/me/service-accounts/{sa_id}/keys | Create My Sa Key
+*DefaultApi* | [**create_my_service_account**](hindclaw_client_api/docs/DefaultApi.md#create_my_service_account) | **POST** /ext/hindclaw/me/service-accounts | Create My Service Account
 *DefaultApi* | [**create_policy**](hindclaw_client_api/docs/DefaultApi.md#create_policy) | **POST** /ext/hindclaw/policies | Create Policy
 *DefaultApi* | [**create_sa_key**](hindclaw_client_api/docs/DefaultApi.md#create_sa_key) | **POST** /ext/hindclaw/service-accounts/{sa_id}/keys | Create Sa Key
 *DefaultApi* | [**create_service_account**](hindclaw_client_api/docs/DefaultApi.md#create_service_account) | **POST** /ext/hindclaw/service-accounts | Create Service Account
@@ -91,6 +93,8 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**delete_api_key**](hindclaw_client_api/docs/DefaultApi.md#delete_api_key) | **DELETE** /ext/hindclaw/users/{user_id}/api-keys/{key_id} | Delete Api Key
 *DefaultApi* | [**delete_bank_policy**](hindclaw_client_api/docs/DefaultApi.md#delete_bank_policy) | **DELETE** /ext/hindclaw/banks/{bank_id}/policy | Delete Bank Policy Endpoint
 *DefaultApi* | [**delete_group**](hindclaw_client_api/docs/DefaultApi.md#delete_group) | **DELETE** /ext/hindclaw/groups/{group_id} | Delete Group
+*DefaultApi* | [**delete_my_sa_key**](hindclaw_client_api/docs/DefaultApi.md#delete_my_sa_key) | **DELETE** /ext/hindclaw/me/service-accounts/{sa_id}/keys/{key_id} | Delete My Sa Key
+*DefaultApi* | [**delete_my_service_account**](hindclaw_client_api/docs/DefaultApi.md#delete_my_service_account) | **DELETE** /ext/hindclaw/me/service-accounts/{sa_id} | Delete My Service Account
 *DefaultApi* | [**delete_policy**](hindclaw_client_api/docs/DefaultApi.md#delete_policy) | **DELETE** /ext/hindclaw/policies/{policy_id} | Delete Policy Endpoint
 *DefaultApi* | [**delete_policy_attachment**](hindclaw_client_api/docs/DefaultApi.md#delete_policy_attachment) | **DELETE** /ext/hindclaw/policy-attachments/{policy_id}/{principal_type}/{principal_id} | Delete Attachment
 *DefaultApi* | [**delete_sa_key**](hindclaw_client_api/docs/DefaultApi.md#delete_sa_key) | **DELETE** /ext/hindclaw/service-accounts/{sa_id}/keys/{key_id} | Delete Sa Key
@@ -100,6 +104,7 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**delete_user**](hindclaw_client_api/docs/DefaultApi.md#delete_user) | **DELETE** /ext/hindclaw/users/{user_id} | Delete User
 *DefaultApi* | [**get_bank_policy**](hindclaw_client_api/docs/DefaultApi.md#get_bank_policy) | **GET** /ext/hindclaw/banks/{bank_id}/policy | Get Bank Policy Endpoint
 *DefaultApi* | [**get_group**](hindclaw_client_api/docs/DefaultApi.md#get_group) | **GET** /ext/hindclaw/groups/{group_id} | Get Group
+*DefaultApi* | [**get_my_service_account**](hindclaw_client_api/docs/DefaultApi.md#get_my_service_account) | **GET** /ext/hindclaw/me/service-accounts/{sa_id} | Get My Service Account
 *DefaultApi* | [**get_policy**](hindclaw_client_api/docs/DefaultApi.md#get_policy) | **GET** /ext/hindclaw/policies/{policy_id} | Get Policy Endpoint
 *DefaultApi* | [**get_service_account**](hindclaw_client_api/docs/DefaultApi.md#get_service_account) | **GET** /ext/hindclaw/service-accounts/{sa_id} | Get Service Account Endpoint
 *DefaultApi* | [**get_template**](hindclaw_client_api/docs/DefaultApi.md#get_template) | **GET** /ext/hindclaw/templates/{scope}/{name} | Get Template Endpoint
@@ -108,6 +113,8 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**list_api_keys**](hindclaw_client_api/docs/DefaultApi.md#list_api_keys) | **GET** /ext/hindclaw/users/{user_id}/api-keys | List Api Keys
 *DefaultApi* | [**list_group_members**](hindclaw_client_api/docs/DefaultApi.md#list_group_members) | **GET** /ext/hindclaw/groups/{group_id}/members | List Group Members
 *DefaultApi* | [**list_groups**](hindclaw_client_api/docs/DefaultApi.md#list_groups) | **GET** /ext/hindclaw/groups | List Groups
+*DefaultApi* | [**list_my_sa_keys**](hindclaw_client_api/docs/DefaultApi.md#list_my_sa_keys) | **GET** /ext/hindclaw/me/service-accounts/{sa_id}/keys | List My Sa Keys
+*DefaultApi* | [**list_my_service_accounts**](hindclaw_client_api/docs/DefaultApi.md#list_my_service_accounts) | **GET** /ext/hindclaw/me/service-accounts | List My Service Accounts
 *DefaultApi* | [**list_policies**](hindclaw_client_api/docs/DefaultApi.md#list_policies) | **GET** /ext/hindclaw/policies | List Policies
 *DefaultApi* | [**list_policy_attachments**](hindclaw_client_api/docs/DefaultApi.md#list_policy_attachments) | **GET** /ext/hindclaw/policy-attachments | List Attachments
 *DefaultApi* | [**list_sa_keys**](hindclaw_client_api/docs/DefaultApi.md#list_sa_keys) | **GET** /ext/hindclaw/service-accounts/{sa_id}/keys | List Sa Keys
@@ -120,6 +127,7 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**remove_group_member**](hindclaw_client_api/docs/DefaultApi.md#remove_group_member) | **DELETE** /ext/hindclaw/groups/{group_id}/members/{user_id} | Remove Group Member
 *DefaultApi* | [**remove_user_channel**](hindclaw_client_api/docs/DefaultApi.md#remove_user_channel) | **DELETE** /ext/hindclaw/users/{user_id}/channels/{provider}/{sender_id} | Remove User Channel
 *DefaultApi* | [**update_group**](hindclaw_client_api/docs/DefaultApi.md#update_group) | **PUT** /ext/hindclaw/groups/{group_id} | Update Group
+*DefaultApi* | [**update_my_service_account**](hindclaw_client_api/docs/DefaultApi.md#update_my_service_account) | **PUT** /ext/hindclaw/me/service-accounts/{sa_id} | Update My Service Account
 *DefaultApi* | [**update_policy**](hindclaw_client_api/docs/DefaultApi.md#update_policy) | **PUT** /ext/hindclaw/policies/{policy_id} | Update Policy Endpoint
 *DefaultApi* | [**update_service_account**](hindclaw_client_api/docs/DefaultApi.md#update_service_account) | **PUT** /ext/hindclaw/service-accounts/{sa_id} | Update Service Account Endpoint
 *DefaultApi* | [**update_template**](hindclaw_client_api/docs/DefaultApi.md#update_template) | **PUT** /ext/hindclaw/templates/{scope}/{name} | Update Template Endpoint
@@ -144,6 +152,7 @@ Class | Method | HTTP request | Description
  - [CreatePolicyAttachmentRequest](hindclaw_client_api/docs/CreatePolicyAttachmentRequest.md)
  - [CreatePolicyRequest](hindclaw_client_api/docs/CreatePolicyRequest.md)
  - [CreateSAKeyRequest](hindclaw_client_api/docs/CreateSAKeyRequest.md)
+ - [CreateSelfServiceAccountRequest](hindclaw_client_api/docs/CreateSelfServiceAccountRequest.md)
  - [CreateServiceAccountRequest](hindclaw_client_api/docs/CreateServiceAccountRequest.md)
  - [CreateSourceRequest](hindclaw_client_api/docs/CreateSourceRequest.md)
  - [CreateTemplateRequest](hindclaw_client_api/docs/CreateTemplateRequest.md)
@@ -172,6 +181,7 @@ Class | Method | HTTP request | Description
  - [TemplateUpdateResponse](hindclaw_client_api/docs/TemplateUpdateResponse.md)
  - [UpdateGroupRequest](hindclaw_client_api/docs/UpdateGroupRequest.md)
  - [UpdatePolicyRequest](hindclaw_client_api/docs/UpdatePolicyRequest.md)
+ - [UpdateSelfServiceAccountRequest](hindclaw_client_api/docs/UpdateSelfServiceAccountRequest.md)
  - [UpdateServiceAccountRequest](hindclaw_client_api/docs/UpdateServiceAccountRequest.md)
  - [UpdateTemplateRequest](hindclaw_client_api/docs/UpdateTemplateRequest.md)
  - [UpdateUserRequest](hindclaw_client_api/docs/UpdateUserRequest.md)
