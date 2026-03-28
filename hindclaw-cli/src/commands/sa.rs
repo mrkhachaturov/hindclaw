@@ -98,7 +98,7 @@ pub async fn run(cmd: SaCommands, conn: ResolvedConnection, format: OutputFormat
         }
         SaCommands::Info { id } => sa_info(&client, &id, format).await,
         SaCommands::Update { id, display_name, scoping_policy, clear_scoping_policy } => {
-            sa_update(&client, &id, display_name.as_deref(), scoping_policy.as_deref(), clear_scoping_policy).await
+            sa_update(&conn, &id, display_name.as_deref(), scoping_policy.as_deref(), clear_scoping_policy).await
         }
         SaCommands::Remove { id } => sa_remove(&client, &id, yes).await,
         SaCommands::Disable { id } => sa_toggle(&client, &id, false).await,
@@ -167,21 +167,48 @@ async fn sa_info(client: &Client, id: &str, format: OutputFormat) -> Result<()> 
     Ok(())
 }
 
-async fn sa_update(client: &Client, id: &str, display_name: Option<&str>, scoping_policy: Option<&str>, clear_scoping_policy: bool) -> Result<()> {
-    // With skip_serializing_if removed from Update*Request structs, None now
-    // serializes as JSON null (not omitted). The server's model_dump(exclude_unset=True)
-    // sees explicit null and the DB _UNSET sentinel correctly sets the column to SQL NULL.
-    let scoping = if clear_scoping_policy { None } else { scoping_policy.map(|s| s.to_string()) };
+async fn sa_update(conn: &crate::config::ResolvedConnection, id: &str, display_name: Option<&str>, scoping_policy: Option<&str>, clear_scoping_policy: bool) -> Result<()> {
+    // Build raw JSON with only the fields the user provided.
+    // The generated client's skip_serializing_if omits None fields, which is correct
+    // for "don't change" but can't express "set to null". Raw JSON lets us send
+    // explicit null for --clear-scoping-policy while omitting unchanged fields.
+    let mut body = serde_json::Map::new();
+    if let Some(dn) = display_name {
+        body.insert("display_name".into(), serde_json::Value::String(dn.to_string()));
+    }
+    if clear_scoping_policy {
+        body.insert("scoping_policy_id".into(), serde_json::Value::Null);
+    } else if let Some(sp) = scoping_policy {
+        body.insert("scoping_policy_id".into(), serde_json::Value::String(sp.to_string()));
+    }
 
-    let body = hindclaw_client::types::UpdateServiceAccountRequest {
-        display_name: display_name.map(|s| s.to_string()),
-        scoping_policy_id: scoping,
-        is_active: None,
-    };
-    let sa = client.update_service_account(id, &body)
+    let http_client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(30))
+        .default_headers({
+            let mut h = reqwest::header::HeaderMap::new();
+            h.insert(
+                reqwest::header::AUTHORIZATION,
+                format!("Bearer {}", conn.api_key).parse()
+                    .map_err(|_| anyhow::anyhow!("Invalid API key format"))?,
+            );
+            h
+        })
+        .build()?;
+
+    let resp = http_client
+        .put(format!("{}/ext/hindclaw/service-accounts/{}", conn.url, id))
+        .json(&body)
+        .send()
         .await
-        .map_err(|e| map_api_error(e, "update service account"))?
-        .into_inner();
+        .map_err(|e| anyhow::anyhow!("Request failed (update service account): {}", e))?;
+
+    if !resp.status().is_success() {
+        let status = resp.status();
+        anyhow::bail!("API error {} (update service account)", status);
+    }
+
+    let sa: hindclaw_client::types::ServiceAccountResponse = resp.json().await
+        .map_err(|e| anyhow::anyhow!("Failed to parse response: {}", e))?;
     print_sa_info(&sa);
     ui::print_success(&format!("Service account '{}' updated", sa.id));
     Ok(())
