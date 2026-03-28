@@ -320,6 +320,40 @@ def test_delete_my_sa_key_not_owned_returns_404(alice_client, headers, mock_db):
     mock_db.delete_sa_key.assert_not_called()
 
 
+# --- Admin surface permission tests ---
+
+
+def test_admin_list_uses_manage_action(headers):
+    """GET /service-accounts requires iam:service_accounts:manage."""
+    captured_actions = []
+    original_require = AsyncMock(return_value={"principal_type": "user", "user_id": "admin"})
+
+    async def capturing_require(action, credentials=None):
+        captured_actions.append(action)
+        return await original_require(action, credentials)
+
+    app = FastAPI()
+
+    @app.exception_handler(AuthenticationError)
+    async def auth_error_handler(request, exc):
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=401, content={"detail": str(exc)})
+
+    ext = HindclawHttp({})
+    memory = AsyncMock()
+
+    # Patch must stay active for the request — keep client.get inside the block
+    with patch("hindclaw_ext.http.require_admin_for_action", side_effect=capturing_require):
+        router = ext.get_router(memory)
+        app.include_router(router, prefix="/ext")
+        client = TestClient(app)
+        with patch("hindclaw_ext.http.db") as mock_db:
+            mock_db.list_service_accounts = AsyncMock(return_value=[])
+            client.get("/ext/hindclaw/service-accounts", headers=headers)
+
+    assert "iam:service_accounts:manage" in captured_actions
+
+
 # --- SA-as-caller ---
 
 

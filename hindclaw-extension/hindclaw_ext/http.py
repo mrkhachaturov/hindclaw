@@ -539,23 +539,23 @@ class HindclawHttp(HttpExtension):
         # --- Service Accounts ---
 
         @router.get("/service-accounts", response_model=list[ServiceAccountResponse], operation_id="list_service_accounts")
-        async def list_service_accounts(_auth=Depends(_require_iam("iam:service_accounts:read"))):
+        async def list_service_accounts(_auth=Depends(_require_iam("iam:service_accounts:manage"))):
             return await db.list_service_accounts()
 
         @router.post("/service-accounts", status_code=201, response_model=ServiceAccountResponse, operation_id="create_service_account")
-        async def create_service_account(req: CreateServiceAccountRequest, _auth=Depends(_require_iam("iam:service_accounts:write"))):
+        async def create_service_account(req: CreateServiceAccountRequest, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
             await db.create_service_account(req.id, req.owner_user_id, req.display_name, req.scoping_policy_id)
             return {"id": req.id, "owner_user_id": req.owner_user_id, "display_name": req.display_name, "is_active": True, "scoping_policy_id": req.scoping_policy_id}
 
         @router.get("/service-accounts/{sa_id}", response_model=ServiceAccountResponse, operation_id="get_service_account")
-        async def get_service_account_endpoint(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:read"))):
+        async def get_service_account_endpoint(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
             result = await db.get_service_account(sa_id)
             if not result:
                 raise HTTPException(404, f"Service account {sa_id} not found")
             return result
 
         @router.put("/service-accounts/{sa_id}", response_model=ServiceAccountResponse, operation_id="update_service_account")
-        async def update_service_account_endpoint(sa_id: str, req: UpdateServiceAccountRequest, _auth=Depends(_require_iam("iam:service_accounts:write"))):
+        async def update_service_account_endpoint(sa_id: str, req: UpdateServiceAccountRequest, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
             updates = req.model_dump(exclude_unset=True)
             if not updates:
                 raise HTTPException(status_code=400, detail="No fields to update")
@@ -575,7 +575,7 @@ class HindclawHttp(HttpExtension):
             return result
 
         @router.delete("/service-accounts/{sa_id}", status_code=204, operation_id="delete_service_account")
-        async def delete_service_account_endpoint(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:write"))):
+        async def delete_service_account_endpoint(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
             existing = await db.get_service_account(sa_id)
             if not existing:
                 raise HTTPException(404, f"Service account {sa_id} not found")
@@ -584,19 +584,19 @@ class HindclawHttp(HttpExtension):
         # --- SA Keys ---
 
         @router.get("/service-accounts/{sa_id}/keys", response_model=list[SAKeyResponse], operation_id="list_sa_keys")
-        async def list_sa_keys(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:read"))):
+        async def list_sa_keys(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
             keys = await db.list_sa_keys(sa_id)
             return [{"id": k.id, "api_key_prefix": k.api_key[:_API_KEY_MASK_LENGTH], "description": k.description} for k in keys]
 
         @router.post("/service-accounts/{sa_id}/keys", status_code=201, response_model=SAKeyCreateResponse, operation_id="create_sa_key")
-        async def create_sa_key(sa_id: str, req: CreateSAKeyRequest, _auth=Depends(_require_iam("iam:service_account_keys:write"))):
+        async def create_sa_key(sa_id: str, req: CreateSAKeyRequest, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
             key_id = secrets.token_hex(8)
             api_key = f"hc_sa_{sa_id}_{secrets.token_hex(16)}"
             await db.create_sa_key(key_id, sa_id, api_key, req.description)
             return {"id": key_id, "api_key": api_key, "description": req.description}
 
         @router.delete("/service-accounts/{sa_id}/keys/{key_id}", status_code=204, operation_id="delete_sa_key")
-        async def delete_sa_key(sa_id: str, key_id: str, _auth=Depends(_require_iam("iam:service_account_keys:write"))):
+        async def delete_sa_key(sa_id: str, key_id: str, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
             existing = await db.get_sa_key(key_id, sa_id)
             if not existing:
                 raise HTTPException(404, f"SA key {key_id} not found")
