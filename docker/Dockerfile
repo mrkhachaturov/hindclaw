@@ -42,7 +42,7 @@ RUN uv sync
 RUN uv pip install "flashrank>=0.2.0"
 
 # Hindclaw server-side access control extensions
-RUN uv pip install "hindclaw-extension==0.2.4"
+RUN uv pip install "hindclaw-extension==0.2.5"
 
 # Copy source and install package
 COPY hindsight-api-slim/hindsight_api ./hindsight_api
