@@ -24,8 +24,10 @@ pub enum AliasCommands {
         default: bool,
     },
     /// List aliases
+    #[command(visible_alias = "list")]
     Ls,
     /// Remove an alias
+    #[command(visible_alias = "remove")]
     Rm {
         /// Alias name to remove
         name: String,
