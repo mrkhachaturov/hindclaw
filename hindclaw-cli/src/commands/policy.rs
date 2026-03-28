@@ -95,9 +95,15 @@ pub async fn run(cmd: PolicyCommands, conn: ResolvedConnection, format: OutputFo
             update_policy(&client, &id, &file, display_name.as_deref(), format).await
         }
         PolicyCommands::Remove { id } => remove_policy(&client, &id, yes).await,
-        PolicyCommands::Attach { .. } => todo!("policy attach"),
-        PolicyCommands::Detach { .. } => todo!("policy detach"),
-        PolicyCommands::Entities { .. } => todo!("policy entities"),
+        PolicyCommands::Attach { policy_id, user, group, priority } => {
+            attach_policy(&client, &policy_id, user.as_deref(), group.as_deref(), priority, format).await
+        }
+        PolicyCommands::Detach { policy_id, user, group } => {
+            detach_policy(&client, &policy_id, user.as_deref(), group.as_deref(), yes).await
+        }
+        PolicyCommands::Entities { policy_id } => {
+            policy_entities(&client, &policy_id, format).await
+        }
     }
 }
 
@@ -215,6 +221,107 @@ async fn remove_policy(client: &Client, id: &str, yes: bool) -> Result<()> {
         .map_err(|e| map_api_error(e, "remove policy"))?;
 
     ui::print_success(&format!("Policy '{}' removed.", id));
+    Ok(())
+}
+
+async fn attach_policy(
+    client: &Client,
+    policy_id: &str,
+    user: Option<&str>,
+    group: Option<&str>,
+    priority: i64,
+    format: OutputFormat,
+) -> Result<()> {
+    let (principal_type, principal_id) = match (user, group) {
+        (Some(uid), None) => ("user", uid),
+        (None, Some(gid)) => ("group", gid),
+        _ => anyhow::bail!("Specify either --user <id> or --group <id>."),
+    };
+
+    let body = hindclaw_client::types::CreatePolicyAttachmentRequest {
+        policy_id: policy_id.to_string(),
+        principal_type: principal_type.to_string(),
+        principal_id: principal_id.to_string(),
+        priority,
+    };
+
+    client.upsert_policy_attachment(&body)
+        .await
+        .map_err(|e| map_api_error(e, "attach policy"))?;
+
+    match format {
+        OutputFormat::Pretty => ui::print_success(&format!(
+            "Policy '{}' attached to {} '{}' (priority: {}).", policy_id, principal_type, principal_id, priority
+        )),
+        _ => {
+            let out = serde_json::json!({
+                "policy_id": policy_id,
+                "principal_type": principal_type,
+                "principal_id": principal_id,
+                "priority": priority,
+            });
+            crate::output::print_output(&out, format)?;
+        }
+    }
+    Ok(())
+}
+
+async fn detach_policy(
+    client: &Client,
+    policy_id: &str,
+    user: Option<&str>,
+    group: Option<&str>,
+    yes: bool,
+) -> Result<()> {
+    let (principal_type, principal_id) = match (user, group) {
+        (Some(uid), None) => ("user", uid),
+        (None, Some(gid)) => ("group", gid),
+        _ => anyhow::bail!("Specify either --user <id> or --group <id>."),
+    };
+
+    if !require_confirmation(
+        &format!("Detach policy '{}' from {} '{}'", policy_id, principal_type, principal_id),
+        yes,
+    )? {
+        println!("  Cancelled.");
+        return Ok(());
+    }
+
+    client.delete_policy_attachment(policy_id, principal_type, principal_id)
+        .await
+        .map_err(|e| map_api_error(e, "detach policy"))?;
+
+    ui::print_success(&format!(
+        "Policy '{}' detached from {} '{}'.", policy_id, principal_type, principal_id
+    ));
+    Ok(())
+}
+
+async fn policy_entities(client: &Client, policy_id: &str, format: OutputFormat) -> Result<()> {
+    let attachments = client.list_policy_attachments(policy_id)
+        .await
+        .map_err(|e| map_api_error(e, "list policy attachments"))?
+        .into_inner();
+
+    match format {
+        OutputFormat::Pretty => {
+            let headers = &["KIND", "ID", "PRIORITY"];
+            let rows: Vec<Vec<String>> = attachments.iter().map(|att| {
+                vec![
+                    att.principal_type.clone(),
+                    att.principal_id.clone(),
+                    att.priority.to_string(),
+                ]
+            }).collect();
+
+            if rows.is_empty() {
+                println!("  Policy '{}' is not attached to any users or groups.", policy_id);
+            } else {
+                ui::print_table(headers, &rows);
+            }
+        }
+        _ => crate::output::print_output(&attachments, format)?,
+    }
     Ok(())
 }
 
