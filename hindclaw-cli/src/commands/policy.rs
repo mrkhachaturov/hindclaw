@@ -12,6 +12,7 @@ use hindclaw_client::Client;
 #[derive(Subcommand)]
 pub enum PolicyCommands {
     /// List all policies
+    #[command(visible_alias = "ls")]
     List,
 
     /// Create a policy from a JSON document file
@@ -26,6 +27,7 @@ pub enum PolicyCommands {
     },
 
     /// Show policy details
+    #[command(visible_alias = "show")]
     Info {
         /// Policy ID
         id: String,
@@ -43,6 +45,7 @@ pub enum PolicyCommands {
     },
 
     /// Remove a policy (requires confirmation)
+    #[command(visible_alias = "rm")]
     Remove {
         /// Policy ID
         id: String,

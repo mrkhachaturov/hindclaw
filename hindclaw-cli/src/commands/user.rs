@@ -8,6 +8,7 @@ use hindclaw_client::Client;
 #[derive(Subcommand)]
 pub enum UserCommands {
     /// List all users
+    #[command(visible_alias = "ls")]
     List,
 
     /// Create a user
@@ -23,12 +24,14 @@ pub enum UserCommands {
     },
 
     /// Show user details
+    #[command(visible_alias = "show")]
     Info {
         /// User ID
         id: String,
     },
 
     /// Delete a user
+    #[command(visible_alias = "rm")]
     Remove {
         /// User ID
         id: String,
@@ -73,6 +76,7 @@ pub enum UserChannelCommands {
         sender_id: String,
     },
     /// Remove a channel from a user
+    #[command(visible_alias = "remove")]
     Rm {
         /// User ID
         user_id: String,
@@ -94,11 +98,13 @@ pub enum UserKeyCommands {
         description: Option<String>,
     },
     /// List API keys for a user
+    #[command(visible_alias = "list")]
     Ls {
         /// User ID
         user_id: String,
     },
     /// Delete an API key
+    #[command(visible_alias = "remove")]
     Rm {
         /// User ID
         user_id: String,

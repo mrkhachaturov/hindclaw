@@ -11,12 +11,14 @@ use hindclaw_client::Client;
 #[derive(Subcommand)]
 pub enum TemplateCommands {
     /// List installed templates
+    #[command(visible_alias = "ls")]
     List {
         /// Filter by scope (server or personal)
         #[arg(long)]
         scope: Option<String>,
     },
     /// Show template details
+    #[command(visible_alias = "show")]
     Info {
         /// Template reference (scope/name) — custom templates only
         template: String,
@@ -61,6 +63,7 @@ pub enum TemplateCommands {
         file: String,
     },
     /// Remove a template
+    #[command(visible_alias = "rm")]
     Remove {
         /// Template reference (scope/name) — custom templates only
         template: String,

@@ -10,6 +10,7 @@ use hindclaw_client::Client;
 #[derive(Subcommand)]
 pub enum SourceCommands {
     /// List marketplace sources
+    #[command(visible_alias = "ls")]
     List,
     /// Register a marketplace source
     Add {
@@ -23,6 +24,7 @@ pub enum SourceCommands {
         auth_token: Option<String>,
     },
     /// Remove a marketplace source
+    #[command(visible_alias = "remove")]
     Rm {
         /// Source name
         name: String,

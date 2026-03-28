@@ -8,6 +8,7 @@ use hindclaw_client::Client;
 #[derive(Subcommand)]
 pub enum GroupCommands {
     /// List all groups
+    #[command(visible_alias = "ls")]
     List,
 
     /// Create a group
@@ -20,12 +21,14 @@ pub enum GroupCommands {
     },
 
     /// Show group details
+    #[command(visible_alias = "show")]
     Info {
         /// Group ID
         id: String,
     },
 
     /// Delete a group
+    #[command(visible_alias = "rm")]
     Remove {
         /// Group ID
         id: String,
@@ -52,6 +55,7 @@ pub enum GroupMemberCommands {
         user_id: String,
     },
     /// Remove a user from a group
+    #[command(visible_alias = "remove")]
     Rm {
         /// Group ID
         group_id: String,

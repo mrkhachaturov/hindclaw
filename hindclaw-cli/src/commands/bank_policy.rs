@@ -18,11 +18,13 @@ pub enum BankPolicyCommands {
         policy_file: std::path::PathBuf,
     },
     /// Show the bank policy for a bank
+    #[command(visible_alias = "show")]
     Info {
         /// Bank ID
         bank_id: String,
     },
     /// Remove the bank policy for a bank
+    #[command(visible_alias = "remove")]
     Rm {
         /// Bank ID
         bank_id: String,

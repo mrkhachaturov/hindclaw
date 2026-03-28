@@ -10,6 +10,7 @@ use hindclaw_client::Client;
 #[derive(Subcommand)]
 pub enum SaCommands {
     /// List service accounts
+    #[command(visible_alias = "ls")]
     List,
     /// Create a service account
     Add {
@@ -26,6 +27,7 @@ pub enum SaCommands {
         scoping_policy: Option<String>,
     },
     /// Show service account details
+    #[command(visible_alias = "show")]
     Info {
         /// Service account ID
         id: String,
@@ -45,6 +47,7 @@ pub enum SaCommands {
         clear_scoping_policy: bool,
     },
     /// Remove a service account
+    #[command(visible_alias = "rm")]
     Remove {
         /// Service account ID
         id: String,
@@ -75,11 +78,13 @@ pub enum SaKeyCommands {
         description: Option<String>,
     },
     /// List API keys for a service account
+    #[command(visible_alias = "list")]
     Ls {
         /// Service account ID
         sa_id: String,
     },
     /// Remove an API key
+    #[command(visible_alias = "remove")]
     Rm {
         /// Service account ID
         sa_id: String,
