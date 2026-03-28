@@ -307,3 +307,34 @@ async def test_update_sa_set_scoping_policy(mock_pool):
         await db.update_service_account("sa-1", scoping_policy_id="policy-abc")
     params = mock_pool.execute.call_args[0][1:]
     assert "policy-abc" in params
+
+
+@pytest.mark.asyncio
+async def test_list_service_accounts_by_owner(mock_pool):
+    """list_service_accounts_by_owner returns only SAs for the given owner."""
+    from hindclaw_ext import db
+
+    mock_pool.fetch.return_value = [
+        MockRecord({"id": "sa-1", "owner_user_id": "alice", "display_name": "Alice SA", "is_active": True, "scoping_policy_id": None}),
+    ]
+
+    with patch.object(db, "_pool", mock_pool):
+        result = await db.list_service_accounts_by_owner("alice")
+    assert len(result) == 1
+    assert result[0].id == "sa-1"
+    assert result[0].owner_user_id == "alice"
+    sql = mock_pool.fetch.call_args[0][0]
+    assert "owner_user_id" in sql
+    assert "$1" in sql
+
+
+@pytest.mark.asyncio
+async def test_list_service_accounts_by_owner_empty(mock_pool):
+    """list_service_accounts_by_owner returns empty list when no SAs owned."""
+    from hindclaw_ext import db
+
+    mock_pool.fetch.return_value = []
+
+    with patch.object(db, "_pool", mock_pool):
+        result = await db.list_service_accounts_by_owner("nobody")
+    assert result == []

@@ -659,6 +659,30 @@ async def list_service_accounts() -> list[ServiceAccountRecord]:
     rows = await pool.fetch("SELECT id, owner_user_id, display_name, is_active, scoping_policy_id FROM hindclaw_service_accounts ORDER BY id")
     return [ServiceAccountRecord(id=r["id"], owner_user_id=r["owner_user_id"], display_name=r["display_name"], is_active=r["is_active"], scoping_policy_id=r["scoping_policy_id"]) for r in rows]
 
+async def list_service_accounts_by_owner(owner_user_id: str) -> list[ServiceAccountRecord]:
+    """List service accounts owned by a specific user.
+
+    Args:
+        owner_user_id: User ID to filter by.
+
+    Returns:
+        List of ServiceAccountRecord for the given owner.
+    """
+    pool = await get_pool()
+    rows = await pool.fetch(
+        "SELECT id, owner_user_id, display_name, is_active, scoping_policy_id "
+        "FROM hindclaw_service_accounts WHERE owner_user_id = $1 ORDER BY id",
+        owner_user_id,
+    )
+    return [
+        ServiceAccountRecord(
+            id=r["id"], owner_user_id=r["owner_user_id"],
+            display_name=r["display_name"], is_active=r["is_active"],
+            scoping_policy_id=r["scoping_policy_id"],
+        )
+        for r in rows
+    ]
+
 async def create_sa_key(key_id: str, sa_id: str, api_key: str, description: str | None = None) -> None:
     """Create an API key for a service account."""
     pool = await get_pool()
