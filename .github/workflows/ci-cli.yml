@@ -1,0 +1,49 @@
+name: CI — hindclaw CLI
+
+on:
+  pull_request:
+    paths:
+      - 'hindclaw-cli/**'
+      - 'hindclaw-clients/rust/**'
+      - '.github/workflows/ci-cli.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'hindclaw-cli/**'
+      - 'hindclaw-clients/rust/**'
+      - '.github/workflows/ci-cli.yml'
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    defaults:
+      run:
+        working-directory: hindclaw-cli
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            hindclaw-cli/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('hindclaw-cli/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Build
+        run: cargo build --locked
+
+      - name: Test
+        run: cargo test --locked
