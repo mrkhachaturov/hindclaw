@@ -42,6 +42,9 @@ dialoguer = "0.11"
 # URL handling
 url = "2.5"
 
+# HindClaw API client (generated from OpenAPI)
+hindclaw-client = { path = "../hindclaw-clients/rust" }
+
 [dev-dependencies]
 tempfile = "3.10"
 
