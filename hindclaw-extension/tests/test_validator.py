@@ -356,3 +356,108 @@ async def test_filter_mcp_tools_recall_only():
     assert "create_mental_model" not in result
     assert "reflect" not in result
     assert "update_bank" not in result
+
+
+@pytest.mark.asyncio
+async def test_filter_mcp_tools_readwrite_sees_all():
+    """User with bank:readwrite sees recall, retain, and reflect tools."""
+    validator = HindclawValidator({})
+    ctx = FakeRequestContext(tenant_id="admin-user")
+
+    tools = frozenset({"recall", "retain", "reflect", "list_memories", "delete_memory"})
+
+    all_allowed = AccessResult(allowed=True)
+
+    with patch("hindclaw_ext.validator._resolve_user_access", return_value=all_allowed):
+        result = await validator.filter_mcp_tools("test-bank", ctx, tools)
+
+    assert result == tools
+
+
+@pytest.mark.asyncio
+async def test_filter_mcp_tools_reflect_only():
+    """User with only bank:reflect sees reflect tool and nothing else."""
+    validator = HindclawValidator({})
+    ctx = FakeRequestContext(tenant_id="reader")
+
+    tools = frozenset({"recall", "retain", "reflect", "list_memories"})
+
+    async def mock_resolve(tenant_id, action, bank_id):
+        if action == "bank:reflect":
+            return AccessResult(allowed=True)
+        return AccessResult(allowed=False)
+
+    with patch("hindclaw_ext.validator._resolve_user_access", side_effect=mock_resolve):
+        result = await validator.filter_mcp_tools("domain::backend", ctx, tools)
+
+    assert result == frozenset({"reflect"})
+
+
+@pytest.mark.asyncio
+async def test_filter_mcp_tools_unknown_tools_pass_through():
+    """Tools not in _TOOL_ACTION_MAP are visible (fail-open)."""
+    validator = HindclawValidator({})
+    ctx = FakeRequestContext(tenant_id="alice")
+
+    tools = frozenset({"recall", "some_future_tool"})
+
+    with patch("hindclaw_ext.validator._resolve_user_access", return_value=AccessResult(allowed=True)):
+        result = await validator.filter_mcp_tools("test-bank", ctx, tools)
+
+    assert "recall" in result
+    assert "some_future_tool" in result
+
+
+@pytest.mark.asyncio
+async def test_filter_mcp_tools_no_tenant_returns_all():
+    """No tenant_id means no filtering (pass all tools through)."""
+    validator = HindclawValidator({})
+    ctx = FakeRequestContext(tenant_id=None)
+
+    tools = frozenset({"recall", "retain", "reflect"})
+
+    result = await validator.filter_mcp_tools("test-bank", ctx, tools)
+
+    assert result == tools
+
+
+@pytest.mark.asyncio
+async def test_filter_mcp_tools_caches_per_action():
+    """Multiple tools mapping to same action trigger only one policy check."""
+    validator = HindclawValidator({})
+    ctx = FakeRequestContext(tenant_id="alice")
+
+    tools = frozenset({"recall", "list_memories", "get_memory"})
+
+    mock_resolve = AsyncMock(return_value=AccessResult(allowed=True))
+
+    with patch("hindclaw_ext.validator._resolve_user_access", mock_resolve):
+        result = await validator.filter_mcp_tools("test-bank", ctx, tools)
+
+    assert result == tools
+    assert mock_resolve.call_count == 1
+    mock_resolve.assert_called_once_with("alice", "bank:recall", "test-bank")
+
+
+@pytest.mark.asyncio
+async def test_filter_mcp_tools_admin_tools():
+    """Admin tools require bank:admin action."""
+    validator = HindclawValidator({})
+    ctx = FakeRequestContext(tenant_id="alice")
+
+    tools = frozenset({"recall", "update_bank", "delete_bank", "create_bank"})
+
+    async def mock_resolve(tenant_id, action, bank_id):
+        if action == "bank:recall":
+            return AccessResult(allowed=True)
+        if action == "bank:admin":
+            return AccessResult(allowed=False)
+        return AccessResult(allowed=False)
+
+    with patch("hindclaw_ext.validator._resolve_user_access", side_effect=mock_resolve):
+        result = await validator.filter_mcp_tools("test-bank", ctx, tools)
+
+    assert "recall" in result
+    assert "update_bank" not in result
+    assert "delete_bank" not in result
+    assert "create_bank" not in result
