@@ -19,6 +19,7 @@ hindclaw-docs/node_modules/
 
 # Rust
 hindclaw-clients/rust/target/
+hindclaw-cli/target/
 
 # Misc
 .worktrees/
