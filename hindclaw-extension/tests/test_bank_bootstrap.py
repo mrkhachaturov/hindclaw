@@ -170,6 +170,86 @@ class TestBootstrapBankFromTemplate:
         assert result.mental_models[0].created is True
 
     @pytest.mark.asyncio
+    async def test_update_bank_uses_reflect_mission(self):
+        """Bank-level mission should be reflect_mission, not retain_mission."""
+        memory = AsyncMock()
+        memory.get_bank_profile = AsyncMock(return_value={"bank_id": "my-bank"})
+        memory.update_bank = AsyncMock(return_value={"bank_id": "my-bank"})
+        memory._config_resolver = AsyncMock()
+        memory._config_resolver.update_bank_config = AsyncMock()
+        memory.create_directive = AsyncMock(return_value={"id": "dir-001"})
+        memory.create_mental_model = AsyncMock(return_value={"id": "mm-001"})
+        memory.submit_async_refresh_mental_model = AsyncMock(return_value={
+            "operation_id": "op-001",
+        })
+
+        template = _make_template(
+            retain_mission="Extract backend patterns.",
+            reflect_mission="You are a backend engineer.",
+        )
+        await bootstrap_bank_from_template(
+            memory=memory,
+            bank_id="my-bank",
+            template=template,
+            requesting_user_id="admin@example.com",
+        )
+
+        update_call = memory.update_bank.call_args
+        assert update_call.kwargs["mission"] == "You are a backend engineer."
+
+    @pytest.mark.asyncio
+    async def test_retain_mission_in_config_updates(self):
+        """retain_mission must be stored in bank config, not bank-level mission."""
+        memory = AsyncMock()
+        memory.get_bank_profile = AsyncMock(return_value={"bank_id": "my-bank"})
+        memory.update_bank = AsyncMock(return_value={"bank_id": "my-bank"})
+        memory._config_resolver = AsyncMock()
+        memory._config_resolver.update_bank_config = AsyncMock()
+        memory.create_directive = AsyncMock(return_value={"id": "dir-001"})
+        memory.create_mental_model = AsyncMock(return_value={"id": "mm-001"})
+        memory.submit_async_refresh_mental_model = AsyncMock(return_value={
+            "operation_id": "op-001",
+        })
+
+        template = _make_template(retain_mission="Extract backend patterns.")
+        await bootstrap_bank_from_template(
+            memory=memory,
+            bank_id="my-bank",
+            template=template,
+            requesting_user_id="admin@example.com",
+        )
+
+        config_call = memory._config_resolver.update_bank_config.call_args
+        config_updates = config_call.args[1]
+        assert config_updates["retain_mission"] == "Extract backend patterns."
+
+    @pytest.mark.asyncio
+    async def test_empty_reflect_mission_falls_back_to_name(self):
+        """Bank-level mission falls back to bank name when reflect_mission is empty."""
+        memory = AsyncMock()
+        memory.get_bank_profile = AsyncMock(return_value={"bank_id": "my-bank"})
+        memory.update_bank = AsyncMock(return_value={"bank_id": "my-bank"})
+        memory._config_resolver = AsyncMock()
+        memory._config_resolver.update_bank_config = AsyncMock()
+        memory.create_directive = AsyncMock(return_value={"id": "dir-001"})
+        memory.create_mental_model = AsyncMock(return_value={"id": "mm-001"})
+        memory.submit_async_refresh_mental_model = AsyncMock(return_value={
+            "operation_id": "op-001",
+        })
+
+        template = _make_template(reflect_mission="")
+        await bootstrap_bank_from_template(
+            memory=memory,
+            bank_id="my-bank",
+            template=template,
+            requesting_user_id="admin@example.com",
+        )
+
+        update_call = memory.update_bank.call_args
+        # Falls back to template.id ("backend-python") since bank_name is None
+        assert update_call.kwargs["mission"] == "backend-python"
+
+    @pytest.mark.asyncio
     async def test_custom_bank_name(self):
         memory = AsyncMock()
         memory.get_bank_profile = AsyncMock(return_value={"bank_id": "my-bank"})

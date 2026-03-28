@@ -98,7 +98,7 @@ async def bootstrap_bank_from_template(
     await memory.update_bank(
         bank_id,
         name=name,
-        mission=template.retain_mission,
+        mission=template.reflect_mission or name,
         request_context=ctx,
     )
     result.bank_created = True
@@ -106,6 +106,8 @@ async def bootstrap_bank_from_template(
     # Step 2: Apply config overrides
     config_updates: dict[str, Any] = {}
 
+    if template.retain_mission:
+        config_updates["retain_mission"] = template.retain_mission
     if template.reflect_mission:
         config_updates["reflect_mission"] = template.reflect_mission
     if template.observations_mission:
