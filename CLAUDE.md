@@ -9,7 +9,7 @@ Self-hosted [Hindsight](https://hindsight.vectorize.io) management platform. Mul
 ```
 hindclaw/
 ├── hindclaw-extension/          # Core Hindsight server extensions (Python)
-├── hindclaw-cli/                # CLI tool (TypeScript, still part of core repo)
+├── hindclaw-cli/                # CLI tool (Rust)
 ├── hindclaw-docs/               # Product docs site
 ├── hindclaw-integrations/
 │   ├── openclaw/                # Submodule: hindclaw-openclaw-plugin
@@ -26,7 +26,7 @@ hindclaw/
 | Package | Language | Registry | Purpose |
 |---------|----------|----------|---------|
 | `hindclaw-extension` | Python | [PyPI](https://pypi.org/project/hindclaw-extension/) | Server-side access control extensions for Hindsight API |
-| `hindclaw-cli` | TypeScript | — | CLI for bank/permission management |
+| `hindclaw-cli` | Rust | — | CLI for managing HindClaw access control |
 
 ## Repository Model
 

@@ -97,13 +97,12 @@ fn set_alias(name: &str, url_str: &str, stdin_key: bool, default: bool) -> Resul
 fn list_aliases(format: OutputFormat) -> Result<()> {
     let config = ConfigFile::load()?;
 
-    if config.aliases.is_empty() {
-        println!("  No aliases configured. Run `hindclaw alias set <name> <url>` to add one.");
-        return Ok(());
-    }
-
     match format {
         OutputFormat::Pretty => {
+            if config.aliases.is_empty() {
+                println!("  No aliases configured. Run `hindclaw alias set <name> <url>` to add one.");
+                return Ok(());
+            }
             let headers = &["NAME", "URL", "DEFAULT"];
             let rows: Vec<Vec<String>> = config.aliases.iter().map(|(name, alias)| {
                 vec![
@@ -115,7 +114,7 @@ fn list_aliases(format: OutputFormat) -> Result<()> {
             ui::print_table(headers, &rows);
         }
         _ => {
-            // For json/yaml, output the aliases map (without api_keys for safety)
+            // Always output valid structure, even when empty — scripts depend on parseable json/yaml
             use serde::Serialize;
             #[derive(Serialize)]
             struct AliasInfo { url: String, default: bool }

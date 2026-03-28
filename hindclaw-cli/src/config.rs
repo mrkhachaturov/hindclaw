@@ -24,6 +24,7 @@ pub struct Alias {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct ResolvedConnection {
     pub url: String,
     pub api_key: String,
