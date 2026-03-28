@@ -5,6 +5,13 @@ All notable changes to `hindclaw-cli` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-03-28
+
+### Fixed
+- `admin sa disable/enable` no longer crashes with NOT NULL violation — sa_toggle correctly omits unchanged fields
+- `admin sa update --clear-scoping-policy` now sends explicit null via raw JSON request
+- `template info/export` now finds marketplace-installed templates (requires hindclaw-extension >= 0.2.6)
+
 ## [0.1.0] - 2026-03-28
 
 ### Added

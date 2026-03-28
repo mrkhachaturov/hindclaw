@@ -1,6 +1,6 @@
 [package]
 name = "hindclaw-cli"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Ruben Khachaturov <mr.kha4a2rov@protonmail.com>"]
 description = "CLI for managing HindClaw access control"
