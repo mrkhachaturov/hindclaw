@@ -1,6 +1,6 @@
 [package]
 name = "hindclaw-cli"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 authors = ["Ruben Khachaturov <mr.kha4a2rov@protonmail.com>"]
 description = "CLI for managing HindClaw access control"
@@ -47,7 +47,7 @@ url = "2.5"
 
 # HindClaw API client (generated from OpenAPI)
 # path is used for local dev; version is required for crates.io publish
-hindclaw-client = { version = "0.1", path = "../hindclaw-clients/rust" }
+hindclaw-client = { version = "0.2", path = "../hindclaw-clients/rust" }
 # Error types for map_api_error (re-exported by hindclaw-client)
 progenitor-client = "0.11"
 

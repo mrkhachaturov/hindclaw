@@ -5,6 +5,26 @@ All notable changes to `hindclaw-cli` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-03-29
+
+### Added
+- `hindclaw sa` top-level subcommand for self-service SA management via `/me/service-accounts`
+  - `sa list/add/info/update/remove` — create and manage your own service accounts without admin access
+  - `sa key add/ls/rm` — manage API keys for your service accounts
+  - Update restricted to display_name only (prevents privilege escalation)
+  - No disable/enable (admin-only operations)
+- Short/long verb aliases across all subcommands: `ls`/`list`, `show`/`info`, `rm`/`remove`
+
+### Changed
+- Bumped hindclaw-client to 0.2.0 (adds /me/ self-service endpoint methods)
+
+### Fixed
+- Policy test fixtures updated for extension v0.3.0 schema (PolicyStatement.banks, PolicyDocument.version)
+- Admin SA test creates owner user before SA (FK constraint enforced in v0.3.0)
+
+### Improved
+- Consolidated duplicated test helpers into shared `tests/common/mod.rs`
+
 ## [0.1.1] - 2026-03-28
 
 ### Fixed
