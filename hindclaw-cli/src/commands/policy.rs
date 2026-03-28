@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use clap::Subcommand;
-use colored::*;
+use colored::Colorize;
 use std::path::PathBuf;
 
 use crate::commands::common::{map_api_error, require_confirmation};

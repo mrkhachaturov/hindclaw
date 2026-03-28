@@ -118,7 +118,7 @@ fn test_policy_create_and_info() {
     assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
     let stdout = String::from_utf8(output.stdout).unwrap();
     let parsed: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    assert_eq!(parsed["id"], *&pid);
+    assert_eq!(parsed["id"].as_str().unwrap(), pid);
     assert_eq!(parsed["display_name"], "Test Policy");
 
     // Cleanup
