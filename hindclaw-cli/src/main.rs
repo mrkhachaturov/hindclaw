@@ -6,6 +6,7 @@ mod commands;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand, ValueEnum};
+use commands::{group::GroupCommands, user::UserCommands};
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum Format {
@@ -44,6 +45,21 @@ enum Commands {
     /// Manage server aliases
     #[command(subcommand)]
     Alias(commands::alias::AliasCommands),
+
+    /// Admin operations (users, groups, policies, ...)
+    #[command(subcommand)]
+    Admin(AdminCommands),
+}
+
+#[derive(Subcommand)]
+enum AdminCommands {
+    /// Manage users
+    #[command(subcommand)]
+    User(UserCommands),
+
+    /// Manage groups
+    #[command(subcommand)]
+    Group(GroupCommands),
 }
 
 #[tokio::main]
@@ -53,5 +69,12 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Commands::Alias(cmd) => commands::alias::run(cmd, format, cli.yes).await,
+        Commands::Admin(admin_cmd) => {
+            let conn = config::resolve_connection(cli.alias.as_deref())?;
+            match admin_cmd {
+                AdminCommands::User(cmd) => commands::user::run(cmd, conn, format, cli.yes).await,
+                AdminCommands::Group(cmd) => commands::group::run(cmd, conn, format, cli.yes).await,
+            }
+        }
     }
 }
