@@ -17,6 +17,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from hindsight_api.extensions import AuthenticationError, HttpExtension
 
 from hindclaw_ext import db, marketplace
+from hindclaw_ext.models import ServiceAccountRecord
 from hindclaw_ext.auth import decode_jwt
 from hindclaw_ext.bank_bootstrap import bootstrap_bank_from_template
 from hindclaw_ext.marketplace import derive_source_name
@@ -464,7 +465,7 @@ class HindclawHttp(HttpExtension):
 
         # --- Self-Service SA Helpers ---
 
-        async def _get_owned_sa(sa_id: str, owner_user_id: str):
+        async def _get_owned_sa(sa_id: str, owner_user_id: str) -> ServiceAccountRecord:
             """Fetch an SA and verify the caller owns it.
 
             Returns 404 for both 'not found' and 'not yours' — no information leakage.
