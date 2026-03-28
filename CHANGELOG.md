@@ -16,6 +16,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-03-28
+
+### Added
+- **Self-service SA endpoints** at `/me/service-accounts` — users create, read, update, delete their own service accounts and keys without admin privileges
+- `CreateSelfServiceAccountRequest` and `UpdateSelfServiceAccountRequest` models with `extra="forbid"` — owner is always the authenticated caller, unknown fields rejected with 422
+- `_get_owned_sa` ownership helper — returns 404 for both "not found" and "not yours" (no information leakage)
+- `list_service_accounts_by_owner` DB query for owner-filtered SA listing
+- 20 new tests covering ownership enforcement, cross-user 404, extra field rejection, SA-as-caller identity
+
+### Changed
+- **Admin SA endpoints now require `iam:service_accounts:manage`** — all 8 endpoints at `/service-accounts` switched from `iam:service_accounts:{read,write}` and `iam:service_account_keys:write` to the new `iam:service_accounts:manage` action. The built-in `iam:admin` policy (`iam:*`) already covers it.
+
+### Security
+- **Fix privilege escalation in SA creation** — previously any user with `iam:service_accounts:write` could create SAs for other users by specifying an arbitrary `owner_user_id`. The self-service surface eliminates this by construction (no `owner_user_id` field). The admin surface is now gated by the separate `iam:service_accounts:manage` action.
+- **Block SA self-escalation** — self-service update only allows `display_name` changes. `scoping_policy_id` and `is_active` are admin-only, preventing an SA from removing its own scoping policy.
+
 ## [0.2.7] - 2026-03-28
 
 ### Added
