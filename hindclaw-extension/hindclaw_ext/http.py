@@ -37,6 +37,7 @@ from hindclaw_ext.http_models import (
     CreatePolicyAttachmentRequest,
     CreatePolicyRequest,
     CreateSAKeyRequest,
+    CreateSelfServiceAccountRequest,
     CreateServiceAccountRequest,
     CreateSourceRequest,
     CreateTemplateRequest,
@@ -58,6 +59,7 @@ from hindclaw_ext.http_models import (
     TemplateResponse,
     TemplateUpdateResponse,
     UpdateGroupRequest,
+    UpdateSelfServiceAccountRequest,
     UpdateTemplateRequest,
     UpdatePolicyRequest,
     UpdateServiceAccountRequest,
@@ -459,6 +461,80 @@ class HindclawHttp(HttpExtension):
             if not existing:
                 raise HTTPException(404, f"Attachment {policy_id}/{principal_type}/{principal_id} not found")
             await db.delete_policy_attachment(policy_id, principal_type, principal_id)
+
+        # --- Self-Service SA Helpers ---
+
+        async def _get_owned_sa(sa_id: str, owner_user_id: str):
+            """Fetch an SA and verify the caller owns it.
+
+            Returns 404 for both 'not found' and 'not yours' — no information leakage.
+
+            Args:
+                sa_id: Service account ID.
+                owner_user_id: Authenticated caller's user ID.
+
+            Returns:
+                ServiceAccountRecord.
+
+            Raises:
+                HTTPException: 404 if SA not found or not owned by caller.
+            """
+            sa = await db.get_service_account(sa_id)
+            if not sa or sa.owner_user_id != owner_user_id:
+                raise HTTPException(404, f"Service account {sa_id} not found")
+            return sa
+
+        # --- Self-Service Service Accounts (/me/service-accounts) ---
+
+        @router.get("/me/service-accounts", response_model=list[ServiceAccountResponse], operation_id="list_my_service_accounts")
+        async def list_my_service_accounts(_auth=Depends(_require_iam("iam:service_accounts:read"))):
+            return await db.list_service_accounts_by_owner(_auth["user_id"])
+
+        @router.post("/me/service-accounts", status_code=201, response_model=ServiceAccountResponse, operation_id="create_my_service_account")
+        async def create_my_service_account(req: CreateSelfServiceAccountRequest, _auth=Depends(_require_iam("iam:service_accounts:write"))):
+            owner_user_id = _auth["user_id"]
+            await db.create_service_account(req.id, owner_user_id, req.display_name, req.scoping_policy_id)
+            return {"id": req.id, "owner_user_id": owner_user_id, "display_name": req.display_name, "is_active": True, "scoping_policy_id": req.scoping_policy_id}
+
+        @router.get("/me/service-accounts/{sa_id}", response_model=ServiceAccountResponse, operation_id="get_my_service_account")
+        async def get_my_service_account(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:read"))):
+            return await _get_owned_sa(sa_id, _auth["user_id"])
+
+        @router.put("/me/service-accounts/{sa_id}", response_model=ServiceAccountResponse, operation_id="update_my_service_account")
+        async def update_my_service_account(sa_id: str, req: UpdateSelfServiceAccountRequest, _auth=Depends(_require_iam("iam:service_accounts:write"))):
+            await _get_owned_sa(sa_id, _auth["user_id"])
+            await db.update_service_account(sa_id, display_name=req.display_name)
+            result = await db.get_service_account(sa_id)
+            if not result:
+                raise HTTPException(404, f"Service account {sa_id} not found")
+            return result
+
+        @router.delete("/me/service-accounts/{sa_id}", status_code=204, operation_id="delete_my_service_account")
+        async def delete_my_service_account(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:write"))):
+            await _get_owned_sa(sa_id, _auth["user_id"])
+            await db.delete_service_account(sa_id)
+
+        @router.get("/me/service-accounts/{sa_id}/keys", response_model=list[SAKeyResponse], operation_id="list_my_sa_keys")
+        async def list_my_sa_keys(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:read"))):
+            await _get_owned_sa(sa_id, _auth["user_id"])
+            keys = await db.list_sa_keys(sa_id)
+            return [{"id": k.id, "api_key_prefix": k.api_key[:_API_KEY_MASK_LENGTH], "description": k.description} for k in keys]
+
+        @router.post("/me/service-accounts/{sa_id}/keys", status_code=201, response_model=SAKeyCreateResponse, operation_id="create_my_sa_key")
+        async def create_my_sa_key(sa_id: str, req: CreateSAKeyRequest, _auth=Depends(_require_iam("iam:service_account_keys:write"))):
+            await _get_owned_sa(sa_id, _auth["user_id"])
+            key_id = secrets.token_hex(8)
+            api_key = f"hc_sa_{sa_id}_{secrets.token_hex(16)}"
+            await db.create_sa_key(key_id, sa_id, api_key, req.description)
+            return {"id": key_id, "api_key": api_key, "description": req.description}
+
+        @router.delete("/me/service-accounts/{sa_id}/keys/{key_id}", status_code=204, operation_id="delete_my_sa_key")
+        async def delete_my_sa_key(sa_id: str, key_id: str, _auth=Depends(_require_iam("iam:service_account_keys:write"))):
+            await _get_owned_sa(sa_id, _auth["user_id"])
+            existing = await db.get_sa_key(key_id, sa_id)
+            if not existing:
+                raise HTTPException(404, f"SA key {key_id} not found")
+            await db.delete_sa_key(key_id, sa_id)
 
         # --- Service Accounts ---
 
