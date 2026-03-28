@@ -28,7 +28,7 @@ fn policy_document() -> serde_json::Value {
             {
                 "effect": "allow",
                 "actions": ["bank:recall"],
-                "resources": ["*"]
+                "banks": ["*"]
             }
         ]
     })

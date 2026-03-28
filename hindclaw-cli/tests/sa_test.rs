@@ -120,34 +120,46 @@ fn test_sa_list() {
 
 #[test]
 fn test_sa_lifecycle() {
-    let Some(mut cmd) = hindclaw_server() else { return };
+    let Some(_) = hindclaw_server() else { return };
     let sa_id = unique_id("cli-test-sa");
+    let user_id = unique_id("sa-owner");
 
-    // Add
-    let output = cmd.args([
+    // Create owner user (FK constraint requires valid owner_user_id)
+    let output = hindclaw_server().unwrap()
+        .args(["admin", "user", "add", &user_id, "--display-name", "SA Test Owner"])
+        .output().unwrap();
+    assert!(output.status.success(), "user add: {}", String::from_utf8_lossy(&output.stderr));
+
+    // Add SA
+    let output = hindclaw_server().unwrap().args([
         "admin", "sa", "add", &sa_id,
-        "--owner", "root",
+        "--owner", &user_id,
         "--display-name", "CLI Test SA",
     ]).output().unwrap();
-    assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
+    assert!(output.status.success(), "sa add: {}", String::from_utf8_lossy(&output.stderr));
 
     // Info
-    let mut cmd = hindclaw_server().unwrap();
-    let output = cmd.args(["admin", "sa", "info", &sa_id]).output().unwrap();
+    let output = hindclaw_server().unwrap()
+        .args(["admin", "sa", "info", &sa_id]).output().unwrap();
     assert!(output.status.success());
 
     // Disable
-    let mut cmd = hindclaw_server().unwrap();
-    let output = cmd.args(["admin", "sa", "disable", &sa_id]).output().unwrap();
+    let output = hindclaw_server().unwrap()
+        .args(["admin", "sa", "disable", &sa_id]).output().unwrap();
     assert!(output.status.success());
 
     // Enable
-    let mut cmd = hindclaw_server().unwrap();
-    let output = cmd.args(["admin", "sa", "enable", &sa_id]).output().unwrap();
+    let output = hindclaw_server().unwrap()
+        .args(["admin", "sa", "enable", &sa_id]).output().unwrap();
     assert!(output.status.success());
 
-    // Remove
-    let mut cmd = hindclaw_server().unwrap();
-    let output = cmd.args(["admin", "sa", "remove", &sa_id, "-y"]).output().unwrap();
+    // Remove SA
+    let output = hindclaw_server().unwrap()
+        .args(["admin", "sa", "remove", &sa_id, "-y"]).output().unwrap();
     assert!(output.status.success());
+
+    // Cleanup owner user
+    hindclaw_server().unwrap()
+        .args(["admin", "user", "remove", &user_id, "-y"])
+        .output().unwrap();
 }
