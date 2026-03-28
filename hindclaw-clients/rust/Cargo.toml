@@ -8,6 +8,8 @@ license = "MIT"
 repository = "https://github.com/mrkhachaturov/hindclaw"
 keywords = ["api", "client", "hindsight", "access-control"]
 categories = ["api-bindings"]
+readme = "README.md"
+include = ["src/", "build.rs", "openapi.json", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
 # Security: bytes >= 1.11.1 fixes integer overflow in BytesMut::reserve

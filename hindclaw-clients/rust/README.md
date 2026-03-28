@@ -4,11 +4,9 @@ Rust client for the Hindclaw access control API. Uses [progenitor](https://githu
 
 ## Usage
 
-Add as a path dependency (from the hindclaw CLI or other local crates):
-
 ```toml
 [dependencies]
-hindclaw-client = { path = "../hindclaw-clients/rust" }
+hindclaw-client = "0.1"
 ```
 
 ```rust

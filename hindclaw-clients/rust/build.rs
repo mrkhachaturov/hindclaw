@@ -104,9 +104,17 @@ fn convert_anyof_to_nullable(value: &mut serde_json::Value) {
 }
 
 fn main() {
-    // Hindclaw openapi.json is one level up from rust/ (in hindclaw-clients/)
+    // Look for openapi.json in the crate directory first (for crates.io),
+    // then fall back to parent directory (for monorepo development).
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let openapi_path = manifest_dir.parent().unwrap().join("openapi.json");
+    let openapi_path = {
+        let local = manifest_dir.join("openapi.json");
+        if local.exists() {
+            local
+        } else {
+            manifest_dir.parent().unwrap().join("openapi.json")
+        }
+    };
 
     println!("cargo:rerun-if-changed={}", openapi_path.display());
 
