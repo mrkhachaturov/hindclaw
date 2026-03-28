@@ -518,6 +518,7 @@ dependencies = [
  "dialoguer",
  "dirs",
  "hindclaw-client",
+ "progenitor-client",
  "reqwest",
  "serde",
  "serde_json",
