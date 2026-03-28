@@ -1,6 +1,6 @@
 [project]
 name = "hindclaw-extension"
-version = "0.2.4"
+version = "0.2.5"
 description = "Hindclaw access control extensions for Hindsight API"
 requires-python = ">=3.11"
 license = "MIT"

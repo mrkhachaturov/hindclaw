@@ -16,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-03-28
+
+### Fixed
+- **Partial updates can now clear nullable fields to NULL** — `update_service_account` (and all `Update*Request` endpoints) previously collapsed "not provided" and "set to null" into the same `None`. Added `_UNSET` sentinel in DB layer, fixed HTTP handler to pass only present fields, and fixed Rust client codegen to emit explicit `null` for `Update*Request` structs.
+
+### Added
+- `--clear-scoping-policy` flag on `hindclaw admin sa update` — sets `scoping_policy_id` to NULL
+- 4 new DB tests for `update_service_account` sentinel behavior
+
 ## [0.2.4] - 2026-03-28
 
 ### Changed
