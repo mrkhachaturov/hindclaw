@@ -51,6 +51,6 @@ async fn main() -> Result<()> {
     let format = output::OutputFormat::from(cli.output);
 
     match cli.command {
-        Commands::Alias(cmd) => commands::alias::run(cmd, format).await,
+        Commands::Alias(cmd) => commands::alias::run(cmd, format, cli.yes).await,
     }
 }
