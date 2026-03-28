@@ -1,4 +1,10 @@
 use std::process::Command;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+fn unique_id(prefix: &str) -> String {
+    let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
+    format!("{}-{}", prefix, ts)
+}
 
 fn hindclaw() -> Option<Command> {
     let url = std::env::var("HINDCLAW_API_URL").ok()?;
@@ -28,25 +34,25 @@ fn test_user_list_json() {
 #[test]
 fn test_user_add_and_remove() {
     let Some(mut cmd) = hindclaw() else { return; };
-    let test_id = "cli-test-user@hindclaw.test";
+    let test_id = unique_id("cli-test-user");
 
     // Add
     let output = cmd.args([
-        "admin", "user", "add", test_id,
+        "admin", "user", "add", &test_id,
         "--display-name", "CLI Test User",
     ]).output().unwrap();
     assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     // Info
     let mut cmd = hindclaw().unwrap();
-    let output = cmd.args(["admin", "user", "info", test_id]).output().unwrap();
+    let output = cmd.args(["admin", "user", "info", &test_id]).output().unwrap();
     assert!(output.status.success());
     let stdout = String::from_utf8(output.stdout).unwrap();
     assert!(stdout.contains("CLI Test User"));
 
     // Remove with -y
     let mut cmd = hindclaw().unwrap();
-    let output = cmd.args(["admin", "user", "remove", test_id, "-y"]).output().unwrap();
+    let output = cmd.args(["admin", "user", "remove", &test_id, "-y"]).output().unwrap();
     assert!(output.status.success());
 }
 

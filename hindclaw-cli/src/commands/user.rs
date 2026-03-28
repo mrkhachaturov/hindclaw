@@ -1,8 +1,8 @@
 use anyhow::Result;
 use clap::Subcommand;
-use std::io::IsTerminal;
 
 use crate::{config::ResolvedConnection, output::OutputFormat, ui};
+use crate::commands::common::{map_api_error, require_confirmation};
 use hindclaw_client::Client;
 
 #[derive(Subcommand)]
@@ -313,30 +313,3 @@ async fn key_rm(client: &Client, user_id: &str, key_id: &str, yes: bool) -> Resu
     Ok(())
 }
 
-pub fn require_confirmation(prompt: &str, yes: bool) -> Result<bool> {
-    if yes {
-        return Ok(true);
-    }
-    if !std::io::stdin().is_terminal() {
-        anyhow::bail!("stdin is not a terminal. Use -y to confirm destructive operations non-interactively.");
-    }
-    let confirmed = dialoguer::Confirm::new()
-        .with_prompt(format!("  {}?", prompt))
-        .default(false)
-        .interact()?;
-    Ok(confirmed)
-}
-
-pub fn map_api_error<E: std::fmt::Debug>(err: progenitor_client::Error<E>, context: &str) -> anyhow::Error {
-    if let Some(status) = err.status() {
-        match status.as_u16() {
-            404 => anyhow::anyhow!("Not found ({})", context),
-            409 => anyhow::anyhow!("Conflict — resource already exists ({})", context),
-            401 => anyhow::anyhow!("Unauthorized — check your API key"),
-            403 => anyhow::anyhow!("Forbidden — insufficient permissions"),
-            _ => anyhow::anyhow!("API error {} ({}): {}", status, context, err),
-        }
-    } else {
-        anyhow::anyhow!("Request failed ({}): {}", context, err)
-    }
-}

@@ -2,7 +2,7 @@ use anyhow::Result;
 use clap::Subcommand;
 
 use crate::{config::ResolvedConnection, output::OutputFormat, ui};
-use crate::commands::user::{map_api_error, require_confirmation};
+use crate::commands::common::{map_api_error, require_confirmation};
 use hindclaw_client::Client;
 
 #[derive(Subcommand)]
