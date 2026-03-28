@@ -5,6 +5,12 @@ All notable changes to `hindclaw-cli` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-03-29
+
+### Fixed
+- Switch from OpenSSL to rustls TLS backend — fixes cross-compilation failures in CI
+- Fix CI runner: macos-13 (deprecated) → macos-15 for x86_64 Darwin builds
+
 ## [0.2.0] - 2026-03-29
 
 ### Added

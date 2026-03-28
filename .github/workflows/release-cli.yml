@@ -50,7 +50,7 @@ jobs:
             asset_name: hindclaw-linux-arm64
 
           - target: x86_64-apple-darwin
-            runner: macos-13
+            runner: macos-15
             use_cross: false
             binary: hindclaw
             asset_name: hindclaw-darwin-amd64

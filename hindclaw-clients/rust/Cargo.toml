@@ -1,6 +1,6 @@
 [package]
 name = "hindclaw-client"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["Ruben Khachaturov"]
 description = "Rust client library for Hindclaw access control API"
@@ -15,7 +15,7 @@ include = ["src/", "build.rs", "openapi.json", "Cargo.toml", "README.md", "LICEN
 # Security: bytes >= 1.11.1 fixes integer overflow in BytesMut::reserve
 bytes = "1.11.1"
 # HTTP client
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 # Async runtime (no default features — consumers choose their own runtime config)
 tokio = { version = "1", default-features = false }
 # Serialization
