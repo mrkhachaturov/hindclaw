@@ -6,7 +6,10 @@ mod commands;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand, ValueEnum};
-use commands::{group::GroupCommands, policy::PolicyCommands, user::UserCommands};
+use commands::{
+    group::GroupCommands, policy::PolicyCommands, resolve::ResolveArgs,
+    sa::SaCommands, bank_policy::BankPolicyCommands, user::UserCommands,
+};
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum Format {
@@ -64,6 +67,17 @@ enum AdminCommands {
     /// Manage policies
     #[command(subcommand)]
     Policy(PolicyCommands),
+
+    /// Manage service accounts
+    #[command(subcommand)]
+    Sa(SaCommands),
+
+    /// Manage bank policies
+    #[command(subcommand)]
+    BankPolicy(BankPolicyCommands),
+
+    /// Debug access resolution
+    Resolve(ResolveArgs),
 }
 
 #[tokio::main]
@@ -79,6 +93,9 @@ async fn main() -> Result<()> {
                 AdminCommands::User(cmd) => commands::user::run(cmd, conn, format, cli.yes).await,
                 AdminCommands::Group(cmd) => commands::group::run(cmd, conn, format, cli.yes).await,
                 AdminCommands::Policy(cmd) => commands::policy::run(cmd, conn, format, cli.yes).await,
+                AdminCommands::Sa(cmd) => commands::sa::run(cmd, conn, format, cli.yes).await,
+                AdminCommands::BankPolicy(cmd) => commands::bank_policy::run(cmd, conn, format, cli.yes).await,
+                AdminCommands::Resolve(args) => commands::resolve::run(args, conn, format).await,
             }
         }
     }
