@@ -461,3 +461,41 @@ async def test_filter_mcp_tools_admin_tools():
     assert "update_bank" not in result
     assert "delete_bank" not in result
     assert "create_bank" not in result
+
+
+@pytest.mark.asyncio
+async def test_filter_mcp_tools_sa_identity():
+    """Service account identity routes through _resolve_access correctly."""
+    validator = HindclawValidator({})
+    ctx = FakeRequestContext(tenant_id="sa:terraform-ci")
+
+    tools = frozenset({"recall", "retain", "reflect"})
+
+    with patch("hindclaw_ext.validator._resolve_sa_access", return_value=AccessResult(allowed=True)) as mock_sa:
+        result = await validator.filter_mcp_tools("test-bank", ctx, tools)
+
+    assert result == tools
+    assert mock_sa.call_count >= 1
+
+
+@pytest.mark.asyncio
+async def test_filter_mcp_tools_unmapped_identity():
+    """Unmapped sender routes to public access resolution."""
+    validator = HindclawValidator({})
+    ctx = FakeRequestContext(tenant_id="_unmapped")
+    _jwt_claims.set({"channel": "telegram"})
+
+    tools = frozenset({"recall", "retain", "reflect"})
+
+    # Public access only allows recall
+    async def mock_public(bank_id, action):
+        if action == "bank:recall":
+            return AccessResult(allowed=True)
+        return AccessResult(allowed=False)
+
+    with patch("hindclaw_ext.validator._resolve_public_access", side_effect=mock_public):
+        result = await validator.filter_mcp_tools("test-bank", ctx, tools)
+
+    assert "recall" in result
+    assert "retain" not in result
+    assert "reflect" not in result
