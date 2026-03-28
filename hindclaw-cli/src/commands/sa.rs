@@ -40,6 +40,9 @@ pub enum SaCommands {
         /// New scoping policy ID
         #[arg(long, value_name = "POLICY_ID")]
         scoping_policy: Option<String>,
+        /// Remove scoping policy (sets to null)
+        #[arg(long, conflicts_with = "scoping_policy")]
+        clear_scoping_policy: bool,
     },
     /// Remove a service account
     Remove {
@@ -94,8 +97,8 @@ pub async fn run(cmd: SaCommands, conn: ResolvedConnection, format: OutputFormat
             sa_add(&client, &id, &owner, &display_name, scoping_policy.as_deref()).await
         }
         SaCommands::Info { id } => sa_info(&client, &id, format).await,
-        SaCommands::Update { id, display_name, scoping_policy } => {
-            sa_update(&client, &id, display_name.as_deref(), scoping_policy.as_deref()).await
+        SaCommands::Update { id, display_name, scoping_policy, clear_scoping_policy } => {
+            sa_update(&client, &id, display_name.as_deref(), scoping_policy.as_deref(), clear_scoping_policy).await
         }
         SaCommands::Remove { id } => sa_remove(&client, &id, yes).await,
         SaCommands::Disable { id } => sa_toggle(&client, &id, false).await,
@@ -164,8 +167,11 @@ async fn sa_info(client: &Client, id: &str, format: OutputFormat) -> Result<()> 
     Ok(())
 }
 
-async fn sa_update(client: &Client, id: &str, display_name: Option<&str>, scoping_policy: Option<&str>) -> Result<()> {
-    let scoping = scoping_policy.map(|s| s.to_string());
+async fn sa_update(client: &Client, id: &str, display_name: Option<&str>, scoping_policy: Option<&str>, clear_scoping_policy: bool) -> Result<()> {
+    // With skip_serializing_if removed from Update*Request structs, None now
+    // serializes as JSON null (not omitted). The server's model_dump(exclude_unset=True)
+    // sees explicit null and the DB _UNSET sentinel correctly sets the column to SQL NULL.
+    let scoping = if clear_scoping_policy { None } else { scoping_policy.map(|s| s.to_string()) };
 
     let body = hindclaw_client::types::UpdateServiceAccountRequest {
         display_name: display_name.map(|s| s.to_string()),

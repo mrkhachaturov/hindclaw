@@ -14,6 +14,12 @@ import os
 
 import asyncpg
 
+# Sentinel for partial-update functions: distinguishes "not provided" from "set to None".
+# _UNSET = caller did not provide this argument (don't touch the column).
+# None   = caller explicitly wants to set the column to SQL NULL.
+# value  = caller wants to set the column to this value.
+_UNSET: object = object()
+
 from hindclaw_ext.models import (
     ApiKeyRecord,
     AttachedPolicyRecord,
@@ -595,26 +601,51 @@ async def create_service_account(sa_id: str, owner_user_id: str, display_name: s
         sa_id, owner_user_id, display_name, scoping_policy_id,
     )
 
-async def update_service_account(sa_id: str, *, display_name: str | None = None, scoping_policy_id: str | None = None, is_active: bool | None = None) -> bool:
-    """Update a service account. Returns True if found."""
+async def update_service_account(
+    sa_id: str,
+    *,
+    display_name: str | None | object = _UNSET,
+    scoping_policy_id: str | None | object = _UNSET,
+    is_active: bool | None | object = _UNSET,
+) -> bool:
+    """Update a service account. Returns True if found.
+
+    Uses the _UNSET sentinel to distinguish "not provided" from "set to None":
+        _UNSET  — do not touch the column
+        None    — set column to SQL NULL
+        <value> — set column to that value
+
+    Args:
+        sa_id: Service account ID.
+        display_name: New display name, None to clear, or _UNSET to skip.
+        scoping_policy_id: New policy ID, None to clear, or _UNSET to skip.
+        is_active: New active state, None to clear, or _UNSET to skip.
+
+    Returns:
+        True if the service account was found (even if no columns changed).
+    """
     pool = await get_pool()
-    parts, params = [], [sa_id]
+    parts: list[str] = []
+    params: list[object] = [sa_id]
     idx = 2
-    if display_name is not None:
+    if display_name is not _UNSET:
         parts.append(f"display_name = ${idx}")
         params.append(display_name)
         idx += 1
-    if scoping_policy_id is not None:
+    if scoping_policy_id is not _UNSET:
         parts.append(f"scoping_policy_id = ${idx}")
         params.append(scoping_policy_id)
         idx += 1
-    if is_active is not None:
+    if is_active is not _UNSET:
         parts.append(f"is_active = ${idx}")
         params.append(is_active)
         idx += 1
     if not parts:
         return True
-    result = await pool.execute(f"UPDATE hindclaw_service_accounts SET {', '.join(parts)} WHERE id = $1", *params)
+    result = await pool.execute(
+        f"UPDATE hindclaw_service_accounts SET {', '.join(parts)} WHERE id = $1",
+        *params,
+    )
     return result != "UPDATE 0"
 
 async def delete_service_account(sa_id: str) -> None:

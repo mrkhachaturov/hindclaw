@@ -483,7 +483,16 @@ class HindclawHttp(HttpExtension):
             updates = req.model_dump(exclude_unset=True)
             if not updates:
                 raise HTTPException(status_code=400, detail="No fields to update")
-            await db.update_service_account(sa_id, display_name=updates.get("display_name"), scoping_policy_id=updates.get("scoping_policy_id"), is_active=updates.get("is_active"))
+            # Pass only fields that were present in the request body.
+            # Absent fields stay as _UNSET (don't touch), explicit null clears to NULL.
+            kwargs: dict = {}
+            if "display_name" in updates:
+                kwargs["display_name"] = updates["display_name"]
+            if "scoping_policy_id" in updates:
+                kwargs["scoping_policy_id"] = updates["scoping_policy_id"]
+            if "is_active" in updates:
+                kwargs["is_active"] = updates["is_active"]
+            await db.update_service_account(sa_id, **kwargs)
             result = await db.get_service_account(sa_id)
             if not result:
                 raise HTTPException(404, f"Service account {sa_id} not found")

@@ -142,10 +142,46 @@ fn main() {
     let mut formatted = prettyplease::unparse(&syntax_tree);
 
     formatted = fix_optional_header_params(&formatted);
+    formatted = fix_update_request_serialization(&formatted);
 
     fs::write(&dest_path, formatted).expect("Failed to write generated client code");
 
     println!("Generated client at: {}", dest_path.display());
+}
+
+/// Strip `skip_serializing_if` from Update*Request structs so `None` serializes
+/// as JSON `null` instead of being omitted. This lets the server distinguish
+/// "field not sent" (omitted) from "set to null" (explicit null) via
+/// `model_dump(exclude_unset=True)`.
+///
+/// Without this fix, the Rust client cannot express "clear this nullable field"
+/// because progenitor adds `skip_serializing_if = "Option::is_none"` to every
+/// Optional field, collapsing "don't change" and "set to null" on the wire.
+fn fix_update_request_serialization(code: &str) -> String {
+    use regex::Regex;
+
+    // Match: inside an Update*Request struct definition, replace
+    //   #[serde(default, skip_serializing_if = "::std::option::Option::is_none")]
+    // with:
+    //   #[serde(default)]
+    //
+    // Strategy: find each "pub struct Update...Request {" block and strip the
+    // skip_serializing_if within it. We do this by finding each struct and
+    // processing its body.
+    let struct_re = Regex::new(
+        r"(?s)(pub struct Update\w*Request \{)(.*?)(\n    \})"
+    ).expect("Invalid regex");
+
+    let field_re = Regex::new(
+        r#"#\[serde\(default, skip_serializing_if = "::std::option::Option::is_none"\)\]"#
+    ).expect("Invalid regex");
+
+    struct_re.replace_all(code, |caps: &regex::Captures| {
+        let header = &caps[1];
+        let body = field_re.replace_all(&caps[2], "#[serde(default)]");
+        let footer = &caps[3];
+        format!("{}{}{}", header, body, footer)
+    }).to_string()
 }
 
 /// Fix progenitor's generated code for optional header parameters.
