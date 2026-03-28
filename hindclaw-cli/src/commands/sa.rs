@@ -168,14 +168,9 @@ async fn sa_info(client: &Client, id: &str, format: OutputFormat) -> Result<()> 
 }
 
 async fn sa_update(client: &Client, id: &str, display_name: Option<&str>, scoping_policy: Option<&str>, clear_scoping_policy: bool) -> Result<()> {
+    // TODO: verify server contract — does empty string mean "set to null"?
+    // Option<String>: None = don't change, Some("") = clear (assumed, not verified)
     let scoping = if clear_scoping_policy {
-        // Explicit null — need to send the field. But UpdateServiceAccountRequest
-        // uses Option<String> where None means "don't change". We need to send
-        // Some("") or handle at the server. For now, send None and let the server
-        // handle clear via a separate mechanism, or just set to empty string.
-        // Actually, the generated type is Option<String> — None = don't change,
-        // Some(value) = set to value. There's no way to express "set to null"
-        // with this schema. We'll send an empty string as the clear signal.
         Some(String::new())
     } else {
         scoping_policy.map(|s| s.to_string())
