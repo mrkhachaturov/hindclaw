@@ -6,6 +6,9 @@ authors = ["Ruben Khachaturov <mr.kha4a2rov@protonmail.com>"]
 description = "CLI for managing HindClaw access control"
 license = "MIT"
 repository = "https://github.com/mrkhachaturov/hindclaw"
+readme = "README.md"
+keywords = ["cli", "hindsight", "access-control", "hindclaw"]
+categories = ["command-line-utilities"]
 
 [[bin]]
 name = "hindclaw"
@@ -43,7 +46,8 @@ dialoguer = "0.11"
 url = "2.5"
 
 # HindClaw API client (generated from OpenAPI)
-hindclaw-client = { path = "../hindclaw-clients/rust" }
+# path is used for local dev; version is required for crates.io publish
+hindclaw-client = { version = "0.1", path = "../hindclaw-clients/rust" }
 # Error types for map_api_error (re-exported by hindclaw-client)
 progenitor-client = "0.11"
 
