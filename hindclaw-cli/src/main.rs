@@ -8,9 +8,9 @@ mod commands;
 use anyhow::Result;
 use clap::{Parser, Subcommand, ValueEnum};
 use commands::{
-    group::GroupCommands, policy::PolicyCommands, resolve::ResolveArgs,
-    sa::SaCommands, bank_policy::BankPolicyCommands, source::SourceCommands,
-    template::TemplateCommands, user::UserCommands,
+    group::GroupCommands, my_sa::MySaCommands, policy::PolicyCommands,
+    resolve::ResolveArgs, sa::SaCommands, bank_policy::BankPolicyCommands,
+    source::SourceCommands, template::TemplateCommands, user::UserCommands,
 };
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
@@ -50,6 +50,10 @@ enum Commands {
     /// Manage server aliases
     #[command(subcommand)]
     Alias(commands::alias::AliasCommands),
+
+    /// Manage your service accounts
+    #[command(subcommand)]
+    Sa(MySaCommands),
 
     /// Manage templates (list, search, install, apply, ...)
     #[command(subcommand)]
@@ -97,6 +101,10 @@ async fn main() -> Result<()> {
 
     match cli.command {
         Commands::Alias(cmd) => commands::alias::run(cmd, format, cli.yes).await,
+        Commands::Sa(cmd) => {
+            let conn = config::resolve_connection(cli.alias.as_deref())?;
+            commands::my_sa::run(cmd, conn, format, cli.yes).await
+        }
         Commands::Template(cmd) => {
             let conn = config::resolve_connection(cli.alias.as_deref())?;
             commands::template::run(cmd, conn, format, cli.yes).await
