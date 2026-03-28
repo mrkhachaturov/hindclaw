@@ -690,7 +690,10 @@ class HindclawHttp(HttpExtension):
             name: str,
             principal=Depends(_require_iam("template:list")),
         ):
-            """Get a custom template by scope and name.
+            """Get a template by scope and name.
+
+            Finds any template matching (scope, name) regardless of source.
+            This covers both custom templates and marketplace-installed ones.
 
             Args:
                 scope: Template scope ('server' or 'personal').
@@ -704,7 +707,7 @@ class HindclawHttp(HttpExtension):
                 HTTPException: 404 if template not found.
             """
             owner = principal["user_id"] if scope == "personal" else None
-            rec = await db.get_template(name, scope, source_name=None, owner=owner)
+            rec = await db.get_template(name, scope, owner=owner)
             if rec is None:
                 raise HTTPException(status_code=404, detail="Template not found")
             return rec.model_dump()
@@ -755,7 +758,7 @@ class HindclawHttp(HttpExtension):
 
             # Cross-field validation: merge with existing record to check final state.
             if "retain_extraction_mode" in updates or "retain_custom_instructions" in updates:
-                existing = await db.get_template(name, scope, source_name=None, owner=owner)
+                existing = await db.get_template(name, scope, owner=owner)
                 if existing is None:
                     raise HTTPException(status_code=404, detail="Template not found")
                 merged_mode = updates.get("retain_extraction_mode", existing.retain_extraction_mode)
@@ -771,7 +774,7 @@ class HindclawHttp(HttpExtension):
                         detail="retain_custom_instructions only valid when retain_extraction_mode is 'custom'",
                     )
 
-            rec = await db.update_template(name, scope, source_name=None, owner=owner, updates=updates)
+            rec = await db.update_template(name, scope, owner=owner, updates=updates)
             if rec is None:
                 raise HTTPException(status_code=404, detail="Template not found")
             return rec.model_dump()
@@ -793,7 +796,7 @@ class HindclawHttp(HttpExtension):
                 HTTPException: 404 if template not found.
             """
             owner = principal["user_id"] if scope == "personal" else None
-            deleted = await db.delete_template(name, scope, source_name=None, owner=owner)
+            deleted = await db.delete_template(name, scope, owner=owner)
             if not deleted:
                 raise HTTPException(status_code=404, detail="Template not found")
 

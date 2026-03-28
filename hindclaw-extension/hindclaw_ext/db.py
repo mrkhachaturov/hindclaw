@@ -875,22 +875,32 @@ async def get_template(
     id: str,
     scope: str,
     *,
-    source_name: str | None,
+    source_name: str | None | object = _UNSET,
     owner: str | None,
 ) -> TemplateRecord | None:
     """Fetch a single template by its composite key.
 
+    Uses the _UNSET sentinel for source_name filtering:
+        _UNSET          — match any source (custom or marketplace)
+        None            — match only custom templates (source_name IS NULL)
+        "source-name"   — match only this specific source
+
     Args:
         id: Template name.
         scope: 'server' or 'personal'.
-        source_name: Marketplace source name (None for custom).
+        source_name: Marketplace source name, None for custom-only, _UNSET for any.
         owner: User ID for personal scope.
 
     Returns:
         TemplateRecord or None if not found.
     """
     pool = await get_pool()
-    if source_name is not None:
+    if source_name is _UNSET:
+        row = await pool.fetchrow(
+            "SELECT * FROM bank_templates WHERE id = $1 AND scope = $2 AND owner IS NOT DISTINCT FROM $3",
+            id, scope, owner,
+        )
+    elif source_name is not None:
         row = await pool.fetchrow(
             "SELECT * FROM bank_templates WHERE id = $1 AND scope = $2 AND source_name = $3 AND owner IS NOT DISTINCT FROM $4",
             id, scope, source_name, owner,
@@ -947,7 +957,7 @@ async def update_template(
     id: str,
     scope: str,
     *,
-    source_name: str | None,
+    source_name: str | None | object = _UNSET,
     owner: str | None,
     updates: dict,
 ) -> TemplateRecord | None:
@@ -956,7 +966,7 @@ async def update_template(
     Args:
         id: Template name.
         scope: 'server' or 'personal'.
-        source_name: Marketplace source name.
+        source_name: Source filter (_UNSET=any, None=custom only, str=specific source).
         owner: User ID for personal scope.
         updates: Dict of column names to new values.
 
@@ -981,7 +991,10 @@ async def update_template(
         idx += 1
     set_clauses.append("updated_at = now()")
 
-    if source_name is not None:
+    if source_name is _UNSET:
+        where = f"id = ${idx} AND scope = ${idx+1} AND owner IS NOT DISTINCT FROM ${idx+2}"
+        params.extend([id, scope, owner])
+    elif source_name is not None:
         where = f"id = ${idx} AND scope = ${idx+1} AND source_name = ${idx+2} AND owner IS NOT DISTINCT FROM ${idx+3}"
         params.extend([id, scope, source_name, owner])
     else:
@@ -999,7 +1012,7 @@ async def delete_template(
     id: str,
     scope: str,
     *,
-    source_name: str | None,
+    source_name: str | None | object = _UNSET,
     owner: str | None,
 ) -> bool:
     """Delete a template.
@@ -1007,14 +1020,19 @@ async def delete_template(
     Args:
         id: Template name.
         scope: 'server' or 'personal'.
-        source_name: Marketplace source name.
+        source_name: Source filter (_UNSET=any, None=custom only, str=specific source).
         owner: User ID for personal scope.
 
     Returns:
         True if a row was deleted, False if not found.
     """
     pool = await get_pool()
-    if source_name is not None:
+    if source_name is _UNSET:
+        result = await pool.execute(
+            "DELETE FROM bank_templates WHERE id = $1 AND scope = $2 AND owner IS NOT DISTINCT FROM $3",
+            id, scope, owner,
+        )
+    elif source_name is not None:
         result = await pool.execute(
             "DELETE FROM bank_templates WHERE id = $1 AND scope = $2 AND source_name = $3 AND owner IS NOT DISTINCT FROM $4",
             id, scope, source_name, owner,
