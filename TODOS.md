@@ -28,18 +28,18 @@ Or pick one convention and alias the other. Most CLIs support `ls` as an alias f
 
 ---
 
-## CLI: Self-service SA creation for regular users
+## CLI: Self-service SA commands (`hindclaw sa`)
 
-SA management is under `hindclaw admin sa`, which implies admin-only. But the design requires users to create their own SAs (self-service, scoped to their permissions).
+**Server-side done (v0.3.0):** `/me/service-accounts` endpoints exist with full ownership enforcement. Clients regenerated with `list_my_service_accounts`, `create_my_service_account`, etc.
 
-**Current:** Only admins can create SAs via `hindclaw admin sa add`.
+**CLI not done:** The Rust CLI needs `hindclaw sa` subcommands targeting the `/me/` endpoints. Mapping is defined in the spec (`docs/rkstack/specs/hindclaw/2026-03-28-sa-self-service-design.md` Section 4):
+- `hindclaw sa list` → `GET /me/service-accounts`
+- `hindclaw sa add <id>` → `POST /me/service-accounts`
+- `hindclaw sa info <id>` → `GET /me/service-accounts/{id}`
+- `hindclaw sa key add <sa-id>` → `POST /me/service-accounts/{id}/keys`
+- etc.
 
-**Needed:** Regular users should be able to create and manage their own SAs without admin access. Options:
-- A) Top-level `hindclaw sa create`, `hindclaw sa list`, `hindclaw sa key add` — uses the user's own API key, restricted to SAs they own
-- B) Keep under `admin` but let the server enforce "you can only manage your own SAs" based on permissions
-- C) New top-level `hindclaw self` or `hindclaw my` namespace for self-service operations
-
-This is important for the Claude Code plugin workflow: `hindclaw sa create claude-myproject` should work for any user, not just admins.
+This is v2 scope per the CLI spec.
 
 ---
 
