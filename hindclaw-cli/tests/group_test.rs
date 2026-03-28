@@ -1,19 +1,6 @@
-use std::process::Command;
-use std::time::{SystemTime, UNIX_EPOCH};
+mod common;
 
-fn unique_id(prefix: &str) -> String {
-    let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
-    format!("{}-{}", prefix, ts)
-}
-
-fn hindclaw() -> Option<Command> {
-    let url = std::env::var("HINDCLAW_API_URL").ok()?;
-    let key = std::env::var("HINDCLAW_API_KEY").ok()?;
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_hindclaw"));
-    cmd.env("HINDCLAW_API_URL", url);
-    cmd.env("HINDCLAW_API_KEY", key);
-    Some(cmd)
-}
+use common::{unique_id, hindclaw_server as hindclaw};
 
 #[test]
 fn test_group_list() {

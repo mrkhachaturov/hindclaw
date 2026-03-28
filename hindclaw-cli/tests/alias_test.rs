@@ -1,12 +1,9 @@
-use std::io::Write;
-use std::process::{Command, Stdio};
-use tempfile::TempDir;
+mod common;
 
-fn hindclaw(config_dir: &str) -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_hindclaw"));
-    cmd.env("HINDCLAW_CONFIG_DIR", config_dir);
-    cmd
-}
+use std::io::Write;
+use std::process::Stdio;
+use tempfile::TempDir;
+use common::hindclaw_config as hindclaw;
 
 /// Helper: run `alias set` with key piped via stdin
 fn alias_set(dir: &str, name: &str, url: &str, key: &str, extra_args: &[&str]) -> std::process::Output {

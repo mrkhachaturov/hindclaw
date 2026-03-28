@@ -1,25 +1,8 @@
-use std::io::Write;
+mod common;
+
 use std::process::{Command, Stdio};
 use tempfile::TempDir;
-
-fn hindclaw_config(config_dir: &str) -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_hindclaw"));
-    cmd.env("HINDCLAW_CONFIG_DIR", config_dir);
-    cmd
-}
-
-fn setup_alias(dir: &str) {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_hindclaw"))
-        .env("HINDCLAW_CONFIG_DIR", dir)
-        .args(["alias", "set", "test", "http://localhost:9999", "--stdin-key"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .unwrap();
-    child.stdin.as_mut().unwrap().write_all(b"dummy-key\n").unwrap();
-    child.wait_with_output().unwrap();
-}
+use common::{hindclaw_config, setup_alias};
 
 #[test]
 fn test_bank_policy_help() {

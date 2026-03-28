@@ -1,25 +1,8 @@
-use std::process::{Command, Stdio};
-use std::time::{SystemTime, UNIX_EPOCH};
+mod common;
+
+use std::process::Stdio;
 use tempfile::TempDir;
-
-fn unique_id(prefix: &str) -> String {
-    let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
-    format!("{}-{}", prefix, ts)
-}
-
-fn test_env() -> Option<(String, String)> {
-    let url = std::env::var("HINDCLAW_API_URL").ok()?;
-    let key = std::env::var("HINDCLAW_API_KEY").ok()?;
-    Some((url, key))
-}
-
-fn hindclaw(config_dir: &str, url: &str, key: &str) -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_hindclaw"));
-    cmd.env("HINDCLAW_CONFIG_DIR", config_dir);
-    cmd.env("HINDCLAW_API_URL", url);
-    cmd.env("HINDCLAW_API_KEY", key);
-    cmd
-}
+use common::{unique_id, hindclaw_config, hindclaw_server};
 
 fn policy_document() -> serde_json::Value {
     serde_json::json!({
@@ -45,8 +28,7 @@ fn write_policy_file(dir: &std::path::Path) -> std::path::PathBuf {
 #[test]
 fn test_policy_help() {
     let tmp = TempDir::new().unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_hindclaw"))
-        .env("HINDCLAW_CONFIG_DIR", tmp.path().to_str().unwrap())
+    let output = hindclaw_config(tmp.path().to_str().unwrap())
         .args(["admin", "policy", "--help"])
         .output()
         .unwrap();
@@ -61,12 +43,8 @@ fn test_policy_help() {
 
 #[test]
 fn test_attach_requires_user_or_group() {
-    let Some((url, key)) = test_env() else { return };
-    let tmp = TempDir::new().unwrap();
-    let dir = tmp.path().to_str().unwrap();
-
-    // attach with neither --user nor --group should fail (runtime bail, not clap)
-    let output = hindclaw(dir, &url, &key)
+    let Some(mut cmd) = hindclaw_server() else { return };
+    let output = cmd
         .args(["admin", "policy", "attach", "some-policy"])
         .output()
         .unwrap();
@@ -77,11 +55,8 @@ fn test_attach_requires_user_or_group() {
 
 #[test]
 fn test_policy_list() {
-    let Some((url, key)) = test_env() else { return };
-    let tmp = TempDir::new().unwrap();
-    let dir = tmp.path().to_str().unwrap();
-
-    let output = hindclaw(dir, &url, &key)
+    let Some(mut cmd) = hindclaw_server() else { return };
+    let output = cmd
         .args(["admin", "policy", "list", "-o", "json"])
         .output()
         .unwrap();
@@ -93,14 +68,13 @@ fn test_policy_list() {
 
 #[test]
 fn test_policy_create_and_info() {
-    let Some((url, key)) = test_env() else { return };
+    let Some(_) = hindclaw_server() else { return };
     let tmp = TempDir::new().unwrap();
-    let dir = tmp.path().to_str().unwrap();
     let policy_file = write_policy_file(tmp.path());
     let pid = unique_id("pol-create");
 
     // Create
-    let output = hindclaw(dir, &url, &key)
+    let output = hindclaw_server().unwrap()
         .args([
             "admin", "policy", "create", &pid,
             policy_file.to_str().unwrap(),
@@ -111,7 +85,7 @@ fn test_policy_create_and_info() {
     assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     // Info
-    let output = hindclaw(dir, &url, &key)
+    let output = hindclaw_server().unwrap()
         .args(["admin", "policy", "info", &pid, "-o", "json"])
         .output()
         .unwrap();
@@ -122,7 +96,7 @@ fn test_policy_create_and_info() {
     assert_eq!(parsed["display_name"], "Test Policy");
 
     // Cleanup
-    hindclaw(dir, &url, &key)
+    hindclaw_server().unwrap()
         .args(["admin", "policy", "remove", &pid, "-y"])
         .output()
         .unwrap();
@@ -130,14 +104,13 @@ fn test_policy_create_and_info() {
 
 #[test]
 fn test_policy_update() {
-    let Some((url, key)) = test_env() else { return };
+    let Some(_) = hindclaw_server() else { return };
     let tmp = TempDir::new().unwrap();
-    let dir = tmp.path().to_str().unwrap();
     let policy_file = write_policy_file(tmp.path());
     let pid = unique_id("pol-update");
 
     // Create
-    hindclaw(dir, &url, &key)
+    hindclaw_server().unwrap()
         .args([
             "admin", "policy", "create", &pid,
             policy_file.to_str().unwrap(),
@@ -147,7 +120,7 @@ fn test_policy_update() {
         .unwrap();
 
     // Update display_name
-    let output = hindclaw(dir, &url, &key)
+    let output = hindclaw_server().unwrap()
         .args([
             "admin", "policy", "update", &pid,
             policy_file.to_str().unwrap(),
@@ -158,7 +131,7 @@ fn test_policy_update() {
     assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     // Verify
-    let output = hindclaw(dir, &url, &key)
+    let output = hindclaw_server().unwrap()
         .args(["admin", "policy", "info", &pid, "-o", "json"])
         .output()
         .unwrap();
@@ -167,7 +140,7 @@ fn test_policy_update() {
     assert_eq!(parsed["display_name"], "Updated Name");
 
     // Cleanup
-    hindclaw(dir, &url, &key)
+    hindclaw_server().unwrap()
         .args(["admin", "policy", "remove", &pid, "-y"])
         .output()
         .unwrap();
@@ -175,14 +148,13 @@ fn test_policy_update() {
 
 #[test]
 fn test_policy_remove_requires_confirmation() {
-    let Some((url, key)) = test_env() else { return };
+    let Some(_) = hindclaw_server() else { return };
     let tmp = TempDir::new().unwrap();
-    let dir = tmp.path().to_str().unwrap();
     let policy_file = write_policy_file(tmp.path());
     let pid = unique_id("pol-rm");
 
     // Create
-    hindclaw(dir, &url, &key)
+    hindclaw_server().unwrap()
         .args([
             "admin", "policy", "create", &pid,
             policy_file.to_str().unwrap(),
@@ -192,7 +164,7 @@ fn test_policy_remove_requires_confirmation() {
         .unwrap();
 
     // Remove without -y on non-TTY stdin should fail
-    let output = hindclaw(dir, &url, &key)
+    let output = hindclaw_server().unwrap()
         .args(["admin", "policy", "remove", &pid])
         .stdin(Stdio::piped())
         .output()
@@ -202,7 +174,7 @@ fn test_policy_remove_requires_confirmation() {
     assert!(stderr.contains("stdin is not a terminal"));
 
     // Remove with -y should succeed
-    let output = hindclaw(dir, &url, &key)
+    let output = hindclaw_server().unwrap()
         .args(["admin", "policy", "remove", &pid, "-y"])
         .output()
         .unwrap();
@@ -211,15 +183,14 @@ fn test_policy_remove_requires_confirmation() {
 
 #[test]
 fn test_policy_attach_detach_entities() {
-    let Some((url, key)) = test_env() else { return };
+    let Some(_) = hindclaw_server() else { return };
     let tmp = TempDir::new().unwrap();
-    let dir = tmp.path().to_str().unwrap();
     let policy_file = write_policy_file(tmp.path());
     let pid = unique_id("pol-attach");
     let gid = unique_id("grp-pol");
 
     // Create policy
-    hindclaw(dir, &url, &key)
+    hindclaw_server().unwrap()
         .args([
             "admin", "policy", "create", &pid,
             policy_file.to_str().unwrap(),
@@ -229,7 +200,7 @@ fn test_policy_attach_detach_entities() {
         .unwrap();
 
     // Create a group to attach to
-    hindclaw(dir, &url, &key)
+    hindclaw_server().unwrap()
         .args([
             "admin", "group", "add", &gid,
             "--display-name", "Test Group",
@@ -238,7 +209,7 @@ fn test_policy_attach_detach_entities() {
         .unwrap();
 
     // Attach to group
-    let output = hindclaw(dir, &url, &key)
+    let output = hindclaw_server().unwrap()
         .args([
             "admin", "policy", "attach", &pid,
             "--group", &gid,
@@ -249,7 +220,7 @@ fn test_policy_attach_detach_entities() {
     assert!(output.status.success(), "stderr: {}", String::from_utf8_lossy(&output.stderr));
 
     // Entities should show the group attachment
-    let output = hindclaw(dir, &url, &key)
+    let output = hindclaw_server().unwrap()
         .args([
             "admin", "policy", "entities", &pid,
             "-o", "json",
@@ -265,7 +236,7 @@ fn test_policy_attach_detach_entities() {
     }));
 
     // Detach
-    let output = hindclaw(dir, &url, &key)
+    let output = hindclaw_server().unwrap()
         .args([
             "admin", "policy", "detach", &pid,
             "--group", &gid,
@@ -276,11 +247,11 @@ fn test_policy_attach_detach_entities() {
     assert!(output.status.success());
 
     // Cleanup
-    hindclaw(dir, &url, &key)
+    hindclaw_server().unwrap()
         .args(["admin", "policy", "remove", &pid, "-y"])
         .output()
         .unwrap();
-    hindclaw(dir, &url, &key)
+    hindclaw_server().unwrap()
         .args(["admin", "group", "remove", &gid, "-y"])
         .output()
         .unwrap();

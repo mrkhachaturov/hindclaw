@@ -1,20 +1,7 @@
-use std::process::Command;
+mod common;
+
 use tempfile::TempDir;
-
-fn hindclaw_config(config_dir: &str) -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_hindclaw"));
-    cmd.env("HINDCLAW_CONFIG_DIR", config_dir);
-    cmd
-}
-
-fn hindclaw_server() -> Option<Command> {
-    let url = std::env::var("HINDCLAW_API_URL").ok()?;
-    let key = std::env::var("HINDCLAW_API_KEY").ok()?;
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_hindclaw"));
-    cmd.env("HINDCLAW_API_URL", url);
-    cmd.env("HINDCLAW_API_KEY", key);
-    Some(cmd)
-}
+use common::{hindclaw_config, hindclaw_server};
 
 // --- Help text tests (no server needed) ---
 
