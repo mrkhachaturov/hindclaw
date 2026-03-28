@@ -16,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-03-28
+
+### Added
+- **MCP tool visibility filtering** — `HindclawValidator.filter_mcp_tools()` hides MCP tools the user's policies don't allow, so the AI never sees tools it can't use
+- `_TOOL_ACTION_MAP` maps 30 MCP tool names to 4 policy actions (`bank:recall`, `bank:retain`, `bank:reflect`, `bank:admin`)
+- Per-action caching keeps policy evaluations to 3-4 per `tools/list` call
+- Unknown tools pass through (fail-open for forward compatibility)
+- 9 new tests covering all identity types (user, SA, unmapped) and edge cases
+
 ## [0.2.6] - 2026-03-28
 
 ### Fixed
