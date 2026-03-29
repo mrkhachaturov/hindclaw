@@ -155,3 +155,14 @@ def test_get_me_rejects_sa_credentials(sa_client):
     )
     assert resp.status_code == 403
     assert "Service account" in resp.json()["detail"]
+
+
+def test_get_me_rejects_invalid_api_key(sa_client):
+    """GET /me rejects an unknown user API key with 401."""
+    with patch("hindclaw_ext.http.db") as mock_db:
+        mock_db.get_api_key = AsyncMock(return_value=None)
+        resp = sa_client.get(
+            "/ext/hindclaw/me",
+            headers={"Authorization": "Bearer hc_u_nonexistent_abc123"},
+        )
+    assert resp.status_code == 401
