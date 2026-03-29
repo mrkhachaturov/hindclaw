@@ -375,3 +375,31 @@ async def test_seed_includes_iam_self_service_policy(mock_pool):
     actions = doc["statements"][0]["actions"]
     assert "iam:api_keys:read" in actions
     assert "iam:service_accounts:write" in actions
+
+
+@pytest.mark.asyncio
+async def test_template_admin_policy_grants_template_admin_action(mock_pool):
+    """template:admin policy uses template:* wildcard so _require_action works.
+
+    The scope gate calls _evaluate_iam_access(user_id, "template:admin").
+    The template:admin built-in policy must grant this action. Without
+    template:* wildcard, server-scope template writes are permanently locked.
+    """
+    import json
+    import re
+    from hindclaw_ext.db import _DDL
+    from hindclaw_ext.policy_engine import evaluate_access
+    from hindclaw_ext.models import AttachedPolicyRecord
+
+    match = re.search(r"'template:admin',\s*'Template Admin',\s*'(\{[^']+\})'", _DDL)
+    assert match, "Could not extract template:admin JSON from DDL"
+    doc_json = match.group(1)
+    doc = json.loads(doc_json)
+
+    attached = AttachedPolicyRecord(
+        id="template:admin", display_name="Template Admin",
+        document_json=doc, is_builtin=True,
+        principal_type="user", principal_id="root", priority=0,
+    )
+    result = evaluate_access([attached], action="template:admin", bank_id="*")
+    assert result.allowed, "template:admin policy must grant template:admin action"
