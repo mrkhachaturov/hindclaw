@@ -263,7 +263,7 @@ async def _authenticate_user(
         return {"principal_type": "user", "principal_id": key_record.user_id, "user_id": key_record.user_id}
 
 
-async def _resolve_my_template(name: str, owner: str, source: str | None = None):
+async def _resolve_my_template(name: str, owner: str, source: str | None = None) -> "TemplateRecord":
     """Resolve a personal template with ambiguity detection.
 
     Returns the unique match for the given owner's personal templates.
