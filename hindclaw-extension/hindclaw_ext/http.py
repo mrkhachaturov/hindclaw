@@ -185,6 +185,83 @@ def _require_iam(action: str):
     return dependency
 
 
+async def _require_action(user_id: str, action: str) -> None:
+    """Second-pass policy check (user already authenticated).
+
+    Args:
+        user_id: The authenticated user ID.
+        action: Required action (e.g., "template:admin").
+
+    Raises:
+        HTTPException: 403 if the user lacks the required action.
+    """
+    access = await _evaluate_iam_access(user_id, action)
+    if not access.allowed:
+        raise HTTPException(403, f"Server scope requires {action}")
+
+
+def _require_iam_user_only(action: str):
+    """IAM check that also rejects SA credentials.
+
+    Used for /me/api-keys endpoints where SAs must not mint user keys.
+
+    Args:
+        action: Required IAM action.
+
+    Returns:
+        Async FastAPI dependency function.
+    """
+    async def dependency(credentials: HTTPAuthorizationCredentials = Depends(_bearer)):
+        token = credentials.credentials
+        if token.startswith("hc_sa_"):
+            raise HTTPException(403, "Service account credentials not accepted on /me/ endpoints")
+        return await require_admin_for_action(action, credentials)
+    return dependency
+
+
+async def _authenticate_user(
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+) -> dict:
+    """Authenticate and return principal — user credentials only, no IAM check.
+
+    Rejects service-account credentials. Used for /me endpoints that
+    don't require a specific IAM action (e.g., GET /me profile).
+
+    Returns:
+        Dict with principal info (user_id, principal_type).
+
+    Raises:
+        HTTPException: 403 if SA credentials used.
+        AuthenticationError: If token is invalid.
+    """
+    token = credentials.credentials
+    if token.startswith("hc_sa_"):
+        raise HTTPException(403, "Service account credentials not accepted on /me/ endpoints")
+
+    if token.startswith("eyJ"):
+        try:
+            claims = decode_jwt(token)
+        except Exception as e:
+            raise AuthenticationError(str(e))
+        sender = claims.get("sender")
+        if sender and ":" in sender:
+            provider, sender_id = sender.split(":", 1)
+            channel_user = await db.get_user_by_channel(provider, sender_id)
+            user = await db.get_user(channel_user.id) if channel_user else None
+            if not user or not user.is_active:
+                raise AuthenticationError("User not found or inactive")
+            return {"principal_type": "user", "principal_id": user.id, "user_id": user.id}
+        raise AuthenticationError("JWT must have sender")
+    else:
+        key_record = await db.get_api_key(token)
+        if not key_record:
+            raise AuthenticationError("Invalid API key")
+        user = await db.get_user(key_record.user_id)
+        if not user or not user.is_active:
+            raise AuthenticationError("User not found or inactive")
+        return {"principal_type": "user", "principal_id": key_record.user_id, "user_id": key_record.user_id}
+
+
 class HindclawHttp(HttpExtension):
     """REST API for managing hindclaw access control data.
 
@@ -723,7 +800,10 @@ class HindclawHttp(HttpExtension):
 
             Raises:
                 HTTPException: 409 if template already exists.
+                HTTPException: 403 if scope is server and user lacks template:admin.
             """
+            if request.scope == "server":
+                await _require_action(principal["user_id"], "template:admin")
             owner = principal["user_id"] if request.scope == "personal" else None
             try:
                 rec = await db.create_template(
@@ -814,7 +894,10 @@ class HindclawHttp(HttpExtension):
             Raises:
                 HTTPException: 404 if template not found, 422 if cross-field
                     validation fails.
+                HTTPException: 403 if scope is server and user lacks template:admin.
             """
+            if scope == "server":
+                await _require_action(principal["user_id"], "template:admin")
             owner = principal["user_id"] if scope == "personal" else None
             updates = request.model_dump(exclude_unset=True)
             if "directive_seeds" in updates:
@@ -871,7 +954,10 @@ class HindclawHttp(HttpExtension):
 
             Raises:
                 HTTPException: 404 if template not found.
+                HTTPException: 403 if scope is server and user lacks template:admin.
             """
+            if scope == "server":
+                await _require_action(principal["user_id"], "template:admin")
             owner = principal["user_id"] if scope == "personal" else None
             deleted = await db.delete_template(name, scope, owner=owner)
             if not deleted:
@@ -932,7 +1018,7 @@ class HindclawHttp(HttpExtension):
         )
         async def create_template_source(
             request: CreateSourceRequest,
-            _auth=Depends(_require_iam("template:source")),
+            _auth=Depends(_require_iam("template:admin")),
         ):
             """Register a trusted marketplace source."""
             try:
@@ -960,7 +1046,7 @@ class HindclawHttp(HttpExtension):
             operation_id="list_template_sources",
         )
         async def list_template_sources(
-            _auth=Depends(_require_iam("template:source")),
+            _auth=Depends(_require_iam("template:admin")),
         ):
             """List all configured marketplace sources."""
             sources = await db.list_template_sources()
@@ -981,7 +1067,7 @@ class HindclawHttp(HttpExtension):
         )
         async def delete_template_source(
             name: str,
-            _auth=Depends(_require_iam("template:source")),
+            _auth=Depends(_require_iam("template:admin")),
         ):
             """Remove a trusted marketplace source."""
             deleted = await db.delete_template_source(name)
@@ -1074,6 +1160,8 @@ class HindclawHttp(HttpExtension):
             principal=Depends(_require_iam("template:install")),
         ):
             """Install a template from a registered marketplace source."""
+            if request.scope == "server":
+                await _require_action(principal["user_id"], "template:admin")
             # 1. Resolve source with ambiguity detection
             try:
                 source = await db.resolve_source(
@@ -1165,6 +1253,8 @@ class HindclawHttp(HttpExtension):
             principal=Depends(_require_iam("template:manage")),
         ):
             """Update an installed template from its marketplace source."""
+            if scope == "server":
+                await _require_action(principal["user_id"], "template:admin")
             # 1. Look up installed template
             owner = principal["user_id"] if scope == "personal" else None
             installed = await db.get_template(

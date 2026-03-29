@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from hindclaw_ext.http import HindclawHttp
 from hindclaw_ext.models import TemplateRecord, TemplateSourceRecord
+from hindclaw_ext.policy_engine import AccessResult
 from hindclaw_ext.template_models import MarketplaceTemplate
 
 
@@ -27,9 +28,16 @@ def _auth_bypass():
         new_callable=AsyncMock,
         return_value={"principal_type": "user", "user_id": "test-admin"},
     )
+    patcher_iam = patch(
+        "hindclaw_ext.http._evaluate_iam_access",
+        new_callable=AsyncMock,
+        return_value=AccessResult(allowed=True),
+    )
     patcher.start()
+    patcher_iam.start()
     yield
     patcher.stop()
+    patcher_iam.stop()
 
 
 @pytest.fixture

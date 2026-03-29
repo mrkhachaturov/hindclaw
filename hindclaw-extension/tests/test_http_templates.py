@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from hindclaw_ext.http import HindclawHttp
 from hindclaw_ext.models import TemplateRecord
+from hindclaw_ext.policy_engine import AccessResult
 
 
 TEST_SECRET = "test-secret-key-for-http-tests!!"
@@ -39,6 +40,10 @@ def app():
         "hindclaw_ext.http.require_admin_for_action",
         new_callable=AsyncMock,
         return_value={"principal_type": "user", "user_id": "test-admin"},
+    ), patch(
+        "hindclaw_ext.http._evaluate_iam_access",
+        new_callable=AsyncMock,
+        return_value=AccessResult(allowed=True),
     ):
         router = ext.get_router(memory)
         a.include_router(router, prefix="/ext")
