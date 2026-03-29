@@ -17,24 +17,22 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List
+from hindclaw_client_api.models.channel_response import ChannelResponse
 from typing import Optional, Set
 from typing_extensions import Self
 
-class MarketplaceSearchResult(BaseModel):
+class MeProfileResponse(BaseModel):
     """
-    A template from marketplace search results with install status.
+    Response for GET /me — caller's own profile.
     """ # noqa: E501
-    source: StrictStr
-    source_scope: StrictStr
-    name: StrictStr
-    version: StrictStr
-    description: Optional[StrictStr] = ''
-    author: Optional[StrictStr] = ''
-    tags: Optional[List[StrictStr]] = None
-    installed_in: Optional[List[StrictStr]] = None
-    __properties: ClassVar[List[str]] = ["source", "source_scope", "name", "version", "description", "author", "tags", "installed_in"]
+    id: StrictStr
+    display_name: StrictStr
+    email: StrictStr
+    is_active: StrictBool
+    channels: List[ChannelResponse]
+    __properties: ClassVar[List[str]] = ["id", "display_name", "email", "is_active", "channels"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -54,7 +52,7 @@ class MarketplaceSearchResult(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of MarketplaceSearchResult from a JSON string"""
+        """Create an instance of MeProfileResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -75,11 +73,18 @@ class MarketplaceSearchResult(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in channels (list)
+        _items = []
+        if self.channels:
+            for _item_channels in self.channels:
+                if _item_channels:
+                    _items.append(_item_channels.to_dict())
+            _dict['channels'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of MarketplaceSearchResult from a dict"""
+        """Create an instance of MeProfileResponse from a dict"""
         if obj is None:
             return None
 
@@ -87,14 +92,11 @@ class MarketplaceSearchResult(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "source": obj.get("source"),
-            "source_scope": obj.get("source_scope"),
-            "name": obj.get("name"),
-            "version": obj.get("version"),
-            "description": obj.get("description") if obj.get("description") is not None else '',
-            "author": obj.get("author") if obj.get("author") is not None else '',
-            "tags": obj.get("tags"),
-            "installed_in": obj.get("installed_in")
+            "id": obj.get("id"),
+            "display_name": obj.get("display_name"),
+            "email": obj.get("email"),
+            "is_active": obj.get("is_active"),
+            "channels": [ChannelResponse.from_dict(_item) for _item in obj["channels"]] if obj.get("channels") is not None else None
         })
         return _obj
 

@@ -1540,6 +1540,542 @@
         }
       }
     },
+    "/ext/hindclaw/me": {
+      "get": {
+        "summary": "Get My Profile",
+        "description": "Return the caller's own profile including channels.\n\nArgs:\n    _auth: Authenticated principal (user only, SA rejected).\n\nReturns:\n    MeProfileResponse with user record and channel list.",
+        "operationId": "get_my_profile",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeProfileResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/me/api-keys": {
+      "get": {
+        "summary": "List My Api Keys",
+        "description": "List the caller's own API keys (masked).\n\nArgs:\n    _auth: Authenticated principal (user only, SA rejected).\n\nReturns:\n    List of ApiKeyResponse with masked key prefixes.",
+        "operationId": "list_my_api_keys",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List My Api Keys"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create My Api Key",
+        "description": "Create a new API key for the caller.\n\nArgs:\n    req: CreateApiKeyRequest with optional description.\n    _auth: Authenticated principal (user only, SA rejected).\n\nReturns:\n    ApiKeyCreateResponse with full api_key shown once.",
+        "operationId": "create_my_api_key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApiKeyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/me/api-keys/{key_id}": {
+      "delete": {
+        "summary": "Delete My Api Key",
+        "description": "Delete one of the caller's own API keys.\n\nScoped to the caller's user_id \u2014 cannot delete other users' keys.\n\nArgs:\n    key_id: API key record ID.\n    _auth: Authenticated principal (user only, SA rejected).",
+        "operationId": "delete_my_api_key",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/me/template-sources": {
+      "get": {
+        "summary": "List My Template Sources",
+        "description": "List the caller's personal template sources.\n\nScoped to the caller's user_id \u2014 only returns sources with\nscope='personal' owned by the authenticated principal.\n\nArgs:\n    _auth: Authenticated principal (users and SAs allowed).\n\nReturns:\n    List of SourceResponse for the caller's personal sources.",
+        "operationId": "list_my_template_sources",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SourceResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List My Template Sources"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create My Template Source",
+        "description": "Register a personal template source for the caller.\n\nSource is created with scope='personal' and owner set to the\ncaller's user_id. Name is derived from the URL unless an alias\nis provided.\n\nArgs:\n    request: CreateSourceRequest with url and optional alias/auth_token.\n    _auth: Authenticated principal (users and SAs allowed).\n\nReturns:\n    SourceResponse for the newly created personal source.\n\nRaises:\n    HTTPException: 422 if the source name cannot be derived from the URL.\n    HTTPException: 409 if a personal source with that name already exists.",
+        "operationId": "create_my_template_source",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/me/template-sources/{name}": {
+      "delete": {
+        "summary": "Delete My Template Source",
+        "description": "Remove a personal template source owned by the caller.\n\nOnly deletes sources with scope='personal' that belong to the\ncaller \u2014 cannot affect other users' sources or server-scope sources.\n\nArgs:\n    name: Template source name to delete.\n    _auth: Authenticated principal (users and SAs allowed).\n\nRaises:\n    HTTPException: 404 if the source is not found in the caller's\n        personal sources.",
+        "operationId": "delete_my_template_source",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/me/templates": {
+      "get": {
+        "summary": "List My Templates",
+        "description": "List the caller's personal templates.\n\nScoped to the caller's user_id \u2014 only returns templates with\nscope='personal' owned by the authenticated principal.\n\nArgs:\n    _auth: Authenticated principal (users and SAs allowed).\n\nReturns:\n    List of TemplateSummaryResponse for the caller's personal templates.",
+        "operationId": "list_my_templates",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateSummaryResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List My Templates"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create My Template",
+        "description": "Create a personal template for the caller.\n\nTemplate is created with scope='personal' and owner set to the\ncaller's user_id. The scope field in the request body is ignored \u2014\npersonal scope is always used.\n\nArgs:\n    request: CreateTemplateRequest with template fields.\n    _auth: Authenticated principal (users and SAs allowed).\n\nReturns:\n    TemplateResponse for the newly created personal template.\n\nRaises:\n    HTTPException: 409 if a personal template with that id already exists.",
+        "operationId": "create_my_template",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/me/templates/install": {
+      "post": {
+        "summary": "Install My Template",
+        "description": "Install a template from a visible source to personal scope.\n\nResolves the named source (visible to the caller), fetches the\ntemplate from the marketplace, validates it, and upserts it into\nthe caller's personal scope.\n\nArgs:\n    request: InstallTemplateRequest with source_name and template name.\n    _auth: Authenticated principal (users and SAs allowed).\n\nReturns:\n    TemplateResponse for the installed template.\n\nRaises:\n    HTTPException: 404 if the source or template is not found.\n    HTTPException: 409 if the source name is ambiguous or template already installed.\n    HTTPException: 422 if template validation fails or name mismatches.",
+        "operationId": "install_my_template",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/me/templates/{name}": {
+      "get": {
+        "summary": "Get My Template",
+        "description": "Get a single personal template by name.\n\nWhen multiple personal templates share the same name (installed from\ndifferent sources), use the ``source`` query parameter to disambiguate.\nPass an empty string to select a custom (non-marketplace) template.\n\nArgs:\n    name: Template name (id).\n    source: Optional source name to disambiguate. Empty string selects\n        custom templates (source_name=None).\n    _auth: Authenticated principal (users and SAs allowed).\n\nReturns:\n    TemplateResponse for the matched template.\n\nRaises:\n    HTTPException: 404 if no matching template is found.\n    HTTPException: 409 if multiple templates match and source is not provided.",
+        "operationId": "get_my_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update My Template",
+        "description": "Update a personal template.\n\nResolves the template by name (with optional source disambiguation),\nthen applies the partial update.\n\nArgs:\n    name: Template name (id).\n    request: UpdateTemplateRequest with fields to update.\n    source: Optional source name to disambiguate.\n    _auth: Authenticated principal (users and SAs allowed).\n\nReturns:\n    TemplateResponse for the updated template.\n\nRaises:\n    HTTPException: 404 if no matching template is found.\n    HTTPException: 409 if multiple templates match and source is not provided.",
+        "operationId": "update_my_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete My Template",
+        "description": "Delete a personal template.\n\nResolves the template by name (with optional source disambiguation),\nthen deletes it.\n\nArgs:\n    name: Template name (id).\n    source: Optional source name to disambiguate.\n    _auth: Authenticated principal (users and SAs allowed).\n\nRaises:\n    HTTPException: 404 if no matching template is found.\n    HTTPException: 409 if multiple templates match and source is not provided.",
+        "operationId": "delete_my_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/ext/hindclaw/service-accounts": {
       "get": {
         "summary": "List Service Accounts",
@@ -2174,7 +2710,7 @@
       },
       "post": {
         "summary": "Create Template",
-        "description": "Create a custom template (no marketplace source).\n\nArgs:\n    request: Template creation payload.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    The created template.\n\nRaises:\n    HTTPException: 409 if template already exists.",
+        "description": "Create a custom template (no marketplace source).\n\nArgs:\n    request: Template creation payload.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    The created template.\n\nRaises:\n    HTTPException: 409 if template already exists.\n    HTTPException: 403 if scope is server and user lacks template:admin.",
         "operationId": "create_template",
         "security": [
           {
@@ -2270,7 +2806,7 @@
       },
       "put": {
         "summary": "Update Template Endpoint",
-        "description": "Update a custom template.\n\nPerforms cross-field validation when extraction mode or custom\ninstructions are part of the update by merging with the existing\nrecord before applying.\n\nArgs:\n    scope: Template scope ('server' or 'personal').\n    name: Template name.\n    request: Partial update payload.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    The updated template.\n\nRaises:\n    HTTPException: 404 if template not found, 422 if cross-field\n        validation fails.",
+        "description": "Update a custom template.\n\nPerforms cross-field validation when extraction mode or custom\ninstructions are part of the update by merging with the existing\nrecord before applying.\n\nArgs:\n    scope: Template scope ('server' or 'personal').\n    name: Template name.\n    request: Partial update payload.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    The updated template.\n\nRaises:\n    HTTPException: 404 if template not found, 422 if cross-field\n        validation fails.\n    HTTPException: 403 if scope is server and user lacks template:admin.",
         "operationId": "update_template",
         "security": [
           {
@@ -2332,7 +2868,7 @@
       },
       "delete": {
         "summary": "Delete Template Endpoint",
-        "description": "Delete a custom template.\n\nArgs:\n    scope: Template scope ('server' or 'personal').\n    name: Template name.\n    principal: Authenticated principal from IAM.\n\nRaises:\n    HTTPException: 404 if template not found.",
+        "description": "Delete a custom template.\n\nArgs:\n    scope: Template scope ('server' or 'personal').\n    name: Template name.\n    principal: Authenticated principal from IAM.\n\nRaises:\n    HTTPException: 404 if template not found.\n    HTTPException: 403 if scope is server and user lacks template:admin.",
         "operationId": "delete_template",
         "security": [
           {
@@ -3481,11 +4017,23 @@
       },
       "InstallTemplateRequest": {
         "properties": {
-          "source": {
+          "source_name": {
             "type": "string",
             "minLength": 1,
-            "title": "Source",
+            "title": "Source Name",
             "description": "Marketplace source name"
+          },
+          "source": {
+            "title": "Source",
+            "description": "Deprecated alias for source_name",
+            "type": "string",
+            "nullable": true
+          },
+          "source_scope": {
+            "title": "Source Scope",
+            "description": "'server' or 'personal' \u2014 required when ambiguous",
+            "type": "string",
+            "nullable": true
           },
           "name": {
             "type": "string",
@@ -3496,15 +4044,15 @@
           "scope": {
             "type": "string",
             "title": "Scope",
-            "description": "'server' or 'personal'"
+            "description": "'server' or 'personal'",
+            "default": "personal"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "source",
-          "name",
-          "scope"
+          "source_name",
+          "name"
         ],
         "title": "InstallTemplateRequest",
         "description": "Request to install a template from a marketplace source."
@@ -3537,6 +4085,10 @@
             "type": "string",
             "title": "Source"
           },
+          "source_scope": {
+            "type": "string",
+            "title": "Source Scope"
+          },
           "name": {
             "type": "string",
             "title": "Name"
@@ -3563,30 +4115,61 @@
             "title": "Tags",
             "default": []
           },
-          "installed": {
-            "type": "boolean",
-            "title": "Installed",
-            "default": false
-          },
-          "installed_version": {
-            "title": "Installed Version",
-            "type": "string",
-            "nullable": true
-          },
-          "installed_scope": {
-            "title": "Installed Scope",
-            "type": "string",
-            "nullable": true
+          "installed_in": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Installed In"
           }
         },
         "type": "object",
         "required": [
           "source",
+          "source_scope",
           "name",
           "version"
         ],
         "title": "MarketplaceSearchResult",
-        "description": "A template from marketplace search results with install status.\n\nInstall status reflects server-scope first, then the calling user's\npersonal scope. If installed in both, server version is reported."
+        "description": "A template from marketplace search results with install status."
+      },
+      "MeProfileResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string",
+            "nullable": true
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "channels": {
+            "items": {
+              "$ref": "#/components/schemas/ChannelResponse"
+            },
+            "type": "array",
+            "title": "Channels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "display_name",
+          "email",
+          "is_active",
+          "channels"
+        ],
+        "title": "MeProfileResponse",
+        "description": "Response for GET /me \u2014 caller's own profile."
       },
       "MentalModelSeed": {
         "properties": {

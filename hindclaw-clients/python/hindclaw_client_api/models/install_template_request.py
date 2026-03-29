@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
@@ -27,11 +27,13 @@ class InstallTemplateRequest(BaseModel):
     """
     Request to install a template from a marketplace source.
     """ # noqa: E501
-    source: Annotated[str, Field(min_length=1, strict=True)] = Field(description="Marketplace source name")
+    source_name: Annotated[str, Field(min_length=1, strict=True)] = Field(description="Marketplace source name")
+    source: Optional[StrictStr] = Field(default=None, description="Deprecated alias for source_name")
+    source_scope: Optional[StrictStr] = Field(default=None, description="'server' or 'personal' — required when ambiguous")
     name: Annotated[str, Field(min_length=1, strict=True)] = Field(description="Template name within the source")
-    scope: StrictStr = Field(description="'server' or 'personal'")
+    scope: Optional[StrictStr] = Field(default='personal', description="'server' or 'personal'")
     additional_properties: Dict[str, Any] = {}
-    __properties: ClassVar[List[str]] = ["source", "name", "scope"]
+    __properties: ClassVar[List[str]] = ["source_name", "source", "source_scope", "name", "scope"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -91,9 +93,11 @@ class InstallTemplateRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "source_name": obj.get("source_name"),
             "source": obj.get("source"),
+            "source_scope": obj.get("source_scope"),
             "name": obj.get("name"),
-            "scope": obj.get("scope")
+            "scope": obj.get("scope") if obj.get("scope") is not None else 'personal'
         })
         # store additional fields in additional_properties
         for _key in obj.keys():

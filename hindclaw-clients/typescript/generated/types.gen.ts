@@ -611,11 +611,23 @@ export type HttpValidationError = {
  */
 export type InstallTemplateRequest = {
     /**
-     * Source
+     * Source Name
      *
      * Marketplace source name
      */
-    source: string;
+    source_name: string;
+    /**
+     * Source
+     *
+     * Deprecated alias for source_name
+     */
+    source?: string;
+    /**
+     * Source Scope
+     *
+     * 'server' or 'personal' — required when ambiguous
+     */
+    source_scope?: string;
     /**
      * Name
      *
@@ -627,7 +639,7 @@ export type InstallTemplateRequest = {
      *
      * 'server' or 'personal'
      */
-    scope: string;
+    scope?: string;
 };
 
 /**
@@ -650,15 +662,16 @@ export type MarketplaceSearchResponse = {
  * MarketplaceSearchResult
  *
  * A template from marketplace search results with install status.
- *
- * Install status reflects server-scope first, then the calling user's
- * personal scope. If installed in both, server version is reported.
  */
 export type MarketplaceSearchResult = {
     /**
      * Source
      */
     source: string;
+    /**
+     * Source Scope
+     */
+    source_scope: string;
     /**
      * Name
      */
@@ -680,17 +693,37 @@ export type MarketplaceSearchResult = {
      */
     tags?: Array<string>;
     /**
-     * Installed
+     * Installed In
      */
-    installed?: boolean;
+    installed_in?: Array<string>;
+};
+
+/**
+ * MeProfileResponse
+ *
+ * Response for GET /me — caller's own profile.
+ */
+export type MeProfileResponse = {
     /**
-     * Installed Version
+     * Id
      */
-    installed_version?: string;
+    id: string;
     /**
-     * Installed Scope
+     * Display Name
      */
-    installed_scope?: string;
+    display_name: string;
+    /**
+     * Email
+     */
+    email: string;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+    /**
+     * Channels
+     */
+    channels: Array<ChannelResponse>;
 };
 
 /**
@@ -2389,6 +2422,341 @@ export type DeleteMySaKeyResponses = {
 };
 
 export type DeleteMySaKeyResponse = DeleteMySaKeyResponses[keyof DeleteMySaKeyResponses];
+
+export type GetMyProfileData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/me';
+};
+
+export type GetMyProfileResponses = {
+    /**
+     * Successful Response
+     */
+    200: MeProfileResponse;
+};
+
+export type GetMyProfileResponse = GetMyProfileResponses[keyof GetMyProfileResponses];
+
+export type ListMyApiKeysData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/me/api-keys';
+};
+
+export type ListMyApiKeysResponses = {
+    /**
+     * Response List My Api Keys
+     *
+     * Successful Response
+     */
+    200: Array<ApiKeyResponse>;
+};
+
+export type ListMyApiKeysResponse = ListMyApiKeysResponses[keyof ListMyApiKeysResponses];
+
+export type CreateMyApiKeyData = {
+    body: CreateApiKeyRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/me/api-keys';
+};
+
+export type CreateMyApiKeyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateMyApiKeyError = CreateMyApiKeyErrors[keyof CreateMyApiKeyErrors];
+
+export type CreateMyApiKeyResponses = {
+    /**
+     * Successful Response
+     */
+    201: ApiKeyCreateResponse;
+};
+
+export type CreateMyApiKeyResponse = CreateMyApiKeyResponses[keyof CreateMyApiKeyResponses];
+
+export type DeleteMyApiKeyData = {
+    body?: never;
+    path: {
+        /**
+         * Key Id
+         */
+        key_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/me/api-keys/{key_id}';
+};
+
+export type DeleteMyApiKeyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteMyApiKeyError = DeleteMyApiKeyErrors[keyof DeleteMyApiKeyErrors];
+
+export type DeleteMyApiKeyResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteMyApiKeyResponse = DeleteMyApiKeyResponses[keyof DeleteMyApiKeyResponses];
+
+export type ListMyTemplateSourcesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/me/template-sources';
+};
+
+export type ListMyTemplateSourcesResponses = {
+    /**
+     * Response List My Template Sources
+     *
+     * Successful Response
+     */
+    200: Array<SourceResponse>;
+};
+
+export type ListMyTemplateSourcesResponse = ListMyTemplateSourcesResponses[keyof ListMyTemplateSourcesResponses];
+
+export type CreateMyTemplateSourceData = {
+    body: CreateSourceRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/me/template-sources';
+};
+
+export type CreateMyTemplateSourceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateMyTemplateSourceError = CreateMyTemplateSourceErrors[keyof CreateMyTemplateSourceErrors];
+
+export type CreateMyTemplateSourceResponses = {
+    /**
+     * Successful Response
+     */
+    201: SourceResponse;
+};
+
+export type CreateMyTemplateSourceResponse = CreateMyTemplateSourceResponses[keyof CreateMyTemplateSourceResponses];
+
+export type DeleteMyTemplateSourceData = {
+    body?: never;
+    path: {
+        /**
+         * Name
+         */
+        name: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/me/template-sources/{name}';
+};
+
+export type DeleteMyTemplateSourceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteMyTemplateSourceError = DeleteMyTemplateSourceErrors[keyof DeleteMyTemplateSourceErrors];
+
+export type DeleteMyTemplateSourceResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteMyTemplateSourceResponse = DeleteMyTemplateSourceResponses[keyof DeleteMyTemplateSourceResponses];
+
+export type ListMyTemplatesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/me/templates';
+};
+
+export type ListMyTemplatesResponses = {
+    /**
+     * Response List My Templates
+     *
+     * Successful Response
+     */
+    200: Array<TemplateSummaryResponse>;
+};
+
+export type ListMyTemplatesResponse = ListMyTemplatesResponses[keyof ListMyTemplatesResponses];
+
+export type CreateMyTemplateData = {
+    body: CreateTemplateRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/me/templates';
+};
+
+export type CreateMyTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateMyTemplateError = CreateMyTemplateErrors[keyof CreateMyTemplateErrors];
+
+export type CreateMyTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    201: TemplateResponse;
+};
+
+export type CreateMyTemplateResponse = CreateMyTemplateResponses[keyof CreateMyTemplateResponses];
+
+export type InstallMyTemplateData = {
+    body: InstallTemplateRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/me/templates/install';
+};
+
+export type InstallMyTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type InstallMyTemplateError = InstallMyTemplateErrors[keyof InstallMyTemplateErrors];
+
+export type InstallMyTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    201: TemplateResponse;
+};
+
+export type InstallMyTemplateResponse = InstallMyTemplateResponses[keyof InstallMyTemplateResponses];
+
+export type DeleteMyTemplateData = {
+    body?: never;
+    path: {
+        /**
+         * Name
+         */
+        name: string;
+    };
+    query?: {
+        /**
+         * Source
+         */
+        source?: string | null;
+    };
+    url: '/ext/hindclaw/me/templates/{name}';
+};
+
+export type DeleteMyTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteMyTemplateError = DeleteMyTemplateErrors[keyof DeleteMyTemplateErrors];
+
+export type DeleteMyTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteMyTemplateResponse = DeleteMyTemplateResponses[keyof DeleteMyTemplateResponses];
+
+export type GetMyTemplateData = {
+    body?: never;
+    path: {
+        /**
+         * Name
+         */
+        name: string;
+    };
+    query?: {
+        /**
+         * Source
+         */
+        source?: string | null;
+    };
+    url: '/ext/hindclaw/me/templates/{name}';
+};
+
+export type GetMyTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetMyTemplateError = GetMyTemplateErrors[keyof GetMyTemplateErrors];
+
+export type GetMyTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: TemplateResponse;
+};
+
+export type GetMyTemplateResponse = GetMyTemplateResponses[keyof GetMyTemplateResponses];
+
+export type UpdateMyTemplateData = {
+    body: UpdateTemplateRequest;
+    path: {
+        /**
+         * Name
+         */
+        name: string;
+    };
+    query?: {
+        /**
+         * Source
+         */
+        source?: string | null;
+    };
+    url: '/ext/hindclaw/me/templates/{name}';
+};
+
+export type UpdateMyTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateMyTemplateError = UpdateMyTemplateErrors[keyof UpdateMyTemplateErrors];
+
+export type UpdateMyTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: TemplateResponse;
+};
+
+export type UpdateMyTemplateResponse = UpdateMyTemplateResponses[keyof UpdateMyTemplateResponses];
 
 export type ListServiceAccountsData = {
     body?: never;

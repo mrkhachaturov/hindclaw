@@ -35,6 +35,7 @@ hindclaw_client_api/models/http_validation_error.py
 hindclaw_client_api/models/install_template_request.py
 hindclaw_client_api/models/marketplace_search_response.py
 hindclaw_client_api/models/marketplace_search_result.py
+hindclaw_client_api/models/me_profile_response.py
 hindclaw_client_api/models/mental_model_seed.py
 hindclaw_client_api/models/mental_model_seed_result.py
 hindclaw_client_api/models/policy_attachment_response.py

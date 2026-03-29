@@ -21,11 +21,15 @@ var _ MappedNullable = &InstallTemplateRequest{}
 // InstallTemplateRequest Request to install a template from a marketplace source.
 type InstallTemplateRequest struct {
 	// Marketplace source name
-	Source string `json:"source"`
+	SourceName string `json:"source_name"`
+	// Deprecated alias for source_name
+	Source *string `json:"source,omitempty"`
+	// 'server' or 'personal' — required when ambiguous
+	SourceScope *string `json:"source_scope,omitempty"`
 	// Template name within the source
 	Name string `json:"name"`
 	// 'server' or 'personal'
-	Scope string `json:"scope"`
+	Scope *string `json:"scope,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -35,11 +39,12 @@ type _InstallTemplateRequest InstallTemplateRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInstallTemplateRequest(source string, name string, scope string) *InstallTemplateRequest {
+func NewInstallTemplateRequest(sourceName string, name string) *InstallTemplateRequest {
 	this := InstallTemplateRequest{}
-	this.Source = source
+	this.SourceName = sourceName
 	this.Name = name
-	this.Scope = scope
+	var scope string = "personal"
+	this.Scope = &scope
 	return &this
 }
 
@@ -48,31 +53,97 @@ func NewInstallTemplateRequest(source string, name string, scope string) *Instal
 // but it doesn't guarantee that properties required by API are set
 func NewInstallTemplateRequestWithDefaults() *InstallTemplateRequest {
 	this := InstallTemplateRequest{}
+	var scope string = "personal"
+	this.Scope = &scope
 	return &this
 }
 
-// GetSource returns the Source field value
-func (o *InstallTemplateRequest) GetSource() string {
+// GetSourceName returns the SourceName field value
+func (o *InstallTemplateRequest) GetSourceName() string {
 	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return o.Source
+	return o.SourceName
 }
 
-// GetSourceOk returns a tuple with the Source field value
+// GetSourceNameOk returns a tuple with the SourceName field value
 // and a boolean to check if the value has been set.
-func (o *InstallTemplateRequest) GetSourceOk() (*string, bool) {
+func (o *InstallTemplateRequest) GetSourceNameOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Source, true
+	return &o.SourceName, true
 }
 
-// SetSource sets field value
+// SetSourceName sets field value
+func (o *InstallTemplateRequest) SetSourceName(v string) {
+	o.SourceName = v
+}
+
+// GetSource returns the Source field value if set, zero value otherwise.
+func (o *InstallTemplateRequest) GetSource() string {
+	if o == nil || IsNil(o.Source) {
+		var ret string
+		return ret
+	}
+	return *o.Source
+}
+
+// GetSourceOk returns a tuple with the Source field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *InstallTemplateRequest) GetSourceOk() (*string, bool) {
+	if o == nil || IsNil(o.Source) {
+		return nil, false
+	}
+	return o.Source, true
+}
+
+// HasSource returns a boolean if a field has been set.
+func (o *InstallTemplateRequest) HasSource() bool {
+	if o != nil && !IsNil(o.Source) {
+		return true
+	}
+
+	return false
+}
+
+// SetSource gets a reference to the given string and assigns it to the Source field.
 func (o *InstallTemplateRequest) SetSource(v string) {
-	o.Source = v
+	o.Source = &v
+}
+
+// GetSourceScope returns the SourceScope field value if set, zero value otherwise.
+func (o *InstallTemplateRequest) GetSourceScope() string {
+	if o == nil || IsNil(o.SourceScope) {
+		var ret string
+		return ret
+	}
+	return *o.SourceScope
+}
+
+// GetSourceScopeOk returns a tuple with the SourceScope field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *InstallTemplateRequest) GetSourceScopeOk() (*string, bool) {
+	if o == nil || IsNil(o.SourceScope) {
+		return nil, false
+	}
+	return o.SourceScope, true
+}
+
+// HasSourceScope returns a boolean if a field has been set.
+func (o *InstallTemplateRequest) HasSourceScope() bool {
+	if o != nil && !IsNil(o.SourceScope) {
+		return true
+	}
+
+	return false
+}
+
+// SetSourceScope gets a reference to the given string and assigns it to the SourceScope field.
+func (o *InstallTemplateRequest) SetSourceScope(v string) {
+	o.SourceScope = &v
 }
 
 // GetName returns the Name field value
@@ -99,28 +170,36 @@ func (o *InstallTemplateRequest) SetName(v string) {
 	o.Name = v
 }
 
-// GetScope returns the Scope field value
+// GetScope returns the Scope field value if set, zero value otherwise.
 func (o *InstallTemplateRequest) GetScope() string {
-	if o == nil {
+	if o == nil || IsNil(o.Scope) {
 		var ret string
 		return ret
 	}
-
-	return o.Scope
+	return *o.Scope
 }
 
-// GetScopeOk returns a tuple with the Scope field value
+// GetScopeOk returns a tuple with the Scope field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *InstallTemplateRequest) GetScopeOk() (*string, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Scope) {
 		return nil, false
 	}
-	return &o.Scope, true
+	return o.Scope, true
 }
 
-// SetScope sets field value
+// HasScope returns a boolean if a field has been set.
+func (o *InstallTemplateRequest) HasScope() bool {
+	if o != nil && !IsNil(o.Scope) {
+		return true
+	}
+
+	return false
+}
+
+// SetScope gets a reference to the given string and assigns it to the Scope field.
 func (o *InstallTemplateRequest) SetScope(v string) {
-	o.Scope = v
+	o.Scope = &v
 }
 
 func (o InstallTemplateRequest) MarshalJSON() ([]byte, error) {
@@ -133,9 +212,17 @@ func (o InstallTemplateRequest) MarshalJSON() ([]byte, error) {
 
 func (o InstallTemplateRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["source"] = o.Source
+	toSerialize["source_name"] = o.SourceName
+	if !IsNil(o.Source) {
+		toSerialize["source"] = o.Source
+	}
+	if !IsNil(o.SourceScope) {
+		toSerialize["source_scope"] = o.SourceScope
+	}
 	toSerialize["name"] = o.Name
-	toSerialize["scope"] = o.Scope
+	if !IsNil(o.Scope) {
+		toSerialize["scope"] = o.Scope
+	}
 
 	for key, value := range o.AdditionalProperties {
 		toSerialize[key] = value
@@ -149,9 +236,8 @@ func (o *InstallTemplateRequest) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"source",
+		"source_name",
 		"name",
-		"scope",
 	}
 
 	allProperties := make(map[string]interface{})
@@ -181,7 +267,9 @@ func (o *InstallTemplateRequest) UnmarshalJSON(data []byte) (err error) {
 	additionalProperties := make(map[string]interface{})
 
 	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "source_name")
 		delete(additionalProperties, "source")
+		delete(additionalProperties, "source_scope")
 		delete(additionalProperties, "name")
 		delete(additionalProperties, "scope")
 		o.AdditionalProperties = additionalProperties

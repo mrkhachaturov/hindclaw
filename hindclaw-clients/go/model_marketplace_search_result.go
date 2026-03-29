@@ -19,17 +19,16 @@ import (
 // checks if the MarketplaceSearchResult type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &MarketplaceSearchResult{}
 
-// MarketplaceSearchResult A template from marketplace search results with install status.  Install status reflects server-scope first, then the calling user's personal scope. If installed in both, server version is reported.
+// MarketplaceSearchResult A template from marketplace search results with install status.
 type MarketplaceSearchResult struct {
 	Source string `json:"source"`
+	SourceScope string `json:"source_scope"`
 	Name string `json:"name"`
 	Version string `json:"version"`
 	Description *string `json:"description,omitempty"`
 	Author *string `json:"author,omitempty"`
 	Tags []string `json:"tags,omitempty"`
-	Installed *bool `json:"installed,omitempty"`
-	InstalledVersion *string `json:"installed_version,omitempty"`
-	InstalledScope *string `json:"installed_scope,omitempty"`
+	InstalledIn []string `json:"installed_in,omitempty"`
 }
 
 type _MarketplaceSearchResult MarketplaceSearchResult
@@ -38,17 +37,16 @@ type _MarketplaceSearchResult MarketplaceSearchResult
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewMarketplaceSearchResult(source string, name string, version string) *MarketplaceSearchResult {
+func NewMarketplaceSearchResult(source string, sourceScope string, name string, version string) *MarketplaceSearchResult {
 	this := MarketplaceSearchResult{}
 	this.Source = source
+	this.SourceScope = sourceScope
 	this.Name = name
 	this.Version = version
 	var description string = ""
 	this.Description = &description
 	var author string = ""
 	this.Author = &author
-	var installed bool = false
-	this.Installed = &installed
 	return &this
 }
 
@@ -61,8 +59,6 @@ func NewMarketplaceSearchResultWithDefaults() *MarketplaceSearchResult {
 	this.Description = &description
 	var author string = ""
 	this.Author = &author
-	var installed bool = false
-	this.Installed = &installed
 	return &this
 }
 
@@ -88,6 +84,30 @@ func (o *MarketplaceSearchResult) GetSourceOk() (*string, bool) {
 // SetSource sets field value
 func (o *MarketplaceSearchResult) SetSource(v string) {
 	o.Source = v
+}
+
+// GetSourceScope returns the SourceScope field value
+func (o *MarketplaceSearchResult) GetSourceScope() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.SourceScope
+}
+
+// GetSourceScopeOk returns a tuple with the SourceScope field value
+// and a boolean to check if the value has been set.
+func (o *MarketplaceSearchResult) GetSourceScopeOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.SourceScope, true
+}
+
+// SetSourceScope sets field value
+func (o *MarketplaceSearchResult) SetSourceScope(v string) {
+	o.SourceScope = v
 }
 
 // GetName returns the Name field value
@@ -234,100 +254,36 @@ func (o *MarketplaceSearchResult) SetTags(v []string) {
 	o.Tags = v
 }
 
-// GetInstalled returns the Installed field value if set, zero value otherwise.
-func (o *MarketplaceSearchResult) GetInstalled() bool {
-	if o == nil || IsNil(o.Installed) {
-		var ret bool
+// GetInstalledIn returns the InstalledIn field value if set, zero value otherwise.
+func (o *MarketplaceSearchResult) GetInstalledIn() []string {
+	if o == nil || IsNil(o.InstalledIn) {
+		var ret []string
 		return ret
 	}
-	return *o.Installed
+	return o.InstalledIn
 }
 
-// GetInstalledOk returns a tuple with the Installed field value if set, nil otherwise
+// GetInstalledInOk returns a tuple with the InstalledIn field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *MarketplaceSearchResult) GetInstalledOk() (*bool, bool) {
-	if o == nil || IsNil(o.Installed) {
+func (o *MarketplaceSearchResult) GetInstalledInOk() ([]string, bool) {
+	if o == nil || IsNil(o.InstalledIn) {
 		return nil, false
 	}
-	return o.Installed, true
+	return o.InstalledIn, true
 }
 
-// HasInstalled returns a boolean if a field has been set.
-func (o *MarketplaceSearchResult) HasInstalled() bool {
-	if o != nil && !IsNil(o.Installed) {
+// HasInstalledIn returns a boolean if a field has been set.
+func (o *MarketplaceSearchResult) HasInstalledIn() bool {
+	if o != nil && !IsNil(o.InstalledIn) {
 		return true
 	}
 
 	return false
 }
 
-// SetInstalled gets a reference to the given bool and assigns it to the Installed field.
-func (o *MarketplaceSearchResult) SetInstalled(v bool) {
-	o.Installed = &v
-}
-
-// GetInstalledVersion returns the InstalledVersion field value if set, zero value otherwise.
-func (o *MarketplaceSearchResult) GetInstalledVersion() string {
-	if o == nil || IsNil(o.InstalledVersion) {
-		var ret string
-		return ret
-	}
-	return *o.InstalledVersion
-}
-
-// GetInstalledVersionOk returns a tuple with the InstalledVersion field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *MarketplaceSearchResult) GetInstalledVersionOk() (*string, bool) {
-	if o == nil || IsNil(o.InstalledVersion) {
-		return nil, false
-	}
-	return o.InstalledVersion, true
-}
-
-// HasInstalledVersion returns a boolean if a field has been set.
-func (o *MarketplaceSearchResult) HasInstalledVersion() bool {
-	if o != nil && !IsNil(o.InstalledVersion) {
-		return true
-	}
-
-	return false
-}
-
-// SetInstalledVersion gets a reference to the given string and assigns it to the InstalledVersion field.
-func (o *MarketplaceSearchResult) SetInstalledVersion(v string) {
-	o.InstalledVersion = &v
-}
-
-// GetInstalledScope returns the InstalledScope field value if set, zero value otherwise.
-func (o *MarketplaceSearchResult) GetInstalledScope() string {
-	if o == nil || IsNil(o.InstalledScope) {
-		var ret string
-		return ret
-	}
-	return *o.InstalledScope
-}
-
-// GetInstalledScopeOk returns a tuple with the InstalledScope field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *MarketplaceSearchResult) GetInstalledScopeOk() (*string, bool) {
-	if o == nil || IsNil(o.InstalledScope) {
-		return nil, false
-	}
-	return o.InstalledScope, true
-}
-
-// HasInstalledScope returns a boolean if a field has been set.
-func (o *MarketplaceSearchResult) HasInstalledScope() bool {
-	if o != nil && !IsNil(o.InstalledScope) {
-		return true
-	}
-
-	return false
-}
-
-// SetInstalledScope gets a reference to the given string and assigns it to the InstalledScope field.
-func (o *MarketplaceSearchResult) SetInstalledScope(v string) {
-	o.InstalledScope = &v
+// SetInstalledIn gets a reference to the given []string and assigns it to the InstalledIn field.
+func (o *MarketplaceSearchResult) SetInstalledIn(v []string) {
+	o.InstalledIn = v
 }
 
 func (o MarketplaceSearchResult) MarshalJSON() ([]byte, error) {
@@ -341,6 +297,7 @@ func (o MarketplaceSearchResult) MarshalJSON() ([]byte, error) {
 func (o MarketplaceSearchResult) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["source"] = o.Source
+	toSerialize["source_scope"] = o.SourceScope
 	toSerialize["name"] = o.Name
 	toSerialize["version"] = o.Version
 	if !IsNil(o.Description) {
@@ -352,14 +309,8 @@ func (o MarketplaceSearchResult) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Tags) {
 		toSerialize["tags"] = o.Tags
 	}
-	if !IsNil(o.Installed) {
-		toSerialize["installed"] = o.Installed
-	}
-	if !IsNil(o.InstalledVersion) {
-		toSerialize["installed_version"] = o.InstalledVersion
-	}
-	if !IsNil(o.InstalledScope) {
-		toSerialize["installed_scope"] = o.InstalledScope
+	if !IsNil(o.InstalledIn) {
+		toSerialize["installed_in"] = o.InstalledIn
 	}
 	return toSerialize, nil
 }
@@ -370,6 +321,7 @@ func (o *MarketplaceSearchResult) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"source",
+		"source_scope",
 		"name",
 		"version",
 	}

@@ -981,6 +981,487 @@ paths:
       security:
       - HTTPBearer: []
       summary: Delete My Sa Key
+  /ext/hindclaw/me:
+    get:
+      description: |-
+        Return the caller's own profile including channels.
+
+        Args:
+            _auth: Authenticated principal (user only, SA rejected).
+
+        Returns:
+            MeProfileResponse with user record and channel list.
+      operationId: get_my_profile
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeProfileResponse'
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: Get My Profile
+  /ext/hindclaw/me/api-keys:
+    get:
+      description: |-
+        List the caller's own API keys (masked).
+
+        Args:
+            _auth: Authenticated principal (user only, SA rejected).
+
+        Returns:
+            List of ApiKeyResponse with masked key prefixes.
+      operationId: list_my_api_keys
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ApiKeyResponse'
+                type: array
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: List My Api Keys
+    post:
+      description: |-
+        Create a new API key for the caller.
+
+        Args:
+            req: CreateApiKeyRequest with optional description.
+            _auth: Authenticated principal (user only, SA rejected).
+
+        Returns:
+            ApiKeyCreateResponse with full api_key shown once.
+      operationId: create_my_api_key
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApiKeyRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyCreateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create My Api Key
+  /ext/hindclaw/me/api-keys/{key_id}:
+    delete:
+      description: |-
+        Delete one of the caller's own API keys.
+
+        Scoped to the caller's user_id — cannot delete other users' keys.
+
+        Args:
+            key_id: API key record ID.
+            _auth: Authenticated principal (user only, SA rejected).
+      operationId: delete_my_api_key
+      parameters:
+      - explode: false
+        in: path
+        name: key_id
+        required: true
+        schema:
+          title: Key Id
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete My Api Key
+  /ext/hindclaw/me/template-sources:
+    get:
+      description: |-
+        List the caller's personal template sources.
+
+        Scoped to the caller's user_id — only returns sources with
+        scope='personal' owned by the authenticated principal.
+
+        Args:
+            _auth: Authenticated principal (users and SAs allowed).
+
+        Returns:
+            List of SourceResponse for the caller's personal sources.
+      operationId: list_my_template_sources
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SourceResponse'
+                type: array
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: List My Template Sources
+    post:
+      description: |-
+        Register a personal template source for the caller.
+
+        Source is created with scope='personal' and owner set to the
+        caller's user_id. Name is derived from the URL unless an alias
+        is provided.
+
+        Args:
+            request: CreateSourceRequest with url and optional alias/auth_token.
+            _auth: Authenticated principal (users and SAs allowed).
+
+        Returns:
+            SourceResponse for the newly created personal source.
+
+        Raises:
+            HTTPException: 422 if the source name cannot be derived from the URL.
+            HTTPException: 409 if a personal source with that name already exists.
+      operationId: create_my_template_source
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSourceRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create My Template Source
+  /ext/hindclaw/me/template-sources/{name}:
+    delete:
+      description: |-
+        Remove a personal template source owned by the caller.
+
+        Only deletes sources with scope='personal' that belong to the
+        caller — cannot affect other users' sources or server-scope sources.
+
+        Args:
+            name: Template source name to delete.
+            _auth: Authenticated principal (users and SAs allowed).
+
+        Raises:
+            HTTPException: 404 if the source is not found in the caller's
+                personal sources.
+      operationId: delete_my_template_source
+      parameters:
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          title: Name
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete My Template Source
+  /ext/hindclaw/me/templates:
+    get:
+      description: |-
+        List the caller's personal templates.
+
+        Scoped to the caller's user_id — only returns templates with
+        scope='personal' owned by the authenticated principal.
+
+        Args:
+            _auth: Authenticated principal (users and SAs allowed).
+
+        Returns:
+            List of TemplateSummaryResponse for the caller's personal templates.
+      operationId: list_my_templates
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TemplateSummaryResponse'
+                type: array
+          description: Successful Response
+      security:
+      - HTTPBearer: []
+      summary: List My Templates
+    post:
+      description: |-
+        Create a personal template for the caller.
+
+        Template is created with scope='personal' and owner set to the
+        caller's user_id. The scope field in the request body is ignored —
+        personal scope is always used.
+
+        Args:
+            request: CreateTemplateRequest with template fields.
+            _auth: Authenticated principal (users and SAs allowed).
+
+        Returns:
+            TemplateResponse for the newly created personal template.
+
+        Raises:
+            HTTPException: 409 if a personal template with that id already exists.
+      operationId: create_my_template
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create My Template
+  /ext/hindclaw/me/templates/install:
+    post:
+      description: |-
+        Install a template from a visible source to personal scope.
+
+        Resolves the named source (visible to the caller), fetches the
+        template from the marketplace, validates it, and upserts it into
+        the caller's personal scope.
+
+        Args:
+            request: InstallTemplateRequest with source_name and template name.
+            _auth: Authenticated principal (users and SAs allowed).
+
+        Returns:
+            TemplateResponse for the installed template.
+
+        Raises:
+            HTTPException: 404 if the source or template is not found.
+            HTTPException: 409 if the source name is ambiguous or template already installed.
+            HTTPException: 422 if template validation fails or name mismatches.
+      operationId: install_my_template
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallTemplateRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Install My Template
+  /ext/hindclaw/me/templates/{name}:
+    delete:
+      description: |-
+        Delete a personal template.
+
+        Resolves the template by name (with optional source disambiguation),
+        then deletes it.
+
+        Args:
+            name: Template name (id).
+            source: Optional source name to disambiguate.
+            _auth: Authenticated principal (users and SAs allowed).
+
+        Raises:
+            HTTPException: 404 if no matching template is found.
+            HTTPException: 409 if multiple templates match and source is not provided.
+      operationId: delete_my_template
+      parameters:
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          title: Name
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: source
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete My Template
+    get:
+      description: |-
+        Get a single personal template by name.
+
+        When multiple personal templates share the same name (installed from
+        different sources), use the ``source`` query parameter to disambiguate.
+        Pass an empty string to select a custom (non-marketplace) template.
+
+        Args:
+            name: Template name (id).
+            source: Optional source name to disambiguate. Empty string selects
+                custom templates (source_name=None).
+            _auth: Authenticated principal (users and SAs allowed).
+
+        Returns:
+            TemplateResponse for the matched template.
+
+        Raises:
+            HTTPException: 404 if no matching template is found.
+            HTTPException: 409 if multiple templates match and source is not provided.
+      operationId: get_my_template
+      parameters:
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          title: Name
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: source
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Get My Template
+    put:
+      description: |-
+        Update a personal template.
+
+        Resolves the template by name (with optional source disambiguation),
+        then applies the partial update.
+
+        Args:
+            name: Template name (id).
+            request: UpdateTemplateRequest with fields to update.
+            source: Optional source name to disambiguate.
+            _auth: Authenticated principal (users and SAs allowed).
+
+        Returns:
+            TemplateResponse for the updated template.
+
+        Raises:
+            HTTPException: 404 if no matching template is found.
+            HTTPException: 409 if multiple templates match and source is not provided.
+      operationId: update_my_template
+      parameters:
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          title: Name
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: source
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Update My Template
   /ext/hindclaw/service-accounts:
     get:
       operationId: list_service_accounts
@@ -1400,6 +1881,7 @@ paths:
 
         Raises:
             HTTPException: 409 if template already exists.
+            HTTPException: 403 if scope is server and user lacks template:admin.
       operationId: create_template
       requestBody:
         content:
@@ -1435,6 +1917,7 @@ paths:
 
         Raises:
             HTTPException: 404 if template not found.
+            HTTPException: 403 if scope is server and user lacks template:admin.
       operationId: delete_template
       parameters:
       - explode: false
@@ -1536,6 +2019,7 @@ paths:
         Raises:
             HTTPException: 404 if template not found, 422 if cross-field
                 validation fails.
+            HTTPException: 403 if scope is server and user lacks template:admin.
       operationId: update_template
       parameters:
       - explode: false
@@ -2523,51 +3007,65 @@ components:
       additionalProperties: true
       description: Request to install a template from a marketplace source.
       example:
-        scope: scope
+        scope: personal
         name: name
+        source_scope: source_scope
         source: source
+        source_name: source_name
       properties:
-        source:
+        source_name:
           description: Marketplace source name
           minLength: 1
+          title: Source Name
+          type: string
+        source:
+          description: Deprecated alias for source_name
           title: Source
           type: string
+          nullable: true
+        source_scope:
+          description: '''server'' or ''personal'' — required when ambiguous'
+          title: Source Scope
+          type: string
+          nullable: true
         name:
           description: Template name within the source
           minLength: 1
           title: Name
           type: string
         scope:
+          default: personal
           description: '''server'' or ''personal'''
           title: Scope
           type: string
       required:
       - name
-      - scope
-      - source
+      - source_name
       title: InstallTemplateRequest
     MarketplaceSearchResponse:
       description: Response for marketplace search.
       example:
         total: 0
         results:
-        - installed: false
-          installed_scope: installed_scope
+        - installed_in:
+          - installed_in
+          - installed_in
           author: ""
-          installed_version: installed_version
           name: name
           description: ""
+          source_scope: source_scope
           source: source
           version: version
           tags:
           - tags
           - tags
-        - installed: false
-          installed_scope: installed_scope
+        - installed_in:
+          - installed_in
+          - installed_in
           author: ""
-          installed_version: installed_version
           name: name
           description: ""
+          source_scope: source_scope
           source: source
           version: version
           tags:
@@ -2586,18 +3084,15 @@ components:
       - total
       title: MarketplaceSearchResponse
     MarketplaceSearchResult:
-      description: |-
-        A template from marketplace search results with install status.
-
-        Install status reflects server-scope first, then the calling user's
-        personal scope. If installed in both, server version is reported.
+      description: A template from marketplace search results with install status.
       example:
-        installed: false
-        installed_scope: installed_scope
+        installed_in:
+        - installed_in
+        - installed_in
         author: ""
-        installed_version: installed_version
         name: name
         description: ""
+        source_scope: source_scope
         source: source
         version: version
         tags:
@@ -2606,6 +3101,9 @@ components:
       properties:
         source:
           title: Source
+          type: string
+        source_scope:
+          title: Source Scope
           type: string
         name:
           title: Name
@@ -2626,23 +3124,53 @@ components:
           items:
             type: string
           type: array
-        installed:
-          default: false
-          title: Installed
-          type: boolean
-        installed_version:
-          title: Installed Version
-          type: string
-          nullable: true
-        installed_scope:
-          title: Installed Scope
-          type: string
-          nullable: true
+        installed_in:
+          items:
+            type: string
+          type: array
       required:
       - name
       - source
+      - source_scope
       - version
       title: MarketplaceSearchResult
+    MeProfileResponse:
+      description: Response for GET /me — caller's own profile.
+      example:
+        is_active: true
+        channels:
+        - provider: provider
+          sender_id: sender_id
+        - provider: provider
+          sender_id: sender_id
+        id: id
+        display_name: display_name
+        email: email
+      properties:
+        id:
+          title: Id
+          type: string
+        display_name:
+          title: Display Name
+          type: string
+        email:
+          title: Email
+          type: string
+          nullable: true
+        is_active:
+          title: Is Active
+          type: boolean
+        channels:
+          items:
+            $ref: '#/components/schemas/ChannelResponse'
+          type: array
+      required:
+      - channels
+      - display_name
+      - email
+      - id
+      - is_active
+      title: MeProfileResponse
     MentalModelSeed:
       description: A mental model to create when bootstrapping a bank from a template.
       example:
