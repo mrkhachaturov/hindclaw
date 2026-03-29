@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 # Cache TTL in seconds (default: 5 minutes)
 _CACHE_TTL = int(os.environ.get("HINDCLAW_MARKETPLACE_CACHE_TTL", "300"))
 
-# In-memory cache: source_name -> (MarketplaceIndex, timestamp)
-_index_cache: dict[str, tuple["MarketplaceIndex", float]] = {}
+# In-memory cache: (source_name, scope, owner) -> (MarketplaceIndex, timestamp)
+_index_cache: dict[tuple[str, str, str | None], tuple["MarketplaceIndex", float]] = {}
 
 
 @dataclass
@@ -149,7 +149,8 @@ async def fetch_index(
         MarketplaceIndex with template entries, or None on failure with no cache.
     """
     now = time.time()
-    cached = _index_cache.get(source.name)
+    cache_key = (source.name, source.scope, source.owner)
+    cached = _index_cache.get(cache_key)
     if cached:
         index, ts = cached
         if now - ts < _CACHE_TTL:
@@ -185,7 +186,7 @@ async def fetch_index(
                     return cached[0]
                 return None
             index = MarketplaceIndex(templates=data.get("templates", []))
-            _index_cache[source.name] = (index, now)
+            _index_cache[cache_key] = (index, now)
             return index
     except Exception:
         logger.exception("Error fetching index from %s", source.name)

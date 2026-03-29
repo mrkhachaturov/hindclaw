@@ -237,7 +237,7 @@ class TestFetchIndex:
 
         # Expire the cache
         from hindclaw_ext.marketplace import _index_cache
-        _index_cache["hindclaw"] = (result1, time.time() - 600)
+        _index_cache[("hindclaw", "server", None)] = (result1, time.time() - 600)
 
         # Second call fails — should return stale cache
         mock_session.get = MagicMock(return_value=AsyncMock(
@@ -424,6 +424,31 @@ class TestFetchTemplate:
         await fetch_template(source, "backend-python", session=mock_session)
         call_kwargs = mock_session.get.call_args[1]
         assert call_kwargs["headers"]["Authorization"] == "Bearer ghp_secret"
+
+
+class TestCacheCompositeKey:
+    def test_cache_uses_composite_key(self):
+        """Marketplace cache keys by (name, scope, owner) not just name."""
+        from hindclaw_ext import marketplace
+        from hindclaw_ext.models import TemplateSourceRecord
+
+        marketplace.clear_cache()
+
+        from hindclaw_ext.marketplace import MarketplaceIndex
+        marketplace._index_cache[("hindclaw", "server", None)] = (
+            MarketplaceIndex(templates=[{"name": "server-t"}]), 9999999999.0,
+        )
+        marketplace._index_cache[("hindclaw", "personal", "alice")] = (
+            MarketplaceIndex(templates=[{"name": "personal-t"}]), 9999999999.0,
+        )
+
+        assert len(marketplace._index_cache) == 2
+        server_cached = marketplace._index_cache[("hindclaw", "server", None)]
+        personal_cached = marketplace._index_cache[("hindclaw", "personal", "alice")]
+        assert server_cached[0].templates[0]["name"] == "server-t"
+        assert personal_cached[0].templates[0]["name"] == "personal-t"
+
+        marketplace.clear_cache()
 
 
 class TestValidateTemplate:
