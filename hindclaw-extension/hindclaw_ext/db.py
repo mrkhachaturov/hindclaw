@@ -169,12 +169,39 @@ CREATE UNIQUE INDEX IF NOT EXISTS bank_templates_custom_uniq
     ON bank_templates (id, scope, COALESCE(owner, ''))
     WHERE source_name IS NULL;
 
+-- Detect old schema (missing scope column) and drop if needed
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_name = 'template_sources'
+    ) AND NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'template_sources' AND column_name = 'scope'
+    ) THEN
+        DROP TABLE template_sources CASCADE;
+    END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS template_sources (
-    name       TEXT PRIMARY KEY,
+    id         SERIAL PRIMARY KEY,
+    name       TEXT NOT NULL,
+    scope      TEXT NOT NULL CHECK (scope IN ('server', 'personal')),
+    owner      TEXT REFERENCES hindclaw_users(id),
     url        TEXT NOT NULL,
     auth_token TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (
+        (scope = 'server' AND owner IS NULL) OR
+        (scope = 'personal' AND owner IS NOT NULL)
+    )
 );
+CREATE UNIQUE INDEX IF NOT EXISTS uq_template_sources_server
+    ON template_sources (name)
+    WHERE scope = 'server';
+CREATE UNIQUE INDEX IF NOT EXISTS uq_template_sources_personal
+    ON template_sources (name, owner)
+    WHERE scope = 'personal';
 
 -- Add is_active to existing users table (idempotent)
 DO $$
@@ -245,6 +272,10 @@ async def get_pool() -> asyncpg.Pool:
                 )
                 await conn.execute(
                     "INSERT INTO hindclaw_policy_attachments (policy_id, principal_type, principal_id, priority) VALUES ('bank:admin', 'user', $1, 0) ON CONFLICT DO NOTHING",
+                    root_user,
+                )
+                await conn.execute(
+                    "INSERT INTO hindclaw_policy_attachments (policy_id, principal_type, principal_id, priority) VALUES ('template:admin', 'user', $1, 0) ON CONFLICT DO NOTHING",
                     root_user,
                 )
                 logger.info("Root user '%s' ensured with admin policies", root_user)
@@ -1218,14 +1249,18 @@ def _row_to_source(row) -> TemplateSourceRecord:
     return TemplateSourceRecord(
         name=d["name"],
         url=d["url"],
+        scope=d.get("scope", "server"),
+        owner=d.get("owner"),
         auth_token=d.get("auth_token"),
-        created_at=str(d["created_at"]),
+        created_at=str(d["created_at"]) if d.get("created_at") else None,
     )
 
 
 async def create_template_source(
     name: str,
     url: str,
+    scope: str = "server",
+    owner: str | None = None,
     auth_token: str | None = None,
 ) -> TemplateSourceRecord:
     """Create a marketplace template source.
@@ -1233,6 +1268,8 @@ async def create_template_source(
     Args:
         name: Source name (derived from git org or admin-provided alias).
         url: Marketplace repository URL.
+        scope: Either 'server' (admin-managed) or 'personal' (user-owned).
+        owner: User ID for personal sources; must be None for server sources.
         auth_token: Optional auth token for private repositories.
 
     Returns:
@@ -1240,56 +1277,160 @@ async def create_template_source(
     """
     pool = await get_pool()
     row = await pool.fetchrow(
-        """INSERT INTO template_sources (name, url, auth_token)
-           VALUES ($1, $2, $3)
+        """INSERT INTO template_sources (name, url, scope, owner, auth_token)
+           VALUES ($1, $2, $3, $4, $5)
            RETURNING *""",
-        name, url, auth_token,
+        name, url, scope, owner, auth_token,
     )
     return _row_to_source(row)
 
 
-async def get_template_source(name: str) -> TemplateSourceRecord | None:
-    """Get a marketplace source by name.
+async def get_template_source(
+    name: str,
+    scope: str | None = None,
+    owner: str | None = None,
+) -> TemplateSourceRecord | None:
+    """Get a marketplace source by name, optionally filtered by scope and owner.
+
+    For personal scope with owner provided, queries by name, scope, and owner.
+    For server scope, queries by name and scope with owner IS NULL.
 
     Args:
         name: Source name.
+        scope: Optional scope filter ('server' or 'personal').
+        owner: Optional owner filter (required when scope is 'personal').
 
     Returns:
         TemplateSourceRecord or None.
     """
     pool = await get_pool()
-    row = await pool.fetchrow(
-        "SELECT * FROM template_sources WHERE name = $1",
-        name,
-    )
+    if scope == "personal" and owner is not None:
+        row = await pool.fetchrow(
+            "SELECT * FROM template_sources WHERE name = $1 AND scope = $2 AND owner = $3",
+            name, scope, owner,
+        )
+    elif scope == "server":
+        row = await pool.fetchrow(
+            "SELECT * FROM template_sources WHERE name = $1 AND scope = $2 AND owner IS NULL",
+            name, scope,
+        )
+    elif scope is not None:
+        row = await pool.fetchrow(
+            "SELECT * FROM template_sources WHERE name = $1 AND scope = $2",
+            name, scope,
+        )
+    else:
+        row = await pool.fetchrow(
+            "SELECT * FROM template_sources WHERE name = $1",
+            name,
+        )
     return _row_to_source(row) if row else None
 
 
-async def list_template_sources() -> list[TemplateSourceRecord]:
-    """List all registered marketplace sources.
+async def list_template_sources(
+    *,
+    scope: str | None = None,
+    owner: str | None = None,
+) -> list[TemplateSourceRecord]:
+    """List registered marketplace sources, optionally filtered by scope and owner.
+
+    Args:
+        scope: Optional scope filter ('server' or 'personal').
+        owner: Optional owner filter; used when scope is 'personal'.
 
     Returns:
         List of TemplateSourceRecord instances, ordered by name.
     """
     pool = await get_pool()
-    rows = await pool.fetch(
-        "SELECT * FROM template_sources ORDER BY name",
-    )
+    if scope == "personal" and owner is not None:
+        rows = await pool.fetch(
+            "SELECT * FROM template_sources WHERE scope = $1 AND owner = $2 ORDER BY name",
+            scope, owner,
+        )
+    elif scope is not None:
+        rows = await pool.fetch(
+            "SELECT * FROM template_sources WHERE scope = $1 ORDER BY name",
+            scope,
+        )
+    else:
+        rows = await pool.fetch(
+            "SELECT * FROM template_sources ORDER BY name",
+        )
     return [_row_to_source(r) for r in rows]
 
 
-async def delete_template_source(name: str) -> bool:
+async def resolve_source(
+    name: str,
+    caller: str,
+    source_scope: str | None = None,
+) -> TemplateSourceRecord:
+    """Resolve a source by name for the given caller.
+
+    Queries server sources and the caller's personal sources for a name.
+    If source_scope is specified, filters to that scope only.
+
+    Args:
+        name: Source name to resolve.
+        caller: User ID of the calling user (for personal source lookup).
+        source_scope: Optional scope filter ('server' or 'personal').
+
+    Returns:
+        The matching TemplateSourceRecord.
+
+    Raises:
+        KeyError: If no matching source is found.
+        ValueError: If multiple sources match and scope is ambiguous.
+    """
+    pool = await get_pool()
+    if source_scope is not None:
+        if source_scope == "personal":
+            rows = await pool.fetch(
+                "SELECT * FROM template_sources WHERE name = $1 AND scope = 'personal' AND owner = $2",
+                name, caller,
+            )
+        else:
+            rows = await pool.fetch(
+                "SELECT * FROM template_sources WHERE name = $1 AND scope = $2",
+                name, source_scope,
+            )
+    else:
+        rows = await pool.fetch(
+            """SELECT * FROM template_sources
+               WHERE name = $1
+                 AND (scope = 'server' OR (scope = 'personal' AND owner = $2))""",
+            name, caller,
+        )
+    if len(rows) == 0:
+        raise KeyError(f"Source not found: {name!r}")
+    if len(rows) > 1:
+        raise ValueError(f"Ambiguous source {name!r}: matches both server and personal scopes")
+    return _row_to_source(rows[0])
+
+
+async def delete_template_source(
+    name: str,
+    scope: str = "server",
+    owner: str | None = None,
+) -> bool:
     """Delete a marketplace source.
 
     Args:
         name: Source name to delete.
+        scope: Scope of the source ('server' or 'personal').
+        owner: Owner user ID for personal sources; must be None for server sources.
 
     Returns:
         True if a row was deleted, False if not found.
     """
     pool = await get_pool()
-    result = await pool.execute(
-        "DELETE FROM template_sources WHERE name = $1",
-        name,
-    )
+    if scope == "personal" and owner is not None:
+        result = await pool.execute(
+            "DELETE FROM template_sources WHERE name = $1 AND scope = $2 AND owner = $3",
+            name, scope, owner,
+        )
+    else:
+        result = await pool.execute(
+            "DELETE FROM template_sources WHERE name = $1 AND scope = $2 AND owner IS NULL",
+            name, scope,
+        )
     return result == "DELETE 1"
