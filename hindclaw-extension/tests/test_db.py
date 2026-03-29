@@ -338,3 +338,19 @@ async def test_list_service_accounts_by_owner_empty(mock_pool):
     with patch.object(db, "_pool", mock_pool):
         result = await db.list_service_accounts_by_owner("nobody")
     assert result == []
+
+
+@pytest.mark.asyncio
+async def test_seed_includes_template_user_policy(mock_pool):
+    """DDL seeds template:user built-in policy."""
+    from hindclaw_ext.db import _DDL
+    assert "'template:user'" in _DDL
+    assert "Template User" in _DDL
+
+
+@pytest.mark.asyncio
+async def test_seed_includes_iam_self_service_policy(mock_pool):
+    """DDL seeds iam:self-service built-in policy."""
+    from hindclaw_ext.db import _DDL
+    assert "'iam:self-service'" in _DDL
+    assert "IAM Self-Service" in _DDL

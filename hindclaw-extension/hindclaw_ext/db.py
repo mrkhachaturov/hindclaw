@@ -221,7 +221,9 @@ INSERT INTO hindclaw_policies (id, display_name, document_json, is_builtin) VALU
     ('bank:retain-only', 'Bank Retain-Only', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:retain"],"banks":["*"]}]}', TRUE),
     ('bank:admin', 'Bank Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["bank:*"],"banks":["*"]}]}', TRUE),
     ('iam:admin', 'IAM Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["iam:*"],"banks":["*"]}]}', TRUE),
-    ('template:admin', 'Template Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["template:list","template:create","template:install","template:manage","template:source","bank:create"],"banks":["*"]}]}', TRUE)
+    ('template:admin', 'Template Admin', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["template:list","template:create","template:install","template:manage","template:source","bank:create"],"banks":["*"]}]}', TRUE),
+    ('template:user', 'Template User', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["template:list","template:create","template:install","template:manage","template:source","bank:create"],"banks":["*"]}]}', TRUE),
+    ('iam:self-service', 'IAM Self-Service', '{"version":"2026-03-24","statements":[{"effect":"allow","actions":["iam:api_keys:read","iam:api_keys:write","iam:service_accounts:read","iam:service_accounts:write","iam:service_account_keys:write"],"banks":["*"]}]}', TRUE)
 ON CONFLICT (id) DO NOTHING;
 """
 
