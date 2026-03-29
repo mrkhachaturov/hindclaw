@@ -49,6 +49,7 @@ from hindclaw_ext.http_models import (
     GroupSummaryResponse,
     InstallTemplateRequest,
     MarketplaceSearchResponse,
+    MeProfileResponse,
     MentalModelSeedResult,
     PolicyAttachmentResponse,
     PolicyResponse,
@@ -613,6 +614,91 @@ class HindclawHttp(HttpExtension):
             if not existing:
                 raise HTTPException(404, f"SA key {key_id} not found")
             await db.delete_sa_key(key_id, sa_id)
+
+        # --- Self-Service Profile (/me) ---
+
+        @router.get("/me", response_model=MeProfileResponse, operation_id="get_my_profile")
+        async def get_my_profile(_auth=Depends(_authenticate_user)):
+            """Return the caller's own profile including channels.
+
+            Args:
+                _auth: Authenticated principal (user only, SA rejected).
+
+            Returns:
+                MeProfileResponse with user record and channel list.
+            """
+            user = await db.get_user(_auth["user_id"])
+            pool = await db.get_pool()
+            channel_rows = await pool.fetch(
+                "SELECT provider, sender_id FROM hindclaw_user_channels WHERE user_id = $1",
+                _auth["user_id"],
+            )
+            return MeProfileResponse(
+                id=user.id,
+                display_name=user.display_name,
+                email=user.email,
+                is_active=user.is_active,
+                channels=[{"provider": c["provider"], "sender_id": c["sender_id"]} for c in channel_rows],
+            )
+
+        # --- Self-Service API Keys (/me/api-keys) ---
+
+        @router.get("/me/api-keys", response_model=list[ApiKeyResponse], operation_id="list_my_api_keys")
+        async def list_my_api_keys(_auth=Depends(_require_iam_user_only("iam:api_keys:read"))):
+            """List the caller's own API keys (masked).
+
+            Args:
+                _auth: Authenticated principal (user only, SA rejected).
+
+            Returns:
+                List of ApiKeyResponse with masked key prefixes.
+            """
+            pool = await db.get_pool()
+            rows = await pool.fetch(
+                "SELECT id, api_key, description FROM hindclaw_api_keys WHERE user_id = $1 ORDER BY id",
+                _auth["user_id"],
+            )
+            return [
+                {"id": r["id"], "api_key_prefix": r["api_key"][:_API_KEY_MASK_LENGTH] + "...", "description": r["description"]}
+                for r in rows
+            ]
+
+        @router.post("/me/api-keys", status_code=201, response_model=ApiKeyCreateResponse, operation_id="create_my_api_key")
+        async def create_my_api_key(req: CreateApiKeyRequest, _auth=Depends(_require_iam_user_only("iam:api_keys:write"))):
+            """Create a new API key for the caller.
+
+            Args:
+                req: CreateApiKeyRequest with optional description.
+                _auth: Authenticated principal (user only, SA rejected).
+
+            Returns:
+                ApiKeyCreateResponse with full api_key shown once.
+            """
+            pool = await db.get_pool()
+            user_id = _auth["user_id"]
+            key_id = secrets.token_hex(8)
+            api_key = f"hc_u_{user_id}_{secrets.token_hex(16)}"
+            await pool.execute(
+                "INSERT INTO hindclaw_api_keys (id, api_key, user_id, description) VALUES ($1, $2, $3, $4)",
+                key_id, api_key, user_id, req.description,
+            )
+            return {"id": key_id, "api_key": api_key, "description": req.description}
+
+        @router.delete("/me/api-keys/{key_id}", status_code=204, operation_id="delete_my_api_key")
+        async def delete_my_api_key(key_id: str, _auth=Depends(_require_iam_user_only("iam:api_keys:write"))):
+            """Delete one of the caller's own API keys.
+
+            Scoped to the caller's user_id — cannot delete other users' keys.
+
+            Args:
+                key_id: API key record ID.
+                _auth: Authenticated principal (user only, SA rejected).
+            """
+            pool = await db.get_pool()
+            await pool.execute(
+                "DELETE FROM hindclaw_api_keys WHERE id = $1 AND user_id = $2",
+                key_id, _auth["user_id"],
+            )
 
         # --- Service Accounts ---
 
