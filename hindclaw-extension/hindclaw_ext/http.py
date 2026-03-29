@@ -263,6 +263,47 @@ async def _authenticate_user(
         return {"principal_type": "user", "principal_id": key_record.user_id, "user_id": key_record.user_id}
 
 
+async def _resolve_my_template(name: str, owner: str, source: str | None = None):
+    """Resolve a personal template with ambiguity detection.
+
+    Returns the unique match for the given owner's personal templates.
+    When the ``source`` parameter is provided it is used to filter by
+    source_name — pass an empty string to select custom (non-marketplace)
+    templates (source_name=None).
+
+    Args:
+        name: Template id to resolve.
+        owner: User id of the template owner.
+        source: Optional source name filter. Empty string selects templates
+            with source_name=None (custom). None means no filter.
+
+    Returns:
+        The unique matching TemplateRecord.
+
+    Raises:
+        HTTPException: 404 if no template matches.
+        HTTPException: 409 if multiple templates match and source is not provided.
+    """
+    templates = await db.list_templates(scope="personal", owner=owner)
+    matches = [t for t in templates if t.id == name]
+
+    if source is not None:
+        src = source if source else None  # empty string -> None (custom)
+        matches = [t for t in matches if t.source_name == src]
+
+    if len(matches) == 0:
+        raise HTTPException(404, f"Template '{name}' not found")
+    if len(matches) == 1:
+        return matches[0]
+
+    sources = [t.source_name or "(custom)" for t in matches]
+    raise HTTPException(
+        409,
+        f"Ambiguous template '{name}' — exists from sources: {', '.join(sources)}. "
+        f"Use ?source= to disambiguate.",
+    )
+
+
 class HindclawHttp(HttpExtension):
     """REST API for managing hindclaw access control data.
 
@@ -805,6 +846,289 @@ class HindclawHttp(HttpExtension):
             deleted = await db.delete_template_source(name, scope="personal", owner=_auth["user_id"])
             if not deleted:
                 raise HTTPException(404, f"Source '{name}' not found in your personal sources")
+
+        # --- Self-Service Templates (/me/templates) ---
+
+        @router.get(
+            "/me/templates",
+            response_model=list[TemplateSummaryResponse],
+            operation_id="list_my_templates",
+        )
+        async def list_my_templates(_auth=Depends(_require_iam("template:list"))):
+            """List the caller's personal templates.
+
+            Scoped to the caller's user_id — only returns templates with
+            scope='personal' owned by the authenticated principal.
+
+            Args:
+                _auth: Authenticated principal (users and SAs allowed).
+
+            Returns:
+                List of TemplateSummaryResponse for the caller's personal templates.
+            """
+            rows = await db.list_templates(scope="personal", owner=_auth["user_id"])
+            return [r.model_dump() for r in rows]
+
+        @router.post(
+            "/me/templates",
+            response_model=TemplateResponse,
+            status_code=201,
+            operation_id="create_my_template",
+        )
+        async def create_my_template(
+            request: CreateTemplateRequest,
+            _auth=Depends(_require_iam("template:create")),
+        ):
+            """Create a personal template for the caller.
+
+            Template is created with scope='personal' and owner set to the
+            caller's user_id. The scope field in the request body is ignored —
+            personal scope is always used.
+
+            Args:
+                request: CreateTemplateRequest with template fields.
+                _auth: Authenticated principal (users and SAs allowed).
+
+            Returns:
+                TemplateResponse for the newly created personal template.
+
+            Raises:
+                HTTPException: 409 if a personal template with that id already exists.
+            """
+            owner = _auth["user_id"]
+            try:
+                rec = await db.create_template(
+                    id=request.id,
+                    scope="personal",
+                    owner=owner,
+                    source_name=None,
+                    schema_version=1,
+                    min_hindclaw_version=request.min_hindclaw_version,
+                    min_hindsight_version=request.min_hindsight_version,
+                    description=request.description,
+                    author=request.author,
+                    tags=request.tags,
+                    retain_mission=request.retain_mission,
+                    reflect_mission=request.reflect_mission,
+                    observations_mission=request.observations_mission,
+                    retain_extraction_mode=request.retain_extraction_mode,
+                    retain_custom_instructions=request.retain_custom_instructions,
+                    retain_chunk_size=request.retain_chunk_size,
+                    retain_default_strategy=request.retain_default_strategy,
+                    retain_strategies=request.retain_strategies,
+                    entity_labels=[l.model_dump() for l in request.entity_labels],
+                    entities_allow_free_form=request.entities_allow_free_form,
+                    enable_observations=request.enable_observations,
+                    consolidation_llm_batch_size=request.consolidation_llm_batch_size,
+                    consolidation_source_facts_max_tokens=request.consolidation_source_facts_max_tokens,
+                    consolidation_source_facts_max_tokens_per_observation=request.consolidation_source_facts_max_tokens_per_observation,
+                    disposition_skepticism=request.disposition_skepticism,
+                    disposition_literalism=request.disposition_literalism,
+                    disposition_empathy=request.disposition_empathy,
+                    directive_seeds=[s.model_dump() for s in request.directive_seeds],
+                    mental_model_seeds=[s.model_dump() for s in request.mental_model_seeds],
+                )
+            except asyncpg.UniqueViolationError:
+                raise HTTPException(409, f"Template '{request.id}' already exists")
+            return rec.model_dump()
+
+        @router.post(
+            "/me/templates/install",
+            response_model=TemplateResponse,
+            status_code=201,
+            operation_id="install_my_template",
+        )
+        async def install_my_template(
+            request: InstallTemplateRequest,
+            _auth=Depends(_require_iam("template:install")),
+        ):
+            """Install a template from a visible source to personal scope.
+
+            Resolves the named source (visible to the caller), fetches the
+            template from the marketplace, validates it, and upserts it into
+            the caller's personal scope.
+
+            Args:
+                request: InstallTemplateRequest with source_name and template name.
+                _auth: Authenticated principal (users and SAs allowed).
+
+            Returns:
+                TemplateResponse for the installed template.
+
+            Raises:
+                HTTPException: 404 if the source or template is not found.
+                HTTPException: 409 if the source name is ambiguous or template already installed.
+                HTTPException: 422 if template validation fails or name mismatches.
+            """
+            try:
+                source = await db.resolve_source(
+                    request.source_name,
+                    caller=_auth["user_id"],
+                    source_scope=request.source_scope,
+                )
+            except KeyError as e:
+                raise HTTPException(404, str(e))
+            except ValueError as e:
+                raise HTTPException(409, str(e))
+
+            template = await marketplace.fetch_template(source, request.name)
+            if not template:
+                raise HTTPException(404, f"Template '{request.name}' not found in source '{source.name}'")
+
+            if template.name != request.name:
+                raise HTTPException(422, f"Template name mismatch: requested '{request.name}' but file contains '{template.name}'")
+
+            errors = marketplace.validate_template(template)
+            if errors:
+                raise HTTPException(422, "; ".join(errors))
+
+            owner = _auth["user_id"]
+            try:
+                rec = await db.upsert_template_from_marketplace(
+                    id=template.name,
+                    scope="personal",
+                    owner=owner,
+                    source_name=source.name,
+                    source_url=source.url,
+                    source_revision=None,
+                    schema_version=template.schema_version,
+                    min_hindclaw_version=template.min_hindclaw_version,
+                    min_hindsight_version=template.min_hindsight_version,
+                    version=template.version,
+                    description=template.description,
+                    author=template.author,
+                    tags=template.tags,
+                    retain_mission=template.retain_mission,
+                    reflect_mission=template.reflect_mission,
+                    observations_mission=template.observations_mission,
+                    retain_extraction_mode=template.retain_extraction_mode,
+                    retain_custom_instructions=template.retain_custom_instructions,
+                    retain_chunk_size=template.retain_chunk_size,
+                    retain_default_strategy=template.retain_default_strategy,
+                    retain_strategies=template.retain_strategies,
+                    entity_labels=[l.model_dump() for l in template.entity_labels],
+                    entities_allow_free_form=template.entities_allow_free_form,
+                    enable_observations=template.enable_observations,
+                    consolidation_llm_batch_size=template.consolidation_llm_batch_size,
+                    consolidation_source_facts_max_tokens=template.consolidation_source_facts_max_tokens,
+                    consolidation_source_facts_max_tokens_per_observation=template.consolidation_source_facts_max_tokens_per_observation,
+                    disposition_skepticism=template.disposition_skepticism,
+                    disposition_literalism=template.disposition_literalism,
+                    disposition_empathy=template.disposition_empathy,
+                    directive_seeds=[s.model_dump() for s in template.directive_seeds],
+                    mental_model_seeds=[s.model_dump() for s in template.mental_model_seeds],
+                )
+            except asyncpg.UniqueViolationError:
+                raise HTTPException(409, f"Template '{template.name}' already installed")
+            return rec.model_dump()
+
+        @router.get(
+            "/me/templates/{name}",
+            response_model=TemplateResponse,
+            operation_id="get_my_template",
+        )
+        async def get_my_template(
+            name: str,
+            source: str | None = Query(default=None),
+            _auth=Depends(_require_iam("template:list")),
+        ):
+            """Get a single personal template by name.
+
+            When multiple personal templates share the same name (installed from
+            different sources), use the ``source`` query parameter to disambiguate.
+            Pass an empty string to select a custom (non-marketplace) template.
+
+            Args:
+                name: Template name (id).
+                source: Optional source name to disambiguate. Empty string selects
+                    custom templates (source_name=None).
+                _auth: Authenticated principal (users and SAs allowed).
+
+            Returns:
+                TemplateResponse for the matched template.
+
+            Raises:
+                HTTPException: 404 if no matching template is found.
+                HTTPException: 409 if multiple templates match and source is not provided.
+            """
+            template = await _resolve_my_template(name, _auth["user_id"], source)
+            return template.model_dump()
+
+        @router.put(
+            "/me/templates/{name}",
+            response_model=TemplateResponse,
+            operation_id="update_my_template",
+        )
+        async def update_my_template(
+            name: str,
+            request: UpdateTemplateRequest,
+            source: str | None = Query(default=None),
+            _auth=Depends(_require_iam("template:manage")),
+        ):
+            """Update a personal template.
+
+            Resolves the template by name (with optional source disambiguation),
+            then applies the partial update.
+
+            Args:
+                name: Template name (id).
+                request: UpdateTemplateRequest with fields to update.
+                source: Optional source name to disambiguate.
+                _auth: Authenticated principal (users and SAs allowed).
+
+            Returns:
+                TemplateResponse for the updated template.
+
+            Raises:
+                HTTPException: 404 if no matching template is found.
+                HTTPException: 409 if multiple templates match and source is not provided.
+            """
+            template = await _resolve_my_template(name, _auth["user_id"], source)
+            updates = request.model_dump(exclude_unset=True)
+            rec = await db.update_template(
+                template.id,
+                "personal",
+                owner=_auth["user_id"],
+                source_name=template.source_name,
+                updates=updates,
+            )
+            if rec is None:
+                raise HTTPException(404, "Template not found")
+            return rec.model_dump()
+
+        @router.delete(
+            "/me/templates/{name}",
+            status_code=204,
+            operation_id="delete_my_template",
+        )
+        async def delete_my_template(
+            name: str,
+            source: str | None = Query(default=None),
+            _auth=Depends(_require_iam("template:manage")),
+        ):
+            """Delete a personal template.
+
+            Resolves the template by name (with optional source disambiguation),
+            then deletes it.
+
+            Args:
+                name: Template name (id).
+                source: Optional source name to disambiguate.
+                _auth: Authenticated principal (users and SAs allowed).
+
+            Raises:
+                HTTPException: 404 if no matching template is found.
+                HTTPException: 409 if multiple templates match and source is not provided.
+            """
+            template = await _resolve_my_template(name, _auth["user_id"], source)
+            deleted = await db.delete_template(
+                template.id,
+                "personal",
+                owner=_auth["user_id"],
+                source_name=template.source_name,
+            )
+            if not deleted:
+                raise HTTPException(404, "Template not found")
 
         # --- Service Accounts ---
 
