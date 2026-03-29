@@ -128,5 +128,7 @@ class TemplateSourceRecord(BaseModel):
 
     name: str
     url: str
-    auth_token: str | None
-    created_at: str
+    scope: str = "server"
+    owner: str | None = None
+    auth_token: str | None = None
+    created_at: str | None = None

@@ -48,3 +48,22 @@ def test_user_record_is_active():
 
     r = UserRecord(id="alice", display_name="Alice")
     assert r.is_active is True
+
+
+def test_template_source_record_with_scope():
+    """TemplateSourceRecord accepts scope and owner fields."""
+    from hindclaw_ext.models import TemplateSourceRecord
+
+    rec = TemplateSourceRecord(
+        name="hindclaw", url="https://github.com/hindclaw/templates",
+        scope="server", owner=None,
+    )
+    assert rec.scope == "server"
+    assert rec.owner is None
+
+    personal = TemplateSourceRecord(
+        name="hindclaw", url="https://github.com/alice/templates",
+        scope="personal", owner="alice",
+    )
+    assert personal.scope == "personal"
+    assert personal.owner == "alice"
