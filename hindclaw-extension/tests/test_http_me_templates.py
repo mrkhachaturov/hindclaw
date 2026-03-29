@@ -356,6 +356,34 @@ def test_delete_my_template_not_found(alice_client, headers, mock_db):
     assert resp.status_code == 404
 
 
+def test_update_my_template_ambiguous_returns_409(alice_client, headers, mock_db):
+    """PUT /me/templates/{name} returns 409 when multiple sources match."""
+    record_custom = _make_template_record(source_name=None)
+    record_sourced = _make_template_record(source_name="community")
+    mock_db.list_templates = AsyncMock(return_value=[record_custom, record_sourced])
+
+    resp = alice_client.put(
+        "/ext/hindclaw/me/templates/test-template",
+        headers=headers,
+        json={"description": "updated"},
+    )
+
+    assert resp.status_code == 409
+    assert "Ambiguous" in resp.json()["detail"]
+
+
+def test_delete_my_template_ambiguous_returns_409(alice_client, headers, mock_db):
+    """DELETE /me/templates/{name} returns 409 when multiple sources match."""
+    record_custom = _make_template_record(source_name=None)
+    record_sourced = _make_template_record(source_name="community")
+    mock_db.list_templates = AsyncMock(return_value=[record_custom, record_sourced])
+
+    resp = alice_client.delete("/ext/hindclaw/me/templates/test-template", headers=headers)
+
+    assert resp.status_code == 409
+    assert "Ambiguous" in resp.json()["detail"]
+
+
 # --- Install ---
 
 
