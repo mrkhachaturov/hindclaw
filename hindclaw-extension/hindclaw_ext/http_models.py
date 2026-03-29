@@ -563,6 +563,13 @@ class InstallTemplateRequest(BaseModel):
             data.pop("source")
         return data
 
+    @field_validator("source_scope")
+    @classmethod
+    def _validate_source_scope(cls, v: str | None) -> str | None:
+        if v is not None and v not in _VALID_SCOPES:
+            raise ValueError(f"source_scope must be one of {_VALID_SCOPES}")
+        return v
+
     @field_validator("scope")
     @classmethod
     def _validate_scope(cls, v: str) -> str:

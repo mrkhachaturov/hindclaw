@@ -13,6 +13,8 @@ def _fake_source_row(**overrides) -> dict:
     defaults = {
         "name": "hindclaw",
         "url": "https://github.com/hindclaw/community-templates",
+        "scope": "server",
+        "owner": None,
         "auth_token": None,
         "created_at": "2026-03-25T12:00:00+00:00",
     }

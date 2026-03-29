@@ -187,7 +187,7 @@ CREATE TABLE IF NOT EXISTS template_sources (
     id         SERIAL PRIMARY KEY,
     name       TEXT NOT NULL,
     scope      TEXT NOT NULL CHECK (scope IN ('server', 'personal')),
-    owner      TEXT REFERENCES hindclaw_users(id),
+    owner      TEXT REFERENCES hindclaw_users(id) ON DELETE CASCADE,
     url        TEXT NOT NULL,
     auth_token TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -1251,7 +1251,7 @@ def _row_to_source(row) -> TemplateSourceRecord:
     return TemplateSourceRecord(
         name=d["name"],
         url=d["url"],
-        scope=d.get("scope", "server"),
+        scope=d["scope"],
         owner=d.get("owner"),
         auth_token=d.get("auth_token"),
         created_at=str(d["created_at"]) if d.get("created_at") else None,
