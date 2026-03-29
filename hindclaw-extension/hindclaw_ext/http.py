@@ -700,6 +700,112 @@ class HindclawHttp(HttpExtension):
                 key_id, _auth["user_id"],
             )
 
+        # --- Self-Service Template Sources (/me/template-sources) ---
+
+        @router.get(
+            "/me/template-sources",
+            response_model=list[SourceResponse],
+            operation_id="list_my_template_sources",
+        )
+        async def list_my_template_sources(
+            _auth=Depends(_require_iam("template:source")),
+        ):
+            """List the caller's personal template sources.
+
+            Scoped to the caller's user_id — only returns sources with
+            scope='personal' owned by the authenticated principal.
+
+            Args:
+                _auth: Authenticated principal (users and SAs allowed).
+
+            Returns:
+                List of SourceResponse for the caller's personal sources.
+            """
+            sources = await db.list_template_sources(scope="personal", owner=_auth["user_id"])
+            return [
+                SourceResponse(
+                    name=s.name,
+                    url=s.url,
+                    has_auth=s.auth_token is not None,
+                    created_at=str(s.created_at),
+                )
+                for s in sources
+            ]
+
+        @router.post(
+            "/me/template-sources",
+            response_model=SourceResponse,
+            status_code=201,
+            operation_id="create_my_template_source",
+        )
+        async def create_my_template_source(
+            request: CreateSourceRequest,
+            _auth=Depends(_require_iam("template:source")),
+        ):
+            """Register a personal template source for the caller.
+
+            Source is created with scope='personal' and owner set to the
+            caller's user_id. Name is derived from the URL unless an alias
+            is provided.
+
+            Args:
+                request: CreateSourceRequest with url and optional alias/auth_token.
+                _auth: Authenticated principal (users and SAs allowed).
+
+            Returns:
+                SourceResponse for the newly created personal source.
+
+            Raises:
+                HTTPException: 422 if the source name cannot be derived from the URL.
+                HTTPException: 409 if a personal source with that name already exists.
+            """
+            try:
+                name = request.alias or derive_source_name(request.url)
+            except ValueError as e:
+                raise HTTPException(422, str(e))
+            try:
+                rec = await db.create_template_source(
+                    name=name,
+                    url=request.url,
+                    scope="personal",
+                    owner=_auth["user_id"],
+                    auth_token=request.auth_token,
+                )
+            except asyncpg.UniqueViolationError:
+                raise HTTPException(409, f"Source '{name}' already exists in your personal sources")
+            return SourceResponse(
+                name=rec.name,
+                url=rec.url,
+                has_auth=rec.auth_token is not None,
+                created_at=str(rec.created_at),
+            )
+
+        @router.delete(
+            "/me/template-sources/{name}",
+            status_code=204,
+            operation_id="delete_my_template_source",
+        )
+        async def delete_my_template_source(
+            name: str,
+            _auth=Depends(_require_iam("template:source")),
+        ):
+            """Remove a personal template source owned by the caller.
+
+            Only deletes sources with scope='personal' that belong to the
+            caller — cannot affect other users' sources or server-scope sources.
+
+            Args:
+                name: Template source name to delete.
+                _auth: Authenticated principal (users and SAs allowed).
+
+            Raises:
+                HTTPException: 404 if the source is not found in the caller's
+                    personal sources.
+            """
+            deleted = await db.delete_template_source(name, scope="personal", owner=_auth["user_id"])
+            if not deleted:
+                raise HTTPException(404, f"Source '{name}' not found in your personal sources")
+
         # --- Service Accounts ---
 
         @router.get("/service-accounts", response_model=list[ServiceAccountResponse], operation_id="list_service_accounts")
