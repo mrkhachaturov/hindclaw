@@ -510,21 +510,16 @@ class MarketplaceTemplateEntry(BaseModel):
 
 
 class MarketplaceSearchResult(BaseModel):
-    """A template from marketplace search results with install status.
-
-    Install status reflects server-scope first, then the calling user's
-    personal scope. If installed in both, server version is reported.
-    """
+    """A template from marketplace search results with install status."""
 
     source: str
+    source_scope: str
     name: str
     version: str
     description: str = ""
     author: str = ""
     tags: list[str] = []
-    installed: bool = False
-    installed_version: str | None = None
-    installed_scope: str | None = None
+    installed_in: list[str] = Field(default_factory=list)
 
 
 class MarketplaceSearchResponse(BaseModel):
@@ -534,17 +529,39 @@ class MarketplaceSearchResponse(BaseModel):
     total: int
 
 
+class MeProfileResponse(BaseModel):
+    """Response for GET /me — caller's own profile."""
+
+    id: str
+    display_name: str
+    email: str | None
+    is_active: bool
+    channels: list[ChannelResponse]
+
+
 # --- Install / Update ---
 
 
 class InstallTemplateRequest(BaseModel):
     """Request to install a template from a marketplace source."""
 
-    source: str = Field(min_length=1, description="Marketplace source name")
+    source_name: str = Field(min_length=1, description="Marketplace source name")
+    source: str | None = Field(default=None, exclude=True, description="Deprecated alias for source_name")
+    source_scope: str | None = Field(default=None, description="'server' or 'personal' — required when ambiguous")
     name: str = Field(min_length=1, description="Template name within the source")
-    scope: str = Field(description="'server' or 'personal'")
+    scope: str = Field(default="personal", description="'server' or 'personal'")
 
     model_config = {"extra": "forbid"}
+
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_source_alias(cls, data):
+        """Accept deprecated 'source' field as alias for source_name."""
+        if isinstance(data, dict) and "source" in data and "source_name" not in data:
+            data["source_name"] = data.pop("source")
+        elif isinstance(data, dict) and "source" in data and "source_name" in data:
+            data.pop("source")
+        return data
 
     @field_validator("scope")
     @classmethod

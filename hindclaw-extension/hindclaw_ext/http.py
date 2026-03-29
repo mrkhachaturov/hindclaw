@@ -1020,17 +1020,14 @@ class HindclawHttp(HttpExtension):
                 if user_id
                 else []
             )
-            # Build installed map keyed by (source_name, id).
-            # Server-scope takes precedence over personal — if installed
-            # in both scopes, the server version is reported.
-            installed_map: dict[tuple[str, str], tuple[str | None, str]] = {}
+            # Build installed map keyed by (source_name, id) → set of scopes.
+            installed_map: dict[tuple[str, str], set[str]] = {}
             for t in personal_installed:
                 if t.source_name:
-                    installed_map[(t.source_name, t.id)] = (t.version, "personal")
+                    installed_map.setdefault((t.source_name, t.id), set()).add("personal")
             for t in server_installed:
                 if t.source_name:
-                    # Server overwrites personal — server takes precedence
-                    installed_map[(t.source_name, t.id)] = (t.version, "server")
+                    installed_map.setdefault((t.source_name, t.id), set()).add("server")
 
             all_results = []
             for src in sources:
@@ -1040,17 +1037,15 @@ class HindclawHttp(HttpExtension):
                 results = marketplace.search_marketplace(
                     index,
                     source_name=src.name,
+                    source_scope=src.scope,
                     query=q,
                     tag=tag,
                 )
-                # Mark installed status
+                # Populate installed_in from the installed map
                 for r in results:
                     key = (r.source, r.name)
                     if key in installed_map:
-                        version, scope = installed_map[key]
-                        r.installed = True
-                        r.installed_version = version
-                        r.installed_scope = scope
+                        r.installed_in = sorted(installed_map[key])
                 all_results.extend(results)
 
             return MarketplaceSearchResponse(
@@ -1072,16 +1067,16 @@ class HindclawHttp(HttpExtension):
         ):
             """Install a template from a registered marketplace source."""
             # 1. Resolve source
-            source = await db.get_template_source(request.source)
+            source = await db.get_template_source(request.source_name)
             if not source:
-                raise HTTPException(404, f"Source '{request.source}' not found")
+                raise HTTPException(404, f"Source '{request.source_name}' not found")
 
             # 2. Fetch template from marketplace
             template = await marketplace.fetch_template(source, request.name)
             if not template:
                 raise HTTPException(
                     404,
-                    f"Template '{request.name}' not found in source '{request.source}'",
+                    f"Template '{request.name}' not found in source '{request.source_name}'",
                 )
 
             # 3. Verify name matches request
@@ -1106,7 +1101,7 @@ class HindclawHttp(HttpExtension):
                     id=template.name,
                     scope=request.scope,
                     owner=owner,
-                    source_name=request.source,
+                    source_name=request.source_name,
                     source_url=source.url,
                     source_revision=None,
                     schema_version=template.schema_version,

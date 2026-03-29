@@ -148,3 +148,55 @@ def test_update_self_service_account_request_rejects_extra_fields():
 
     with pytest.raises(ValidationError, match="extra"):
         UpdateSelfServiceAccountRequest(display_name="OK", scoping_policy_id="nope")
+
+
+def test_install_template_request_new_fields():
+    """InstallTemplateRequest accepts source_name and source_scope."""
+    from hindclaw_ext.http_models import InstallTemplateRequest
+
+    req = InstallTemplateRequest(source_name="hindclaw", name="backend", scope="personal")
+    assert req.source_name == "hindclaw"
+    assert req.source_scope is None
+
+
+def test_install_template_request_backward_compat():
+    """InstallTemplateRequest accepts old 'source' field as alias."""
+    from hindclaw_ext.http_models import InstallTemplateRequest
+
+    req = InstallTemplateRequest.model_validate({"source": "hindclaw", "name": "backend", "scope": "personal"})
+    assert req.source_name == "hindclaw"
+
+
+def test_install_template_request_source_name_takes_precedence():
+    """source_name takes precedence over deprecated source field."""
+    from hindclaw_ext.http_models import InstallTemplateRequest
+
+    req = InstallTemplateRequest.model_validate({
+        "source": "old", "source_name": "new", "name": "backend", "scope": "personal",
+    })
+    assert req.source_name == "new"
+
+
+def test_marketplace_search_result_installed_in():
+    """MarketplaceSearchResult uses installed_in list instead of installed bool."""
+    from hindclaw_ext.http_models import MarketplaceSearchResult
+
+    result = MarketplaceSearchResult(
+        source="hindclaw", source_scope="server",
+        name="backend", version="1.0",
+        installed_in=["server", "personal"],
+    )
+    assert result.installed_in == ["server", "personal"]
+    assert result.source_scope == "server"
+
+
+def test_me_profile_response():
+    """MeProfileResponse has correct shape."""
+    from hindclaw_ext.http_models import MeProfileResponse
+
+    resp = MeProfileResponse(
+        id="alice", display_name="Alice", email="alice@example.com",
+        is_active=True, channels=[],
+    )
+    assert resp.id == "alice"
+    assert resp.channels == []

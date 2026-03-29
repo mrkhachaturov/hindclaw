@@ -202,6 +202,7 @@ def search_marketplace(
     index: MarketplaceIndex,
     *,
     source_name: str,
+    source_scope: str = "server",
     query: str | None = None,
     tag: str | None = None,
 ) -> list[MarketplaceSearchResult]:
@@ -213,6 +214,7 @@ def search_marketplace(
     Args:
         index: The marketplace index to search.
         source_name: Source name to include in results.
+        source_scope: Scope of the source ('server' or 'personal').
         query: Free-text search (matches name, description, tags).
         tag: Filter by exact tag match.
 
@@ -239,6 +241,7 @@ def search_marketplace(
 
         results.append(MarketplaceSearchResult(
             source=source_name,
+            source_scope=source_scope,
             name=name,
             version=version,
             description=description,

@@ -213,13 +213,12 @@ class TestMarketplaceSearch:
             mock_mkt.search_marketplace = MagicMock(return_value=[
                 MSR(
                     source="hindclaw",
+                    source_scope="server",
                     name="backend-python",
                     version="2.1.0",
                     description="Backend patterns for Python",
                     author="community",
                     tags=["python", "backend"],
-                    installed=False,
-                    installed_version=None,
                 ),
             ])
 
@@ -284,14 +283,13 @@ class TestMarketplaceSearch:
             mock_mkt.search_marketplace = MagicMock(return_value=[
                 MarketplaceSearchResult(
                     source="hindclaw",
+                    source_scope="server",
                     name="backend-python",
                     version="2.1.0",
                     description="Backend patterns",
                     author="community",
                     tags=["python"],
-                    installed=True,
-                    installed_version="2.0.0",
-                    installed_scope="server",
+                    installed_in=["server"],
                 ),
             ])
 
@@ -302,9 +300,8 @@ class TestMarketplaceSearch:
 
         assert resp.status_code == 200
         result = resp.json()["results"][0]
-        assert result["installed"] is True
-        assert result["installed_version"] == "2.0.0"
-        assert result["installed_scope"] == "server"
+        assert result["installed_in"] == ["server"]
+        assert result["source_scope"] == "server"
 
     def test_search_no_sources_returns_empty(self, client):
         with (
