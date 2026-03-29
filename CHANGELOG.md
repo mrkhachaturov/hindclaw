@@ -16,6 +16,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-03-29
+
+### Added
+- **Self-service template endpoints** at `/me/templates` — CRUD for personal templates with ambiguity detection via `?source=` query param, plus `POST /me/templates/install` using `resolve_source()` with 409 on ambiguity
+- **Self-service template source endpoints** at `/me/template-sources` — register, list, and delete personal marketplace sources (scope hardcoded to personal, owner from caller)
+- **Self-service API key endpoints** at `/me/api-keys` — create, list, delete own API keys with SA credential rejection
+- **Profile endpoint** `GET /me` — returns caller's user record and channels, user-only auth (no IAM check), rejects SA credentials
+- **Server scope gates** on admin template write endpoints — `POST/PUT/DELETE /templates` with `scope=server` now requires `template:admin` in addition to the base action
+- `_require_action` helper for second-pass policy checks after authentication
+- `_require_iam_user_only` dependency combining SA credential rejection with IAM check
+- `_authenticate_user` dependency for user-only auth without IAM action requirement
+- `_resolve_my_template` helper with ambiguity detection — returns 404 on no match, 409 on multiple matches with disambiguation hint
+- `template:user` built-in policy — regular user template operations (list, create, install, manage, source, bank:create)
+- `iam:self-service` built-in policy — self-management of API keys and service accounts
+- Scoped template sources with `scope` + `owner` columns, surrogate PK, partial unique indexes
+- `resolve_source()` DB function — explicit scope fields with ambiguity errors
+- Composite marketplace cache key `(name, scope, owner)` for scoped sources
+- `source_scope` and `installed_in` fields on `MarketplaceSearchResult` (replaces `installed` boolean)
+- `MeProfileResponse` model
+- `InstallTemplateRequest` backward compat — accepts deprecated `source` field as alias for `source_name`
+- 80 new tests including marketplace integration tests with real template data from hindclaw-templates-official
+- Bank bootstrap tests verifying all config fields (retain_mission, entity_labels, dispositions, etc.) propagate from marketplace templates
+
+### Changed
+- **Admin source endpoints tightened** from `template:source` to `template:admin` — prevents regular users with `template:user` from managing server-scope sources
+- **`template:admin` policy uses `template:*` wildcard** — consistent with `iam:admin` (`iam:*`) and `bank:admin` (`bank:*`), fixes lockout where `template:admin` action wasn't grantable by any policy
+- **Template sources table recreated** with `scope`, `owner`, surrogate PK — migration detect drops old schema on upgrade
+
+### Security
+- **SA credential rejection on /me/api-keys and GET /me** — prevents service accounts from minting user API keys or reading user profiles, which would bypass SA scoping
+- **Server scope write gate** — non-admin users can no longer create, update, or delete server-scope templates even if they have the base action (template:create, etc.)
+
 ## [0.3.0] - 2026-03-28
 
 ### Added
