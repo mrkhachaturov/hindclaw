@@ -202,11 +202,16 @@ class TestMarketplaceSearch:
             },
         ])
 
+        async def _list_sources_by_scope(**kwargs):
+            if kwargs.get("scope") == "server":
+                return sources
+            return []
+
         with (
             patch("hindclaw_ext.http.db") as mock_db,
             patch("hindclaw_ext.http.marketplace") as mock_mkt,
         ):
-            mock_db.list_template_sources = AsyncMock(return_value=sources)
+            mock_db.list_template_sources = AsyncMock(side_effect=_list_sources_by_scope)
             mock_db.list_templates = AsyncMock(return_value=[])
             mock_mkt.fetch_index = AsyncMock(return_value=index)
             from hindclaw_ext.http_models import MarketplaceSearchResult as MSR
@@ -239,11 +244,16 @@ class TestMarketplaceSearch:
             _make_source(name="astrateam", url="https://github.com/astrateam/templates"),
         ]
 
+        async def _list_sources_by_scope(**kwargs):
+            if kwargs.get("scope") == "server":
+                return sources
+            return []
+
         with (
             patch("hindclaw_ext.http.db") as mock_db,
             patch("hindclaw_ext.http.marketplace") as mock_mkt,
         ):
-            mock_db.list_template_sources = AsyncMock(return_value=sources)
+            mock_db.list_template_sources = AsyncMock(side_effect=_list_sources_by_scope)
             mock_db.list_templates = AsyncMock(return_value=[])
             mock_mkt.fetch_index = AsyncMock(return_value=None)
             mock_mkt.search_marketplace = MagicMock(return_value=[])
@@ -271,13 +281,18 @@ class TestMarketplaceSearch:
             },
         ])
 
+        async def _list_sources_by_scope(**kwargs):
+            if kwargs.get("scope") == "server":
+                return sources
+            return []
+
         from hindclaw_ext.http_models import MarketplaceSearchResult
 
         with (
             patch("hindclaw_ext.http.db") as mock_db,
             patch("hindclaw_ext.http.marketplace") as mock_mkt,
         ):
-            mock_db.list_template_sources = AsyncMock(return_value=sources)
+            mock_db.list_template_sources = AsyncMock(side_effect=_list_sources_by_scope)
             mock_db.list_templates = AsyncMock(return_value=[])
             mock_mkt.fetch_index = AsyncMock(return_value=index)
             mock_mkt.search_marketplace = MagicMock(return_value=[
@@ -308,7 +323,7 @@ class TestMarketplaceSearch:
             patch("hindclaw_ext.http.db") as mock_db,
             patch("hindclaw_ext.http.marketplace"),
         ):
-            mock_db.list_template_sources = AsyncMock(return_value=[])
+            mock_db.list_template_sources = AsyncMock(return_value=[])  # returns [] for both scope calls
             resp = client.get(
                 "/ext/hindclaw/marketplace/search?q=python",
                 headers=_AUTH_HEADER,

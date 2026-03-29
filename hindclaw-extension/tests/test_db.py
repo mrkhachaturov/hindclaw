@@ -342,15 +342,36 @@ async def test_list_service_accounts_by_owner_empty(mock_pool):
 
 @pytest.mark.asyncio
 async def test_seed_includes_template_user_policy(mock_pool):
-    """DDL seeds template:user built-in policy."""
+    """DDL seeds template:user built-in policy with valid JSON document."""
+    import json
+    import re
     from hindclaw_ext.db import _DDL
     assert "'template:user'" in _DDL
     assert "Template User" in _DDL
+    # Extract and validate the JSON document
+    match = re.search(r"'template:user',\s*'Template User',\s*'(\{[^']+\})'", _DDL)
+    assert match, "Could not extract template:user JSON from DDL"
+    doc = json.loads(match.group(1))
+    assert doc["version"] == "2026-03-24"
+    actions = doc["statements"][0]["actions"]
+    assert "template:list" in actions
+    assert "template:install" in actions
+    assert "bank:create" in actions
 
 
 @pytest.mark.asyncio
 async def test_seed_includes_iam_self_service_policy(mock_pool):
-    """DDL seeds iam:self-service built-in policy."""
+    """DDL seeds iam:self-service built-in policy with valid JSON document."""
+    import json
+    import re
     from hindclaw_ext.db import _DDL
     assert "'iam:self-service'" in _DDL
     assert "IAM Self-Service" in _DDL
+    # Extract and validate the JSON document
+    match = re.search(r"'iam:self-service',\s*'IAM Self-Service',\s*'(\{[^']+\})'", _DDL)
+    assert match, "Could not extract iam:self-service JSON from DDL"
+    doc = json.loads(match.group(1))
+    assert doc["version"] == "2026-03-24"
+    actions = doc["statements"][0]["actions"]
+    assert "iam:api_keys:read" in actions
+    assert "iam:service_accounts:write" in actions

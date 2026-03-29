@@ -1002,7 +1002,14 @@ class HindclawHttp(HttpExtension):
             principal=Depends(_require_iam("template:list")),
         ):
             """Search marketplace templates across configured sources."""
-            sources = await db.list_template_sources()
+            user_id = principal.get("user_id")
+            # Only visible sources: all server + caller's personal
+            server_sources = await db.list_template_sources(scope="server")
+            personal_sources = (
+                await db.list_template_sources(scope="personal", owner=user_id)
+                if user_id else []
+            )
+            sources = server_sources + personal_sources
             if source:
                 sources = [s for s in sources if s.name == source]
 
@@ -1010,24 +1017,25 @@ class HindclawHttp(HttpExtension):
                 return MarketplaceSearchResponse(results=[], total=0)
 
             # Fetch installed templates for "installed" flag.
-            # Only check server-scope templates (visible to all) and the
-            # calling user's personal templates — never leak other users'
-            # personal install state.
-            user_id = principal.get("user_id")
             server_installed = await db.list_templates(scope="server")
             personal_installed = (
                 await db.list_templates(scope="personal", owner=user_id)
                 if user_id
                 else []
             )
-            # Build installed map keyed by (source_name, id) → set of scopes.
-            installed_map: dict[tuple[str, str], set[str]] = {}
-            for t in personal_installed:
-                if t.source_name:
-                    installed_map.setdefault((t.source_name, t.id), set()).add("personal")
+            # Build installed map keyed by (source_name, source_scope, template_id)
+            # to prevent conflation when same source name exists in both scopes.
+            installed_map: dict[tuple[str, str, str], set[str]] = {}
             for t in server_installed:
                 if t.source_name:
-                    installed_map.setdefault((t.source_name, t.id), set()).add("server")
+                    key = (t.source_name, "server", t.id)
+                    installed_map.setdefault(key, set()).add("server")
+            for t in personal_installed:
+                if t.source_name:
+                    for src in sources:
+                        if src.name == t.source_name:
+                            key = (t.source_name, src.scope, t.id)
+                            installed_map.setdefault(key, set()).add("personal")
 
             all_results = []
             for src in sources:
@@ -1043,7 +1051,7 @@ class HindclawHttp(HttpExtension):
                 )
                 # Populate installed_in from the installed map
                 for r in results:
-                    key = (r.source, r.name)
+                    key = (r.source, r.source_scope, r.name)
                     if key in installed_map:
                         r.installed_in = sorted(installed_map[key])
                 all_results.extend(results)
@@ -1066,10 +1074,17 @@ class HindclawHttp(HttpExtension):
             principal=Depends(_require_iam("template:install")),
         ):
             """Install a template from a registered marketplace source."""
-            # 1. Resolve source
-            source = await db.get_template_source(request.source_name)
-            if not source:
-                raise HTTPException(404, f"Source '{request.source_name}' not found")
+            # 1. Resolve source with ambiguity detection
+            try:
+                source = await db.resolve_source(
+                    request.source_name,
+                    caller=principal["user_id"],
+                    source_scope=request.source_scope,
+                )
+            except KeyError as e:
+                raise HTTPException(404, str(e))
+            except ValueError as e:
+                raise HTTPException(409, str(e))
 
             # 2. Fetch template from marketplace
             template = await marketplace.fetch_template(source, request.name)

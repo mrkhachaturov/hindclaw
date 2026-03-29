@@ -143,7 +143,7 @@ class TestInstallTemplate:
             patch("hindclaw_ext.http.db") as mock_db,
             patch("hindclaw_ext.http.marketplace") as mock_mkt,
         ):
-            mock_db.get_template_source = AsyncMock(return_value=source)
+            mock_db.resolve_source = AsyncMock(return_value=source)
             mock_mkt.fetch_template = AsyncMock(return_value=mkt_template)
             mock_mkt.validate_template = MagicMock(return_value=[])
             mock_db.upsert_template_from_marketplace = AsyncMock(return_value=record)
@@ -161,7 +161,7 @@ class TestInstallTemplate:
 
     def test_install_source_not_found(self, client):
         with patch("hindclaw_ext.http.db") as mock_db:
-            mock_db.get_template_source = AsyncMock(return_value=None)
+            mock_db.resolve_source = AsyncMock(side_effect=KeyError("Source not found: 'unknown'"))
             resp = client.post(
                 "/ext/hindclaw/templates/install",
                 json={"source": "unknown", "name": "test", "scope": "server"},
@@ -176,7 +176,7 @@ class TestInstallTemplate:
             patch("hindclaw_ext.http.db") as mock_db,
             patch("hindclaw_ext.http.marketplace") as mock_mkt,
         ):
-            mock_db.get_template_source = AsyncMock(return_value=source)
+            mock_db.resolve_source = AsyncMock(return_value=source)
             mock_mkt.fetch_template = AsyncMock(return_value=None)
             resp = client.post(
                 "/ext/hindclaw/templates/install",
@@ -194,7 +194,7 @@ class TestInstallTemplate:
             patch("hindclaw_ext.http.db") as mock_db,
             patch("hindclaw_ext.http.marketplace") as mock_mkt,
         ):
-            mock_db.get_template_source = AsyncMock(return_value=source)
+            mock_db.resolve_source = AsyncMock(return_value=source)
             mock_mkt.fetch_template = AsyncMock(return_value=mkt_template)
             mock_mkt.validate_template = MagicMock(
                 return_value=["Requires hindclaw >= 99.0.0"],
@@ -216,7 +216,7 @@ class TestInstallTemplate:
             patch("hindclaw_ext.http.db") as mock_db,
             patch("hindclaw_ext.http.marketplace") as mock_mkt,
         ):
-            mock_db.get_template_source = AsyncMock(return_value=source)
+            mock_db.resolve_source = AsyncMock(return_value=source)
             mock_mkt.fetch_template = AsyncMock(return_value=mkt_template)
             mock_mkt.validate_template = MagicMock(return_value=[])
             mock_db.upsert_template_from_marketplace = AsyncMock(return_value=record)
@@ -240,7 +240,7 @@ class TestInstallTemplate:
             patch("hindclaw_ext.http.db") as mock_db,
             patch("hindclaw_ext.http.marketplace") as mock_mkt,
         ):
-            mock_db.get_template_source = AsyncMock(return_value=source)
+            mock_db.resolve_source = AsyncMock(return_value=source)
             mock_mkt.fetch_template = AsyncMock(return_value=mkt_template)
             resp = client.post(
                 "/ext/hindclaw/templates/install",

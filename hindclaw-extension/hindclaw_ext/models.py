@@ -131,4 +131,4 @@ class TemplateSourceRecord(BaseModel):
     scope: str = "server"
     owner: str | None = None
     auth_token: str | None = None
-    created_at: str | None = None
+    created_at: str | None = None  # Always set from DB; None only in test construction
