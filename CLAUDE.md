@@ -61,20 +61,36 @@ Server-side access control via three Hindsight extensions:
 
 ```bash
 cd hindclaw-extension
-pip install -e ".[dev]"
-pytest tests/ -v              # 71 tests
+uv venv --python 3.12 .venv
+uv pip install -e ".[dev]"
+.venv/bin/python -m pytest tests/ -v          # 294 tests
+.venv/bin/python -m ruff check hindclaw_ext/  # lint
+.venv/bin/python -m ruff format --check hindclaw_ext/ tests/
+.venv/bin/python -m ty check hindclaw_ext/    # type check
 ```
 
 ### Python Style
 
-Code follows upstream Hindsight conventions (studied from `hindsight-api-slim/`):
+Code follows upstream Hindsight conventions (studied from `hindsight-api-slim/`).
+The `pyproject.toml` ruff + ty + pytest config is kept in lockstep with upstream.
 
-- **Pydantic `BaseModel`** for all structured data — never raw `dict`
+- **Pydantic `BaseModel`** for all structured data — never raw `dict`. Template
+  content is the only exception: it lives as opaque JSONB and parses through
+  upstream's `BankTemplateManifest` on the way in/out.
 - **Google-style docstrings** with `Args:`, `Returns:`, `Raises:`
-- **Immutability** — `model_copy()`, never mutate arguments
+- **Immutability** — `model_copy()`, never mutate arguments. `TemplateRecord`
+  is a `@dataclass` (not Pydantic) because it's a thin DB row, not validated input.
 - **Async throughout** — raw `asyncpg`, lazy pool init via `asyncio.Lock`
-- **Type hints** — `str | None` syntax, no `Optional`
-- **Testing** — `pytest-asyncio` strict mode, `autouse` fixtures, mocked asyncpg
+- **Type hints** — `str | None` syntax, no `Optional`. ty type-checks
+  `hindclaw_ext/` clean.
+- **Testing** — `pytest-asyncio` `auto` mode (mirrors upstream),
+  `autouse` fixtures, mocked asyncpg, `pytest-rerunfailures` for flaky integration
+  paths, `pytest-xdist` available for parallel runs. `tests/test_upstream_imports.py`
+  is the single drift-detection chokepoint for the upstream symbol surface
+  HindClaw imports — fails fast if Hindsight renames anything HindClaw depends on.
+- **Helpers over duplication** — when two routes share construction logic
+  (e.g. `/me/templates/install` and `/admin/templates/install`), extract a
+  shared `_do_*` helper rather than copy-pasting the body.
 
 ## Publishing
 
@@ -88,4 +104,7 @@ Conventional commits in the core repo: `feat(hindclaw-ext):`, `fix(hindclaw-cli)
 
 ## Design Specs
 
-In the astromech repo: `docs/superpowers/specs/hindclaw/2026-03-21-hindclaw-server-extension-design.md`
+In the astromech repo, under `docs/rkstack/specs/hindclaw/`:
+
+- `2026-03-21-hindclaw-server-extension-design.md` — original server extension architecture
+- `2026-04-13-template-upstream-convergence-design.md` — Plan B template convergence (extension v0.5.0+, templates v2.0.0+)

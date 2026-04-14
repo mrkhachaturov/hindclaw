@@ -16,6 +16,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-14
+
+### Changed (BREAKING)
+
+- **Template layer converged onto upstream Hindsight `BankTemplateManifest`.** Replaces the parallel Pydantic hierarchy (`MarketplaceTemplate`, `DirectiveSeed`, `MentalModelSeed`, `EntityLabel`, `EntityLabelValue`) with direct imports from `hindsight_api.api.http`. Templates are now opaque upstream JSONB; HindClaw only owns the governance wrapper (catalog metadata, scope, owner, source attribution, IAM gating). Net delta −395 lines across `template_models.py`, `models.py`, `db.py`, `http_models.py`, `bank_bootstrap.py`, `marketplace.py`, `http.py`. Spec at `docs/rkstack/specs/hindclaw/2026-04-13-template-upstream-convergence-design.md`.
+- **`bank_templates` and `template_sources` DDL rewritten** with surrogate `row_id BIGSERIAL` primary key, `NULLS NOT DISTINCT` unique index on the natural key, GIN index on `tags JSONB`, and CHECK constraint on `(scope, owner)`. The natural key is now `(id, scope, owner)` for `bank_templates` and `(name, scope, owner)` for `template_sources`. Per project rule "no DB migrations until production," the tables are recreated from scratch on first deploy.
+- **`TemplateRecord` collapsed to 16 fields** with manifest stored as opaque `dict`. Source attribution moves into five dedicated columns (`source_name`, `source_scope`, `source_template_id`, `source_url`, `source_revision`). The previous 40-field shape is gone.
+- **`/ext/hindclaw/me/templates` and `/ext/hindclaw/admin/templates` route set rebuilt** around the `(id, scope, owner)` identity tuple. New endpoints: `POST /…/templates/{id}/install`, `POST /…/templates/{id}/update` (re-fetch from source), `GET /…/templates/{id}/check-update`, `PATCH /…/templates/{id}` (hand-edit), `POST /…/templates` (create from inline manifest). Server-scope routes are gated on `template:admin`, personal routes on `template:list`/`template:create`/`template:install`/`template:manage`. Shared install/update/check-update logic factored into private helpers.
+- **`POST /ext/hindclaw/banks` rebuilt** to delegate to upstream's `apply_bank_template_manifest()` via `RequestContext(internal=True)`. Body now takes `template: "{scope}/{id}"` instead of a per-field selector. Dual IAM check: `bank:create` + `template:list`.
+- **`bank_bootstrap.py` reduced from 207 to 97 lines.** Single function (`bootstrap_bank_from_template`) parses the stored manifest, runs upstream's `validate_bank_template`, touches the bank via `get_bank_profile` + `update_bank`, and delegates to `apply_bank_template_manifest()`.
+- **`marketplace.py` rewritten around `fetch_and_resolve_template()`** returning `(CatalogEntry, BankTemplateManifest, revision)` with composite revision strings for templates that use `manifest_file` references. Preserves the existing `_resolve_file_url` GitHub/GitLab URL munging. Old `MarketplaceIndex`, `fetch_template`, `validate_template`, `search_marketplace`, and `MarketplaceTemplate` parsing helpers removed.
+- **`db.create_template_source` accepts a `description` kwarg** and `TemplateSourceRecord` now carries `description` and `updated_at`. Required for the Plan C default-source registration hook.
+- **Tier 1 test suite rewritten:** `test_template_models`, `test_db_templates`, `test_http_models`, `test_bank_bootstrap`, `test_marketplace_template`, `test_models`. New `tests/test_upstream_imports.py` is the single drift-detection chokepoint for upstream symbol surface — fails fast if Hindsight renames any of `BankTemplateManifest`, `validate_bank_template`, `apply_bank_template_manifest`, `RequestContext.internal`, `parse_entity_labels`, or the `BankTemplateConfig` configurable-field set patched in by `hindsight-api-slim` v0.5.1+patch.
+
+### Added
+
+- **`hindclaw_ext.template_models.Catalog` + `CatalogEntry`** Pydantic models that parse upstream's `hindsight-docs/src/data/templates.json` byte-for-byte AND HindClaw's own catalog format (with `manifest_file` references). The exclusive-or invariant between inline `manifest` and `manifest_file` is enforced by a `model_validator`.
+- **`fetch_installed_template_for_apply(pool, *, template, current_user)`** in `db.py` parses a `"{scope}/{id}"` string and returns the matching installed `TemplateRecord` (server scope owner=NULL, personal scope owner=current_user). Used by `POST /banks` to resolve the template ref.
+- **`pyproject.toml` aligned with upstream Hindsight tooling** — same ruff config, same ty rules block, `[dependency-groups]` (PEP 735), `pytest-rerunfailures`, `pytest-xdist`, `pytest-timeout`, `asyncio_mode = "auto"`, `asyncio_default_fixture_loop_scope = "function"`. ty type checker now passes clean across `hindclaw_ext/` (was 14 errors before cleanup).
+- **OpenAPI metadata on every template route** (`operation_id`, `summary`, `tags`) so the generated client SDKs and Swagger UI render readable documentation.
+
+### Removed
+
+- `MarketplaceTemplate`, `DirectiveSeed`, `MentalModelSeed`, `EntityLabel`, `EntityLabelValue`, `_VALID_EXTRACTION_MODES` from `hindclaw_ext.template_models`.
+- `upsert_template_from_marketplace`, `_row_to_template` (legacy), and the 25-parameter `create_template` signature from `hindclaw_ext.db`.
+- `parse_template_ref` and the entire `template_ref.py` module — replaced by `db.fetch_installed_template_for_apply`.
+- `MarketplaceIndex`, `fetch_template`, `validate_template`, `search_marketplace`, `_get_hindsight_version`, and version-gating logic from `hindclaw_ext.marketplace`. The `/ext/hindclaw/marketplace/search` route is also removed — search now flows through `fetch_and_resolve_template`.
+- Legacy template HTTP routes: `POST /ext/hindclaw/me/templates/install` (no `{id}` in path), `PUT /ext/hindclaw/me/templates/{name}`, `PUT /ext/hindclaw/templates/{scope}/{name}`, `POST /ext/hindclaw/templates/install`, `POST /ext/hindclaw/templates/{scope}/{source}/{name}/update`, `GET /ext/hindclaw/marketplace/search`.
+- Legacy template request/response models: `TemplateSummaryResponse`, `TemplateUpdateResponse`, `DirectiveSeedResult`, `MentalModelSeedResult`, `MarketplaceTemplateEntry`, `MarketplaceSearchResult`, `MarketplaceSearchResponse` from `http_models.py`.
+
+### Fixed
+
+- Pre-existing `Optional[PolicyRecord]` and `Optional[UserRecord]` dereferences in `update_policy_endpoint` (`http.py:717`) and `get_my_profile` (`http.py:928`) now raise explicit `HTTPException` when the row vanishes between fetch and use. Surfaced by `ty check` after the upstream-aligned tooling landed.
+
+### Dependencies
+
+- Bumps the minimum supported Hindsight to `hindsight-api-slim` v0.5.1 with the `BankTemplateConfig` configurable-fields patch applied (committed at `build/hindsight/patches/0001-fix-bank-template-align-with-configurable-fields.patch` in the consuming repo, filed upstream as a follow-up PR).
+
+### Breaking changes for downstream consumers
+
+These are tracked as separate follow-up tasks per the spec's "Out of scope for Spec 1" list:
+- `hindclaw-cli` Rust commands (`template install`, `template upgrade`, `template list`) — old route paths and request shapes are gone. Needs a regen against the new OpenAPI spec.
+- Generated TypeScript/Rust SDK clients in `hindclaw-clients/` — regenerate from the new OpenAPI spec.
+- `hindclaw-openclaw-plugin` — imports of the deleted `MarketplaceTemplate`, `DirectiveSeed`, `MentalModelSeed`, `EntityLabel`, `EntityLabelValue` symbols will fail at extension startup. Needs a separate refactor.
+
 ## [0.4.0] - 2026-03-29
 
 ### Added
