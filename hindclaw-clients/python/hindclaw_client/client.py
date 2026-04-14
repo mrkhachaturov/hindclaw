@@ -6,14 +6,13 @@ Usage:
     client = HindclawClient("https://hindsight.home.local", api_key="hc_admin_xxxxx")
     users = await client.list_users()
 """
-from hindclaw_client_api import ApiClient, Configuration
-from hindclaw_client_api.api import DefaultApi
-
 from dataclasses import dataclass
 from typing import Any
 
-import hindsight_client_api.models as _upstream_models
 import hindclaw_client_api.models as _local_models
+import hindsight_client_api.models as _upstream_models
+from hindclaw_client_api import ApiClient, Configuration
+from hindclaw_client_api.api import DefaultApi
 
 
 def _local_manifest_from_upstream(
@@ -70,6 +69,17 @@ class CreateBankFromTemplateResult:
 class HindclawClient:
     """Convenience wrapper around the generated Hindclaw API client.
 
+    Template-CRUD wrapper methods take individual kwargs (id, name, manifest,
+    etc.) rather than pre-built CreateTemplateRequest / PatchTemplateRequest
+    instances. This is deliberate: consumers working with HindClaw pass an
+    upstream BankTemplateManifest (from hindsight_client_api.models) as the
+    manifest kwarg, and the wrapper normalizes it through model_dump() before
+    building the local generated request model. If the caller built a local
+    CreateTemplateRequest directly with manifest=<upstream instance>, Pydantic
+    validate_assignment would either reject the upstream instance or coerce
+    it back to the local class at construction time — hiding the conversion
+    boundary from tests. Accepting kwargs keeps the conversion explicit.
+
     Args:
         base_url: Hindsight server URL.
         api_key: Hindclaw API key or JWT token.
@@ -91,28 +101,42 @@ class HindclawClient:
     async def __aexit__(self, *args):
         await self.close()
 
-    async def create_my_template(
+    def _coerce_manifest(
+        self,
+        manifest: _upstream_models.BankTemplateManifest | dict[str, Any] | None,
+    ) -> dict[str, Any] | None:
+        """Normalize a manifest kwarg to a dict payload.
+
+        Accepts upstream BankTemplateManifest instances, plain dicts, or None.
+        Dumps upstream instances via model_dump(mode="json", by_alias=True) so
+        the aiohttp-based generated client can serialize the payload directly.
+        """
+        if manifest is None:
+            return None
+        if isinstance(manifest, _upstream_models.BankTemplateManifest):
+            return manifest.model_dump(mode="json", by_alias=True)
+        return manifest
+
+    async def _do_create_template(
         self,
         *,
+        scope: str,
         id: str,
         name: str,
-        manifest: _upstream_models.BankTemplateManifest | dict,
-        description: str | None = None,
-        category: str | None = None,
-        integrations: list[str] | None = None,
-        tags: list[str] | None = None,
+        manifest: _upstream_models.BankTemplateManifest | dict[str, Any],
+        description: str | None,
+        category: str | None,
+        integrations: list[str] | None,
+        tags: list[str] | None,
     ):
-        """Create a personal template.
+        """Shared create path for personal and admin templates.
 
-        The manifest kwarg accepts either an upstream BankTemplateManifest
-        instance or a dict in that shape. The wrapper converts upstream
-        instances via model_dump() before constructing the local generated
-        request model.
+        scope is "my" or "admin" and chooses which generated API method the
+        request is routed to. The public create_* methods are one-line
+        delegations so each stays discoverable in IDE autocompletion while
+        the construction logic lives in one place.
         """
-        if isinstance(manifest, _upstream_models.BankTemplateManifest):
-            manifest_payload = manifest.model_dump(mode="json", by_alias=True)
-        else:
-            manifest_payload = manifest
+        manifest_payload = self._coerce_manifest(manifest)
         request = _local_models.CreateTemplateRequest(
             id=id,
             name=name,
@@ -122,7 +146,69 @@ class HindclawClient:
             tags=tags or [],
             manifest=manifest_payload,
         )
-        return await self.api.create_my_template(create_template_request=request)
+        if scope == "my":
+            return await self.api.create_my_template(create_template_request=request)
+        return await self.api.create_admin_template(create_template_request=request)
+
+    async def _do_patch_template(
+        self,
+        template_id: str,
+        *,
+        scope: str,
+        name: str | None,
+        description: str | None,
+        category: str | None,
+        integrations: list[str] | None,
+        tags: list[str] | None,
+        manifest: _upstream_models.BankTemplateManifest | dict[str, Any] | None,
+    ):
+        """Shared patch path for personal and admin templates."""
+        manifest_payload = self._coerce_manifest(manifest)
+        patch = _local_models.PatchTemplateRequest(
+            name=name,
+            description=description,
+            category=category,
+            integrations=integrations,
+            tags=tags,
+            manifest=manifest_payload,
+        )
+        if scope == "my":
+            return await self.api.patch_my_template(
+                template_id=template_id,
+                patch_template_request=patch,
+            )
+        return await self.api.patch_admin_template(
+            template_id=template_id,
+            patch_template_request=patch,
+        )
+
+    async def create_my_template(
+        self,
+        *,
+        id: str,
+        name: str,
+        manifest: _upstream_models.BankTemplateManifest | dict[str, Any],
+        description: str | None = None,
+        category: str | None = None,
+        integrations: list[str] | None = None,
+        tags: list[str] | None = None,
+    ):
+        """Create a personal template.
+
+        The manifest kwarg accepts either an upstream BankTemplateManifest
+        instance or a dict in that shape. Upstream instances are normalized
+        via model_dump() before the local generated request model is built.
+        """
+        return await self._do_create_template(
+            scope="my",
+            id=id,
+            name=name,
+            manifest=manifest,
+            description=description,
+            category=category,
+            integrations=integrations,
+            tags=tags,
+        )
 
     async def patch_my_template(
         self,
@@ -133,26 +219,20 @@ class HindclawClient:
         category: str | None = None,
         integrations: list[str] | None = None,
         tags: list[str] | None = None,
-        manifest: _upstream_models.BankTemplateManifest | dict | None = None,
+        manifest: _upstream_models.BankTemplateManifest | dict[str, Any] | None = None,
     ):
         """Partial update of a personal template. Every kwarg is optional;
         only provided fields are sent to the server.
         """
-        if isinstance(manifest, _upstream_models.BankTemplateManifest):
-            manifest_payload: dict | None = manifest.model_dump(mode="json", by_alias=True)
-        else:
-            manifest_payload = manifest
-        patch = _local_models.PatchTemplateRequest(
+        return await self._do_patch_template(
+            template_id,
+            scope="my",
             name=name,
             description=description,
             category=category,
             integrations=integrations,
             tags=tags,
-            manifest=manifest_payload,
-        )
-        return await self.api.patch_my_template(
-            template_id=template_id,
-            patch_template_request=patch,
+            manifest=manifest,
         )
 
     async def create_admin_template(
@@ -160,27 +240,28 @@ class HindclawClient:
         *,
         id: str,
         name: str,
-        manifest: _upstream_models.BankTemplateManifest | dict,
+        manifest: _upstream_models.BankTemplateManifest | dict[str, Any],
         description: str | None = None,
         category: str | None = None,
         integrations: list[str] | None = None,
         tags: list[str] | None = None,
     ):
-        """Create an admin (server-scope) template. Same conversion rule as create_my_template."""
-        if isinstance(manifest, _upstream_models.BankTemplateManifest):
-            manifest_payload = manifest.model_dump(mode="json", by_alias=True)
-        else:
-            manifest_payload = manifest
-        request = _local_models.CreateTemplateRequest(
+        """Create an admin (server-scope) template.
+
+        Same conversion rule as create_my_template. Admin templates are
+        server-visible to all users; personal templates are scoped to the
+        caller.
+        """
+        return await self._do_create_template(
+            scope="admin",
             id=id,
             name=name,
+            manifest=manifest,
             description=description,
             category=category,
-            integrations=integrations or [],
-            tags=tags or [],
-            manifest=manifest_payload,
+            integrations=integrations,
+            tags=tags,
         )
-        return await self.api.create_admin_template(create_template_request=request)
 
     async def patch_admin_template(
         self,
@@ -191,24 +272,18 @@ class HindclawClient:
         category: str | None = None,
         integrations: list[str] | None = None,
         tags: list[str] | None = None,
-        manifest: _upstream_models.BankTemplateManifest | dict | None = None,
+        manifest: _upstream_models.BankTemplateManifest | dict[str, Any] | None = None,
     ):
         """Partial update of an admin template."""
-        if isinstance(manifest, _upstream_models.BankTemplateManifest):
-            manifest_payload: dict | None = manifest.model_dump(mode="json", by_alias=True)
-        else:
-            manifest_payload = manifest
-        patch = _local_models.PatchTemplateRequest(
+        return await self._do_patch_template(
+            template_id,
+            scope="admin",
             name=name,
             description=description,
             category=category,
             integrations=integrations,
             tags=tags,
-            manifest=manifest_payload,
-        )
-        return await self.api.patch_admin_template(
-            template_id=template_id,
-            patch_template_request=patch,
+            manifest=manifest,
         )
 
     async def create_bank_from_template(

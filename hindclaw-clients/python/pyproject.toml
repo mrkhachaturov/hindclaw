@@ -31,5 +31,5 @@ packages = ["hindclaw_client", "hindclaw_client_api"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-addopts = "--timeout 60 -v"
+addopts = "--timeout 60"
 log_cli = true

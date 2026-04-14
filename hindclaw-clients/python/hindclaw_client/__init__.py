@@ -26,11 +26,11 @@ from hindsight_client_api.models import (
 from .client import HindclawClient
 
 __all__ = [
-    "HindclawClient",
     "BankTemplateConfig",
     "BankTemplateDirective",
     "BankTemplateImportResponse",
     "BankTemplateManifest",
     "BankTemplateMentalModel",
+    "HindclawClient",
     "MentalModelTrigger",
 ]
