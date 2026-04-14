@@ -49,6 +49,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Pre-existing `Optional[PolicyRecord]` and `Optional[UserRecord]` dereferences in `update_policy_endpoint` (`http.py:717`) and `get_my_profile` (`http.py:928`) now raise explicit `HTTPException` when the row vanishes between fetch and use. Surfaced by `ty check` after the upstream-aligned tooling landed.
+- **`bank_bootstrap` no longer clobbers existing bank name/mission** when the target bank already exists. Previous behavior synthesized defaults for missing manifest fields and wrote them even when the current values were set, which could overwrite operator edits. The new path only writes fields the manifest explicitly provides.
+- **`POST /ext/hindclaw/banks` returns a `BankCreationResponse` envelope** with `bank_id`, `template`, `bank_created`, and `import_result` instead of the bare upstream response. The previous shape leaked upstream's raw import result directly and made the wrapper clients assume a flat structure; the envelope makes the wrapper-owned fields (bank_id, template, bank_created) first-class and the nested import_result typed. Breaking for anyone consuming the old flat response.
+- **`update_policy` returns HTTP 404 instead of 500** when the target policy is deleted between fetch and use. Previously the second `get_policy` call raised an uncaught `AttributeError` on `None`.
+- **`_apply_patch` switched to `model_dump(exclude_unset=True)`** so PATCH semantics correctly distinguish "field omitted" from "field explicitly null". Before this fix, sending any PATCH body with a `manifest: null` field (or a default-valued kwarg in a client wrapper) would clobber the stored manifest.
+
+### Added (post-review)
+
+- **`force=true` query parameter** on `POST /me/templates/{id}/update` and `POST /admin/templates/{id}/update` to override the preflight check that blocks an update when the target already has local edits. Without `force`, the endpoint returns `409 Conflict` with the divergent field list.
+- **Preflight `409 Conflict` on `/update` routes** when local `updated_at` is newer than the recorded `source_revision`. Prevents silent clobber of hand-edited templates during source refresh.
+- **`source_owner` column** on `bank_templates` and the corresponding `source_owner` field on `TemplateRecord` / `TemplateResponse`. Required to distinguish "installed from my own marketplace source" from "installed from a server-wide source" when the same template id exists in both scopes.
+- **33 new tests in `tests/test_http_templates.py`** covering `/me/templates`, `/admin/templates`, and `POST /banks` end-to-end — scope gating, ambiguity detection, force-update flow, BankCreationResponse envelope shape, policy collision semantics.
+
+### Changed (post-review)
+
+- **`db.create_template` is now a pure `INSERT`** instead of `INSERT ... ON CONFLICT DO UPDATE`. The ambiguity check moves into the route handler (`_create_template_impl`) where it returns a proper HTTP 409 on collision. Makes the DB layer less surprising and matches how upstream's install/update paths are structured.
+- **Removed `UpdateTemplateRequest`** from `http_models.py` — no route uses it; `PatchTemplateRequest` covers every update path. Dropping it keeps the generated client surface minimal.
 
 ### Dependencies
 
