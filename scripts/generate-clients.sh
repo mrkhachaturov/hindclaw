@@ -1,28 +1,34 @@
 #!/usr/bin/env bash
 set -e
 
-# Generate Go, Python, and TypeScript clients from OpenAPI spec.
-# Same pipeline as upstream Hindsight (build/hindsight/.upstream/scripts/generate-clients.sh).
+# Script to generate Python, TypeScript, and Go clients from OpenAPI spec
+# Note: Rust client is auto-generated at build time via build.rs (uses progenitor)
+# Usage: ./scripts/generate-clients.sh
 #
-# Prerequisites:
-#   - Docker (for OpenAPI Generator)
-#   - Go 1.18+ (for go mod tidy && go build)
-#   - Node.js + npm (for TypeScript @hey-api/openapi-ts)
-#   - openapi.json already extracted (run extract-openapi.py first)
-#
-# Usage:
-#   cd build/hindclaw
-#   python scripts/extract-openapi.py > hindclaw-clients/openapi.json
-#   bash scripts/generate-clients.sh
+# Re-forked from upstream Hindsight scripts/generate-clients.sh
+# (https://raw.githubusercontent.com/vectorize-io/hindsight/main/scripts/generate-clients.sh).
+# HindClaw-specific substitutions:
+#   - Spec source: hindclaw-docs/static/openapi.json
+#   - Go package: --package-name hindclaw via co-located openapi-generator-config.yaml
+#     (HindClaw keeps enumClassPrefix / structPrefix / generateInterfaces set)
+#   - Python package: hindclaw_client_api (co-located openapi-generator-config.yaml)
+#   - Go git-user-id: mrkhachaturov, git-repo-id: hindclaw/hindclaw-clients/go
+#   - TypeScript: generated via @hey-api/openapi-ts, configured via
+#     hindclaw-clients/typescript/openapi-ts.config.ts (no inline CLI args)
+#   - Python wrapper: hindclaw-clients/python/hindclaw_client.py is a sibling
+#     file (HindClaw's Python package is flat, not the hindsight_client/ subpackage
+#     upstream uses)
+#   - Final step: spec is copied to hindclaw-clients/rust/openapi.json so the
+#     crates.io publish tarball retains a byte-for-byte fallback the Rust build.rs
+#     can consume when the top-level hindclaw-docs/static/openapi.json is absent.
 
-# Pin OpenAPI Generator version for reproducible builds (matches upstream)
+# Pin openapi-generator version for reproducible builds across local and CI
 OPENAPI_GENERATOR_VERSION="v7.10.0"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CLIENTS_DIR="$PROJECT_ROOT/hindclaw-clients"
-OPENAPI_SPEC="$CLIENTS_DIR/openapi.json"
-CONFIG_DIR="$CLIENTS_DIR/openapi-generator-config"
+OPENAPI_SPEC="$PROJECT_ROOT/hindclaw-docs/static/openapi.json"
 
 echo "=================================================="
 echo "Hindclaw API Client Generator"
@@ -31,148 +37,167 @@ echo "Project root: $PROJECT_ROOT"
 echo "Clients directory: $CLIENTS_DIR"
 echo "OpenAPI spec: $OPENAPI_SPEC"
 echo ""
+echo "This script generates clients for:"
+echo "  - Rust (via progenitor in build.rs)"
+echo "  - Python (via openapi-generator)"
+echo "  - TypeScript (via @hey-api/openapi-ts)"
+echo "  - Go (via openapi-generator)"
+echo ""
 
-# Check prerequisites
+# Check if OpenAPI spec exists
 if [ ! -f "$OPENAPI_SPEC" ]; then
     echo "Error: OpenAPI spec not found at $OPENAPI_SPEC"
-    echo "Run: python scripts/extract-openapi.py > hindclaw-clients/openapi.json"
+    echo "Run: python scripts/extract-openapi.py > hindclaw-docs/static/openapi.json"
     exit 1
 fi
 echo "OpenAPI spec found"
+echo ""
 
+# Check for Docker (we'll use Docker to run openapi-generator)
 if ! command -v docker &> /dev/null; then
-    echo "Error: Docker not found. Required for OpenAPI Generator."
+    echo "Error: Docker not found. Please install Docker"
+    echo "  https://docs.docker.com/get-docker/"
     exit 1
 fi
 echo "Docker available"
 echo "Using openapi-generator ${OPENAPI_GENERATOR_VERSION}"
 echo ""
 
-# ==========================================
-# Go client
-# ==========================================
+# Generate Rust client
 echo "=================================================="
-echo "Generating Go client..."
+echo "Generating Rust client..."
 echo "=================================================="
 
-GO_CLIENT_DIR="$CLIENTS_DIR/go"
+RUST_CLIENT_DIR="$CLIENTS_DIR/rust"
 
-if ! command -v go &> /dev/null; then
-    echo "Go not found, skipping Go client generation"
+if ! command -v cargo &> /dev/null; then
+    echo "Cargo not found, skipping Rust client regeneration"
 else
-    # Save maintained files
-    TEMP_DIR=$(mktemp -d)
-    echo "Preserving maintained files..."
-    [ -f "$GO_CLIENT_DIR/hindclaw_client.go" ] && cp "$GO_CLIENT_DIR/hindclaw_client.go" "$TEMP_DIR/"
-    [ -f "$GO_CLIENT_DIR/README.md" ] && cp "$GO_CLIENT_DIR/README.md" "$TEMP_DIR/"
+    # Clean old generated files (keep Cargo.lock for reproducible builds)
+    echo "Cleaning old Rust generated code..."
+    rm -rf "$RUST_CLIENT_DIR/target"
 
-    # Remove old generated files
-    echo "Removing old generated code..."
-    rm -f "$GO_CLIENT_DIR"/api_*.go "$GO_CLIENT_DIR"/model_*.go
-    rm -f "$GO_CLIENT_DIR"/client.go "$GO_CLIENT_DIR"/configuration.go "$GO_CLIENT_DIR"/response.go "$GO_CLIENT_DIR"/utils.go
-    rm -rf "$GO_CLIENT_DIR"/docs/ "$GO_CLIENT_DIR"/.openapi-generator/
-    rm -f "$GO_CLIENT_DIR"/go.mod "$GO_CLIENT_DIR"/go.sum
+    # Trigger regeneration by building
+    # Use --locked to ensure reproducible builds from committed Cargo.lock
+    echo "Regenerating Rust client (via build.rs)..."
+    cd "$RUST_CLIENT_DIR"
+    cargo clean
+    cargo build --release --locked
 
-    # Generate via Docker (--platform linux/amd64 for reproducible output)
-    echo "Generating client from OpenAPI spec..."
-    docker run --rm \
-        --platform linux/amd64 \
-        --user "$(id -u):$(id -g)" \
-        -v "$OPENAPI_SPEC:/local/openapi.json" \
-        -v "$GO_CLIENT_DIR:/local/out" \
-        -v "$CONFIG_DIR/go.yaml:/local/config.yaml" \
-        "openapitools/openapi-generator-cli:${OPENAPI_GENERATOR_VERSION}" generate \
-        -i /local/openapi.json \
-        -g go \
-        -o /local/out \
-        -c /local/config.yaml \
-        --global-property apiDocs=false,apiTests=false,modelDocs=false,modelTests=false
-
-    # Remove boilerplate
-    echo "Removing boilerplate files..."
-    rm -rf "$GO_CLIENT_DIR"/docs/ "$GO_CLIENT_DIR"/git_push.sh
-    rm -rf "$GO_CLIENT_DIR"/.travis.yml "$GO_CLIENT_DIR"/.gitlab-ci.yml
-    rm -rf "$GO_CLIENT_DIR"/.openapi-generator-ignore "$GO_CLIENT_DIR"/.openapi-generator/
-
-    # Restore maintained files
-    echo "Restoring maintained files..."
-    [ -f "$TEMP_DIR/hindclaw_client.go" ] && mv "$TEMP_DIR/hindclaw_client.go" "$GO_CLIENT_DIR/"
-    [ -f "$TEMP_DIR/README.md" ] && mv "$TEMP_DIR/README.md" "$GO_CLIENT_DIR/"
-    rm -rf "$TEMP_DIR"
-
-    # Build
-    echo "Building Go client..."
-    cd "$GO_CLIENT_DIR"
-    go mod tidy
-    go build ./...
-
-    echo "Go client generated at $GO_CLIENT_DIR"
+    echo "Rust client generated at $RUST_CLIENT_DIR"
 fi
 echo ""
 
-# ==========================================
-# Python client
-# ==========================================
+# Generate Python client
 echo "=================================================="
 echo "Generating Python client..."
 echo "=================================================="
 
 PYTHON_CLIENT_DIR="$CLIENTS_DIR/python"
 
-# Save maintained files
+# Backup maintained files
+# HindClaw's Python client uses a flat layout: hindclaw_client.py is a
+# sibling file next to the generated hindclaw_client_api/ package, not a
+# subpackage the way upstream Hindsight structures its wrapper.
 TEMP_DIR=$(mktemp -d)
 echo "Preserving maintained files..."
 [ -f "$PYTHON_CLIENT_DIR/hindclaw_client.py" ] && cp "$PYTHON_CLIENT_DIR/hindclaw_client.py" "$TEMP_DIR/"
 [ -f "$PYTHON_CLIENT_DIR/pyproject.toml" ] && cp "$PYTHON_CLIENT_DIR/pyproject.toml" "$TEMP_DIR/"
 [ -f "$PYTHON_CLIENT_DIR/README.md" ] && cp "$PYTHON_CLIENT_DIR/README.md" "$TEMP_DIR/"
 
-# Remove old generated code
+# Remove old generated code (but keep config and maintained files)
 if [ -d "$PYTHON_CLIENT_DIR/hindclaw_client_api" ]; then
     echo "Removing old generated code..."
     rm -rf "$PYTHON_CLIENT_DIR/hindclaw_client_api"
 fi
 
-# Remove generator boilerplate
+# Remove other generated files but keep pyproject.toml and config
 for file in setup.py setup.cfg requirements.txt test-requirements.txt tox.ini git_push.sh .travis.yml .gitlab-ci.yml .gitignore README.md; do
-    rm -f "$PYTHON_CLIENT_DIR/$file"
+    if [ -f "$PYTHON_CLIENT_DIR/$file" ]; then
+        rm "$PYTHON_CLIENT_DIR/$file"
+    fi
 done
 
-# Generate via Docker
-echo "Generating client from OpenAPI spec..."
+echo "Generating new client with openapi-generator..."
+cd "$PYTHON_CLIENT_DIR"
+
+# Run openapi-generator via Docker (pinned version for reproducibility)
+# Use --platform linux/amd64 to ensure identical output on both macOS (arm64) and Linux CI (amd64)
+# Use --user to match current user's UID/GID so generated files are writable
+# Note: the generator may exit non-zero due to a known bug writing
+# README_onlypackage.mustache, but all API/model files are generated
+# before that step, so we allow the failure and verify files below.
 docker run --rm \
     --platform linux/amd64 \
     --user "$(id -u):$(id -g)" \
     -v "$OPENAPI_SPEC:/local/openapi.json" \
     -v "$PYTHON_CLIENT_DIR:/local/out" \
-    -v "$CONFIG_DIR/python.yaml:/local/config.yaml" \
+    -v "$PYTHON_CLIENT_DIR/openapi-generator-config.yaml:/local/config.yaml" \
     "openapitools/openapi-generator-cli:${OPENAPI_GENERATOR_VERSION}" generate \
     -i /local/openapi.json \
     -g python \
     -o /local/out \
-    -c /local/config.yaml
+    -c /local/config.yaml || true
+
+# Verify critical generated files exist
+if [ ! -f "$PYTHON_CLIENT_DIR/hindclaw_client_api/api_client.py" ]; then
+    echo "Error: Python client generation failed - api_client.py not found"
+    exit 1
+fi
+
+echo "Organizing generated files..."
 
 # Restore maintained files
-echo "Restoring maintained files..."
-[ -f "$TEMP_DIR/hindclaw_client.py" ] && mv "$TEMP_DIR/hindclaw_client.py" "$PYTHON_CLIENT_DIR/"
-[ -f "$TEMP_DIR/pyproject.toml" ] && mv "$TEMP_DIR/pyproject.toml" "$PYTHON_CLIENT_DIR/"
-[ -f "$TEMP_DIR/README.md" ] && mv "$TEMP_DIR/README.md" "$PYTHON_CLIENT_DIR/"
+if [ -f "$TEMP_DIR/hindclaw_client.py" ]; then
+    echo "Restoring maintained wrapper: hindclaw_client.py"
+    mv "$TEMP_DIR/hindclaw_client.py" "$PYTHON_CLIENT_DIR/"
+fi
+if [ -f "$TEMP_DIR/pyproject.toml" ]; then
+    echo "Restoring maintained pyproject.toml"
+    mv "$TEMP_DIR/pyproject.toml" "$PYTHON_CLIENT_DIR/"
+fi
+if [ -f "$TEMP_DIR/README.md" ]; then
+    echo "Restoring maintained README.md"
+    mv "$TEMP_DIR/README.md" "$PYTHON_CLIENT_DIR/"
+fi
 rm -rf "$TEMP_DIR"
 
-# Patch rest.py for deferred aiohttp initialization.
-# The generated code creates aiohttp.TCPConnector in __init__ which requires
-# a running event loop. Same patch as upstream generate-clients.sh.
-# Fix: move connector/session creation to a lazy _ensure_session() method.
+# Create PEP 561 py.typed marker for type checker support.
+# HindClaw's Python layout is flat (no hindclaw_client/ subpackage), so the
+# marker only lives inside the generated hindclaw_client_api/ package.
+echo "Creating PEP 561 py.typed marker file..."
+touch "$PYTHON_CLIENT_DIR/hindclaw_client_api/py.typed"
+
+# Remove the auto-generated README (we have our own)
+if [ -f "$PYTHON_CLIENT_DIR/hindclaw_client_api_README.md" ]; then
+    echo "Removing auto-generated README..."
+    rm "$PYTHON_CLIENT_DIR/hindclaw_client_api_README.md"
+fi
+
+# Patch rest.py to defer aiohttp initialization (fixes "no running event loop" error)
+# The generated code creates aiohttp.TCPConnector in __init__ which requires a running event loop.
+# We patch it to defer initialization until the first request (which runs in async context).
+# -------------------------------------------------------------------------
+# HINDCLAW-PRESERVED BLOCK: this rest.py aiohttp patch is load-bearing for the
+# hindclaw-extension tests and OpenClaw plugin runtime — it is the same patch
+# upstream Hindsight applies. Keep it in lockstep with upstream's version.
+# -------------------------------------------------------------------------
+echo "Patching rest.py for deferred aiohttp initialization..."
 REST_FILE="$PYTHON_CLIENT_DIR/hindclaw_client_api/rest.py"
-if [ -f "$REST_FILE" ] && grep -q 'aiohttp.TCPConnector' "$REST_FILE" && ! grep -q '_ensure_session' "$REST_FILE"; then
-    echo "Patching rest.py for deferred aiohttp initialization..."
-    python3 -c "
-import pathlib, sys
+if [ -f "$REST_FILE" ]; then
+    cd "$PROJECT_ROOT"
+    python3 << PATCH_SCRIPT
+import re
 
-rest = pathlib.Path('$REST_FILE')
-content = rest.read_text()
+rest_file = "$PYTHON_CLIENT_DIR/hindclaw_client_api/rest.py"
 
-# --- Patch 1: Replace __init__ with deferred init + _ensure_session + properties ---
-OLD_INIT = '''    def __init__(self, configuration) -> None:
+with open(rest_file, 'r') as f:
+    content = f.read()
+
+# Replace the __init__ method to defer initialization
+old_init = '''class RESTClientObject:
+
+    def __init__(self, configuration) -> None:
 
         # maxsize is number of requests to host that are allowed in parallel
         maxsize = configuration.connection_pool_maxsize
@@ -218,10 +243,12 @@ OLD_INIT = '''    def __init__(self, configuration) -> None:
         else:
             self.retry_client = None'''
 
-NEW_INIT = '''    def __init__(self, configuration) -> None:
-        # Store configuration for deferred initialization.
+new_init = '''class RESTClientObject:
+
+    def __init__(self, configuration) -> None:
+        # Store configuration for deferred initialization
         # aiohttp.TCPConnector requires a running event loop, so we defer
-        # creation until the first request (which runs in async context).
+        # creation until the first request (which runs in async context)
         self._configuration = configuration
         self._pool_manager: Optional[aiohttp.ClientSession] = None
         self._retry_client: Optional[aiohttp_retry.RetryClient] = None
@@ -230,7 +257,7 @@ NEW_INIT = '''    def __init__(self, configuration) -> None:
         self.proxy_headers = configuration.proxy_headers
 
     def _ensure_session(self) -> None:
-        \"\"\"Create aiohttp session lazily (must be called from async context).\"\"\"
+        """Create aiohttp session lazily (must be called from async context)."""
         if self._pool_manager is not None:
             return
 
@@ -273,99 +300,218 @@ NEW_INIT = '''    def __init__(self, configuration) -> None:
 
     @property
     def pool_manager(self) -> aiohttp.ClientSession:
-        \"\"\"Get the pool manager, initializing if needed.\"\"\"
+        """Get the pool manager, initializing if needed."""
         self._ensure_session()
         return self._pool_manager
 
     @property
     def retry_client(self) -> Optional[aiohttp_retry.RetryClient]:
-        \"\"\"Get the retry client, initializing if needed.\"\"\"
+        """Get the retry client, initializing if needed."""
         self._ensure_session()
         return self._retry_client'''
 
-if OLD_INIT not in content:
-    print('WARNING: __init__ pattern not found in rest.py — generator output may have changed')
-    sys.exit(0)
+if old_init in content:
+    content = content.replace(old_init, new_init)
 
-content = content.replace(OLD_INIT, NEW_INIT)
-
-# --- Patch 2: Replace close() with null-safe version ---
-OLD_CLOSE = '''    async def close(self):
+    # Also update the close method to handle None pool_manager
+    old_close = '''    async def close(self):
         await self.pool_manager.close()
         if self.retry_client is not None:
             await self.retry_client.close()'''
 
-NEW_CLOSE = '''    async def close(self):
+    new_close = '''    async def close(self):
         if self._pool_manager is not None:
             await self._pool_manager.close()
         if self._retry_client is not None:
             await self._retry_client.close()'''
 
-if OLD_CLOSE in content:
-    content = content.replace(OLD_CLOSE, NEW_CLOSE)
+    content = content.replace(old_close, new_close)
 
-rest.write_text(content)
-print('rest.py patched successfully')
-"
+    with open(rest_file, 'w') as f:
+        f.write(content)
+    print("  rest.py patched successfully")
+else:
+    print("  WARNING: Could not find expected pattern in rest.py - skipping patch")
+PATCH_SCRIPT
 fi
 
 echo "Python client generated at $PYTHON_CLIENT_DIR"
 echo ""
 
-# ==========================================
-# TypeScript client
-# ==========================================
+# Generate TypeScript client
 echo "=================================================="
 echo "Generating TypeScript client..."
 echo "=================================================="
 
 TYPESCRIPT_CLIENT_DIR="$CLIENTS_DIR/typescript"
 
-# Remove old generated client
+# Remove old generated client (keep package.json, tsconfig.json, tests, src/, and config)
 echo "Removing old TypeScript generated code..."
 rm -rf "$TYPESCRIPT_CLIENT_DIR/generated"
 
-# Generate using @hey-api/openapi-ts (pinned in package.json)
+# Also remove legacy structure from old generator if it exists
+rm -rf "$TYPESCRIPT_CLIENT_DIR/core"
+rm -rf "$TYPESCRIPT_CLIENT_DIR/models"
+rm -rf "$TYPESCRIPT_CLIENT_DIR/services"
+rm -f "$TYPESCRIPT_CLIENT_DIR/index.ts"
+
+# Generate new client using @hey-api/openapi-ts
+# The openapi-ts config lives at hindclaw-clients/typescript/openapi-ts.config.ts
+# and is discovered automatically when we run `npm run generate` from that dir
+# (the package.json script invokes @hey-api/openapi-ts with no CLI args so the
+# config file drives input/output/plugins).
 echo "Generating from $OPENAPI_SPEC..."
 cd "$TYPESCRIPT_CLIENT_DIR"
 npm install
 npm run generate
 
+# Patch client.gen.ts for Deno compatibility.
+# Deno's Request constructor rejects a 'client' field in RequestInit because
+# 'client' is a reserved Deno.HttpClient option name, causing a TypeError.
+# We destructure it out before spreading opts into RequestInit.
+# -------------------------------------------------------------------------
+# HINDCLAW-PRESERVED BLOCK: mirrors upstream Hindsight's Deno-compat patch.
+# Keep in lockstep with upstream's version.
+# -------------------------------------------------------------------------
+echo "Patching client.gen.ts for Deno compatibility..."
+cd "$PROJECT_ROOT"
+python3 << PATCH_SCRIPT
+CLIENT_GEN = "$TYPESCRIPT_CLIENT_DIR/generated/client/client.gen.ts"
+with open(CLIENT_GEN) as f:
+    content = f.read()
+OLD = '''    const requestInit: ReqInit = {
+      redirect: "follow",
+      ...opts,
+      body: getValidRequestBody(opts),
+    };'''
+NEW = '''    // Exclude hey-api internal fields that conflict with Deno's RequestInit.client
+    const { client: _client, ...optsForRequest } = opts as typeof opts & { client?: unknown };
+    const requestInit: ReqInit = {
+      redirect: "follow",
+      ...optsForRequest,
+      body: getValidRequestBody(opts),
+    };'''
+if OLD in content:
+    content = content.replace(OLD, NEW)
+    with open(CLIENT_GEN, "w") as f:
+        f.write(content)
+    print("  client.gen.ts patched successfully")
+else:
+    print("  WARNING: Could not find expected pattern in client.gen.ts - skipping patch")
+PATCH_SCRIPT
+
 echo "TypeScript client generated at $TYPESCRIPT_CLIENT_DIR"
 echo ""
 
-# ==========================================
-# Rust client
-# ==========================================
+# Generate Go client
 echo "=================================================="
-echo "Verifying Rust client..."
+echo "Generating Go client..."
 echo "=================================================="
 
-RUST_CLIENT_DIR="$CLIENTS_DIR/rust"
+GO_CLIENT_DIR="$CLIENTS_DIR/go"
 
-if ! command -v cargo &> /dev/null; then
-    echo "Cargo not found, skipping Rust client verification"
+if ! command -v go &> /dev/null; then
+    echo "WARNING: Go not found, skipping Go client generation"
+    echo "  Install Go 1.25+ from https://go.dev/dl/"
 else
-    echo "Running cargo check..."
-    cd "$RUST_CLIENT_DIR"
-    cargo check
-    echo "Rust client verified at $RUST_CLIENT_DIR"
+    echo "Regenerating Go client (via OpenAPI Generator Docker)..."
+    echo "  Using co-located config: $GO_CLIENT_DIR/openapi-generator-config.yaml"
+    echo "  Reading spec from:       $OPENAPI_SPEC"
+    cd "$GO_CLIENT_DIR"
+
+    # Save maintained files to temp.
+    # HindClaw's Go client has one maintained wrapper (hindclaw_client.go)
+    # and a README.md. Unlike upstream Hindsight, HindClaw does not keep
+    # *_test.go files in this directory.
+    TEMP_DIR=$(mktemp -d)
+    echo "Preserving maintained files..."
+    [ -f "README.md" ] && cp README.md "$TEMP_DIR/"
+    [ -f "hindclaw_client.go" ] && cp hindclaw_client.go "$TEMP_DIR/"
+
+    # Remove old generated files
+    echo "Removing old generated code..."
+    rm -f api_*.go model_*.go client.go configuration.go response.go utils.go
+    rm -rf docs/ .openapi-generator/
+    rm -f go.mod go.sum
+
+    # Generate new client via Docker (--platform linux/amd64 ensures identical output on macOS and Linux CI)
+    # HindClaw uses a co-located openapi-generator-config.yaml with packageName,
+    # gitUserId, gitRepoId, enumClassPrefix, structPrefix, and generateInterfaces
+    # set — the config file supersedes inline --package-name / --git-user-id args.
+    echo "Generating client from OpenAPI spec..."
+    docker run --rm \
+        --platform linux/amd64 \
+        --user "$(id -u):$(id -g)" \
+        -v "$OPENAPI_SPEC:/local/openapi.json" \
+        -v "$GO_CLIENT_DIR:/local/out" \
+        -v "$GO_CLIENT_DIR/openapi-generator-config.yaml:/local/config.yaml" \
+        "openapitools/openapi-generator-cli:${OPENAPI_GENERATOR_VERSION}" generate \
+        -i /local/openapi.json \
+        -g go \
+        -o /local/out \
+        -c /local/config.yaml \
+        --global-property apiDocs=false,apiTests=false,modelDocs=false,modelTests=false
+
+    # Remove OpenAPI Generator boilerplate files
+    echo "Removing boilerplate files..."
+    rm -rf docs/ git_push.sh .travis.yml .gitlab-ci.yml .openapi-generator-ignore .openapi-generator/
+
+    # Restore maintained files from temp
+    echo "Restoring maintained files..."
+    [ -f "$TEMP_DIR/README.md" ] && mv "$TEMP_DIR/README.md" .
+    [ -f "$TEMP_DIR/hindclaw_client.go" ] && mv "$TEMP_DIR/hindclaw_client.go" .
+    rm -rf "$TEMP_DIR"
+
+    # Fix known generator issue: api_files.go uses os.File but generator omits "os" import.
+    # -------------------------------------------------------------------------
+    # HINDCLAW-PRESERVED BLOCK: mirrors upstream's api_files.go os-import patch.
+    # Only runs if the generator actually produces an api_files.go file, so it's
+    # safe to leave in place even when the HindClaw OpenAPI spec doesn't yet
+    # declare any multipart/file routes.
+    # -------------------------------------------------------------------------
+    if [ -f "api_files.go" ] && grep -q 'os\.File' api_files.go && ! grep -q '"os"' api_files.go; then
+        echo "Patching api_files.go: adding missing 'os' import..."
+        sed -i.bak 's|"net/url"|"net/url"\n\t"os"|' api_files.go
+        rm -f api_files.go.bak
+    fi
+
+    # Initialize module and build
+    echo "Building Go client..."
+    go mod tidy
+    go build ./...
+
+    echo "Go client generated at $GO_CLIENT_DIR"
 fi
 echo ""
 
-# ==========================================
-# Done
-# ==========================================
+# Copy the OpenAPI spec into the Rust crate directory so the crates.io publish
+# tarball includes a byte-for-byte fallback copy that build.rs can consume when
+# the top-level hindclaw-docs/static/openapi.json is absent (e.g. when the
+# crate is being built from a downloaded tarball rather than from the monorepo).
+# -------------------------------------------------------------------------
+# HINDCLAW-PRESERVED STEP: not present upstream. The Rust build.rs in Task 1
+# relies on this file as a fallback; removing this step breaks crates.io builds.
+# -------------------------------------------------------------------------
+echo "Copying OpenAPI spec into Rust crate for publish-tarball fallback..."
+cp "$OPENAPI_SPEC" "$RUST_CLIENT_DIR/openapi.json"
+echo "  -> $RUST_CLIENT_DIR/openapi.json"
+echo ""
+
 echo "=================================================="
 echo "Client generation complete!"
 echo "=================================================="
 echo ""
-echo "Go client:         $GO_CLIENT_DIR"
+echo "Rust client:       $RUST_CLIENT_DIR"
 echo "Python client:     $PYTHON_CLIENT_DIR"
 echo "TypeScript client: $TYPESCRIPT_CLIENT_DIR"
-echo "Rust client:       $RUST_CLIENT_DIR"
+echo "Go client:         $GO_CLIENT_DIR"
+echo ""
+echo "Important: maintained wrappers (hindclaw_client.py, hindclaw_client.go,"
+echo "src/index.ts) and README.md files were preserved."
 echo ""
 echo "Next steps:"
 echo "  1. Review the generated clients"
-echo "  2. Test the clients"
-echo "  3. Commit the generated code"
+echo "  2. Update package versions if needed"
+echo "  3. Test the clients"
+echo "  4. Run 'cargo build' in hindclaw-cli to rebuild with new Rust client"
+echo ""

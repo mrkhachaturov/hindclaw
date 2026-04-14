@@ -1,0 +1,15 @@
+import { defineConfig } from '@hey-api/openapi-ts';
+
+export default defineConfig({
+  client: '@hey-api/client-fetch',
+  input: '../../hindclaw-docs/static/openapi.json',
+  output: {
+    path: 'generated',
+    format: 'prettier',
+  },
+  plugins: [
+    '@hey-api/sdk',
+    '@hey-api/types',
+    '@hey-api/schemas',
+  ],
+});
