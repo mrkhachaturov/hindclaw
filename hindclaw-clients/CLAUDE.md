@@ -46,21 +46,36 @@ hindclaw-clients/
 From the hindclaw repo root:
 
 ```bash
-python scripts/extract-openapi.py
+bash scripts/generate-openapi.sh    # or: python scripts/extract-openapi.py
 bash scripts/generate-clients.sh
 ```
 
 This is fully automated:
+- `generate-openapi.sh` is a shell wrapper around `extract-openapi.py` that
+  runs via the hindclaw-extension venv. Pass `--build-docs` to also run
+  `npm run build` in hindclaw-docs.
 - `extract-openapi.py` builds a FastAPI app from HindclawHttp and writes the
   spec directly to `hindclaw-docs/static/openapi.json` (no running server
-  needed, no stdout redirect)
+  needed, no stdout redirect).
 - `generate-clients.sh` runs OpenAPI Generator (Docker) for Go/Python using
   each language's co-located `openapi-generator-config.yaml`, and
   `@hey-api/openapi-ts` for TypeScript using `typescript/openapi-ts.config.ts`
   (the TS generator auto-discovers the config when run from the `typescript/`
-  directory, so no CLI flags are passed)
-- Python `rest.py` is auto-patched for deferred aiohttp initialization (same fix as upstream Hindsight)
-- Maintained files are preserved via temp dir backup/restore
+  directory, so no CLI flags are passed).
+- Python `rest.py` is auto-patched for deferred aiohttp initialization (same fix as upstream Hindsight).
+- Maintained files are preserved via temp dir backup/restore.
+
+### Upstream pin sync
+
+`bash scripts/sync-upstream-pins.sh` rewrites the Python and TypeScript client manifests to match the state declared at the repo root. Reads `UPSTREAM_HINDSIGHT_VERSION` (always present) and optional `UPSTREAM_HINDSIGHT_COMMIT`.
+
+Two states:
+- **Released** (`UPSTREAM_HINDSIGHT_COMMIT` missing): Python pinned to `hindsight-client==X.Y.Z`, TypeScript pinned to `"@vectorize-io/hindsight-client": "X.Y.Z"`.
+- **Pre-release** (`UPSTREAM_HINDSIGHT_COMMIT` set to a merge SHA): Python pinned via `git+https://github.com/vectorize-io/hindsight.git@<sha>#subdirectory=hindsight-clients/python`, TypeScript stays at the released version (npm subpath git-refs don't round-trip cleanly; the vendor shim at `typescript/src/vendor-hindsight-client.d.ts` carries the TEMPORARY marker for the upstream export gap).
+
+Go and Rust are intentionally skipped per Plan D forced-duplication rationale — Go uses fork+replace in terraform-provider-hindclaw, Rust has a `PERMANENT WORKAROUND` in `rust/build.rs`.
+
+Run after any pin bump, then `bash scripts/generate-clients.sh` to regenerate clients against the new upstream state.
 
 Prerequisites: Docker, Go 1.18+, Rust toolchain (cargo), Node.js + npm, `pip install -e hindclaw-extension/` + `hindsight-api-slim`
 

@@ -69,6 +69,56 @@ uv pip install -e ".[dev]"
 .venv/bin/python -m ty check hindclaw_ext/    # type check
 ```
 
+## Scripts
+
+Repo-level automation under `scripts/`. Each script is idempotent and runnable from the HindClaw repo root.
+
+| Script | Purpose |
+|---|---|
+| `scripts/extract-openapi.py` | Extract FastAPI/Pydantic OpenAPI spec to `hindclaw-docs/static/openapi.json` (no running server needed). |
+| `scripts/generate-openapi.sh` | Shell wrapper around `extract-openapi.py`. Pass `--build-docs` to also run `npm run build` in `hindclaw-docs`. |
+| `scripts/generate-clients.sh` | Regenerate Go/Python/TypeScript clients against the OpenAPI spec. Copies the spec to `hindclaw-clients/rust/openapi.json` for the crates.io publish path. |
+| `scripts/generate-docs-skill.sh` | Regenerate `skills/hindclaw-docs/references/` from `hindclaw-docs/docs/`. Converts `.mdx` to `.md`, copies openapi.json, preserves the hand-written `SKILL.md`. |
+| `scripts/sync-upstream-pins.sh` | Rewrite Python and TypeScript upstream hindsight pins. Reads `UPSTREAM_HINDSIGHT_VERSION` and optional `UPSTREAM_HINDSIGHT_COMMIT`. See "Upstream version tracking" below. |
+| `scripts/hooks/lint.sh` | Parallel lint runner: `ruff check/format` + `ty check` for hindclaw-extension, `eslint`/`prettier` for hindclaw-docs and hindclaw-clients/typescript (config-gated). Called by the pre-commit hook. |
+| `scripts/setup-hooks.sh` | One-shot: `git config core.hooksPath $REPO_ROOT/.githooks`. Run once after checkout to activate the pre-commit hook that runs `scripts/hooks/lint.sh`. |
+
+## Upstream version tracking
+
+HindClaw depends on upstream Hindsight and often tracks features that are merged upstream but not yet released. The repo root has two files that express the current state:
+
+- `UPSTREAM_HINDSIGHT_VERSION` — always present. Latest released upstream semver (bare, no `v` prefix).
+- `UPSTREAM_HINDSIGHT_COMMIT` — optional. When present, holds a commit SHA that HindClaw depends on but which predates the next upstream release.
+
+**Two states:**
+
+| State | `UPSTREAM_HINDSIGHT_COMMIT` | Python pin | TypeScript pin |
+|---|---|---|---|
+| Released | missing/empty | `"hindsight-client==X.Y.Z"` | `"@vectorize-io/hindsight-client": "X.Y.Z"` |
+| Pre-release | set to a merge SHA | git-ref install at the SHA | still released version + vendor shim |
+
+Go and Rust are intentionally skipped: Go uses fork+replace directive in `terraform-provider-hindclaw`, Rust has a `PERMANENT WORKAROUND` in `hindclaw-clients/rust/build.rs` (no upstream Rust crate).
+
+**Flow when upstream merges a PR HindClaw needs:**
+
+```bash
+echo "<merge_sha>" > UPSTREAM_HINDSIGHT_COMMIT
+bash scripts/sync-upstream-pins.sh
+bash scripts/generate-clients.sh  # regenerate against the pinned upstream
+git add -A && git commit -m "chore(deps): track upstream PR #<N> at <sha>"
+```
+
+**Flow when upstream publishes a release containing your commit:**
+
+```bash
+rm UPSTREAM_HINDSIGHT_COMMIT
+echo "X.Y.Z" > UPSTREAM_HINDSIGHT_VERSION
+bash scripts/sync-upstream-pins.sh
+git add -A && git commit -m "chore(deps): bump upstream to X.Y.Z (released)"
+```
+
+The `.github/workflows/version-coherence.yml` CI job enforces that the declared state (files at repo root) matches the actual pins in `hindclaw-clients/python/pyproject.toml` and `hindclaw-clients/typescript/package.json` on every PR and push to main. The `.github/workflows/rust-spec-coherence.yml` job enforces `hindclaw-docs/static/openapi.json == hindclaw-clients/rust/openapi.json` so the crates.io fallback stays byte-for-byte identical.
+
 ### Python Style
 
 Code follows upstream Hindsight conventions (studied from `hindsight-api-slim/`).
