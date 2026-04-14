@@ -1,0 +1,50 @@
+name: version-coherence
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check-pins:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read UPSTREAM_HINDSIGHT_VERSION
+        id: version
+        run: |
+          V=$(tr -d '[:space:]' < UPSTREAM_HINDSIGHT_VERSION)
+          if [ -z "$V" ]; then
+            echo "UPSTREAM_HINDSIGHT_VERSION is empty" >&2
+            exit 1
+          fi
+          echo "value=$V" >> "$GITHUB_OUTPUT"
+      - name: Read UPSTREAM_HINDSIGHT_COMMIT (optional)
+        id: commit
+        run: |
+          if [ -f UPSTREAM_HINDSIGHT_COMMIT ]; then
+            C=$(tr -d '[:space:]' < UPSTREAM_HINDSIGHT_COMMIT)
+            echo "value=$C" >> "$GITHUB_OUTPUT"
+            echo "mode: pre-release at $C"
+          else
+            echo "value=" >> "$GITHUB_OUTPUT"
+            V="${{ steps.version.outputs.value }}"
+            echo "mode: released at v$V"
+          fi
+      - name: Verify TypeScript pin
+        run: |
+          V="${{ steps.version.outputs.value }}"
+          grep -q "\"@vectorize-io/hindsight-client\": \"$V\"" hindclaw-clients/typescript/package.json \
+            || (echo "hindclaw-clients/typescript/package.json @vectorize-io/hindsight-client pin != $V" >&2 && exit 1)
+      - name: Verify Python pin (release mode)
+        if: steps.commit.outputs.value == ''
+        run: |
+          V="${{ steps.version.outputs.value }}"
+          grep -q "\"hindsight-client==$V\"" hindclaw-clients/python/pyproject.toml \
+            || (echo "hindclaw-clients/python/pyproject.toml hindsight-client pin != $V (release mode)" >&2 && exit 1)
+      - name: Verify Python pin (pre-release mode)
+        if: steps.commit.outputs.value != ''
+        run: |
+          C="${{ steps.commit.outputs.value }}"
+          grep -q "hindsight-client @ git+.*@$C" hindclaw-clients/python/pyproject.toml \
+            || (echo "hindclaw-clients/python/pyproject.toml hindsight-client pin missing git-ref to $C (pre-release mode)" >&2 && exit 1)

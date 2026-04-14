@@ -1,0 +1,19 @@
+name: rust-spec-coherence
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check-rust-spec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: cmp hindclaw-docs/static/openapi.json vs hindclaw-clients/rust/openapi.json
+        run: |
+          if ! cmp hindclaw-docs/static/openapi.json hindclaw-clients/rust/openapi.json; then
+            echo "Rust crate-local openapi.json is out of sync with hindclaw-docs/static/openapi.json." >&2
+            echo "Run: bash scripts/generate-clients.sh" >&2
+            exit 1
+          fi
