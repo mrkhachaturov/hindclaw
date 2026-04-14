@@ -13,17 +13,31 @@ If future changes add import-time side effects, extraction will break.
 
 Prerequisites:
     pip install -e hindclaw-extension/
-    pip install hindsight-api-slim
+    pip install hindsight-api-slim==<UPSTREAM_HINDSIGHT_VERSION>
 
 Usage:
-    python scripts/extract-openapi.py > hindclaw-clients/openapi.json
+    python scripts/extract-openapi.py
+    # Writes to hindclaw-docs/static/openapi.json
+
+The spec that openapi-generator and @hey-api/openapi-ts consume is the raw
+Pydantic v2 output (OpenAPI 3.1.0), with only a single ValidationError schema
+patch. Upstream Hindsight uses the same openapi-generator v7.10.0 against a
+3.1.0 spec with anyOf+null patterns, which proves the older pre-conversion
+that hindclaw did is unnecessary. The 3.1->3.0 down-conversion needed by
+progenitor (Rust client) lives in hindclaw-clients/rust/build.rs instead,
+where only the Rust client sees it.
 """
 import json
-import sys
+from pathlib import Path
 
 from fastapi import FastAPI
 
 from hindclaw_ext.http import HindclawHttp
+
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent
+SPEC_PATH = REPO_ROOT / "hindclaw-docs" / "static" / "openapi.json"
 
 
 def extract() -> dict:
@@ -56,67 +70,13 @@ def extract() -> dict:
         props.setdefault("ctx", {"title": "Context", "type": "object"})
         props.setdefault("url", {"title": "URL", "type": "string"})
 
-    # Convert OpenAPI 3.1.0 nullable patterns to 3.0.x style.
-    # FastAPI + Pydantic v2 emits {"anyOf": [{"type": "T"}, {"type": "null"}]}
-    # for `T | None` fields. openapi-generator's Python codegen (v7.x) crashes
-    # on the {"type": "null"} branch. Convert to {"type": "T", "nullable": true}
-    # which all generators handle correctly.
-    _convert_nullable_anyof(schema)
-    _convert_exclusive_bounds(schema)
-
     return schema
-
-
-def _convert_nullable_anyof(schema: dict) -> None:
-    """Convert anyOf-null patterns to nullable style throughout the spec.
-
-    Walks all component schemas and converts patterns like:
-        {"anyOf": [{"type": "string"}, {"type": "null"}]}
-    to:
-        {"type": "string", "nullable": true}
-
-    Also handles complex branches (arrays, $ref, constrained integers) by
-    keeping the non-null branch and adding nullable: true.
-
-    Args:
-        schema: OpenAPI spec dict (modified in place).
-    """
-    for comp_schema in schema.get("components", {}).get("schemas", {}).values():
-        for prop_name, prop_def in comp_schema.get("properties", {}).items():
-            if "anyOf" not in prop_def:
-                continue
-            branches = prop_def["anyOf"]
-            null_branches = [b for b in branches if b.get("type") == "null"]
-            non_null_branches = [b for b in branches if b.get("type") != "null"]
-            if not null_branches or not non_null_branches:
-                continue
-            if len(non_null_branches) == 1:
-                # Simple case: one real type + null → flatten
-                real = non_null_branches[0]
-                del prop_def["anyOf"]
-                prop_def.update(real)
-                prop_def["nullable"] = True
-
-
-def _convert_exclusive_bounds(schema: dict) -> None:
-    """Convert OpenAPI 3.1.0 numeric exclusiveMinimum/Maximum to 3.0.x booleans.
-
-    Pydantic v2's ``Field(gt=0)`` emits ``{"exclusiveMinimum": 0}`` (3.1.0
-    style, numeric value). OpenAPI 3.0.x and progenitor expect a boolean.
-    Convert ``{"exclusiveMinimum": N}`` to ``{"minimum": N, "exclusiveMinimum": true}``.
-
-    Args:
-        schema: OpenAPI spec dict (modified in place).
-    """
-    for comp_schema in schema.get("components", {}).get("schemas", {}).values():
-        for prop_def in comp_schema.get("properties", {}).values():
-            for bound, opposite in [("exclusiveMinimum", "minimum"), ("exclusiveMaximum", "maximum")]:
-                if bound in prop_def and not isinstance(prop_def[bound], bool):
-                    prop_def[opposite] = prop_def[bound]
-                    prop_def[bound] = True
 
 
 if __name__ == "__main__":
     spec = extract()
-    json.dump(spec, sys.stdout, indent=2)
-    sys.stdout.write("\n")
+    SPEC_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with SPEC_PATH.open("w", encoding="utf-8") as f:
+        json.dump(spec, f, indent=2)
+        f.write("\n")
+    print(f"Wrote {SPEC_PATH.relative_to(REPO_ROOT)}")

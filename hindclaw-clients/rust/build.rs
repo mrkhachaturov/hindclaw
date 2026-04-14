@@ -104,16 +104,34 @@ fn convert_anyof_to_nullable(value: &mut serde_json::Value) {
 }
 
 fn main() {
-    // Look for openapi.json in the crate directory first (for crates.io),
-    // then fall back to parent directory (for monorepo development).
+    // Spec path resolution — the single source of truth during local
+    // development is hindclaw-docs/static/openapi.json at the repo root.
+    // A crate-local copy at hindclaw-clients/rust/openapi.json exists only
+    // so `cargo publish` ships a copy inside the tarball (the `include` list
+    // in Cargo.toml bundles it), since crates.io builds run without the
+    // monorepo context. The generator pipeline writes both locations; a CI
+    // check verifies they stay byte-for-byte identical.
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let openapi_path = {
-        let local = manifest_dir.join("openapi.json");
-        if local.exists() {
-            local
-        } else {
-            manifest_dir.parent().unwrap().join("openapi.json")
-        }
+    let docs_path = manifest_dir
+        .parent()
+        .expect("crate parent")
+        .parent()
+        .expect("repo root")
+        .join("hindclaw-docs")
+        .join("static")
+        .join("openapi.json");
+    let crate_local = manifest_dir.join("openapi.json");
+
+    let openapi_path = if docs_path.exists() {
+        docs_path
+    } else if crate_local.exists() {
+        crate_local
+    } else {
+        panic!(
+            "openapi.json not found. Looked at {} (monorepo) and {} (crate-local).",
+            docs_path.display(),
+            crate_local.display()
+        );
     };
 
     println!("cargo:rerun-if-changed={}", openapi_path.display());
