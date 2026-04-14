@@ -102,6 +102,117 @@ The `pyproject.toml` ruff + ty + pytest config is kept in lockstep with upstream
 
 Conventional commits in the core repo: `feat(hindclaw-ext):`, `fix(hindclaw-cli):`, `chore:`, `docs:`
 
+## Workaround Lifecycle Discipline
+
+HindClaw is a layer on top of upstream Hindsight. Sometimes we need code paths
+that exist only because upstream has not caught up with a feature, fix, or
+publishing change yet. Those code paths must be marked clearly so the next
+person who touches the file knows whether they are looking at the long-term
+shape of the project or at a temporary bridge.
+
+**Rationale**: Without this discipline, temporary workarounds calcify into
+accidental architecture. Six months later nobody remembers which code is the
+"right" shape and which is a bridge waiting to be removed, so the bridge
+stays forever and the project drifts away from upstream. This rule was
+established during the 2026-04 client-generator alignment work after we found
+a Dockerfile `sdk-builder` stage that existed only because upstream had not
+yet published `@vectorize-io/hindsight-client` to npm — by the time we noticed,
+upstream had published it months earlier and the workaround had become invisible.
+
+### Three categories
+
+Every code path tied to an upstream limitation falls into exactly one of these:
+
+**1. STEADY STATE** — the target shape. No workaround. Written as if upstream
+already supports what we need. No special marker required.
+
+**2. TEMPORARY** — exists because of a specific upstream gap that we are
+actively closing (filed PR, filed issue, or pinned to a known release). Must
+carry a marker comment in this exact format:
+
+```
+# TEMPORARY: <one-line reason>
+# Tracked: <link to upstream PR or issue, or "no PR yet — see <design-doc>">
+# Replace with: <exact code or pattern that should run once upstream merges>
+```
+
+The "Replace with" line is non-negotiable. If you cannot describe the
+post-merge code path, you do not understand the workaround well enough to
+mark it temporary — clarify the design first.
+
+**3. PERMANENT WORKAROUND** — exists because of an upstream limitation that
+is unlikely to change soon (missing tooling feature, deliberate upstream
+design choice we disagree with, infrastructure gap with no fix in sight).
+Must carry:
+
+```
+# PERMANENT WORKAROUND: <one-line reason>
+# Long-term resolution: <link to issue/discussion, or "none — accepted limitation">
+```
+
+### Anti-patterns
+
+- **Commenting out obsolete workarounds.** When the upstream condition that
+  necessitated a workaround changes (e.g., upstream starts publishing the
+  package we used to build locally), DELETE the workaround. Do not leave it
+  commented out "in case we need it later" — git history is the archive.
+- **TEMPORARY marker without a tracked PR/issue.** If there is genuinely no
+  upstream tracker yet, the marker must say so explicitly and link to a
+  HindClaw-side design doc that explains why we are blocked. "TEMPORARY,
+  TODO file PR later" is not acceptable — file the PR or escalate.
+- **Letting steady-state code reference the temporary path.** Steady-state
+  code must be readable in isolation. If a steady-state function only works
+  because some other module is using a temporary workaround, that coupling
+  itself is a workaround and needs its own marker.
+
+### Examples
+
+**Dockerfile `api-builder` stage, transitional state (2026-04):**
+```dockerfile
+# === STEADY STATE (uncomment when Plan A patch lands upstream) ============
+# RUN uv pip install hindsight-api-slim==0.5.2  # release containing the patch
+# ==========================================================================
+
+# TEMPORARY: editable install of patched hindsight-api-slim
+# Tracked: build/hindsight/patches/0001-fix-bank-template-align-with-configurable-fields.patch
+#          (filed as upstream PR — link when opened)
+# Replace with: the steady-state line above, once build/hindsight/UPSTREAM_VERSION
+#               points to a release containing the merged patch.
+COPY hindsight-api-slim/pyproject.toml ./api/
+COPY hindsight-api-slim/hindsight_api ./hindsight_api
+RUN uv pip install -e .
+```
+
+**Terraform provider `go.mod` (permanent for now):**
+```
+// PERMANENT WORKAROUND: upstream Hindsight does not tag Go modules,
+// so we publish hindsight-clients/go from our fork mrkhachaturov/hindsight
+// and consume it through a `replace` directive.
+// Long-term resolution: none — upstream considers Go module tagging out of scope.
+replace github.com/vectorize-io/hindsight/hindsight-clients/go => github.com/mrkhachaturov/hindsight/hindsight-clients/go v0.4.20
+```
+
+**hindclaw-clients/rust forced duplication of upstream types:**
+```rust
+// PERMANENT WORKAROUND: progenitor generates all types inline into a single
+// .rs file in OUT_DIR, so HindClaw's Rust client cannot import upstream
+// types from a separate crate the way the TS/Python/Go clients do.
+// Long-term resolution: none — would require an upstream feature in
+// progenitor for cross-crate type imports.
+```
+
+### When upstream catches up
+
+When a tracked PR is merged or a tracked issue is closed, the cleanup is
+exactly two steps:
+
+1. Find every TEMPORARY marker that references the now-resolved tracker.
+2. Replace the temporary block with the "Replace with" pattern, then DELETE
+   the marker comment entirely.
+
+The cleanup commit message should reference the upstream PR number and list
+every file touched, so the trace is permanent in git history.
+
 ## Design Specs
 
 In the astromech repo, under `docs/rkstack/specs/hindclaw/`:
