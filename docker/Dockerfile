@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 # Hindsight — Astromech custom image
 #
 # Custom build tailored for our infrastructure:
@@ -96,7 +97,7 @@ RUN STANDALONE_ROOT=$(find .next/standalone -path '*/node_modules' -prune -o -na
 # =============================================================================
 # Stage: Final Image (API + Control Plane)
 # =============================================================================
-FROM python:3.11-slim
+FROM python:3.11-slim AS prod
 
 WORKDIR /app
 
@@ -160,3 +161,34 @@ ENV HINDSIGHT_ENABLE_CP=true
 ENV PYTHONUNBUFFERED=1
 
 CMD ["/app/start-all.sh"]
+
+# =============================================================================
+# Stage: Dev (local hindclaw-extension from named build context)
+# =============================================================================
+#
+# Used by Tier 2 integration tests and local development. Swaps the
+# PyPI-installed hindclaw-extension for an editable install from a
+# named BuildKit build context:
+#
+#   DOCKER_BUILDKIT=1 docker build \
+#     -t hindsight-astromech:latest \
+#     -f build/hindclaw/docker/Dockerfile \
+#     --build-context hindclaw-ext=build/hindclaw/hindclaw-extension \
+#     --target dev \
+#     build/hindsight/.upstream
+#
+# Both targets must be passed explicitly (see Section 6 of the design
+# spec) so a future stage reorder cannot silently flip the default.
+
+FROM prod AS dev
+
+USER root
+# `hindclaw-ext` is satisfied by `--build-context hindclaw-ext=build/hindclaw/hindclaw-extension`
+COPY --from=hindclaw-ext . /app/hindclaw-ext
+# The prod venv was built with `uv sync` and has no pip — copy the uv
+# binary from api-builder and drive the venv via `uv pip --python`.
+COPY --from=api-builder /usr/local/bin/uv /usr/local/bin/uv
+RUN uv pip uninstall --python /app/api/.venv/bin/python hindclaw-extension \
+    && uv pip install --python /app/api/.venv/bin/python -e /app/hindclaw-ext
+RUN chown -R hindsight:hindsight /app/hindclaw-ext
+USER hindsight
