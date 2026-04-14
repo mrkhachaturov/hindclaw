@@ -7,7 +7,8 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "types": ["jest", "node"],
     "outDir": "dist"
   },
-  "include": ["src", "generated"]
+  "include": ["src", "generated", "tests"]
 }
