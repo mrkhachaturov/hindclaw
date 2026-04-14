@@ -32,6 +32,7 @@ def _record(manifest: dict | None = None) -> TemplateRecord:
         owner="user-1",
         source_name="hindclaw-official",
         source_scope=TemplateScope.SERVER,
+        source_owner=None,
         source_template_id="backend-python",
         source_url="https://example.com/raw",
         source_revision="etag-1",
@@ -76,7 +77,10 @@ async def test_bootstrap_parses_manifest_and_touches_bank():
 
     assert result == {"updated": True}
     memory.get_bank_profile.assert_awaited_once()
-    memory.update_bank.assert_awaited_once()
+    # No bank_name override → update_bank must NOT be called. Touching
+    # the existing bank's name with a derived default would clobber the
+    # user's chosen name (Plan B convergence finding #3 fix).
+    memory.update_bank.assert_not_called()
     apply_mock.assert_awaited_once()
 
 
@@ -127,7 +131,7 @@ async def test_bootstrap_raises_on_semantic_validation_failure():
     assert "backend-python" in str(exc.value)
 
 
-async def test_bootstrap_uses_bank_name_override_and_mission_fallback():
+async def test_bootstrap_passes_caller_supplied_bank_name_to_update_bank():
     memory = MagicMock()
     memory.get_bank_profile = AsyncMock()
     memory.update_bank = AsyncMock()
@@ -148,10 +152,12 @@ async def test_bootstrap_uses_bank_name_override_and_mission_fallback():
 
     update_args = memory.update_bank.call_args
     assert update_args.kwargs["name"] == "Custom Name"
-    assert update_args.kwargs["mission"] == "m"
+    # mission must NOT be set directly — apply_bank_template_manifest
+    # routes manifest.bank.reflect_mission through the config layer.
+    assert "mission" not in update_args.kwargs
 
 
-async def test_bootstrap_defaults_bank_name_to_template_id():
+async def test_bootstrap_does_not_touch_name_when_bank_name_is_omitted():
     memory = MagicMock()
     memory.get_bank_profile = AsyncMock()
     memory.update_bank = AsyncMock()
@@ -169,4 +175,4 @@ async def test_bootstrap_defaults_bank_name_to_template_id():
             request_context=ctx,
         )
 
-    assert memory.update_bank.call_args.kwargs["name"] == "backend-python"
+    memory.update_bank.assert_not_called()

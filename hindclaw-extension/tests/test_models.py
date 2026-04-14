@@ -18,6 +18,7 @@ def test_template_record_stores_manifest_as_opaque_dict():
         owner="user-1",
         source_name="hindclaw-official",
         source_scope=TemplateScope.SERVER,
+        source_owner=None,
         source_template_id="backend-python",
         source_url="https://example.com/raw",
         source_revision="etag-abc",
@@ -35,9 +36,11 @@ def test_template_record_stores_manifest_as_opaque_dict():
 
 
 def test_template_record_is_a_dataclass_with_expected_field_count():
-    """The new TemplateRecord has exactly 16 fields: no template-content
+    """The new TemplateRecord has exactly 17 fields: no template-content
     fields are materialized onto the record — everything lives inside the
-    opaque manifest dict."""
+    opaque manifest dict. ``source_owner`` is persisted alongside
+    ``source_name``/``source_scope`` so /update can resolve the original
+    source even when a different admin makes the call."""
     from dataclasses import fields
 
     field_names = {f.name for f in fields(TemplateRecord)}
@@ -47,6 +50,7 @@ def test_template_record_is_a_dataclass_with_expected_field_count():
         "owner",
         "source_name",
         "source_scope",
+        "source_owner",
         "source_template_id",
         "source_url",
         "source_revision",

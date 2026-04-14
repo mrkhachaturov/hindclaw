@@ -29,6 +29,7 @@ from hindclaw_ext.http_models import (
     AddMemberRequest,
     ApiKeyCreateResponse,
     ApiKeyResponse,
+    BankCreationResponse,
     BankPolicyResponse,
     ChannelResponse,
     CheckUpdateResponse,
@@ -719,7 +720,7 @@ class HindclawHttp(HttpExtension):
                 raise HTTPException(404, f"Policy {policy_id} not found or is built-in")
             result = await db.get_policy(policy_id)
             if result is None:
-                raise HTTPException(500, f"Policy {policy_id} disappeared after update")
+                raise HTTPException(404, f"Policy {policy_id} was deleted concurrently")
             return {
                 "id": result.id,
                 "display_name": result.display_name,
@@ -1459,6 +1460,7 @@ class HindclawHttp(HttpExtension):
                 owner=record.owner,
                 source_name=record.source_name,
                 source_scope=record.source_scope,
+                source_owner=record.source_owner,
                 source_revision=record.source_revision,
                 installed_at=record.installed_at,
                 updated_at=record.updated_at,
@@ -1484,6 +1486,7 @@ class HindclawHttp(HttpExtension):
                 owner=owner,
                 source_name=None,
                 source_scope=None,
+                source_owner=None,
                 source_template_id=None,
                 source_url=None,
                 source_revision=None,
@@ -1501,24 +1504,32 @@ class HindclawHttp(HttpExtension):
             existing: TemplateRecord,
             patch: PatchTemplateRequest,
         ) -> TemplateRecord:
-            """Return a new TemplateRecord with PATCH fields layered over existing."""
+            """Return a new TemplateRecord with PATCH fields layered over existing.
+
+            Uses ``model_fields_set`` so an explicit ``null`` clears nullable
+            fields (description, category) while an omitted field is left
+            untouched. ``id``/``scope``/``owner``/source attribution stay pinned
+            to the existing row regardless of the patch body.
+            """
+            patched = patch.model_dump(exclude_unset=True)
+            if "manifest" in patched and patch.manifest is not None:
+                patched["manifest"] = patch.manifest.model_dump(exclude_none=True)
             return TemplateRecord(
                 id=existing.id,
                 scope=existing.scope,
                 owner=existing.owner,
                 source_name=existing.source_name,
                 source_scope=existing.source_scope,
+                source_owner=existing.source_owner,
                 source_template_id=existing.source_template_id,
                 source_url=existing.source_url,
                 source_revision=existing.source_revision,
-                name=patch.name if patch.name is not None else existing.name,
-                description=patch.description if patch.description is not None else existing.description,
-                category=patch.category if patch.category is not None else existing.category,
-                integrations=patch.integrations if patch.integrations is not None else existing.integrations,
-                tags=patch.tags if patch.tags is not None else existing.tags,
-                manifest=(
-                    patch.manifest.model_dump(exclude_none=True) if patch.manifest is not None else existing.manifest
-                ),
+                name=patched.get("name", existing.name) or existing.name,
+                description=patched["description"] if "description" in patched else existing.description,
+                category=patched["category"] if "category" in patched else existing.category,
+                integrations=patched["integrations"] if "integrations" in patched else existing.integrations,
+                tags=patched["tags"] if "tags" in patched else existing.tags,
+                manifest=patched["manifest"] if "manifest" in patched else existing.manifest,
                 installed_at=existing.installed_at,
                 updated_at=_now_utc(),
             )
@@ -1530,6 +1541,7 @@ class HindclawHttp(HttpExtension):
             owner: str | None,
             request: InstallTemplateRequest,
             template_id: str,
+            source_owner: str | None,
             entry: CatalogEntry,
             manifest: BankTemplateManifest,
             revision: str,
@@ -1542,6 +1554,7 @@ class HindclawHttp(HttpExtension):
                 owner=owner,
                 source_name=request.source_name,
                 source_scope=request.source_scope,
+                source_owner=source_owner,
                 source_template_id=template_id,
                 source_url=None,
                 source_revision=revision,
@@ -1568,6 +1581,7 @@ class HindclawHttp(HttpExtension):
                 owner=existing.owner,
                 source_name=existing.source_name,
                 source_scope=existing.source_scope,
+                source_owner=existing.source_owner,
                 source_template_id=existing.source_template_id,
                 source_url=existing.source_url,
                 source_revision=new_revision,
@@ -1581,21 +1595,6 @@ class HindclawHttp(HttpExtension):
                 updated_at=_now_utc(),
             )
 
-        def _resolve_source_owner(
-            source_scope: TemplateScope,
-            *,
-            installed_scope: TemplateScope,
-            user_id: str,
-        ) -> str | None:
-            """Return the owner to query when resolving a source.
-
-            For a personal install, a personal source belongs to the caller;
-            a server source has owner=None. For a server install, the same
-            logic still applies — admin can install from either source scope.
-            """
-            del installed_scope  # currently unused, kept for symmetry
-            return user_id if source_scope is TemplateScope.PERSONAL else None
-
         async def _check_collision_or_409(
             pool,
             *,
@@ -1603,6 +1602,13 @@ class HindclawHttp(HttpExtension):
             scope: TemplateScope,
             owner: str | None,
         ) -> None:
+            """Pre-check: refuse install if natural-key row already exists.
+
+            Run BEFORE the network fetch in ``_do_install`` so a colliding
+            install fails fast (no remote round-trip just to return 409).
+            The ``create_template`` INSERT also raises ``UniqueViolationError``
+            as defense-in-depth in case of a race after this check passes.
+            """
             existing = await db.get_template(pool, id=installed_id, scope=scope, owner=owner)
             if existing is not None:
                 raise HTTPException(
@@ -1623,26 +1629,36 @@ class HindclawHttp(HttpExtension):
         ) -> TemplateRecord:
             """Shared body for /me/install and /admin/install."""
             pool = await db.get_pool()
-            source_owner = _resolve_source_owner(request.source_scope, installed_scope=scope, user_id=user_id)
+            installed_id = request.alias_id or template_id
+            # Fast 409 path — fail before the network round-trip.
+            await _check_collision_or_409(pool, installed_id=installed_id, scope=scope, owner=owner)
+            # Personal sources belong to the caller's user; server sources have owner=None.
+            # The result is persisted on the row so future /update and /check-update
+            # calls resolve the same source even if a different admin makes the call.
+            source_owner: str | None = user_id if request.source_scope is TemplateScope.PERSONAL else None
             entry, manifest, revision = await marketplace.fetch_and_resolve_template(
                 source_name=request.source_name,
                 source_scope=request.source_scope,
                 source_owner=source_owner,
                 template_id=template_id,
             )
-            installed_id = request.alias_id or template_id
-            await _check_collision_or_409(pool, installed_id=installed_id, scope=scope, owner=owner)
             record = _build_installed_record(
                 installed_id=installed_id,
                 scope=scope,
                 owner=owner,
                 request=request,
                 template_id=template_id,
+                source_owner=source_owner,
                 entry=entry,
                 manifest=manifest,
                 revision=revision,
             )
-            await db.create_template(pool, record)
+            try:
+                await db.create_template(pool, record)
+            except asyncpg.UniqueViolationError:
+                # Lost a race against a concurrent install at the same natural key.
+                await _check_collision_or_409(pool, installed_id=installed_id, scope=scope, owner=owner)
+                raise  # pragma: no cover — _check_collision_or_409 always raises here
             return record
 
         async def _do_update_from_source(
@@ -1651,8 +1667,15 @@ class HindclawHttp(HttpExtension):
             scope: TemplateScope,
             owner: str | None,
             user_id: str,
+            force: bool,
         ) -> UpdateTemplateResponse:
-            """Shared body for /me/update and /admin/update."""
+            """Shared body for /me/update and /admin/update.
+
+            ``force=True`` re-fetches and rewrites the row even when the
+            source revision is unchanged — the explicit reinstall-as-replace
+            path documented in the convergence design (Finding 3 fix).
+            """
+            del user_id  # source identity is read from the row, not the caller
             pool = await db.get_pool()
             existing = await db.get_template(pool, id=template_id, scope=scope, owner=owner)
             if existing is None:
@@ -1663,15 +1686,14 @@ class HindclawHttp(HttpExtension):
                     detail="Template was not installed from a source; use PATCH for hand-edited templates",
                 )
             assert existing.source_scope is not None
-            source_owner = _resolve_source_owner(existing.source_scope, installed_scope=scope, user_id=user_id)
             entry, manifest, new_revision = await marketplace.fetch_and_resolve_template(
                 source_name=existing.source_name,
                 source_scope=existing.source_scope,
-                source_owner=source_owner,
+                source_owner=existing.source_owner,
                 template_id=existing.source_template_id or existing.id,
             )
             previous_revision = existing.source_revision
-            if new_revision == previous_revision:
+            if new_revision == previous_revision and not force:
                 return UpdateTemplateResponse(
                     updated=False,
                     previous_revision=previous_revision,
@@ -1695,6 +1717,7 @@ class HindclawHttp(HttpExtension):
             user_id: str,
         ) -> CheckUpdateResponse:
             """Shared body for /me/check-update and /admin/check-update."""
+            del user_id  # source identity is read from the row, not the caller
             pool = await db.get_pool()
             existing = await db.get_template(pool, id=template_id, scope=scope, owner=owner)
             if existing is None:
@@ -1708,11 +1731,10 @@ class HindclawHttp(HttpExtension):
                     source_scope=None,
                 )
             assert existing.source_scope is not None
-            source_owner = _resolve_source_owner(existing.source_scope, installed_scope=scope, user_id=user_id)
             _, _, new_revision = await marketplace.fetch_and_resolve_template(
                 source_name=existing.source_name,
                 source_scope=existing.source_scope,
-                source_owner=source_owner,
+                source_owner=existing.source_owner,
                 template_id=existing.source_template_id or existing.id,
             )
             return CheckUpdateResponse(
@@ -1856,6 +1878,7 @@ class HindclawHttp(HttpExtension):
         )
         async def update_me_template_from_source(
             template_id: str,
+            force: bool = False,
             _auth=Depends(_require_iam("template:install")),
         ):
             return await _do_update_from_source(
@@ -1863,6 +1886,7 @@ class HindclawHttp(HttpExtension):
                 scope=TemplateScope.PERSONAL,
                 owner=_auth["user_id"],
                 user_id=_auth["user_id"],
+                force=force,
             )
 
         @router.get(
@@ -2017,6 +2041,7 @@ class HindclawHttp(HttpExtension):
         )
         async def update_admin_template_from_source(
             template_id: str,
+            force: bool = False,
             _auth=Depends(_require_iam("template:admin")),
         ):
             return await _do_update_from_source(
@@ -2024,6 +2049,7 @@ class HindclawHttp(HttpExtension):
                 scope=TemplateScope.SERVER,
                 owner=None,
                 user_id=_auth["user_id"],
+                force=force,
             )
 
         @router.get(
@@ -2048,6 +2074,7 @@ class HindclawHttp(HttpExtension):
 
         @router.post(
             "/banks",
+            response_model=BankCreationResponse,
             operation_id="create_bank_from_template",
             summary="Apply an installed template to a new or existing bank",
             tags=["Banks"],
@@ -2068,12 +2095,20 @@ class HindclawHttp(HttpExtension):
                     detail=f"template not found for ref {request.template!r}",
                 )
             ctx = RequestContext(internal=True)  # type: ignore[call-arg]
-            return await bootstrap_bank_from_template(
+            existing_banks = await memory.list_banks(request_context=ctx)
+            bank_existed = any(b.get("bank_id") == request.bank_id for b in existing_banks)
+            import_result = await bootstrap_bank_from_template(
                 memory,
                 bank_id=request.bank_id,
                 template=record,
                 request_context=ctx,
                 bank_name=request.name,
+            )
+            return BankCreationResponse(
+                bank_id=request.bank_id,
+                template=request.template,
+                bank_created=not bank_existed,
+                import_result=import_result,
             )
 
         return router

@@ -101,11 +101,13 @@ class TemplateRecord:
 
     Identity invariant: a TemplateRecord is uniquely keyed by
     (id, scope, owner). Source attribution (source_name, source_scope,
-    source_template_id, source_url, source_revision) is informational
-    only — re-installing a template with the same id replaces the
-    existing row regardless of which source it came from. To install
-    two templates with the same id from different sources, rename one
-    before installing via the install request's `alias_id`.
+    source_owner, source_template_id, source_url, source_revision) is
+    informational and round-trip metadata: source_owner is required by
+    /update and /check-update so refreshes resolve the original source
+    regardless of who is calling now. Without it the marketplace lookup
+    would conflate "the user installing now" with "the user that owned
+    the personal source the row was originally pulled from", silently
+    pulling from a different user's source after admin-handoff.
     """
 
     id: str
@@ -113,6 +115,7 @@ class TemplateRecord:
     owner: str | None
     source_name: str | None
     source_scope: TemplateScope | None
+    source_owner: str | None
     source_template_id: str | None
     source_url: str | None
     source_revision: str | None

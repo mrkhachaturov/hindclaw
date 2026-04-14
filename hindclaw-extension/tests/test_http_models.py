@@ -327,6 +327,7 @@ def test_template_response_carries_manifest_as_dict():
             "owner": "user-1",
             "source_name": "hindclaw-official",
             "source_scope": "server",
+            "source_owner": None,
             "source_revision": "etag",
             "installed_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),

@@ -317,14 +317,6 @@ class InstallTemplateRequest(BaseModel):
     alias_id: str | None = None
 
 
-class UpdateTemplateRequest(BaseModel):
-    """Query knobs for /me/templates/{id}/update — body is empty by default."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    force: bool = False
-
-
 class CheckUpdateResponse(BaseModel):
     has_update: bool
     current_revision: str | None
@@ -346,6 +338,7 @@ class TemplateResponse(BaseModel):
     owner: str | None
     source_name: str | None
     source_scope: TemplateScope | None
+    source_owner: str | None
     source_revision: str | None
     installed_at: datetime
     updated_at: datetime

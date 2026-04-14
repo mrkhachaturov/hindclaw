@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS bank_templates (
 
     source_name        TEXT,
     source_scope       TEXT CHECK (source_scope IS NULL OR source_scope IN ('server', 'personal')),
+    source_owner       TEXT,
     source_template_id TEXT,
     source_url         TEXT,
     source_revision    TEXT,
@@ -888,6 +889,7 @@ def _row_to_template_record(row) -> TemplateRecord:
         owner=row["owner"],
         source_name=row["source_name"],
         source_scope=TemplateScope(row["source_scope"]) if row["source_scope"] else None,
+        source_owner=row["source_owner"],
         source_template_id=row["source_template_id"],
         source_url=row["source_url"],
         source_revision=row["source_revision"],
@@ -904,7 +906,7 @@ def _row_to_template_record(row) -> TemplateRecord:
 
 _TEMPLATE_COLUMNS = """
     id, scope, owner,
-    source_name, source_scope, source_template_id,
+    source_name, source_scope, source_owner, source_template_id,
     source_url, source_revision,
     name, description, category,
     integrations, tags, manifest,
@@ -913,45 +915,38 @@ _TEMPLATE_COLUMNS = """
 
 
 async def create_template(pool, record: TemplateRecord) -> None:
-    """Insert a new template row. Upsert on the natural key — reinstalling
-    the same (id, scope, owner) replaces the existing row regardless of
-    source. Section 4.2 identity invariant."""
+    """Insert a new template row at (id, scope, owner). Pure INSERT —
+    the natural-key collision is the caller's signal to return 409. The
+    spec (Finding 3, ``2026-04-13-template-upstream-convergence-design.md``
+    section 4.4) requires explicit replace via ``/update?force=true``,
+    not silent upsert, so the historical ``ON CONFLICT DO UPDATE`` shape
+    is intentionally absent. Raises ``asyncpg.UniqueViolationError`` if
+    the natural-key row already exists.
+    """
     await pool.execute(
         """
         INSERT INTO bank_templates (
             id, scope, owner,
-            source_name, source_scope, source_template_id,
+            source_name, source_scope, source_owner, source_template_id,
             source_url, source_revision,
             name, description, category,
             integrations, tags, manifest,
             installed_at, updated_at
         ) VALUES (
             $1, $2, $3,
-            $4, $5, $6,
-            $7, $8,
-            $9, $10, $11,
-            $12::jsonb, $13::jsonb, $14::jsonb,
-            $15, $16
+            $4, $5, $6, $7,
+            $8, $9,
+            $10, $11, $12,
+            $13::jsonb, $14::jsonb, $15::jsonb,
+            $16, $17
         )
-        ON CONFLICT (id, scope, owner) DO UPDATE SET
-            source_name        = EXCLUDED.source_name,
-            source_scope       = EXCLUDED.source_scope,
-            source_template_id = EXCLUDED.source_template_id,
-            source_url         = EXCLUDED.source_url,
-            source_revision    = EXCLUDED.source_revision,
-            name               = EXCLUDED.name,
-            description        = EXCLUDED.description,
-            category           = EXCLUDED.category,
-            integrations       = EXCLUDED.integrations,
-            tags               = EXCLUDED.tags,
-            manifest           = EXCLUDED.manifest,
-            updated_at         = EXCLUDED.updated_at
         """,
         record.id,
         record.scope.value,
         record.owner,
         record.source_name,
         record.source_scope.value if record.source_scope is not None else None,
+        record.source_owner,
         record.source_template_id,
         record.source_url,
         record.source_revision,
@@ -1027,16 +1022,17 @@ async def update_template(pool, record: TemplateRecord) -> None:
         UPDATE bank_templates SET
             source_name        = $4,
             source_scope       = $5,
-            source_template_id = $6,
-            source_url         = $7,
-            source_revision    = $8,
-            name               = $9,
-            description        = $10,
-            category           = $11,
-            integrations       = $12::jsonb,
-            tags               = $13::jsonb,
-            manifest           = $14::jsonb,
-            updated_at         = $15
+            source_owner       = $6,
+            source_template_id = $7,
+            source_url         = $8,
+            source_revision    = $9,
+            name               = $10,
+            description        = $11,
+            category           = $12,
+            integrations       = $13::jsonb,
+            tags               = $14::jsonb,
+            manifest           = $15::jsonb,
+            updated_at         = $16
         WHERE id = $1
           AND scope = $2
           AND owner IS NOT DISTINCT FROM $3
@@ -1046,6 +1042,7 @@ async def update_template(pool, record: TemplateRecord) -> None:
         record.owner,
         record.source_name,
         record.source_scope.value if record.source_scope is not None else None,
+        record.source_owner,
         record.source_template_id,
         record.source_url,
         record.source_revision,

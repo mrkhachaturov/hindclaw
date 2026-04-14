@@ -34,18 +34,19 @@ async def bootstrap_bank_from_template(
     *,
     bank_name: str | None = None,
 ) -> BankTemplateImportResponse:
-    """Create-or-touch a bank, set its display metadata, and apply a stored template manifest.
+    """Create-or-touch a bank and apply a stored template manifest.
 
-    Bank existence is handled with the documented upstream primitives:
-    ``get_bank_profile(bank_id)`` auto-creates the row if missing;
-    ``update_bank()`` then sets the caller-supplied name and an initial
-    mission. There is NO ``create_or_update_bank()`` method on
-    ``MemoryEngine`` — this function intentionally uses the same
-    ``get_bank_profile`` + ``update_bank`` pair the pre-convergence
-    ``bank_bootstrap.py`` used. After bank metadata is in place,
-    upstream's ``apply_bank_template_manifest()`` handles config
-    overrides, directive upserts (by name), mental model upserts
-    (by id), and async refresh scheduling in one coordinated pass.
+    Bank existence is handled with the documented upstream primitive:
+    ``get_bank_profile(bank_id)`` auto-creates the row if missing.
+    Display name is set via ``update_bank()`` ONLY when the caller
+    explicitly supplied one — applying a template to an existing bank
+    must never silently overwrite the user's chosen name. Mission is
+    NEVER touched directly here; upstream's ``apply_bank_template_manifest``
+    routes ``manifest.bank.reflect_mission`` through the config layer
+    (``BankTemplateConfig.get_config_updates``) so the right field is
+    written and the legacy ``mission`` column stays in sync via the
+    config resolver — synthesizing a mission default in this function
+    would clobber an existing bank with derived garbage.
 
     Args:
         memory: MemoryEngine instance from get_router(self, memory).
@@ -54,8 +55,9 @@ async def bootstrap_bank_from_template(
             BankTemplateManifest as a dict.
         request_context: Must have internal=True so the engine bypasses
             HindclawTenant.authenticate() for this internal call.
-        bank_name: Optional caller-supplied display name. Defaults to
-            template.id when omitted.
+        bank_name: Caller-supplied display name. When omitted, the
+            existing bank's name is left untouched and a freshly
+            auto-created bank keeps upstream's default name (= bank_id).
 
     Returns:
         BankTemplateImportResponse from upstream — counts of
@@ -77,14 +79,12 @@ async def bootstrap_bank_from_template(
 
     await memory.get_bank_profile(bank_id, request_context=request_context)
 
-    name = bank_name or template.id
-    initial_mission = (manifest.bank.reflect_mission if manifest.bank else None) or bank_id
-    await memory.update_bank(
-        bank_id,
-        name=name,
-        mission=initial_mission,
-        request_context=request_context,
-    )
+    if bank_name is not None:
+        await memory.update_bank(
+            bank_id,
+            name=bank_name,
+            request_context=request_context,
+        )
 
     return await apply_bank_template_manifest(
         memory=memory,

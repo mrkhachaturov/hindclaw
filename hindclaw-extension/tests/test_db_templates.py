@@ -36,6 +36,7 @@ def _sample_record(
     owner: str | None = "user-1",
     source_name: str | None = "hindclaw-official",
     source_scope: TemplateScope | None = TemplateScope.SERVER,
+    source_owner: str | None = None,
 ) -> TemplateRecord:
     now = _fixed_now()
     return TemplateRecord(
@@ -44,6 +45,7 @@ def _sample_record(
         owner=owner,
         source_name=source_name,
         source_scope=source_scope,
+        source_owner=source_owner,
         source_template_id=id,
         source_url="https://example.com/raw",
         source_revision="etag-abc",
@@ -93,6 +95,7 @@ def test_ddl_has_source_attribution_columns():
     for col in (
         "source_name",
         "source_scope",
+        "source_owner",
         "source_template_id",
         "source_url",
         "source_revision",
@@ -114,7 +117,10 @@ async def test_create_template_inserts_record(mock_pool):
     call_args = mock_pool.execute.call_args_list[-1]
     sql = call_args.args[0]
     assert "INSERT INTO bank_templates" in sql
-    assert "ON CONFLICT" in sql
+    # Pure INSERT — must NOT silently upsert on natural-key collision.
+    # The route layer raises 409 on UniqueViolationError per the
+    # convergence design (Finding 3 fix).
+    assert "ON CONFLICT" not in sql
 
 
 @pytest.mark.asyncio
@@ -126,6 +132,7 @@ async def test_get_template_takes_natural_key_tuple(mock_pool):
             "owner": "user-1",
             "source_name": "hindclaw-official",
             "source_scope": "server",
+            "source_owner": None,
             "source_template_id": "backend-python",
             "source_url": "https://example.com/raw",
             "source_revision": "etag",
