@@ -111,16 +111,17 @@ class HindclawClient:
 
     def _coerce_manifest(
         self,
-        manifest: _upstream_models.BankTemplateManifest | dict[str, Any] | None,
-    ) -> dict[str, Any] | None:
+        manifest: _upstream_models.BankTemplateManifest | dict[str, Any],
+    ) -> dict[str, Any]:
         """Normalize a manifest kwarg to a dict payload.
 
-        Accepts upstream BankTemplateManifest instances, plain dicts, or None.
-        Dumps upstream instances via model_dump(mode="json", by_alias=True) so
-        the aiohttp-based generated client can serialize the payload directly.
+        Accepts upstream BankTemplateManifest instances or plain dicts.
+        Dumps upstream instances via model_dump(mode="json", by_alias=True)
+        so the aiohttp-based generated client can serialize the payload
+        directly. Called only when the caller explicitly passed a manifest
+        — _do_patch_template gates on `if manifest is not None` so this
+        helper is never invoked with None.
         """
-        if manifest is None:
-            return None
         if isinstance(manifest, _upstream_models.BankTemplateManifest):
             return manifest.model_dump(mode="json", by_alias=True)
         return manifest

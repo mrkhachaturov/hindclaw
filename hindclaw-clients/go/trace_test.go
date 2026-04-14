@@ -15,6 +15,9 @@ import (
 )
 
 func TestClientHonoursHTTPTrace(t *testing.T) {
+	// Uses GetConn/GotConn instead of DNSStart because loopback skips DNS
+	// resolution, so DNSStart would never fire on the httptest.NewServer
+	// address.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`[]`))
@@ -23,9 +26,9 @@ func TestClientHonoursHTTPTrace(t *testing.T) {
 
 	client := hindclaw.NewAPIClientWithToken(server.URL, "test-token")
 
-	var gotStart, gotGotConn bool
+	var gotGetConn, gotGotConn bool
 	trace := &httptrace.ClientTrace{
-		GetConn:  func(hostPort string) { gotStart = true },
+		GetConn:  func(hostPort string) { gotGetConn = true },
 		GotConn:  func(info httptrace.GotConnInfo) { gotGotConn = true },
 	}
 	ctx := httptrace.WithClientTrace(context.Background(), trace)
@@ -37,7 +40,7 @@ func TestClientHonoursHTTPTrace(t *testing.T) {
 	if httpResp.StatusCode != http.StatusOK {
 		t.Errorf("expected 200 OK, got %d", httpResp.StatusCode)
 	}
-	if !gotStart {
+	if !gotGetConn {
 		t.Error("expected httptrace GetConn hook to fire")
 	}
 	if !gotGotConn {

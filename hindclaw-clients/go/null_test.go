@@ -47,7 +47,11 @@ func TestBankTemplateManifestNullBank(t *testing.T) {
 	if err := json.Unmarshal(out, &decoded); err != nil {
 		t.Fatalf("decode round-tripped json: %v", err)
 	}
-	if _, present := decoded["version"]; !present {
-		t.Errorf("expected version in round-tripped json, got %s", string(out))
+	bankVal, present := decoded["bank"]
+	if !present {
+		t.Errorf("expected bank key in round-tripped json, got %s", string(out))
+	}
+	if bankVal != nil {
+		t.Errorf("expected bank to round-trip as null, got %v", bankVal)
 	}
 }

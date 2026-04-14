@@ -36,9 +36,8 @@ url = "2.5"
 tokio = { version = "1", features = ["full"] }
 tokio-test = "0.4"
 uuid = { version = "1.0", features = ["v4"] }
-# Integration test support — mockito stub server and serde_json round-trip.
+# Integration test support — mockito stub server (serde_json comes from [dependencies]).
 mockito = "1"
-serde_json = "1"
 
 [build-dependencies]
 progenitor = "0.11"
