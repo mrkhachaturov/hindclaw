@@ -19,6 +19,9 @@
   },
   "author": "Hindclaw",
   "license": "MIT",
+  "dependencies": {
+    "@vectorize-io/hindsight-client": "0.5.1"
+  },
   "devDependencies": {
     "@hey-api/openapi-ts": "0.88.0",
     "tsup": "^8.5.1",

@@ -1,12 +1,25 @@
-/**
- * Hindclaw TypeScript client — re-exports from generated code.
- *
- * File names (sdk.gen, types.gen) match @hey-api/openapi-ts 0.88.0 output.
- * If upgrading the generator version, verify output file names haven't changed.
- *
- * Usage:
- *   import { createClient } from '@hindclaw/client'
- *   const client = createClient({ baseUrl: '...', headers: { Authorization: `Bearer ${key}` } })
- */
-export * from '../generated/sdk.gen'
-export * from '../generated/types.gen'
+// HindClaw TypeScript client — public surface.
+//
+// HindClaw is built on top of Hindsight. Manifest types (BankTemplateManifest,
+// BankTemplateConfig, BankTemplateMentalModel, BankTemplateDirective,
+// MentalModelTrigger, BankTemplateImportResponse) come from upstream's
+// @vectorize-io/hindsight-client package — re-exported here so consumers
+// see one canonical type, not a HindClaw-local duplicate.
+//
+// HindClaw-specific operations (template install, bank creation, user
+// management, etc.) come from the generated SDK in ./generated/.
+
+export type {
+  BankTemplateManifest,
+  BankTemplateConfig,
+  BankTemplateMentalModel,
+  BankTemplateDirective,
+  MentalModelTrigger,
+  BankTemplateImportResponse,
+} from '@vectorize-io/hindsight-client';
+
+// Re-export everything HindClaw-specific from the generated SDK.
+// The generated code contains its own copies of the upstream types
+// above — those copies remain internal to hindclaw-clients/typescript/
+// generated/types.gen.ts and are not part of the public surface.
+export * from '../generated';

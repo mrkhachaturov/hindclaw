@@ -1,5 +1,18 @@
 package hindclaw
 
+// PERMANENT WORKAROUND: HindClaw's Go client duplicates upstream-owned
+// types (BankTemplateManifest, BankTemplateConfig, BankTemplateMentalModel,
+// BankTemplateDirective, MentalModelTrigger, BankTemplateImportResponse)
+// because openapi-generator's Go target writes generated types into the
+// same package as the hand-maintained wrapper, so Go type aliases to the
+// upstream types would collide with the generated structs. Consumers
+// wanting type unity between @hindclaw/go and @hindsight/go must copy
+// between them explicitly at the boundary.
+// Long-term resolution: a subpackage restructure for generated code
+// could enable type aliasing, but the work would require updating every
+// call site in terraform-provider-hindclaw. Deferred unless a concrete
+// consumer needs type unity between @hindclaw/go and @hindsight/go.
+
 import (
 	"net/http"
 	"time"
