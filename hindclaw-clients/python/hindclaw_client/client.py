@@ -174,16 +174,30 @@ class HindclawClient:
         tags: list[str] | None,
         manifest: _upstream_models.BankTemplateManifest | dict[str, Any] | None,
     ):
-        """Shared patch path for personal and admin templates."""
-        manifest_payload = self._coerce_manifest(manifest)
-        patch = _local_models.PatchTemplateRequest(
-            name=name,
-            description=description,
-            category=category,
-            integrations=integrations,
-            tags=tags,
-            manifest=manifest_payload,
-        )
+        """Shared patch path for personal and admin templates.
+
+        Builds a PatchTemplateRequest containing only fields the caller
+        explicitly passed. PATCH semantics matter on the server side: the
+        handler uses model_dump(exclude_unset=True) to distinguish "field
+        not sent" from "field explicitly null", so passing manifest=None
+        (or any other field set to None) unconditionally would add the
+        field to model_fields_set and clobber the stored value.
+        """
+        patch_kwargs: dict[str, Any] = {}
+        if name is not None:
+            patch_kwargs["name"] = name
+        if description is not None:
+            patch_kwargs["description"] = description
+        if category is not None:
+            patch_kwargs["category"] = category
+        if integrations is not None:
+            patch_kwargs["integrations"] = integrations
+        if tags is not None:
+            patch_kwargs["tags"] = tags
+        if manifest is not None:
+            patch_kwargs["manifest"] = self._coerce_manifest(manifest)
+
+        patch = _local_models.PatchTemplateRequest(**patch_kwargs)
         if scope == "my":
             return await self._templates_api.patch_my_template(
                 template_id=template_id,

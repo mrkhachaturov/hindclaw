@@ -101,7 +101,15 @@ async def test_patch_my_template_with_manifest(stub_server) -> None:
 
 
 async def test_patch_my_template_without_manifest(stub_server) -> None:
-    """Calling patch without a manifest must not raise or send one."""
+    """Calling patch without a manifest must not raise or send one.
+
+    This is the regression guard for the PATCH-clobber bug: the wrapper
+    must omit every unset field from the wire payload so the server's
+    ``model_dump(exclude_unset=True)`` cannot treat ``None`` as an
+    explicit clear. Sending ``manifest: null`` (or any other null field
+    the caller did not pass) would overwrite the stored value on the
+    server.
+    """
     base_url, state = stub_server
     async with hindclaw_client.HindclawClient(base_url, api_key="test-token") as client:
         await client.patch_my_template("tmpl-smoke", name="Just a rename")
@@ -110,10 +118,20 @@ async def test_patch_my_template_without_manifest(stub_server) -> None:
     captured = state.captured_requests[0]
     assert captured["method"] == "PATCH"
     assert captured["body"]["name"] == "Just a rename"
-    # The aiohttp client omits None-valued optional fields from the
-    # serialised payload (by_alias dump + exclude_none). Manifest must
-    # be absent, not null, so the PATCH does not clobber existing data.
-    assert "manifest" not in captured["body"] or captured["body"]["manifest"] is None
+    # Unset fields must be ABSENT from the wire payload, not null. The
+    # HindClaw PATCH handler uses model_dump(exclude_unset=True), so any
+    # field that appears in the wire body — even as null — is treated as
+    # an explicit clear and clobbers the stored value.
+    assert "manifest" not in captured["body"], (
+        f"manifest key must be absent (not null) on PATCH without manifest — "
+        f"sending null would clobber the stored manifest on the server "
+        f"because the PATCH handler uses exclude_unset=True. Got: {captured['body']}"
+    )
+    for field in ("description", "category", "integrations", "tags"):
+        assert field not in captured["body"], (
+            f"{field} must be absent from PATCH body when caller did not pass it — "
+            f"sending null would clobber the stored value. Got: {captured['body']}"
+        )
 
 
 async def test_create_admin_template_roundtrip(stub_server) -> None:
