@@ -17,20 +17,17 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
-class DirectiveSeedResult(BaseModel):
+class TagGroupNot(BaseModel):
     """
-    Result of creating a single directive from a template seed.
+    Compound NOT group: child filter must NOT match.
     """ # noqa: E501
-    name: StrictStr
-    created: StrictBool
-    directive_id: Optional[StrictStr] = None
-    error: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["name", "created", "directive_id", "error"]
+    var_not: ModelNot = Field(alias="not")
+    __properties: ClassVar[List[str]] = ["not"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -50,7 +47,7 @@ class DirectiveSeedResult(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of DirectiveSeedResult from a JSON string"""
+        """Create an instance of TagGroupNot from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -71,11 +68,14 @@ class DirectiveSeedResult(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of var_not
+        if self.var_not:
+            _dict['not'] = self.var_not.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of DirectiveSeedResult from a dict"""
+        """Create an instance of TagGroupNot from a dict"""
         if obj is None:
             return None
 
@@ -83,11 +83,11 @@ class DirectiveSeedResult(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "created": obj.get("created"),
-            "directive_id": obj.get("directive_id"),
-            "error": obj.get("error")
+            "not": ModelNot.from_dict(obj["not"]) if obj.get("not") is not None else None
         })
         return _obj
 
+from hindclaw_client_api.models.model_not import ModelNot
+# TODO: Rewrite to not use raise_errors
+TagGroupNot.model_rebuild(raise_errors=False)
 

@@ -45,7 +45,7 @@ export type ApiKeyCreateResponse = {
     /**
      * Description
      */
-    description?: string;
+    description?: string | null;
 };
 
 /**
@@ -65,13 +65,16 @@ export type ApiKeyResponse = {
     /**
      * Description
      */
-    description?: string;
+    description?: string | null;
 };
 
 /**
  * BankCreationResponse
  *
  * Response from POST /ext/hindclaw/banks — bank creation from template.
+ *
+ * Wraps upstream's ``BankTemplateImportResponse`` so clients see the
+ * same counts/errors upstream reports directly.
  */
 export type BankCreationResponse = {
     /**
@@ -86,22 +89,7 @@ export type BankCreationResponse = {
      * Bank Created
      */
     bank_created: boolean;
-    /**
-     * Config Applied
-     */
-    config_applied: boolean;
-    /**
-     * Directives
-     */
-    directives: Array<DirectiveSeedResult>;
-    /**
-     * Mental Models
-     */
-    mental_models: Array<MentalModelSeedResult>;
-    /**
-     * Errors
-     */
-    errors: Array<string>;
+    import_result: BankTemplateImportResponse;
 };
 
 /**
@@ -123,6 +111,263 @@ export type BankPolicyResponse = {
 };
 
 /**
+ * BankTemplateConfig
+ *
+ * Bank configuration fields within a template manifest.
+ *
+ * Only includes configurable (per-bank) fields. Credential fields
+ * (API keys, base URLs) are intentionally excluded for security.
+ */
+export type BankTemplateConfig = {
+    /**
+     * Reflect Mission
+     *
+     * Mission/context for Reflect operations
+     */
+    reflect_mission?: string | null;
+    /**
+     * Retain Mission
+     *
+     * Steers what gets extracted during retain
+     */
+    retain_mission?: string | null;
+    /**
+     * Retain Extraction Mode
+     *
+     * Fact extraction mode: 'concise' (default), 'verbose', or 'custom'
+     */
+    retain_extraction_mode?: string | null;
+    /**
+     * Retain Custom Instructions
+     *
+     * Custom extraction prompt (when mode='custom')
+     */
+    retain_custom_instructions?: string | null;
+    /**
+     * Retain Chunk Size
+     *
+     * Max token size for each content chunk
+     */
+    retain_chunk_size?: number | null;
+    /**
+     * Enable Observations
+     *
+     * Toggle observation consolidation
+     */
+    enable_observations?: boolean | null;
+    /**
+     * Observations Mission
+     *
+     * Controls what gets synthesised
+     */
+    observations_mission?: string | null;
+    /**
+     * Disposition Skepticism
+     *
+     * Skepticism trait (1-5)
+     */
+    disposition_skepticism?: number | null;
+    /**
+     * Disposition Literalism
+     *
+     * Literalism trait (1-5)
+     */
+    disposition_literalism?: number | null;
+    /**
+     * Disposition Empathy
+     *
+     * Empathy trait (1-5)
+     */
+    disposition_empathy?: number | null;
+    /**
+     * Entity Labels
+     *
+     * Controlled vocabulary for entity labels
+     */
+    entity_labels?: Array<{
+        [key: string]: unknown;
+    }> | null;
+    /**
+     * Entities Allow Free Form
+     *
+     * Allow entities outside the label vocabulary
+     */
+    entities_allow_free_form?: boolean | null;
+};
+
+/**
+ * BankTemplateDirective
+ *
+ * A directive definition within a bank template manifest.
+ *
+ * Directives are matched by name on re-import: existing directives
+ * with the same name are updated, new ones are created.
+ */
+export type BankTemplateDirective = {
+    /**
+     * Name
+     *
+     * Human-readable name for the directive (used as match key on re-import)
+     */
+    name: string;
+    /**
+     * Content
+     *
+     * The directive text to inject into prompts
+     */
+    content: string;
+    /**
+     * Priority
+     *
+     * Higher priority directives are injected first
+     */
+    priority?: number;
+    /**
+     * Is Active
+     *
+     * Whether this directive is active
+     */
+    is_active?: boolean;
+    /**
+     * Tags
+     *
+     * Tags for filtering
+     */
+    tags?: Array<string>;
+};
+
+/**
+ * BankTemplateImportResponse
+ *
+ * Response model for the bank template import endpoint.
+ */
+export type BankTemplateImportResponse = {
+    /**
+     * Bank Id
+     *
+     * Bank that was imported into
+     */
+    bank_id: string;
+    /**
+     * Config Applied
+     *
+     * Whether bank config was updated
+     */
+    config_applied: boolean;
+    /**
+     * Mental Models Created
+     *
+     * IDs of newly created mental models
+     */
+    mental_models_created?: Array<string>;
+    /**
+     * Mental Models Updated
+     *
+     * IDs of updated mental models
+     */
+    mental_models_updated?: Array<string>;
+    /**
+     * Directives Created
+     *
+     * Names of newly created directives
+     */
+    directives_created?: Array<string>;
+    /**
+     * Directives Updated
+     *
+     * Names of updated directives
+     */
+    directives_updated?: Array<string>;
+    /**
+     * Operation Ids
+     *
+     * Operation IDs for mental model content generation (async)
+     */
+    operation_ids?: Array<string>;
+    /**
+     * Dry Run
+     *
+     * True if this was a validation-only run
+     */
+    dry_run?: boolean;
+};
+
+/**
+ * BankTemplateManifest
+ *
+ * A bank template manifest for import/export.
+ *
+ * Version field enables forward-compatible schema evolution: the API
+ * auto-upgrades older manifest versions to the current schema on import.
+ */
+export type BankTemplateManifest = {
+    /**
+     * Version
+     *
+     * Manifest schema version (currently '1')
+     */
+    version: string;
+    /**
+     * Bank configuration to apply. Omit to leave config unchanged.
+     */
+    bank?: BankTemplateConfig | null;
+    /**
+     * Mental Models
+     *
+     * Mental models to create or update (matched by id). Omit to leave unchanged.
+     */
+    mental_models?: Array<BankTemplateMentalModel> | null;
+    /**
+     * Directives
+     *
+     * Directives to create or update (matched by name). Omit to leave unchanged.
+     */
+    directives?: Array<BankTemplateDirective> | null;
+};
+
+/**
+ * BankTemplateMentalModel
+ *
+ * A mental model definition within a bank template manifest.
+ */
+export type BankTemplateMentalModel = {
+    /**
+     * Id
+     *
+     * Unique ID for the mental model (alphanumeric lowercase with hyphens)
+     */
+    id: string;
+    /**
+     * Name
+     *
+     * Human-readable name for the mental model
+     */
+    name: string;
+    /**
+     * Source Query
+     *
+     * The query to run to generate content
+     */
+    source_query: string;
+    /**
+     * Tags
+     *
+     * Tags for scoped visibility
+     */
+    tags?: Array<string>;
+    /**
+     * Max Tokens
+     *
+     * Maximum tokens for generated content
+     */
+    max_tokens?: number;
+    /**
+     * Trigger settings
+     */
+    trigger?: MentalModelTrigger;
+};
+
+/**
  * ChannelResponse
  *
  * Channel mapping returned by GET/POST endpoints.
@@ -139,19 +384,42 @@ export type ChannelResponse = {
 };
 
 /**
+ * CheckUpdateResponse
+ */
+export type CheckUpdateResponse = {
+    /**
+     * Has Update
+     */
+    has_update: boolean;
+    /**
+     * Current Revision
+     */
+    current_revision: string | null;
+    /**
+     * Latest Revision
+     */
+    latest_revision: string | null;
+    /**
+     * Source Name
+     */
+    source_name?: string | null;
+    source_scope?: TemplateScope | null;
+};
+
+/**
  * CreateApiKeyRequest
  */
 export type CreateApiKeyRequest = {
     /**
      * Description
      */
-    description?: string;
+    description?: string | null;
 };
 
 /**
  * CreateBankFromTemplateRequest
  *
- * Request to create a bank from an installed template.
+ * Body for POST /ext/hindclaw/banks.
  */
 export type CreateBankFromTemplateRequest = {
     /**
@@ -165,7 +433,7 @@ export type CreateBankFromTemplateRequest = {
     /**
      * Name
      */
-    name?: string;
+    name?: string | null;
 };
 
 /**
@@ -237,7 +505,7 @@ export type CreateSaKeyRequest = {
     /**
      * Description
      */
-    description?: string;
+    description?: string | null;
 };
 
 /**
@@ -257,7 +525,7 @@ export type CreateSelfServiceAccountRequest = {
     /**
      * Scoping Policy Id
      */
-    scoping_policy_id?: string;
+    scoping_policy_id?: string | null;
 };
 
 /**
@@ -281,7 +549,7 @@ export type CreateServiceAccountRequest = {
     /**
      * Scoping Policy Id
      */
-    scoping_policy_id?: string;
+    scoping_policy_id?: string | null;
 };
 
 /**
@@ -301,19 +569,23 @@ export type CreateSourceRequest = {
      *
      * Override auto-derived source name
      */
-    alias?: string;
+    alias?: string | null;
     /**
      * Auth Token
      *
      * Auth token for private repositories
      */
-    auth_token?: string;
+    auth_token?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
 };
 
 /**
  * CreateTemplateRequest
  *
- * Request to create a custom template.
+ * Request to create a personal template by inlining an upstream manifest.
  */
 export type CreateTemplateRequest = {
     /**
@@ -321,107 +593,26 @@ export type CreateTemplateRequest = {
      */
     id: string;
     /**
-     * Scope
+     * Name
      */
-    scope: string;
+    name: string;
     /**
      * Description
      */
-    description?: string;
+    description?: string | null;
     /**
-     * Author
+     * Category
      */
-    author?: string;
+    category?: string | null;
+    /**
+     * Integrations
+     */
+    integrations?: Array<string>;
     /**
      * Tags
      */
     tags?: Array<string>;
-    /**
-     * Min Hindclaw Version
-     */
-    min_hindclaw_version: string;
-    /**
-     * Min Hindsight Version
-     */
-    min_hindsight_version?: string;
-    /**
-     * Retain Mission
-     */
-    retain_mission: string;
-    /**
-     * Reflect Mission
-     */
-    reflect_mission: string;
-    /**
-     * Observations Mission
-     */
-    observations_mission?: string;
-    /**
-     * Retain Extraction Mode
-     */
-    retain_extraction_mode?: string;
-    /**
-     * Retain Custom Instructions
-     */
-    retain_custom_instructions?: string;
-    /**
-     * Retain Chunk Size
-     */
-    retain_chunk_size?: number;
-    /**
-     * Retain Default Strategy
-     */
-    retain_default_strategy?: string;
-    /**
-     * Retain Strategies
-     */
-    retain_strategies?: {
-        [key: string]: unknown;
-    };
-    /**
-     * Entity Labels
-     */
-    entity_labels?: Array<EntityLabel>;
-    /**
-     * Entities Allow Free Form
-     */
-    entities_allow_free_form?: boolean;
-    /**
-     * Enable Observations
-     */
-    enable_observations?: boolean;
-    /**
-     * Consolidation Llm Batch Size
-     */
-    consolidation_llm_batch_size?: number;
-    /**
-     * Consolidation Source Facts Max Tokens
-     */
-    consolidation_source_facts_max_tokens?: number;
-    /**
-     * Consolidation Source Facts Max Tokens Per Observation
-     */
-    consolidation_source_facts_max_tokens_per_observation?: number;
-    /**
-     * Disposition Skepticism
-     */
-    disposition_skepticism?: number;
-    /**
-     * Disposition Literalism
-     */
-    disposition_literalism?: number;
-    /**
-     * Disposition Empathy
-     */
-    disposition_empathy?: number;
-    /**
-     * Directive Seeds
-     */
-    directive_seeds?: Array<DirectiveSeed>;
-    /**
-     * Mental Model Seeds
-     */
-    mental_model_seeds?: Array<MentalModelSeed>;
+    manifest: BankTemplateManifest;
 };
 
 /**
@@ -439,115 +630,11 @@ export type CreateUserRequest = {
     /**
      * Email
      */
-    email?: string;
+    email?: string | null;
     /**
      * Is Active
      */
     is_active?: boolean;
-};
-
-/**
- * DirectiveSeed
- *
- * A directive to create when bootstrapping a bank from a template.
- */
-export type DirectiveSeed = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Content
-     */
-    content: string;
-    /**
-     * Priority
-     */
-    priority?: number;
-    /**
-     * Is Active
-     */
-    is_active?: boolean;
-};
-
-/**
- * DirectiveSeedResult
- *
- * Result of creating a single directive from a template seed.
- */
-export type DirectiveSeedResult = {
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Created
-     */
-    created: boolean;
-    /**
-     * Directive Id
-     */
-    directive_id?: string;
-    /**
-     * Error
-     */
-    error?: string;
-};
-
-/**
- * EntityLabel
- *
- * An entity label definition for structured classification.
- *
- * Hindsight supports three label types:
- * - "value": single enum value from the values list
- * - "multi-values": multiple enum values from the values list
- * - "text": free-form text (no values list needed)
- *
- * The ``tag`` field controls whether facts with this label also get tagged
- * (enabling tag-based filtering in recall/reflect).
- */
-export type EntityLabel = {
-    /**
-     * Key
-     */
-    key: string;
-    /**
-     * Description
-     */
-    description?: string;
-    /**
-     * Type
-     */
-    type?: string;
-    /**
-     * Optional
-     */
-    optional?: boolean;
-    /**
-     * Tag
-     */
-    tag?: boolean;
-    /**
-     * Values
-     */
-    values?: Array<EntityLabelValue>;
-};
-
-/**
- * EntityLabelValue
- *
- * A valid value for a value or multi-values entity label.
- */
-export type EntityLabelValue = {
-    /**
-     * Value
-     */
-    value: string;
-    /**
-     * Description
-     */
-    description?: string;
 };
 
 /**
@@ -608,94 +695,33 @@ export type HttpValidationError = {
  * InstallTemplateRequest
  *
  * Request to install a template from a marketplace source.
+ *
+ * The ``{id}`` in the URL path is the template id WITHIN the source.
+ * The installed-template id is ``alias_id`` if provided, else the source
+ * template id. This lets a user install the same source template under a
+ * different installed name (Section 4.3 identity invariant: at most one
+ * row per (id, scope, owner)).
  */
 export type InstallTemplateRequest = {
     /**
      * Source Name
-     *
-     * Marketplace source name
      */
     source_name: string;
+    source_scope?: TemplateScope;
     /**
-     * Source
-     *
-     * Deprecated alias for source_name
+     * Alias Id
      */
-    source?: string;
-    /**
-     * Source Scope
-     *
-     * 'server' or 'personal' — required when ambiguous
-     */
-    source_scope?: string;
-    /**
-     * Name
-     *
-     * Template name within the source
-     */
-    name: string;
-    /**
-     * Scope
-     *
-     * 'server' or 'personal'
-     */
-    scope?: string;
+    alias_id?: string | null;
 };
 
 /**
- * MarketplaceSearchResponse
- *
- * Response for marketplace search.
+ * ListTemplatesResponse
  */
-export type MarketplaceSearchResponse = {
+export type ListTemplatesResponse = {
     /**
-     * Results
+     * Templates
      */
-    results: Array<MarketplaceSearchResult>;
-    /**
-     * Total
-     */
-    total: number;
-};
-
-/**
- * MarketplaceSearchResult
- *
- * A template from marketplace search results with install status.
- */
-export type MarketplaceSearchResult = {
-    /**
-     * Source
-     */
-    source: string;
-    /**
-     * Source Scope
-     */
-    source_scope: string;
-    /**
-     * Name
-     */
-    name: string;
-    /**
-     * Version
-     */
-    version: string;
-    /**
-     * Description
-     */
-    description?: string;
-    /**
-     * Author
-     */
-    author?: string;
-    /**
-     * Tags
-     */
-    tags?: Array<string>;
-    /**
-     * Installed In
-     */
-    installed_in?: Array<string>;
+    templates: Array<TemplateResponse>;
 };
 
 /**
@@ -715,7 +741,7 @@ export type MeProfileResponse = {
     /**
      * Email
      */
-    email: string;
+    email: string | null;
     /**
      * Is Active
      */
@@ -727,47 +753,76 @@ export type MeProfileResponse = {
 };
 
 /**
- * MentalModelSeed
+ * MentalModelTrigger
  *
- * A mental model to create when bootstrapping a bank from a template.
+ * Trigger settings for a mental model.
  */
-export type MentalModelSeed = {
+export type MentalModelTrigger = {
     /**
-     * Name
+     * Refresh After Consolidation
+     *
+     * If true, refresh this mental model after observations consolidation (real-time mode)
      */
-    name: string;
+    refresh_after_consolidation?: boolean;
     /**
-     * Source Query
+     * Fact Types
+     *
+     * Filter which fact types are retrieved during reflect. None means all types (world, experience, observation).
      */
-    source_query: string;
+    fact_types?: Array<'world' | 'experience' | 'observation'> | null;
+    /**
+     * Exclude Mental Models
+     *
+     * If true, exclude all mental models from the reflect loop (skip search_mental_models tool).
+     */
+    exclude_mental_models?: boolean;
+    /**
+     * Exclude Mental Model Ids
+     *
+     * Exclude specific mental models by ID from the reflect loop.
+     */
+    exclude_mental_model_ids?: Array<string> | null;
+    /**
+     * Tags Match
+     *
+     * Override how the model's tags filter memories during refresh. If not set, defaults to 'all_strict' when the model has tags (security isolation) or 'any' when the model has no tags. Set to 'any' to include untagged memories alongside tagged ones during refresh.
+     */
+    tags_match?: 'any' | 'all' | 'any_strict' | 'all_strict' | null;
+    /**
+     * Tag Groups
+     *
+     * Compound boolean tag expressions to use during refresh instead of the model's own tags. When set, these tag groups are passed to reflect and the model's flat tags are NOT used for filtering. Supports nested and/or/not expressions for complex tag-based scoping.
+     */
+    tag_groups?: Array<TagGroupLeaf | TagGroupAnd | TagGroupOr | TagGroupNot> | null;
 };
 
 /**
- * MentalModelSeedResult
+ * PatchTemplateRequest
  *
- * Result of creating a single mental model from a template seed.
+ * Partial update for hand-edited templates. Every field is optional.
  */
-export type MentalModelSeedResult = {
+export type PatchTemplateRequest = {
     /**
      * Name
      */
-    name: string;
+    name?: string | null;
     /**
-     * Created
+     * Description
      */
-    created: boolean;
+    description?: string | null;
     /**
-     * Mental Model Id
+     * Category
      */
-    mental_model_id?: string;
+    category?: string | null;
     /**
-     * Operation Id
+     * Integrations
      */
-    operation_id?: string;
+    integrations?: Array<string> | null;
     /**
-     * Error
+     * Tags
      */
-    error?: string;
+    tags?: Array<string> | null;
+    manifest?: BankTemplateManifest | null;
 };
 
 /**
@@ -837,7 +892,7 @@ export type SaKeyCreateResponse = {
     /**
      * Description
      */
-    description: string;
+    description: string | null;
 };
 
 /**
@@ -857,7 +912,7 @@ export type SaKeyResponse = {
     /**
      * Description
      */
-    description: string;
+    description: string | null;
 };
 
 /**
@@ -885,7 +940,7 @@ export type ServiceAccountResponse = {
     /**
      * Scoping Policy Id
      */
-    scoping_policy_id: string;
+    scoping_policy_id: string | null;
 };
 
 /**
@@ -902,20 +957,85 @@ export type SourceResponse = {
      * Url
      */
     url: string;
+    scope: TemplateScope;
+    /**
+     * Owner
+     */
+    owner?: string | null;
     /**
      * Has Auth
      */
     has_auth: boolean;
     /**
+     * Description
+     */
+    description?: string | null;
+    /**
      * Created At
      */
-    created_at: string;
+    created_at?: string | null;
+    /**
+     * Updated At
+     */
+    updated_at?: string | null;
+};
+
+/**
+ * TagGroupAnd
+ *
+ * Compound AND group: all child filters must match.
+ */
+export type TagGroupAnd = {
+    /**
+     * And
+     */
+    and: Array<TagGroupLeaf | TagGroupAnd | TagGroupOr | TagGroupNot>;
+};
+
+/**
+ * TagGroupLeaf
+ *
+ * A leaf tag filter: matches memories by tag list and match mode.
+ */
+export type TagGroupLeaf = {
+    /**
+     * Tags
+     */
+    tags: Array<string>;
+    /**
+     * Match
+     */
+    match?: 'any' | 'all' | 'any_strict' | 'all_strict';
+};
+
+/**
+ * TagGroupNot
+ *
+ * Compound NOT group: child filter must NOT match.
+ */
+export type TagGroupNot = {
+    /**
+     * Not
+     */
+    not: TagGroupLeaf | TagGroupAnd | TagGroupOr | TagGroupNot;
+};
+
+/**
+ * TagGroupOr
+ *
+ * Compound OR group: at least one child filter must match.
+ */
+export type TagGroupOr = {
+    /**
+     * Or
+     */
+    or: Array<TagGroupLeaf | TagGroupAnd | TagGroupOr | TagGroupNot>;
 };
 
 /**
  * TemplateResponse
  *
- * Full template details.
+ * Installed template, surfaced over the API.
  */
 export type TemplateResponse = {
     /**
@@ -923,227 +1043,65 @@ export type TemplateResponse = {
      */
     id: string;
     /**
-     * Scope
+     * Name
      */
-    scope: string;
+    name: string;
+    /**
+     * Description
+     */
+    description: string | null;
+    /**
+     * Category
+     */
+    category: string | null;
+    /**
+     * Integrations
+     */
+    integrations: Array<string>;
+    /**
+     * Tags
+     */
+    tags: Array<string>;
+    scope: TemplateScope;
     /**
      * Owner
      */
-    owner: string;
+    owner: string | null;
     /**
      * Source Name
      */
-    source_name: string;
+    source_name: string | null;
+    source_scope: TemplateScope | null;
     /**
-     * Schema Version
+     * Source Owner
      */
-    schema_version: number;
-    /**
-     * Min Hindclaw Version
-     */
-    min_hindclaw_version: string;
-    /**
-     * Min Hindsight Version
-     */
-    min_hindsight_version: string;
-    /**
-     * Version
-     */
-    version: string;
-    /**
-     * Source Url
-     */
-    source_url: string;
+    source_owner: string | null;
     /**
      * Source Revision
      */
-    source_revision: string;
+    source_revision: string | null;
     /**
-     * Description
+     * Installed At
      */
-    description: string;
+    installed_at: string;
     /**
-     * Author
+     * Updated At
      */
-    author: string;
+    updated_at: string;
     /**
-     * Tags
+     * Manifest
      */
-    tags: Array<string>;
-    /**
-     * Retain Mission
-     */
-    retain_mission: string;
-    /**
-     * Reflect Mission
-     */
-    reflect_mission: string;
-    /**
-     * Observations Mission
-     */
-    observations_mission: string;
-    /**
-     * Retain Extraction Mode
-     */
-    retain_extraction_mode: string;
-    /**
-     * Retain Custom Instructions
-     */
-    retain_custom_instructions: string;
-    /**
-     * Retain Chunk Size
-     */
-    retain_chunk_size: number;
-    /**
-     * Retain Default Strategy
-     */
-    retain_default_strategy: string;
-    /**
-     * Retain Strategies
-     */
-    retain_strategies: {
+    manifest: {
         [key: string]: unknown;
     };
-    /**
-     * Entity Labels
-     */
-    entity_labels: Array<{
-        [key: string]: unknown;
-    }>;
-    /**
-     * Entities Allow Free Form
-     */
-    entities_allow_free_form: boolean;
-    /**
-     * Enable Observations
-     */
-    enable_observations: boolean;
-    /**
-     * Consolidation Llm Batch Size
-     */
-    consolidation_llm_batch_size: number;
-    /**
-     * Consolidation Source Facts Max Tokens
-     */
-    consolidation_source_facts_max_tokens: number;
-    /**
-     * Consolidation Source Facts Max Tokens Per Observation
-     */
-    consolidation_source_facts_max_tokens_per_observation: number;
-    /**
-     * Disposition Skepticism
-     */
-    disposition_skepticism: number;
-    /**
-     * Disposition Literalism
-     */
-    disposition_literalism: number;
-    /**
-     * Disposition Empathy
-     */
-    disposition_empathy: number;
-    /**
-     * Directive Seeds
-     */
-    directive_seeds: Array<{
-        [key: string]: unknown;
-    }>;
-    /**
-     * Mental Model Seeds
-     */
-    mental_model_seeds: Array<{
-        [key: string]: unknown;
-    }>;
-    /**
-     * Created At
-     */
-    created_at: string;
-    /**
-     * Updated At
-     */
-    updated_at: string;
 };
 
 /**
- * TemplateSummaryResponse
+ * TemplateScope
  *
- * Summary of a template for list endpoints.
+ * Template visibility scope.
  */
-export type TemplateSummaryResponse = {
-    /**
-     * Id
-     */
-    id: string;
-    /**
-     * Scope
-     */
-    scope: string;
-    /**
-     * Source Name
-     */
-    source_name: string;
-    /**
-     * Version
-     */
-    version: string;
-    /**
-     * Description
-     */
-    description: string;
-    /**
-     * Author
-     */
-    author: string;
-    /**
-     * Tags
-     */
-    tags: Array<string>;
-    /**
-     * Retain Extraction Mode
-     */
-    retain_extraction_mode: string;
-    /**
-     * Disposition Skepticism
-     */
-    disposition_skepticism: number;
-    /**
-     * Disposition Literalism
-     */
-    disposition_literalism: number;
-    /**
-     * Disposition Empathy
-     */
-    disposition_empathy: number;
-    /**
-     * Created At
-     */
-    created_at: string;
-    /**
-     * Updated At
-     */
-    updated_at: string;
-};
-
-/**
- * TemplateUpdateResponse
- *
- * Response for template update from marketplace.
- */
-export type TemplateUpdateResponse = {
-    /**
-     * Updated
-     */
-    updated: boolean;
-    /**
-     * Previous Version
-     */
-    previous_version: string;
-    /**
-     * New Version
-     */
-    new_version: string;
-    template?: TemplateResponse;
-};
+export type TemplateScope = 'server' | 'personal';
 
 /**
  * UpdateGroupRequest
@@ -1152,7 +1110,7 @@ export type UpdateGroupRequest = {
     /**
      * Display Name
      */
-    display_name?: string;
+    display_name?: string | null;
 };
 
 /**
@@ -1164,13 +1122,13 @@ export type UpdatePolicyRequest = {
     /**
      * Display Name
      */
-    display_name?: string;
+    display_name?: string | null;
     /**
      * Document
      */
     document?: {
         [key: string]: unknown;
-    };
+    } | null;
 };
 
 /**
@@ -1199,125 +1157,34 @@ export type UpdateServiceAccountRequest = {
     /**
      * Display Name
      */
-    display_name?: string;
+    display_name?: string | null;
     /**
      * Scoping Policy Id
      */
-    scoping_policy_id?: string;
+    scoping_policy_id?: string | null;
     /**
      * Is Active
      */
-    is_active?: boolean;
+    is_active?: boolean | null;
 };
 
 /**
- * UpdateTemplateRequest
- *
- * Request to update an existing template. All fields optional.
- *
- * Note: cross-field validation (e.g. custom mode requires custom instructions)
- * cannot be fully checked here because this is a partial update. The endpoint
- * must merge with the existing record and validate the final state.
+ * UpdateTemplateResponse
  */
-export type UpdateTemplateRequest = {
+export type UpdateTemplateResponse = {
     /**
-     * Description
+     * Updated
      */
-    description?: string;
+    updated: boolean;
     /**
-     * Author
+     * Previous Revision
      */
-    author?: string;
+    previous_revision: string | null;
     /**
-     * Tags
+     * New Revision
      */
-    tags?: Array<string>;
-    /**
-     * Min Hindclaw Version
-     */
-    min_hindclaw_version?: string;
-    /**
-     * Min Hindsight Version
-     */
-    min_hindsight_version?: string;
-    /**
-     * Retain Mission
-     */
-    retain_mission?: string;
-    /**
-     * Reflect Mission
-     */
-    reflect_mission?: string;
-    /**
-     * Observations Mission
-     */
-    observations_mission?: string;
-    /**
-     * Retain Extraction Mode
-     */
-    retain_extraction_mode?: string;
-    /**
-     * Retain Custom Instructions
-     */
-    retain_custom_instructions?: string;
-    /**
-     * Retain Chunk Size
-     */
-    retain_chunk_size?: number;
-    /**
-     * Retain Default Strategy
-     */
-    retain_default_strategy?: string;
-    /**
-     * Retain Strategies
-     */
-    retain_strategies?: {
-        [key: string]: unknown;
-    };
-    /**
-     * Entity Labels
-     */
-    entity_labels?: Array<EntityLabel>;
-    /**
-     * Entities Allow Free Form
-     */
-    entities_allow_free_form?: boolean;
-    /**
-     * Enable Observations
-     */
-    enable_observations?: boolean;
-    /**
-     * Consolidation Llm Batch Size
-     */
-    consolidation_llm_batch_size?: number;
-    /**
-     * Consolidation Source Facts Max Tokens
-     */
-    consolidation_source_facts_max_tokens?: number;
-    /**
-     * Consolidation Source Facts Max Tokens Per Observation
-     */
-    consolidation_source_facts_max_tokens_per_observation?: number;
-    /**
-     * Disposition Skepticism
-     */
-    disposition_skepticism?: number;
-    /**
-     * Disposition Literalism
-     */
-    disposition_literalism?: number;
-    /**
-     * Disposition Empathy
-     */
-    disposition_empathy?: number;
-    /**
-     * Directive Seeds
-     */
-    directive_seeds?: Array<DirectiveSeed>;
-    /**
-     * Mental Model Seeds
-     */
-    mental_model_seeds?: Array<MentalModelSeed>;
+    new_revision: string | null;
+    template: TemplateResponse;
 };
 
 /**
@@ -1327,15 +1194,15 @@ export type UpdateUserRequest = {
     /**
      * Display Name
      */
-    display_name?: string;
+    display_name?: string | null;
     /**
      * Email
      */
-    email?: string;
+    email?: string | null;
     /**
      * Is Active
      */
-    is_active?: boolean;
+    is_active?: boolean | null;
 };
 
 /**
@@ -1369,7 +1236,7 @@ export type UserResponse = {
     /**
      * Email
      */
-    email?: string;
+    email?: string | null;
     /**
      * Is Active
      */
@@ -2585,179 +2452,6 @@ export type DeleteMyTemplateSourceResponses = {
 
 export type DeleteMyTemplateSourceResponse = DeleteMyTemplateSourceResponses[keyof DeleteMyTemplateSourceResponses];
 
-export type ListMyTemplatesData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/ext/hindclaw/me/templates';
-};
-
-export type ListMyTemplatesResponses = {
-    /**
-     * Response List My Templates
-     *
-     * Successful Response
-     */
-    200: Array<TemplateSummaryResponse>;
-};
-
-export type ListMyTemplatesResponse = ListMyTemplatesResponses[keyof ListMyTemplatesResponses];
-
-export type CreateMyTemplateData = {
-    body: CreateTemplateRequest;
-    path?: never;
-    query?: never;
-    url: '/ext/hindclaw/me/templates';
-};
-
-export type CreateMyTemplateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type CreateMyTemplateError = CreateMyTemplateErrors[keyof CreateMyTemplateErrors];
-
-export type CreateMyTemplateResponses = {
-    /**
-     * Successful Response
-     */
-    201: TemplateResponse;
-};
-
-export type CreateMyTemplateResponse = CreateMyTemplateResponses[keyof CreateMyTemplateResponses];
-
-export type InstallMyTemplateData = {
-    body: InstallTemplateRequest;
-    path?: never;
-    query?: never;
-    url: '/ext/hindclaw/me/templates/install';
-};
-
-export type InstallMyTemplateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type InstallMyTemplateError = InstallMyTemplateErrors[keyof InstallMyTemplateErrors];
-
-export type InstallMyTemplateResponses = {
-    /**
-     * Successful Response
-     */
-    201: TemplateResponse;
-};
-
-export type InstallMyTemplateResponse = InstallMyTemplateResponses[keyof InstallMyTemplateResponses];
-
-export type DeleteMyTemplateData = {
-    body?: never;
-    path: {
-        /**
-         * Name
-         */
-        name: string;
-    };
-    query?: {
-        /**
-         * Source
-         */
-        source?: string | null;
-    };
-    url: '/ext/hindclaw/me/templates/{name}';
-};
-
-export type DeleteMyTemplateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type DeleteMyTemplateError = DeleteMyTemplateErrors[keyof DeleteMyTemplateErrors];
-
-export type DeleteMyTemplateResponses = {
-    /**
-     * Successful Response
-     */
-    204: void;
-};
-
-export type DeleteMyTemplateResponse = DeleteMyTemplateResponses[keyof DeleteMyTemplateResponses];
-
-export type GetMyTemplateData = {
-    body?: never;
-    path: {
-        /**
-         * Name
-         */
-        name: string;
-    };
-    query?: {
-        /**
-         * Source
-         */
-        source?: string | null;
-    };
-    url: '/ext/hindclaw/me/templates/{name}';
-};
-
-export type GetMyTemplateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetMyTemplateError = GetMyTemplateErrors[keyof GetMyTemplateErrors];
-
-export type GetMyTemplateResponses = {
-    /**
-     * Successful Response
-     */
-    200: TemplateResponse;
-};
-
-export type GetMyTemplateResponse = GetMyTemplateResponses[keyof GetMyTemplateResponses];
-
-export type UpdateMyTemplateData = {
-    body: UpdateTemplateRequest;
-    path: {
-        /**
-         * Name
-         */
-        name: string;
-    };
-    query?: {
-        /**
-         * Source
-         */
-        source?: string | null;
-    };
-    url: '/ext/hindclaw/me/templates/{name}';
-};
-
-export type UpdateMyTemplateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type UpdateMyTemplateError = UpdateMyTemplateErrors[keyof UpdateMyTemplateErrors];
-
-export type UpdateMyTemplateResponses = {
-    /**
-     * Successful Response
-     */
-    200: TemplateResponse;
-};
-
-export type UpdateMyTemplateResponse = UpdateMyTemplateResponses[keyof UpdateMyTemplateResponses];
-
 export type ListServiceAccountsData = {
     body?: never;
     path?: never;
@@ -3121,190 +2815,6 @@ export type DebugResolveResponses = {
     200: unknown;
 };
 
-export type ListTemplatesData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Scope
-         */
-        scope?: string | null;
-    };
-    url: '/ext/hindclaw/templates';
-};
-
-export type ListTemplatesErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ListTemplatesError = ListTemplatesErrors[keyof ListTemplatesErrors];
-
-export type ListTemplatesResponses = {
-    /**
-     * Response List Templates
-     *
-     * Successful Response
-     */
-    200: Array<TemplateSummaryResponse>;
-};
-
-export type ListTemplatesResponse = ListTemplatesResponses[keyof ListTemplatesResponses];
-
-export type CreateTemplateData = {
-    body: CreateTemplateRequest;
-    path?: never;
-    query?: never;
-    url: '/ext/hindclaw/templates';
-};
-
-export type CreateTemplateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type CreateTemplateError = CreateTemplateErrors[keyof CreateTemplateErrors];
-
-export type CreateTemplateResponses = {
-    /**
-     * Successful Response
-     */
-    201: TemplateResponse;
-};
-
-export type CreateTemplateResponse = CreateTemplateResponses[keyof CreateTemplateResponses];
-
-export type DeleteTemplateData = {
-    body?: never;
-    path: {
-        /**
-         * Scope
-         */
-        scope: string;
-        /**
-         * Name
-         */
-        name: string;
-    };
-    query?: never;
-    url: '/ext/hindclaw/templates/{scope}/{name}';
-};
-
-export type DeleteTemplateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type DeleteTemplateError = DeleteTemplateErrors[keyof DeleteTemplateErrors];
-
-export type DeleteTemplateResponses = {
-    /**
-     * Successful Response
-     */
-    204: void;
-};
-
-export type DeleteTemplateResponse = DeleteTemplateResponses[keyof DeleteTemplateResponses];
-
-export type GetTemplateData = {
-    body?: never;
-    path: {
-        /**
-         * Scope
-         */
-        scope: string;
-        /**
-         * Name
-         */
-        name: string;
-    };
-    query?: never;
-    url: '/ext/hindclaw/templates/{scope}/{name}';
-};
-
-export type GetTemplateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type GetTemplateError = GetTemplateErrors[keyof GetTemplateErrors];
-
-export type GetTemplateResponses = {
-    /**
-     * Successful Response
-     */
-    200: TemplateResponse;
-};
-
-export type GetTemplateResponse = GetTemplateResponses[keyof GetTemplateResponses];
-
-export type UpdateTemplateData = {
-    body: UpdateTemplateRequest;
-    path: {
-        /**
-         * Scope
-         */
-        scope: string;
-        /**
-         * Name
-         */
-        name: string;
-    };
-    query?: never;
-    url: '/ext/hindclaw/templates/{scope}/{name}';
-};
-
-export type UpdateTemplateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type UpdateTemplateError = UpdateTemplateErrors[keyof UpdateTemplateErrors];
-
-export type UpdateTemplateResponses = {
-    /**
-     * Successful Response
-     */
-    200: TemplateResponse;
-};
-
-export type UpdateTemplateResponse = UpdateTemplateResponses[keyof UpdateTemplateResponses];
-
-export type CreateBankFromTemplateData = {
-    body: CreateBankFromTemplateRequest;
-    path?: never;
-    query?: never;
-    url: '/ext/hindclaw/banks';
-};
-
-export type CreateBankFromTemplateErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type CreateBankFromTemplateError = CreateBankFromTemplateErrors[keyof CreateBankFromTemplateErrors];
-
-export type CreateBankFromTemplateResponses = {
-    /**
-     * Successful Response
-     */
-    201: BankCreationResponse;
-};
-
-export type CreateBankFromTemplateResponse = CreateBankFromTemplateResponses[keyof CreateBankFromTemplateResponses];
-
 export type ListTemplateSourcesData = {
     body?: never;
     path?: never;
@@ -3378,109 +2888,515 @@ export type DeleteTemplateSourceResponses = {
 
 export type DeleteTemplateSourceResponse = DeleteTemplateSourceResponses[keyof DeleteTemplateSourceResponses];
 
-export type MarketplaceSearchData = {
+export type ListMyTemplatesData = {
     body?: never;
     path?: never;
     query?: {
         /**
-         * Q
-         *
-         * Search query
+         * Category
          */
-        q?: string | null;
-        /**
-         * Source
-         *
-         * Filter by source name
-         */
-        source?: string | null;
+        category?: string | null;
         /**
          * Tag
-         *
-         * Filter by tag
          */
         tag?: string | null;
     };
-    url: '/ext/hindclaw/marketplace/search';
+    url: '/ext/hindclaw/me/templates';
 };
 
-export type MarketplaceSearchErrors = {
+export type ListMyTemplatesErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type MarketplaceSearchError = MarketplaceSearchErrors[keyof MarketplaceSearchErrors];
+export type ListMyTemplatesError = ListMyTemplatesErrors[keyof ListMyTemplatesErrors];
 
-export type MarketplaceSearchResponses = {
+export type ListMyTemplatesResponses = {
     /**
      * Successful Response
      */
-    200: MarketplaceSearchResponse;
+    200: ListTemplatesResponse;
 };
 
-export type MarketplaceSearchResponse2 = MarketplaceSearchResponses[keyof MarketplaceSearchResponses];
+export type ListMyTemplatesResponse = ListMyTemplatesResponses[keyof ListMyTemplatesResponses];
 
-export type InstallTemplateData = {
-    body: InstallTemplateRequest;
+export type CreateMyTemplateData = {
+    body: CreateTemplateRequest;
     path?: never;
     query?: never;
-    url: '/ext/hindclaw/templates/install';
+    url: '/ext/hindclaw/me/templates';
 };
 
-export type InstallTemplateErrors = {
+export type CreateMyTemplateErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type InstallTemplateError = InstallTemplateErrors[keyof InstallTemplateErrors];
+export type CreateMyTemplateError = CreateMyTemplateErrors[keyof CreateMyTemplateErrors];
 
-export type InstallTemplateResponses = {
+export type CreateMyTemplateResponses = {
     /**
      * Successful Response
      */
-    201: TemplateResponse;
+    200: TemplateResponse;
 };
 
-export type InstallTemplateResponse = InstallTemplateResponses[keyof InstallTemplateResponses];
+export type CreateMyTemplateResponse = CreateMyTemplateResponses[keyof CreateMyTemplateResponses];
 
-export type UpdateTemplateFromMarketplaceData = {
+export type DeleteMyTemplateData = {
     body?: never;
     path: {
         /**
-         * Scope
+         * Template Id
          */
-        scope: string;
-        /**
-         * Source
-         */
-        source: string;
-        /**
-         * Name
-         */
-        name: string;
+        template_id: string;
     };
     query?: never;
-    url: '/ext/hindclaw/templates/{scope}/{source}/{name}/update';
+    url: '/ext/hindclaw/me/templates/{template_id}';
 };
 
-export type UpdateTemplateFromMarketplaceErrors = {
+export type DeleteMyTemplateErrors = {
     /**
      * Validation Error
      */
     422: HttpValidationError;
 };
 
-export type UpdateTemplateFromMarketplaceError = UpdateTemplateFromMarketplaceErrors[keyof UpdateTemplateFromMarketplaceErrors];
+export type DeleteMyTemplateError = DeleteMyTemplateErrors[keyof DeleteMyTemplateErrors];
 
-export type UpdateTemplateFromMarketplaceResponses = {
+export type DeleteMyTemplateResponses = {
     /**
      * Successful Response
      */
-    200: TemplateUpdateResponse;
+    204: void;
 };
 
-export type UpdateTemplateFromMarketplaceResponse = UpdateTemplateFromMarketplaceResponses[keyof UpdateTemplateFromMarketplaceResponses];
+export type DeleteMyTemplateResponse = DeleteMyTemplateResponses[keyof DeleteMyTemplateResponses];
+
+export type GetMyTemplateData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/me/templates/{template_id}';
+};
+
+export type GetMyTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetMyTemplateError = GetMyTemplateErrors[keyof GetMyTemplateErrors];
+
+export type GetMyTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: TemplateResponse;
+};
+
+export type GetMyTemplateResponse = GetMyTemplateResponses[keyof GetMyTemplateResponses];
+
+export type PatchMyTemplateData = {
+    body: PatchTemplateRequest;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/me/templates/{template_id}';
+};
+
+export type PatchMyTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PatchMyTemplateError = PatchMyTemplateErrors[keyof PatchMyTemplateErrors];
+
+export type PatchMyTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: TemplateResponse;
+};
+
+export type PatchMyTemplateResponse = PatchMyTemplateResponses[keyof PatchMyTemplateResponses];
+
+export type InstallMyTemplateData = {
+    body: InstallTemplateRequest;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/me/templates/{template_id}/install';
+};
+
+export type InstallMyTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type InstallMyTemplateError = InstallMyTemplateErrors[keyof InstallMyTemplateErrors];
+
+export type InstallMyTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: TemplateResponse;
+};
+
+export type InstallMyTemplateResponse = InstallMyTemplateResponses[keyof InstallMyTemplateResponses];
+
+export type UpdateMyTemplateFromSourceData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: {
+        /**
+         * Force
+         */
+        force?: boolean;
+    };
+    url: '/ext/hindclaw/me/templates/{template_id}/update';
+};
+
+export type UpdateMyTemplateFromSourceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateMyTemplateFromSourceError = UpdateMyTemplateFromSourceErrors[keyof UpdateMyTemplateFromSourceErrors];
+
+export type UpdateMyTemplateFromSourceResponses = {
+    /**
+     * Successful Response
+     */
+    200: UpdateTemplateResponse;
+};
+
+export type UpdateMyTemplateFromSourceResponse = UpdateMyTemplateFromSourceResponses[keyof UpdateMyTemplateFromSourceResponses];
+
+export type CheckMyTemplateUpdateData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/me/templates/{template_id}/check-update';
+};
+
+export type CheckMyTemplateUpdateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CheckMyTemplateUpdateError = CheckMyTemplateUpdateErrors[keyof CheckMyTemplateUpdateErrors];
+
+export type CheckMyTemplateUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: CheckUpdateResponse;
+};
+
+export type CheckMyTemplateUpdateResponse = CheckMyTemplateUpdateResponses[keyof CheckMyTemplateUpdateResponses];
+
+export type ListAdminTemplatesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Category
+         */
+        category?: string | null;
+        /**
+         * Tag
+         */
+        tag?: string | null;
+    };
+    url: '/ext/hindclaw/admin/templates';
+};
+
+export type ListAdminTemplatesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListAdminTemplatesError = ListAdminTemplatesErrors[keyof ListAdminTemplatesErrors];
+
+export type ListAdminTemplatesResponses = {
+    /**
+     * Successful Response
+     */
+    200: ListTemplatesResponse;
+};
+
+export type ListAdminTemplatesResponse = ListAdminTemplatesResponses[keyof ListAdminTemplatesResponses];
+
+export type CreateAdminTemplateData = {
+    body: CreateTemplateRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/admin/templates';
+};
+
+export type CreateAdminTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateAdminTemplateError = CreateAdminTemplateErrors[keyof CreateAdminTemplateErrors];
+
+export type CreateAdminTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: TemplateResponse;
+};
+
+export type CreateAdminTemplateResponse = CreateAdminTemplateResponses[keyof CreateAdminTemplateResponses];
+
+export type DeleteAdminTemplateData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/admin/templates/{template_id}';
+};
+
+export type DeleteAdminTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteAdminTemplateError = DeleteAdminTemplateErrors[keyof DeleteAdminTemplateErrors];
+
+export type DeleteAdminTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    204: void;
+};
+
+export type DeleteAdminTemplateResponse = DeleteAdminTemplateResponses[keyof DeleteAdminTemplateResponses];
+
+export type GetAdminTemplateData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/admin/templates/{template_id}';
+};
+
+export type GetAdminTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAdminTemplateError = GetAdminTemplateErrors[keyof GetAdminTemplateErrors];
+
+export type GetAdminTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: TemplateResponse;
+};
+
+export type GetAdminTemplateResponse = GetAdminTemplateResponses[keyof GetAdminTemplateResponses];
+
+export type PatchAdminTemplateData = {
+    body: PatchTemplateRequest;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/admin/templates/{template_id}';
+};
+
+export type PatchAdminTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PatchAdminTemplateError = PatchAdminTemplateErrors[keyof PatchAdminTemplateErrors];
+
+export type PatchAdminTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: TemplateResponse;
+};
+
+export type PatchAdminTemplateResponse = PatchAdminTemplateResponses[keyof PatchAdminTemplateResponses];
+
+export type InstallAdminTemplateData = {
+    body: InstallTemplateRequest;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/admin/templates/{template_id}/install';
+};
+
+export type InstallAdminTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type InstallAdminTemplateError = InstallAdminTemplateErrors[keyof InstallAdminTemplateErrors];
+
+export type InstallAdminTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: TemplateResponse;
+};
+
+export type InstallAdminTemplateResponse = InstallAdminTemplateResponses[keyof InstallAdminTemplateResponses];
+
+export type UpdateAdminTemplateFromSourceData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: {
+        /**
+         * Force
+         */
+        force?: boolean;
+    };
+    url: '/ext/hindclaw/admin/templates/{template_id}/update';
+};
+
+export type UpdateAdminTemplateFromSourceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateAdminTemplateFromSourceError = UpdateAdminTemplateFromSourceErrors[keyof UpdateAdminTemplateFromSourceErrors];
+
+export type UpdateAdminTemplateFromSourceResponses = {
+    /**
+     * Successful Response
+     */
+    200: UpdateTemplateResponse;
+};
+
+export type UpdateAdminTemplateFromSourceResponse = UpdateAdminTemplateFromSourceResponses[keyof UpdateAdminTemplateFromSourceResponses];
+
+export type CheckAdminTemplateUpdateData = {
+    body?: never;
+    path: {
+        /**
+         * Template Id
+         */
+        template_id: string;
+    };
+    query?: never;
+    url: '/ext/hindclaw/admin/templates/{template_id}/check-update';
+};
+
+export type CheckAdminTemplateUpdateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CheckAdminTemplateUpdateError = CheckAdminTemplateUpdateErrors[keyof CheckAdminTemplateUpdateErrors];
+
+export type CheckAdminTemplateUpdateResponses = {
+    /**
+     * Successful Response
+     */
+    200: CheckUpdateResponse;
+};
+
+export type CheckAdminTemplateUpdateResponse = CheckAdminTemplateUpdateResponses[keyof CheckAdminTemplateUpdateResponses];
+
+export type CreateBankFromTemplateData = {
+    body: CreateBankFromTemplateRequest;
+    path?: never;
+    query?: never;
+    url: '/ext/hindclaw/banks';
+};
+
+export type CreateBankFromTemplateErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateBankFromTemplateError = CreateBankFromTemplateErrors[keyof CreateBankFromTemplateErrors];
+
+export type CreateBankFromTemplateResponses = {
+    /**
+     * Successful Response
+     */
+    200: BankCreationResponse;
+};
+
+export type CreateBankFromTemplateResponse = CreateBankFromTemplateResponses[keyof CreateBankFromTemplateResponses];

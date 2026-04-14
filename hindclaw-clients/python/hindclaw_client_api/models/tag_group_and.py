@@ -17,21 +17,17 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
-class MentalModelSeedResult(BaseModel):
+class TagGroupAnd(BaseModel):
     """
-    Result of creating a single mental model from a template seed.
+    Compound AND group: all child filters must match.
     """ # noqa: E501
-    name: StrictStr
-    created: StrictBool
-    mental_model_id: Optional[StrictStr] = None
-    operation_id: Optional[StrictStr] = None
-    error: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["name", "created", "mental_model_id", "operation_id", "error"]
+    var_and: List[MentalModelTriggerTagGroupsInner] = Field(alias="and")
+    __properties: ClassVar[List[str]] = ["and"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -51,7 +47,7 @@ class MentalModelSeedResult(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of MentalModelSeedResult from a JSON string"""
+        """Create an instance of TagGroupAnd from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,11 +68,18 @@ class MentalModelSeedResult(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in var_and (list)
+        _items = []
+        if self.var_and:
+            for _item_var_and in self.var_and:
+                if _item_var_and:
+                    _items.append(_item_var_and.to_dict())
+            _dict['and'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of MentalModelSeedResult from a dict"""
+        """Create an instance of TagGroupAnd from a dict"""
         if obj is None:
             return None
 
@@ -84,12 +87,11 @@ class MentalModelSeedResult(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "created": obj.get("created"),
-            "mental_model_id": obj.get("mental_model_id"),
-            "operation_id": obj.get("operation_id"),
-            "error": obj.get("error")
+            "and": [MentalModelTriggerTagGroupsInner.from_dict(_item) for _item in obj["and"]] if obj.get("and") is not None else None
         })
         return _obj
 
+from hindclaw_client_api.models.mental_model_trigger_tag_groups_inner import MentalModelTriggerTagGroupsInner
+# TODO: Rewrite to not use raise_errors
+TagGroupAnd.model_rebuild(raise_errors=False)
 

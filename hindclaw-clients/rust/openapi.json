@@ -1540,6 +1540,246 @@
         }
       }
     },
+    "/ext/hindclaw/me": {
+      "get": {
+        "summary": "Get My Profile",
+        "description": "Return the caller's own profile including channels.\n\nArgs:\n    _auth: Authenticated principal (user only, SA rejected).\n\nReturns:\n    MeProfileResponse with user record and channel list.",
+        "operationId": "get_my_profile",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeProfileResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/me/api-keys": {
+      "get": {
+        "summary": "List My Api Keys",
+        "description": "List the caller's own API keys (masked).\n\nArgs:\n    _auth: Authenticated principal (user only, SA rejected).\n\nReturns:\n    List of ApiKeyResponse with masked key prefixes.",
+        "operationId": "list_my_api_keys",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List My Api Keys"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create My Api Key",
+        "description": "Create a new API key for the caller.\n\nArgs:\n    req: CreateApiKeyRequest with optional description.\n    _auth: Authenticated principal (user only, SA rejected).\n\nReturns:\n    ApiKeyCreateResponse with full api_key shown once.",
+        "operationId": "create_my_api_key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApiKeyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/me/api-keys/{key_id}": {
+      "delete": {
+        "summary": "Delete My Api Key",
+        "description": "Delete one of the caller's own API keys.\n\nScoped to the caller's user_id \u2014 cannot delete other users' keys.\n\nArgs:\n    key_id: API key record ID.\n    _auth: Authenticated principal (user only, SA rejected).",
+        "operationId": "delete_my_api_key",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/me/template-sources": {
+      "get": {
+        "summary": "List My Template Sources",
+        "description": "List the caller's personal template sources.\n\nScoped to the caller's user_id \u2014 only returns sources with\nscope='personal' owned by the authenticated principal.\n\nArgs:\n    _auth: Authenticated principal (users and SAs allowed).\n\nReturns:\n    List of SourceResponse for the caller's personal sources.",
+        "operationId": "list_my_template_sources",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SourceResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List My Template Sources"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create My Template Source",
+        "description": "Register a personal template source for the caller.\n\nSource is created with scope='personal' and owner set to the\ncaller's user_id. Name is derived from the URL unless an alias\nis provided.\n\nArgs:\n    request: CreateSourceRequest with url and optional alias/auth_token.\n    _auth: Authenticated principal (users and SAs allowed).\n\nReturns:\n    SourceResponse for the newly created personal source.\n\nRaises:\n    HTTPException: 422 if the source name cannot be derived from the URL.\n    HTTPException: 409 if a personal source with that name already exists.",
+        "operationId": "create_my_template_source",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ext/hindclaw/me/template-sources/{name}": {
+      "delete": {
+        "summary": "Delete My Template Source",
+        "description": "Remove a personal template source owned by the caller.\n\nOnly deletes sources with scope='personal' that belong to the\ncaller \u2014 cannot affect other users' sources or server-scope sources.\n\nArgs:\n    name: Template source name to delete.\n    _auth: Authenticated principal (users and SAs allowed).\n\nRaises:\n    HTTPException: 404 if the source is not found in the caller's\n        personal sources.",
+        "operationId": "delete_my_template_source",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/ext/hindclaw/service-accounts": {
       "get": {
         "summary": "List Service Accounts",
@@ -2117,309 +2357,6 @@
         }
       }
     },
-    "/ext/hindclaw/templates": {
-      "get": {
-        "summary": "List Templates",
-        "description": "List installed templates filtered by access.\n\nWhen scope is None, returns all server templates plus the caller's\npersonal templates. When scope is specified, returns only that scope.\n\nArgs:\n    scope: Optional scope filter ('server' or 'personal').\n    principal: Authenticated principal from IAM.\n\nReturns:\n    List of template summaries.",
-        "operationId": "list_templates",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "scope",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Scope"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TemplateSummaryResponse"
-                  },
-                  "title": "Response List Templates"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Create Template",
-        "description": "Create a custom template (no marketplace source).\n\nArgs:\n    request: Template creation payload.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    The created template.\n\nRaises:\n    HTTPException: 409 if template already exists.",
-        "operationId": "create_template",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTemplateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TemplateResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/ext/hindclaw/templates/{scope}/{name}": {
-      "get": {
-        "summary": "Get Template Endpoint",
-        "description": "Get a template by scope and name.\n\nFinds any template matching (scope, name) regardless of source.\nThis covers both custom templates and marketplace-installed ones.\n\nArgs:\n    scope: Template scope ('server' or 'personal').\n    name: Template name.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    Full template details.\n\nRaises:\n    HTTPException: 404 if template not found.",
-        "operationId": "get_template",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "scope",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Scope"
-            }
-          },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Name"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TemplateResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "summary": "Update Template Endpoint",
-        "description": "Update a custom template.\n\nPerforms cross-field validation when extraction mode or custom\ninstructions are part of the update by merging with the existing\nrecord before applying.\n\nArgs:\n    scope: Template scope ('server' or 'personal').\n    name: Template name.\n    request: Partial update payload.\n    principal: Authenticated principal from IAM.\n\nReturns:\n    The updated template.\n\nRaises:\n    HTTPException: 404 if template not found, 422 if cross-field\n        validation fails.",
-        "operationId": "update_template",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "scope",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Scope"
-            }
-          },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Name"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTemplateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TemplateResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete Template Endpoint",
-        "description": "Delete a custom template.\n\nArgs:\n    scope: Template scope ('server' or 'personal').\n    name: Template name.\n    principal: Authenticated principal from IAM.\n\nRaises:\n    HTTPException: 404 if template not found.",
-        "operationId": "delete_template",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "scope",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Scope"
-            }
-          },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Name"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/ext/hindclaw/banks": {
-      "post": {
-        "summary": "Create Bank From Template",
-        "description": "Create a bank from an installed template.",
-        "operationId": "create_bank_from_template",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateBankFromTemplateRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BankCreationResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
     "/ext/hindclaw/admin/template-sources": {
       "get": {
         "summary": "List Template Sources",
@@ -2528,11 +2465,13 @@
         }
       }
     },
-    "/ext/hindclaw/marketplace/search": {
+    "/ext/hindclaw/me/templates": {
       "get": {
-        "summary": "Marketplace Search",
-        "description": "Search marketplace templates across configured sources.",
-        "operationId": "marketplace_search",
+        "tags": [
+          "Templates"
+        ],
+        "summary": "List installed personal templates",
+        "operationId": "list_my_templates",
         "security": [
           {
             "HTTPBearer": []
@@ -2540,7 +2479,7 @@
         ],
         "parameters": [
           {
-            "name": "q",
+            "name": "category",
             "in": "query",
             "required": false,
             "schema": {
@@ -2552,28 +2491,8 @@
                   "type": "null"
                 }
               ],
-              "description": "Search query",
-              "title": "Q"
-            },
-            "description": "Search query"
-          },
-          {
-            "name": "source",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Filter by source name",
-              "title": "Source"
-            },
-            "description": "Filter by source name"
+              "title": "Category"
+            }
           },
           {
             "name": "tag",
@@ -2588,10 +2507,8 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by tag",
               "title": "Tag"
-            },
-            "description": "Filter by tag"
+            }
           }
         ],
         "responses": {
@@ -2600,7 +2517,51 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MarketplaceSearchResponse"
+                  "$ref": "#/components/schemas/ListTemplatesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Create a hand-authored personal template",
+        "operationId": "create_my_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
                 }
               }
             }
@@ -2618,28 +2579,754 @@
         }
       }
     },
-    "/ext/hindclaw/templates/install": {
-      "post": {
-        "summary": "Install Template",
-        "description": "Install a template from a registered marketplace source.",
-        "operationId": "install_template",
+    "/ext/hindclaw/me/templates/{template_id}": {
+      "get": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Get an installed personal template",
+        "operationId": "get_my_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Update a hand-authored personal template",
+        "operationId": "patch_my_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Delete an installed personal template",
+        "operationId": "delete_my_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/me/templates/{template_id}/install": {
+      "post": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Install a marketplace template into the personal scope",
+        "operationId": "install_my_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/InstallTemplateRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/me/templates/{template_id}/update": {
+      "post": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Re-fetch an installed personal template from its source",
+        "operationId": "update_my_template_from_source",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Force"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/me/templates/{template_id}/check-update": {
+      "get": {
+        "tags": [
+          "Templates"
+        ],
+        "summary": "Check whether the source has a newer revision",
+        "operationId": "check_my_template_update",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/admin/templates": {
+      "get": {
+        "tags": [
+          "Templates",
+          "Admin"
+        ],
+        "summary": "List installed server-scope templates",
+        "operationId": "list_admin_templates",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tag"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListTemplatesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Templates",
+          "Admin"
+        ],
+        "summary": "Create a hand-authored server-scope template",
+        "operationId": "create_admin_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/admin/templates/{template_id}": {
+      "get": {
+        "tags": [
+          "Templates",
+          "Admin"
+        ],
+        "summary": "Get an installed server-scope template",
+        "operationId": "get_admin_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Templates",
+          "Admin"
+        ],
+        "summary": "Update a hand-authored server-scope template",
+        "operationId": "patch_admin_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Templates",
+          "Admin"
+        ],
+        "summary": "Delete an installed server-scope template",
+        "operationId": "delete_admin_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/admin/templates/{template_id}/install": {
+      "post": {
+        "tags": [
+          "Templates",
+          "Admin"
+        ],
+        "summary": "Install a marketplace template into the server scope",
+        "operationId": "install_admin_template",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/admin/templates/{template_id}/update": {
+      "post": {
+        "tags": [
+          "Templates",
+          "Admin"
+        ],
+        "summary": "Re-fetch an installed server-scope template from its source",
+        "operationId": "update_admin_template_from_source",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Force"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/admin/templates/{template_id}/check-update": {
+      "get": {
+        "tags": [
+          "Templates",
+          "Admin"
+        ],
+        "summary": "Check whether the source has a newer revision",
+        "operationId": "check_admin_template_update",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ext/hindclaw/banks": {
+      "post": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Apply an installed template to a new or existing bank",
+        "operationId": "create_bank_from_template",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBankFromTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BankCreationResponse"
                 }
               }
             }
@@ -2660,69 +3347,6 @@
             "HTTPBearer": []
           }
         ]
-      }
-    },
-    "/ext/hindclaw/templates/{scope}/{source}/{name}/update": {
-      "post": {
-        "summary": "Update Template From Marketplace",
-        "description": "Update an installed template from its marketplace source.",
-        "operationId": "update_template_from_marketplace",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "scope",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Scope"
-            }
-          },
-          {
-            "name": "source",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Source"
-            }
-          },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Name"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TemplateUpdateResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
       }
     }
   },
@@ -2770,9 +3394,15 @@
             "title": "Api Key"
           },
           "description": {
-            "title": "Description",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
           }
         },
         "type": "object",
@@ -2794,9 +3424,15 @@
             "title": "Api Key Prefix"
           },
           "description": {
-            "title": "Description",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
           }
         },
         "type": "object",
@@ -2821,30 +3457,8 @@
             "type": "boolean",
             "title": "Bank Created"
           },
-          "config_applied": {
-            "type": "boolean",
-            "title": "Config Applied"
-          },
-          "directives": {
-            "items": {
-              "$ref": "#/components/schemas/DirectiveSeedResult"
-            },
-            "type": "array",
-            "title": "Directives"
-          },
-          "mental_models": {
-            "items": {
-              "$ref": "#/components/schemas/MentalModelSeedResult"
-            },
-            "type": "array",
-            "title": "Mental Models"
-          },
-          "errors": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Errors"
+          "import_result": {
+            "$ref": "#/components/schemas/BankTemplateImportResponse"
           }
         },
         "type": "object",
@@ -2852,13 +3466,10 @@
           "bank_id",
           "template",
           "bank_created",
-          "config_applied",
-          "directives",
-          "mental_models",
-          "errors"
+          "import_result"
         ],
         "title": "BankCreationResponse",
-        "description": "Response from POST /ext/hindclaw/banks \u2014 bank creation from template."
+        "description": "Response from POST /ext/hindclaw/banks \u2014 bank creation from template.\n\nWraps upstream's ``BankTemplateImportResponse`` so clients see the\nsame counts/errors upstream reports directly."
       },
       "BankPolicyResponse": {
         "properties": {
@@ -2880,6 +3491,412 @@
         "title": "BankPolicyResponse",
         "description": "Bank policy resource."
       },
+      "BankTemplateConfig": {
+        "properties": {
+          "reflect_mission": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reflect Mission",
+            "description": "Mission/context for Reflect operations"
+          },
+          "retain_mission": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Mission",
+            "description": "Steers what gets extracted during retain"
+          },
+          "retain_extraction_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Extraction Mode",
+            "description": "Fact extraction mode: 'concise' (default), 'verbose', or 'custom'"
+          },
+          "retain_custom_instructions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Custom Instructions",
+            "description": "Custom extraction prompt (when mode='custom')"
+          },
+          "retain_chunk_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retain Chunk Size",
+            "description": "Max token size for each content chunk"
+          },
+          "enable_observations": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable Observations",
+            "description": "Toggle observation consolidation"
+          },
+          "observations_mission": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observations Mission",
+            "description": "Controls what gets synthesised"
+          },
+          "disposition_skepticism": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disposition Skepticism",
+            "description": "Skepticism trait (1-5)"
+          },
+          "disposition_literalism": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disposition Literalism",
+            "description": "Literalism trait (1-5)"
+          },
+          "disposition_empathy": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disposition Empathy",
+            "description": "Empathy trait (1-5)"
+          },
+          "entity_labels": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Labels",
+            "description": "Controlled vocabulary for entity labels"
+          },
+          "entities_allow_free_form": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entities Allow Free Form",
+            "description": "Allow entities outside the label vocabulary"
+          }
+        },
+        "type": "object",
+        "title": "BankTemplateConfig",
+        "description": "Bank configuration fields within a template manifest.\n\nOnly includes configurable (per-bank) fields. Credential fields\n(API keys, base URLs) are intentionally excluded for security."
+      },
+      "BankTemplateDirective": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name for the directive (used as match key on re-import)"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "The directive text to inject into prompts"
+          },
+          "priority": {
+            "type": "integer",
+            "title": "Priority",
+            "description": "Higher priority directives are injected first",
+            "default": 0
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "Whether this directive is active",
+            "default": true
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Tags for filtering",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "content"
+        ],
+        "title": "BankTemplateDirective",
+        "description": "A directive definition within a bank template manifest.\n\nDirectives are matched by name on re-import: existing directives\nwith the same name are updated, new ones are created."
+      },
+      "BankTemplateImportResponse": {
+        "properties": {
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id",
+            "description": "Bank that was imported into"
+          },
+          "config_applied": {
+            "type": "boolean",
+            "title": "Config Applied",
+            "description": "Whether bank config was updated"
+          },
+          "mental_models_created": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mental Models Created",
+            "description": "IDs of newly created mental models",
+            "default": []
+          },
+          "mental_models_updated": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mental Models Updated",
+            "description": "IDs of updated mental models",
+            "default": []
+          },
+          "directives_created": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Directives Created",
+            "description": "Names of newly created directives",
+            "default": []
+          },
+          "directives_updated": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Directives Updated",
+            "description": "Names of updated directives",
+            "default": []
+          },
+          "operation_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Operation Ids",
+            "description": "Operation IDs for mental model content generation (async)",
+            "default": []
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "description": "True if this was a validation-only run",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_id",
+          "config_applied"
+        ],
+        "title": "BankTemplateImportResponse",
+        "description": "Response model for the bank template import endpoint."
+      },
+      "BankTemplateManifest": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Manifest schema version (currently '1')"
+          },
+          "bank": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BankTemplateConfig"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Bank configuration to apply. Omit to leave config unchanged."
+          },
+          "mental_models": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/BankTemplateMentalModel"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mental Models",
+            "description": "Mental models to create or update (matched by id). Omit to leave unchanged."
+          },
+          "directives": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/BankTemplateDirective"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Directives",
+            "description": "Directives to create or update (matched by name). Omit to leave unchanged."
+          }
+        },
+        "type": "object",
+        "required": [
+          "version"
+        ],
+        "title": "BankTemplateManifest",
+        "description": "A bank template manifest for import/export.\n\nVersion field enables forward-compatible schema evolution: the API\nauto-upgrades older manifest versions to the current schema on import.",
+        "example": {
+          "bank": {
+            "disposition_empathy": 5,
+            "enable_observations": true,
+            "reflect_mission": "You are helping a support agent remember customer interactions.",
+            "retain_mission": "Extract customer issues, resolutions, and sentiment."
+          },
+          "directives": [
+            {
+              "content": "Always respond with empathy and understanding.",
+              "name": "Always be empathetic",
+              "priority": 10
+            }
+          ],
+          "mental_models": [
+            {
+              "id": "sentiment-overview",
+              "name": "Customer Sentiment Overview",
+              "source_query": "What is the overall sentiment trend?",
+              "trigger": {
+                "refresh_after_consolidation": true
+              }
+            }
+          ],
+          "version": "1"
+        }
+      },
+      "BankTemplateMentalModel": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Unique ID for the mental model (alphanumeric lowercase with hyphens)"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name for the mental model"
+          },
+          "source_query": {
+            "type": "string",
+            "title": "Source Query",
+            "description": "The query to run to generate content"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Tags for scoped visibility",
+            "default": []
+          },
+          "max_tokens": {
+            "type": "integer",
+            "maximum": 8192.0,
+            "minimum": 256.0,
+            "title": "Max Tokens",
+            "description": "Maximum tokens for generated content",
+            "default": 2048
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/MentalModelTrigger",
+            "description": "Trigger settings",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "source_query"
+        ],
+        "title": "BankTemplateMentalModel",
+        "description": "A mental model definition within a bank template manifest."
+      },
       "ChannelResponse": {
         "properties": {
           "provider": {
@@ -2899,12 +3916,76 @@
         "title": "ChannelResponse",
         "description": "Channel mapping returned by GET/POST endpoints."
       },
+      "CheckUpdateResponse": {
+        "properties": {
+          "has_update": {
+            "type": "boolean",
+            "title": "Has Update"
+          },
+          "current_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Revision"
+          },
+          "latest_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Revision"
+          },
+          "source_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Name"
+          },
+          "source_scope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TemplateScope"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "has_update",
+          "current_revision",
+          "latest_revision"
+        ],
+        "title": "CheckUpdateResponse"
+      },
       "CreateApiKeyRequest": {
         "properties": {
           "description": {
-            "title": "Description",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
           }
         },
         "type": "object",
@@ -2925,9 +4006,15 @@
             "title": "Template"
           },
           "name": {
-            "title": "Name",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
           }
         },
         "additionalProperties": false,
@@ -2937,7 +4024,7 @@
           "template"
         ],
         "title": "CreateBankFromTemplateRequest",
-        "description": "Request to create a bank from an installed template."
+        "description": "Body for POST /ext/hindclaw/banks."
       },
       "CreateGroupRequest": {
         "properties": {
@@ -3014,9 +4101,15 @@
       "CreateSAKeyRequest": {
         "properties": {
           "description": {
-            "title": "Description",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
           }
         },
         "type": "object",
@@ -3034,9 +4127,15 @@
             "title": "Display Name"
           },
           "scoping_policy_id": {
-            "title": "Scoping Policy Id",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoping Policy Id"
           }
         },
         "additionalProperties": false,
@@ -3063,9 +4162,15 @@
             "title": "Display Name"
           },
           "scoping_policy_id": {
-            "title": "Scoping Policy Id",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoping Policy Id"
           }
         },
         "type": "object",
@@ -3086,18 +4191,41 @@
             "description": "Marketplace repository URL"
           },
           "alias": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Alias",
-            "description": "Override auto-derived source name",
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 1,
-            "nullable": true
+            "description": "Override auto-derived source name"
           },
           "auth_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Auth Token",
-            "description": "Auth token for private repositories",
-            "type": "string",
-            "nullable": true
+            "description": "Auth token for private repositories"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
           }
         },
         "additionalProperties": false,
@@ -3116,19 +4244,39 @@
             "minLength": 1,
             "title": "Id"
           },
-          "scope": {
+          "name": {
             "type": "string",
-            "title": "Scope"
+            "minLength": 1,
+            "title": "Name"
           },
           "description": {
-            "type": "string",
-            "title": "Description",
-            "default": ""
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
           },
-          "author": {
-            "type": "string",
-            "title": "Author",
-            "default": ""
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "integrations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Integrations"
           },
           "tags": {
             "items": {
@@ -3137,136 +4285,19 @@
             "type": "array",
             "title": "Tags"
           },
-          "min_hindclaw_version": {
-            "type": "string",
-            "title": "Min Hindclaw Version"
-          },
-          "min_hindsight_version": {
-            "title": "Min Hindsight Version",
-            "type": "string",
-            "nullable": true
-          },
-          "retain_mission": {
-            "type": "string",
-            "title": "Retain Mission"
-          },
-          "reflect_mission": {
-            "type": "string",
-            "title": "Reflect Mission"
-          },
-          "observations_mission": {
-            "title": "Observations Mission",
-            "type": "string",
-            "nullable": true
-          },
-          "retain_extraction_mode": {
-            "type": "string",
-            "title": "Retain Extraction Mode",
-            "default": "concise"
-          },
-          "retain_custom_instructions": {
-            "title": "Retain Custom Instructions",
-            "type": "string",
-            "nullable": true
-          },
-          "retain_chunk_size": {
-            "title": "Retain Chunk Size",
-            "type": "integer",
-            "exclusiveMinimum": true,
-            "nullable": true,
-            "minimum": 0.0
-          },
-          "retain_default_strategy": {
-            "title": "Retain Default Strategy",
-            "type": "string",
-            "nullable": true
-          },
-          "retain_strategies": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Retain Strategies"
-          },
-          "entity_labels": {
-            "items": {
-              "$ref": "#/components/schemas/EntityLabel"
-            },
-            "type": "array",
-            "title": "Entity Labels"
-          },
-          "entities_allow_free_form": {
-            "type": "boolean",
-            "title": "Entities Allow Free Form",
-            "default": true
-          },
-          "enable_observations": {
-            "type": "boolean",
-            "title": "Enable Observations",
-            "default": true
-          },
-          "consolidation_llm_batch_size": {
-            "title": "Consolidation Llm Batch Size",
-            "type": "integer",
-            "exclusiveMinimum": true,
-            "nullable": true,
-            "minimum": 0.0
-          },
-          "consolidation_source_facts_max_tokens": {
-            "title": "Consolidation Source Facts Max Tokens",
-            "type": "integer",
-            "nullable": true
-          },
-          "consolidation_source_facts_max_tokens_per_observation": {
-            "title": "Consolidation Source Facts Max Tokens Per Observation",
-            "type": "integer",
-            "nullable": true
-          },
-          "disposition_skepticism": {
-            "type": "integer",
-            "maximum": 5.0,
-            "minimum": 1.0,
-            "title": "Disposition Skepticism",
-            "default": 3
-          },
-          "disposition_literalism": {
-            "type": "integer",
-            "maximum": 5.0,
-            "minimum": 1.0,
-            "title": "Disposition Literalism",
-            "default": 3
-          },
-          "disposition_empathy": {
-            "type": "integer",
-            "maximum": 5.0,
-            "minimum": 1.0,
-            "title": "Disposition Empathy",
-            "default": 3
-          },
-          "directive_seeds": {
-            "items": {
-              "$ref": "#/components/schemas/DirectiveSeed"
-            },
-            "type": "array",
-            "title": "Directive Seeds"
-          },
-          "mental_model_seeds": {
-            "items": {
-              "$ref": "#/components/schemas/MentalModelSeed"
-            },
-            "type": "array",
-            "title": "Mental Model Seeds"
+          "manifest": {
+            "$ref": "#/components/schemas/BankTemplateManifest"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "id",
-          "scope",
-          "min_hindclaw_version",
-          "retain_mission",
-          "reflect_mission"
+          "name",
+          "manifest"
         ],
         "title": "CreateTemplateRequest",
-        "description": "Request to create a custom template."
+        "description": "Request to create a personal template by inlining an upstream manifest."
       },
       "CreateUserRequest": {
         "properties": {
@@ -3279,9 +4310,15 @@
             "title": "Display Name"
           },
           "email": {
-            "title": "Email",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
           },
           "is_active": {
             "type": "boolean",
@@ -3295,124 +4332,6 @@
           "display_name"
         ],
         "title": "CreateUserRequest"
-      },
-      "DirectiveSeed": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "content": {
-            "type": "string",
-            "title": "Content"
-          },
-          "priority": {
-            "type": "integer",
-            "title": "Priority",
-            "default": 0
-          },
-          "is_active": {
-            "type": "boolean",
-            "title": "Is Active",
-            "default": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "content"
-        ],
-        "title": "DirectiveSeed",
-        "description": "A directive to create when bootstrapping a bank from a template."
-      },
-      "DirectiveSeedResult": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "created": {
-            "type": "boolean",
-            "title": "Created"
-          },
-          "directive_id": {
-            "title": "Directive Id",
-            "type": "string",
-            "nullable": true
-          },
-          "error": {
-            "title": "Error",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "created"
-        ],
-        "title": "DirectiveSeedResult",
-        "description": "Result of creating a single directive from a template seed."
-      },
-      "EntityLabel": {
-        "properties": {
-          "key": {
-            "type": "string",
-            "title": "Key"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description",
-            "default": ""
-          },
-          "type": {
-            "type": "string",
-            "title": "Type",
-            "default": "value"
-          },
-          "optional": {
-            "type": "boolean",
-            "title": "Optional",
-            "default": true
-          },
-          "tag": {
-            "type": "boolean",
-            "title": "Tag",
-            "default": false
-          },
-          "values": {
-            "items": {
-              "$ref": "#/components/schemas/EntityLabelValue"
-            },
-            "type": "array",
-            "title": "Values"
-          }
-        },
-        "type": "object",
-        "required": [
-          "key"
-        ],
-        "title": "EntityLabel",
-        "description": "An entity label definition for structured classification.\n\nHindsight supports three label types:\n- \"value\": single enum value from the values list\n- \"multi-values\": multiple enum values from the values list\n- \"text\": free-form text (no values list needed)\n\nThe ``tag`` field controls whether facts with this label also get tagged\n(enabling tag-based filtering in recall/reflect)."
-      },
-      "EntityLabelValue": {
-        "properties": {
-          "value": {
-            "type": "string",
-            "title": "Value"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "required": [
-          "value"
-        ],
-        "title": "EntityLabelValue",
-        "description": "A valid value for a value or multi-values entity label."
       },
       "GroupMemberResponse": {
         "properties": {
@@ -3481,165 +4400,273 @@
       },
       "InstallTemplateRequest": {
         "properties": {
-          "source": {
+          "source_name": {
             "type": "string",
             "minLength": 1,
-            "title": "Source",
-            "description": "Marketplace source name"
+            "title": "Source Name"
           },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Name",
-            "description": "Template name within the source"
+          "source_scope": {
+            "$ref": "#/components/schemas/TemplateScope",
+            "default": "server"
           },
-          "scope": {
-            "type": "string",
-            "title": "Scope",
-            "description": "'server' or 'personal'"
+          "alias_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alias Id"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "source",
-          "name",
-          "scope"
+          "source_name"
         ],
         "title": "InstallTemplateRequest",
-        "description": "Request to install a template from a marketplace source."
+        "description": "Request to install a template from a marketplace source.\n\nThe ``{id}`` in the URL path is the template id WITHIN the source.\nThe installed-template id is ``alias_id`` if provided, else the source\ntemplate id. This lets a user install the same source template under a\ndifferent installed name (Section 4.3 identity invariant: at most one\nrow per (id, scope, owner))."
       },
-      "MarketplaceSearchResponse": {
+      "ListTemplatesResponse": {
         "properties": {
-          "results": {
+          "templates": {
             "items": {
-              "$ref": "#/components/schemas/MarketplaceSearchResult"
+              "$ref": "#/components/schemas/TemplateResponse"
             },
             "type": "array",
-            "title": "Results"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
+            "title": "Templates"
           }
         },
         "type": "object",
         "required": [
-          "results",
-          "total"
+          "templates"
         ],
-        "title": "MarketplaceSearchResponse",
-        "description": "Response for marketplace search."
+        "title": "ListTemplatesResponse"
       },
-      "MarketplaceSearchResult": {
+      "MeProfileResponse": {
         "properties": {
-          "source": {
+          "id": {
             "type": "string",
-            "title": "Source"
+            "title": "Id"
           },
-          "name": {
+          "display_name": {
             "type": "string",
-            "title": "Name"
+            "title": "Display Name"
           },
-          "version": {
-            "type": "string",
-            "title": "Version"
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
           },
-          "description": {
-            "type": "string",
-            "title": "Description",
-            "default": ""
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
           },
-          "author": {
-            "type": "string",
-            "title": "Author",
-            "default": ""
-          },
-          "tags": {
+          "channels": {
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/ChannelResponse"
             },
             "type": "array",
-            "title": "Tags",
-            "default": []
-          },
-          "installed": {
+            "title": "Channels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "display_name",
+          "email",
+          "is_active",
+          "channels"
+        ],
+        "title": "MeProfileResponse",
+        "description": "Response for GET /me \u2014 caller's own profile."
+      },
+      "MentalModelTrigger": {
+        "properties": {
+          "refresh_after_consolidation": {
             "type": "boolean",
-            "title": "Installed",
+            "title": "Refresh After Consolidation",
+            "description": "If true, refresh this mental model after observations consolidation (real-time mode)",
             "default": false
           },
-          "installed_version": {
-            "title": "Installed Version",
-            "type": "string",
-            "nullable": true
+          "fact_types": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "world",
+                    "experience",
+                    "observation"
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fact Types",
+            "description": "Filter which fact types are retrieved during reflect. None means all types (world, experience, observation)."
           },
-          "installed_scope": {
-            "title": "Installed Scope",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "source",
-          "name",
-          "version"
-        ],
-        "title": "MarketplaceSearchResult",
-        "description": "A template from marketplace search results with install status.\n\nInstall status reflects server-scope first, then the calling user's\npersonal scope. If installed in both, server version is reported."
-      },
-      "MentalModelSeed": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "source_query": {
-            "type": "string",
-            "title": "Source Query"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "source_query"
-        ],
-        "title": "MentalModelSeed",
-        "description": "A mental model to create when bootstrapping a bank from a template."
-      },
-      "MentalModelSeedResult": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "created": {
+          "exclude_mental_models": {
             "type": "boolean",
-            "title": "Created"
+            "title": "Exclude Mental Models",
+            "description": "If true, exclude all mental models from the reflect loop (skip search_mental_models tool).",
+            "default": false
           },
-          "mental_model_id": {
-            "title": "Mental Model Id",
-            "type": "string",
-            "nullable": true
+          "exclude_mental_model_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exclude Mental Model Ids",
+            "description": "Exclude specific mental models by ID from the reflect loop."
           },
-          "operation_id": {
-            "title": "Operation Id",
-            "type": "string",
-            "nullable": true
+          "tags_match": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "any",
+                  "all",
+                  "any_strict",
+                  "all_strict"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags Match",
+            "description": "Override how the model's tags filter memories during refresh. If not set, defaults to 'all_strict' when the model has tags (security isolation) or 'any' when the model has no tags. Set to 'any' to include untagged memories alongside tagged ones during refresh."
           },
-          "error": {
-            "title": "Error",
-            "type": "string",
-            "nullable": true
+          "tag_groups": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/TagGroupLeaf"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TagGroupAnd"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TagGroupOr"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TagGroupNot"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tag Groups",
+            "description": "Compound boolean tag expressions to use during refresh instead of the model's own tags. When set, these tag groups are passed to reflect and the model's flat tags are NOT used for filtering. Supports nested and/or/not expressions for complex tag-based scoping."
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "created"
-        ],
-        "title": "MentalModelSeedResult",
-        "description": "Result of creating a single mental model from a template seed."
+        "title": "MentalModelTrigger",
+        "description": "Trigger settings for a mental model."
+      },
+      "PatchTemplateRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "integrations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Integrations"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "manifest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BankTemplateManifest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PatchTemplateRequest",
+        "description": "Partial update for hand-edited templates. Every field is optional."
       },
       "PolicyAttachmentResponse": {
         "properties": {
@@ -3711,9 +4738,15 @@
             "title": "Api Key"
           },
           "description": {
-            "title": "Description",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
           }
         },
         "type": "object",
@@ -3736,9 +4769,15 @@
             "title": "Api Key Prefix"
           },
           "description": {
-            "title": "Description",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
           }
         },
         "type": "object",
@@ -3769,9 +4808,15 @@
             "title": "Is Active"
           },
           "scoping_policy_id": {
-            "title": "Scoping Policy Id",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoping Policy Id"
           }
         },
         "type": "object",
@@ -3795,24 +4840,182 @@
             "type": "string",
             "title": "Url"
           },
+          "scope": {
+            "$ref": "#/components/schemas/TemplateScope"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
           "has_auth": {
             "type": "boolean",
             "title": "Has Auth"
           },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
           "created_at": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
           }
         },
         "type": "object",
         "required": [
           "name",
           "url",
-          "has_auth",
-          "created_at"
+          "scope",
+          "has_auth"
         ],
         "title": "SourceResponse",
         "description": "Response for a registered marketplace source."
+      },
+      "TagGroupAnd": {
+        "properties": {
+          "and": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TagGroupLeaf"
+                },
+                {
+                  "$ref": "#/components/schemas/TagGroupAnd"
+                },
+                {
+                  "$ref": "#/components/schemas/TagGroupOr"
+                },
+                {
+                  "$ref": "#/components/schemas/TagGroupNot"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "And"
+          }
+        },
+        "type": "object",
+        "required": [
+          "and"
+        ],
+        "title": "TagGroupAnd",
+        "description": "Compound AND group: all child filters must match."
+      },
+      "TagGroupLeaf": {
+        "properties": {
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "match": {
+            "type": "string",
+            "enum": [
+              "any",
+              "all",
+              "any_strict",
+              "all_strict"
+            ],
+            "title": "Match",
+            "default": "any_strict"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tags"
+        ],
+        "title": "TagGroupLeaf",
+        "description": "A leaf tag filter: matches memories by tag list and match mode."
+      },
+      "TagGroupNot": {
+        "properties": {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TagGroupLeaf"
+              },
+              {
+                "$ref": "#/components/schemas/TagGroupAnd"
+              },
+              {
+                "$ref": "#/components/schemas/TagGroupOr"
+              },
+              {
+                "$ref": "#/components/schemas/TagGroupNot"
+              }
+            ],
+            "title": "Not"
+          }
+        },
+        "type": "object",
+        "required": [
+          "not"
+        ],
+        "title": "TagGroupNot",
+        "description": "Compound NOT group: child filter must NOT match."
+      },
+      "TagGroupOr": {
+        "properties": {
+          "or": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TagGroupLeaf"
+                },
+                {
+                  "$ref": "#/components/schemas/TagGroupAnd"
+                },
+                {
+                  "$ref": "#/components/schemas/TagGroupOr"
+                },
+                {
+                  "$ref": "#/components/schemas/TagGroupNot"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Or"
+          }
+        },
+        "type": "object",
+        "required": [
+          "or"
+        ],
+        "title": "TagGroupOr",
+        "description": "Compound OR group: at least one child filter must match."
       },
       "TemplateResponse": {
         "properties": {
@@ -3820,55 +5023,38 @@
             "type": "string",
             "title": "Id"
           },
-          "scope": {
+          "name": {
             "type": "string",
-            "title": "Scope"
-          },
-          "owner": {
-            "title": "Owner",
-            "type": "string",
-            "nullable": true
-          },
-          "source_name": {
-            "title": "Source Name",
-            "type": "string",
-            "nullable": true
-          },
-          "schema_version": {
-            "type": "integer",
-            "title": "Schema Version"
-          },
-          "min_hindclaw_version": {
-            "type": "string",
-            "title": "Min Hindclaw Version"
-          },
-          "min_hindsight_version": {
-            "title": "Min Hindsight Version",
-            "type": "string",
-            "nullable": true
-          },
-          "version": {
-            "title": "Version",
-            "type": "string",
-            "nullable": true
-          },
-          "source_url": {
-            "title": "Source Url",
-            "type": "string",
-            "nullable": true
-          },
-          "source_revision": {
-            "title": "Source Revision",
-            "type": "string",
-            "nullable": true
+            "title": "Name"
           },
           "description": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Description"
           },
-          "author": {
-            "type": "string",
-            "title": "Author"
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "integrations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Integrations"
           },
           "tags": {
             "items": {
@@ -3877,266 +5063,121 @@
             "type": "array",
             "title": "Tags"
           },
-          "retain_mission": {
+          "scope": {
+            "$ref": "#/components/schemas/TemplateScope"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "source_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Name"
+          },
+          "source_scope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TemplateScope"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Owner"
+          },
+          "source_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Revision"
+          },
+          "installed_at": {
             "type": "string",
-            "title": "Retain Mission"
-          },
-          "reflect_mission": {
-            "type": "string",
-            "title": "Reflect Mission"
-          },
-          "observations_mission": {
-            "title": "Observations Mission",
-            "type": "string",
-            "nullable": true
-          },
-          "retain_extraction_mode": {
-            "type": "string",
-            "title": "Retain Extraction Mode"
-          },
-          "retain_custom_instructions": {
-            "title": "Retain Custom Instructions",
-            "type": "string",
-            "nullable": true
-          },
-          "retain_chunk_size": {
-            "title": "Retain Chunk Size",
-            "type": "integer",
-            "nullable": true
-          },
-          "retain_default_strategy": {
-            "title": "Retain Default Strategy",
-            "type": "string",
-            "nullable": true
-          },
-          "retain_strategies": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Retain Strategies"
-          },
-          "entity_labels": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Entity Labels"
-          },
-          "entities_allow_free_form": {
-            "type": "boolean",
-            "title": "Entities Allow Free Form"
-          },
-          "enable_observations": {
-            "type": "boolean",
-            "title": "Enable Observations"
-          },
-          "consolidation_llm_batch_size": {
-            "title": "Consolidation Llm Batch Size",
-            "type": "integer",
-            "nullable": true
-          },
-          "consolidation_source_facts_max_tokens": {
-            "title": "Consolidation Source Facts Max Tokens",
-            "type": "integer",
-            "nullable": true
-          },
-          "consolidation_source_facts_max_tokens_per_observation": {
-            "title": "Consolidation Source Facts Max Tokens Per Observation",
-            "type": "integer",
-            "nullable": true
-          },
-          "disposition_skepticism": {
-            "type": "integer",
-            "title": "Disposition Skepticism"
-          },
-          "disposition_literalism": {
-            "type": "integer",
-            "title": "Disposition Literalism"
-          },
-          "disposition_empathy": {
-            "type": "integer",
-            "title": "Disposition Empathy"
-          },
-          "directive_seeds": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Directive Seeds"
-          },
-          "mental_model_seeds": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Mental Model Seeds"
-          },
-          "created_at": {
-            "type": "string",
-            "title": "Created At"
+            "format": "date-time",
+            "title": "Installed At"
           },
           "updated_at": {
             "type": "string",
+            "format": "date-time",
             "title": "Updated At"
+          },
+          "manifest": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Manifest"
           }
         },
         "type": "object",
         "required": [
           "id",
+          "name",
+          "description",
+          "category",
+          "integrations",
+          "tags",
           "scope",
           "owner",
           "source_name",
-          "schema_version",
-          "min_hindclaw_version",
-          "min_hindsight_version",
-          "version",
-          "source_url",
+          "source_scope",
+          "source_owner",
           "source_revision",
-          "description",
-          "author",
-          "tags",
-          "retain_mission",
-          "reflect_mission",
-          "observations_mission",
-          "retain_extraction_mode",
-          "retain_custom_instructions",
-          "retain_chunk_size",
-          "retain_default_strategy",
-          "retain_strategies",
-          "entity_labels",
-          "entities_allow_free_form",
-          "enable_observations",
-          "consolidation_llm_batch_size",
-          "consolidation_source_facts_max_tokens",
-          "consolidation_source_facts_max_tokens_per_observation",
-          "disposition_skepticism",
-          "disposition_literalism",
-          "disposition_empathy",
-          "directive_seeds",
-          "mental_model_seeds",
-          "created_at",
-          "updated_at"
+          "installed_at",
+          "updated_at",
+          "manifest"
         ],
         "title": "TemplateResponse",
-        "description": "Full template details."
+        "description": "Installed template, surfaced over the API."
       },
-      "TemplateSummaryResponse": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "scope": {
-            "type": "string",
-            "title": "Scope"
-          },
-          "source_name": {
-            "title": "Source Name",
-            "type": "string",
-            "nullable": true
-          },
-          "version": {
-            "title": "Version",
-            "type": "string",
-            "nullable": true
-          },
-          "description": {
-            "type": "string",
-            "title": "Description"
-          },
-          "author": {
-            "type": "string",
-            "title": "Author"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Tags"
-          },
-          "retain_extraction_mode": {
-            "type": "string",
-            "title": "Retain Extraction Mode"
-          },
-          "disposition_skepticism": {
-            "type": "integer",
-            "title": "Disposition Skepticism"
-          },
-          "disposition_literalism": {
-            "type": "integer",
-            "title": "Disposition Literalism"
-          },
-          "disposition_empathy": {
-            "type": "integer",
-            "title": "Disposition Empathy"
-          },
-          "created_at": {
-            "type": "string",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "title": "Updated At"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "scope",
-          "source_name",
-          "version",
-          "description",
-          "author",
-          "tags",
-          "retain_extraction_mode",
-          "disposition_skepticism",
-          "disposition_literalism",
-          "disposition_empathy",
-          "created_at",
-          "updated_at"
+      "TemplateScope": {
+        "type": "string",
+        "enum": [
+          "server",
+          "personal"
         ],
-        "title": "TemplateSummaryResponse",
-        "description": "Summary of a template for list endpoints."
-      },
-      "TemplateUpdateResponse": {
-        "properties": {
-          "updated": {
-            "type": "boolean",
-            "title": "Updated"
-          },
-          "previous_version": {
-            "title": "Previous Version",
-            "type": "string",
-            "nullable": true
-          },
-          "new_version": {
-            "title": "New Version",
-            "type": "string",
-            "nullable": true
-          },
-          "template": {
-            "$ref": "#/components/schemas/TemplateResponse",
-            "nullable": true
-          }
-        },
-        "type": "object",
-        "required": [
-          "updated",
-          "previous_version",
-          "new_version"
-        ],
-        "title": "TemplateUpdateResponse",
-        "description": "Response for template update from marketplace."
+        "title": "TemplateScope",
+        "description": "Template visibility scope."
       },
       "UpdateGroupRequest": {
         "properties": {
           "display_name": {
-            "title": "Display Name",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
           }
         },
         "type": "object",
@@ -4145,15 +5186,27 @@
       "UpdatePolicyRequest": {
         "properties": {
           "display_name": {
-            "title": "Display Name",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
           },
           "document": {
-            "title": "Document",
-            "additionalProperties": true,
-            "type": "object",
-            "nullable": true
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document"
           }
         },
         "type": "object",
@@ -4178,192 +5231,118 @@
       "UpdateServiceAccountRequest": {
         "properties": {
           "display_name": {
-            "title": "Display Name",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
           },
           "scoping_policy_id": {
-            "title": "Scoping Policy Id",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scoping Policy Id"
           },
           "is_active": {
-            "title": "Is Active",
-            "type": "boolean",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
           }
         },
         "type": "object",
         "title": "UpdateServiceAccountRequest",
         "description": "Request to update a service account."
       },
-      "UpdateTemplateRequest": {
+      "UpdateTemplateResponse": {
         "properties": {
-          "description": {
-            "title": "Description",
-            "type": "string",
-            "nullable": true
-          },
-          "author": {
-            "title": "Author",
-            "type": "string",
-            "nullable": true
-          },
-          "tags": {
-            "title": "Tags",
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "nullable": true
-          },
-          "min_hindclaw_version": {
-            "title": "Min Hindclaw Version",
-            "type": "string",
-            "nullable": true
-          },
-          "min_hindsight_version": {
-            "title": "Min Hindsight Version",
-            "type": "string",
-            "nullable": true
-          },
-          "retain_mission": {
-            "title": "Retain Mission",
-            "type": "string",
-            "nullable": true
-          },
-          "reflect_mission": {
-            "title": "Reflect Mission",
-            "type": "string",
-            "nullable": true
-          },
-          "observations_mission": {
-            "title": "Observations Mission",
-            "type": "string",
-            "nullable": true
-          },
-          "retain_extraction_mode": {
-            "title": "Retain Extraction Mode",
-            "type": "string",
-            "nullable": true
-          },
-          "retain_custom_instructions": {
-            "title": "Retain Custom Instructions",
-            "type": "string",
-            "nullable": true
-          },
-          "retain_chunk_size": {
-            "title": "Retain Chunk Size",
-            "type": "integer",
-            "exclusiveMinimum": true,
-            "nullable": true,
-            "minimum": 0.0
-          },
-          "retain_default_strategy": {
-            "title": "Retain Default Strategy",
-            "type": "string",
-            "nullable": true
-          },
-          "retain_strategies": {
-            "title": "Retain Strategies",
-            "additionalProperties": true,
-            "type": "object",
-            "nullable": true
-          },
-          "entity_labels": {
-            "title": "Entity Labels",
-            "items": {
-              "$ref": "#/components/schemas/EntityLabel"
-            },
-            "type": "array",
-            "nullable": true
-          },
-          "entities_allow_free_form": {
-            "title": "Entities Allow Free Form",
+          "updated": {
             "type": "boolean",
-            "nullable": true
+            "title": "Updated"
           },
-          "enable_observations": {
-            "title": "Enable Observations",
-            "type": "boolean",
-            "nullable": true
+          "previous_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Revision"
           },
-          "consolidation_llm_batch_size": {
-            "title": "Consolidation Llm Batch Size",
-            "type": "integer",
-            "exclusiveMinimum": true,
-            "nullable": true,
-            "minimum": 0.0
+          "new_revision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Revision"
           },
-          "consolidation_source_facts_max_tokens": {
-            "title": "Consolidation Source Facts Max Tokens",
-            "type": "integer",
-            "nullable": true
-          },
-          "consolidation_source_facts_max_tokens_per_observation": {
-            "title": "Consolidation Source Facts Max Tokens Per Observation",
-            "type": "integer",
-            "nullable": true
-          },
-          "disposition_skepticism": {
-            "title": "Disposition Skepticism",
-            "type": "integer",
-            "maximum": 5.0,
-            "minimum": 1.0,
-            "nullable": true
-          },
-          "disposition_literalism": {
-            "title": "Disposition Literalism",
-            "type": "integer",
-            "maximum": 5.0,
-            "minimum": 1.0,
-            "nullable": true
-          },
-          "disposition_empathy": {
-            "title": "Disposition Empathy",
-            "type": "integer",
-            "maximum": 5.0,
-            "minimum": 1.0,
-            "nullable": true
-          },
-          "directive_seeds": {
-            "title": "Directive Seeds",
-            "items": {
-              "$ref": "#/components/schemas/DirectiveSeed"
-            },
-            "type": "array",
-            "nullable": true
-          },
-          "mental_model_seeds": {
-            "title": "Mental Model Seeds",
-            "items": {
-              "$ref": "#/components/schemas/MentalModelSeed"
-            },
-            "type": "array",
-            "nullable": true
+          "template": {
+            "$ref": "#/components/schemas/TemplateResponse"
           }
         },
-        "additionalProperties": false,
         "type": "object",
-        "title": "UpdateTemplateRequest",
-        "description": "Request to update an existing template. All fields optional.\n\nNote: cross-field validation (e.g. custom mode requires custom instructions)\ncannot be fully checked here because this is a partial update. The endpoint\nmust merge with the existing record and validate the final state."
+        "required": [
+          "updated",
+          "previous_revision",
+          "new_revision",
+          "template"
+        ],
+        "title": "UpdateTemplateResponse"
       },
       "UpdateUserRequest": {
         "properties": {
           "display_name": {
-            "title": "Display Name",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
           },
           "email": {
-            "title": "Email",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
           },
           "is_active": {
-            "title": "Is Active",
-            "type": "boolean",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
           }
         },
         "type": "object",
@@ -4395,9 +5374,15 @@
             "title": "Display Name"
           },
           "email": {
-            "title": "Email",
-            "type": "string",
-            "nullable": true
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
           },
           "is_active": {
             "type": "boolean",

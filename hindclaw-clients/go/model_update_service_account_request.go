@@ -19,9 +19,9 @@ var _ MappedNullable = &UpdateServiceAccountRequest{}
 
 // UpdateServiceAccountRequest Request to update a service account.
 type UpdateServiceAccountRequest struct {
-	DisplayName *string `json:"display_name,omitempty"`
-	ScopingPolicyId *string `json:"scoping_policy_id,omitempty"`
-	IsActive *bool `json:"is_active,omitempty"`
+	DisplayName NullableString `json:"display_name,omitempty"`
+	ScopingPolicyId NullableString `json:"scoping_policy_id,omitempty"`
+	IsActive NullableBool `json:"is_active,omitempty"`
 }
 
 // NewUpdateServiceAccountRequest instantiates a new UpdateServiceAccountRequest object
@@ -41,100 +41,130 @@ func NewUpdateServiceAccountRequestWithDefaults() *UpdateServiceAccountRequest {
 	return &this
 }
 
-// GetDisplayName returns the DisplayName field value if set, zero value otherwise.
+// GetDisplayName returns the DisplayName field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *UpdateServiceAccountRequest) GetDisplayName() string {
-	if o == nil || IsNil(o.DisplayName) {
+	if o == nil || IsNil(o.DisplayName.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.DisplayName
+	return *o.DisplayName.Get()
 }
 
 // GetDisplayNameOk returns a tuple with the DisplayName field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *UpdateServiceAccountRequest) GetDisplayNameOk() (*string, bool) {
-	if o == nil || IsNil(o.DisplayName) {
+	if o == nil {
 		return nil, false
 	}
-	return o.DisplayName, true
+	return o.DisplayName.Get(), o.DisplayName.IsSet()
 }
 
 // HasDisplayName returns a boolean if a field has been set.
 func (o *UpdateServiceAccountRequest) HasDisplayName() bool {
-	if o != nil && !IsNil(o.DisplayName) {
+	if o != nil && o.DisplayName.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetDisplayName gets a reference to the given string and assigns it to the DisplayName field.
+// SetDisplayName gets a reference to the given NullableString and assigns it to the DisplayName field.
 func (o *UpdateServiceAccountRequest) SetDisplayName(v string) {
-	o.DisplayName = &v
+	o.DisplayName.Set(&v)
+}
+// SetDisplayNameNil sets the value for DisplayName to be an explicit nil
+func (o *UpdateServiceAccountRequest) SetDisplayNameNil() {
+	o.DisplayName.Set(nil)
 }
 
-// GetScopingPolicyId returns the ScopingPolicyId field value if set, zero value otherwise.
+// UnsetDisplayName ensures that no value is present for DisplayName, not even an explicit nil
+func (o *UpdateServiceAccountRequest) UnsetDisplayName() {
+	o.DisplayName.Unset()
+}
+
+// GetScopingPolicyId returns the ScopingPolicyId field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *UpdateServiceAccountRequest) GetScopingPolicyId() string {
-	if o == nil || IsNil(o.ScopingPolicyId) {
+	if o == nil || IsNil(o.ScopingPolicyId.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.ScopingPolicyId
+	return *o.ScopingPolicyId.Get()
 }
 
 // GetScopingPolicyIdOk returns a tuple with the ScopingPolicyId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *UpdateServiceAccountRequest) GetScopingPolicyIdOk() (*string, bool) {
-	if o == nil || IsNil(o.ScopingPolicyId) {
+	if o == nil {
 		return nil, false
 	}
-	return o.ScopingPolicyId, true
+	return o.ScopingPolicyId.Get(), o.ScopingPolicyId.IsSet()
 }
 
 // HasScopingPolicyId returns a boolean if a field has been set.
 func (o *UpdateServiceAccountRequest) HasScopingPolicyId() bool {
-	if o != nil && !IsNil(o.ScopingPolicyId) {
+	if o != nil && o.ScopingPolicyId.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetScopingPolicyId gets a reference to the given string and assigns it to the ScopingPolicyId field.
+// SetScopingPolicyId gets a reference to the given NullableString and assigns it to the ScopingPolicyId field.
 func (o *UpdateServiceAccountRequest) SetScopingPolicyId(v string) {
-	o.ScopingPolicyId = &v
+	o.ScopingPolicyId.Set(&v)
+}
+// SetScopingPolicyIdNil sets the value for ScopingPolicyId to be an explicit nil
+func (o *UpdateServiceAccountRequest) SetScopingPolicyIdNil() {
+	o.ScopingPolicyId.Set(nil)
 }
 
-// GetIsActive returns the IsActive field value if set, zero value otherwise.
+// UnsetScopingPolicyId ensures that no value is present for ScopingPolicyId, not even an explicit nil
+func (o *UpdateServiceAccountRequest) UnsetScopingPolicyId() {
+	o.ScopingPolicyId.Unset()
+}
+
+// GetIsActive returns the IsActive field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *UpdateServiceAccountRequest) GetIsActive() bool {
-	if o == nil || IsNil(o.IsActive) {
+	if o == nil || IsNil(o.IsActive.Get()) {
 		var ret bool
 		return ret
 	}
-	return *o.IsActive
+	return *o.IsActive.Get()
 }
 
 // GetIsActiveOk returns a tuple with the IsActive field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *UpdateServiceAccountRequest) GetIsActiveOk() (*bool, bool) {
-	if o == nil || IsNil(o.IsActive) {
+	if o == nil {
 		return nil, false
 	}
-	return o.IsActive, true
+	return o.IsActive.Get(), o.IsActive.IsSet()
 }
 
 // HasIsActive returns a boolean if a field has been set.
 func (o *UpdateServiceAccountRequest) HasIsActive() bool {
-	if o != nil && !IsNil(o.IsActive) {
+	if o != nil && o.IsActive.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetIsActive gets a reference to the given bool and assigns it to the IsActive field.
+// SetIsActive gets a reference to the given NullableBool and assigns it to the IsActive field.
 func (o *UpdateServiceAccountRequest) SetIsActive(v bool) {
-	o.IsActive = &v
+	o.IsActive.Set(&v)
+}
+// SetIsActiveNil sets the value for IsActive to be an explicit nil
+func (o *UpdateServiceAccountRequest) SetIsActiveNil() {
+	o.IsActive.Set(nil)
+}
+
+// UnsetIsActive ensures that no value is present for IsActive, not even an explicit nil
+func (o *UpdateServiceAccountRequest) UnsetIsActive() {
+	o.IsActive.Unset()
 }
 
 func (o UpdateServiceAccountRequest) MarshalJSON() ([]byte, error) {
@@ -147,14 +177,14 @@ func (o UpdateServiceAccountRequest) MarshalJSON() ([]byte, error) {
 
 func (o UpdateServiceAccountRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.DisplayName) {
-		toSerialize["display_name"] = o.DisplayName
+	if o.DisplayName.IsSet() {
+		toSerialize["display_name"] = o.DisplayName.Get()
 	}
-	if !IsNil(o.ScopingPolicyId) {
-		toSerialize["scoping_policy_id"] = o.ScopingPolicyId
+	if o.ScopingPolicyId.IsSet() {
+		toSerialize["scoping_policy_id"] = o.ScopingPolicyId.Get()
 	}
-	if !IsNil(o.IsActive) {
-		toSerialize["is_active"] = o.IsActive
+	if o.IsActive.IsSet() {
+		toSerialize["is_active"] = o.IsActive.Get()
 	}
 	return toSerialize, nil
 }

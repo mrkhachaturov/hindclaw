@@ -17,18 +17,17 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 
-class MentalModelSeed(BaseModel):
+class TagGroupOr(BaseModel):
     """
-    A mental model to create when bootstrapping a bank from a template.
+    Compound OR group: at least one child filter must match.
     """ # noqa: E501
-    name: StrictStr
-    source_query: StrictStr
-    __properties: ClassVar[List[str]] = ["name", "source_query"]
+    var_or: List[MentalModelTriggerTagGroupsInner] = Field(alias="or")
+    __properties: ClassVar[List[str]] = ["or"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -48,7 +47,7 @@ class MentalModelSeed(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of MentalModelSeed from a JSON string"""
+        """Create an instance of TagGroupOr from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -69,11 +68,18 @@ class MentalModelSeed(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in var_or (list)
+        _items = []
+        if self.var_or:
+            for _item_var_or in self.var_or:
+                if _item_var_or:
+                    _items.append(_item_var_or.to_dict())
+            _dict['or'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of MentalModelSeed from a dict"""
+        """Create an instance of TagGroupOr from a dict"""
         if obj is None:
             return None
 
@@ -81,9 +87,11 @@ class MentalModelSeed(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "source_query": obj.get("source_query")
+            "or": [MentalModelTriggerTagGroupsInner.from_dict(_item) for _item in obj["or"]] if obj.get("or") is not None else None
         })
         return _obj
 
+from hindclaw_client_api.models.mental_model_trigger_tag_groups_inner import MentalModelTriggerTagGroupsInner
+# TODO: Rewrite to not use raise_errors
+TagGroupOr.model_rebuild(raise_errors=False)
 

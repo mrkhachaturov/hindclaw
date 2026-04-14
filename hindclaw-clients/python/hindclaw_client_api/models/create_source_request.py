@@ -28,10 +28,11 @@ class CreateSourceRequest(BaseModel):
     Request to register a marketplace source.
     """ # noqa: E501
     url: Annotated[str, Field(min_length=1, strict=True)] = Field(description="Marketplace repository URL")
-    alias: Optional[Annotated[str, Field(min_length=1, strict=True, max_length=128)]] = Field(default=None, description="Override auto-derived source name")
-    auth_token: Optional[StrictStr] = Field(default=None, description="Auth token for private repositories")
+    alias: Optional[Annotated[str, Field(min_length=1, strict=True, max_length=128)]] = None
+    auth_token: Optional[StrictStr] = None
+    description: Optional[StrictStr] = None
     additional_properties: Dict[str, Any] = {}
-    __properties: ClassVar[List[str]] = ["url", "alias", "auth_token"]
+    __properties: ClassVar[List[str]] = ["url", "alias", "auth_token", "description"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -79,6 +80,21 @@ class CreateSourceRequest(BaseModel):
             for _key, _value in self.additional_properties.items():
                 _dict[_key] = _value
 
+        # set to None if alias (nullable) is None
+        # and model_fields_set contains the field
+        if self.alias is None and "alias" in self.model_fields_set:
+            _dict['alias'] = None
+
+        # set to None if auth_token (nullable) is None
+        # and model_fields_set contains the field
+        if self.auth_token is None and "auth_token" in self.model_fields_set:
+            _dict['auth_token'] = None
+
+        # set to None if description (nullable) is None
+        # and model_fields_set contains the field
+        if self.description is None and "description" in self.model_fields_set:
+            _dict['description'] = None
+
         return _dict
 
     @classmethod
@@ -93,7 +109,8 @@ class CreateSourceRequest(BaseModel):
         _obj = cls.model_validate({
             "url": obj.get("url"),
             "alias": obj.get("alias"),
-            "auth_token": obj.get("auth_token")
+            "auth_token": obj.get("auth_token"),
+            "description": obj.get("description")
         })
         # store additional fields in additional_properties
         for _key in obj.keys():

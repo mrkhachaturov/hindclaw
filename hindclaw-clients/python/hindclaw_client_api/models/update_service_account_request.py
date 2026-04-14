@@ -70,6 +70,21 @@ class UpdateServiceAccountRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if display_name (nullable) is None
+        # and model_fields_set contains the field
+        if self.display_name is None and "display_name" in self.model_fields_set:
+            _dict['display_name'] = None
+
+        # set to None if scoping_policy_id (nullable) is None
+        # and model_fields_set contains the field
+        if self.scoping_policy_id is None and "scoping_policy_id" in self.model_fields_set:
+            _dict['scoping_policy_id'] = None
+
+        # set to None if is_active (nullable) is None
+        # and model_fields_set contains the field
+        if self.is_active is None and "is_active" in self.model_fields_set:
+            _dict['is_active'] = None
+
         return _dict
 
     @classmethod

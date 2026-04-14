@@ -1194,274 +1194,6 @@ paths:
       security:
       - HTTPBearer: []
       summary: Delete My Template Source
-  /ext/hindclaw/me/templates:
-    get:
-      description: |-
-        List the caller's personal templates.
-
-        Scoped to the caller's user_id — only returns templates with
-        scope='personal' owned by the authenticated principal.
-
-        Args:
-            _auth: Authenticated principal (users and SAs allowed).
-
-        Returns:
-            List of TemplateSummaryResponse for the caller's personal templates.
-      operationId: list_my_templates
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/TemplateSummaryResponse'
-                type: array
-          description: Successful Response
-      security:
-      - HTTPBearer: []
-      summary: List My Templates
-    post:
-      description: |-
-        Create a personal template for the caller.
-
-        Template is created with scope='personal' and owner set to the
-        caller's user_id. The scope field in the request body is ignored —
-        personal scope is always used.
-
-        Args:
-            request: CreateTemplateRequest with template fields.
-            _auth: Authenticated principal (users and SAs allowed).
-
-        Returns:
-            TemplateResponse for the newly created personal template.
-
-        Raises:
-            HTTPException: 409 if a personal template with that id already exists.
-      operationId: create_my_template
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateTemplateRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TemplateResponse'
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Create My Template
-  /ext/hindclaw/me/templates/install:
-    post:
-      description: |-
-        Install a template from a visible source to personal scope.
-
-        Resolves the named source (visible to the caller), fetches the
-        template from the marketplace, validates it, and upserts it into
-        the caller's personal scope.
-
-        Args:
-            request: InstallTemplateRequest with source_name and template name.
-            _auth: Authenticated principal (users and SAs allowed).
-
-        Returns:
-            TemplateResponse for the installed template.
-
-        Raises:
-            HTTPException: 404 if the source or template is not found.
-            HTTPException: 409 if the source name is ambiguous or template already installed.
-            HTTPException: 422 if template validation fails or name mismatches.
-      operationId: install_my_template
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InstallTemplateRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TemplateResponse'
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Install My Template
-  /ext/hindclaw/me/templates/{name}:
-    delete:
-      description: |-
-        Delete a personal template.
-
-        Resolves the template by name (with optional source disambiguation),
-        then deletes it.
-
-        Args:
-            name: Template name (id).
-            source: Optional source name to disambiguate.
-            _auth: Authenticated principal (users and SAs allowed).
-
-        Raises:
-            HTTPException: 404 if no matching template is found.
-            HTTPException: 409 if multiple templates match and source is not provided.
-      operationId: delete_my_template
-      parameters:
-      - explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          title: Name
-          type: string
-        style: simple
-      - explode: true
-        in: query
-        name: source
-        required: false
-        schema:
-          nullable: true
-          type: string
-        style: form
-      responses:
-        "204":
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Delete My Template
-    get:
-      description: |-
-        Get a single personal template by name.
-
-        When multiple personal templates share the same name (installed from
-        different sources), use the ``source`` query parameter to disambiguate.
-        Pass an empty string to select a custom (non-marketplace) template.
-
-        Args:
-            name: Template name (id).
-            source: Optional source name to disambiguate. Empty string selects
-                custom templates (source_name=None).
-            _auth: Authenticated principal (users and SAs allowed).
-
-        Returns:
-            TemplateResponse for the matched template.
-
-        Raises:
-            HTTPException: 404 if no matching template is found.
-            HTTPException: 409 if multiple templates match and source is not provided.
-      operationId: get_my_template
-      parameters:
-      - explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          title: Name
-          type: string
-        style: simple
-      - explode: true
-        in: query
-        name: source
-        required: false
-        schema:
-          nullable: true
-          type: string
-        style: form
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TemplateResponse'
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Get My Template
-    put:
-      description: |-
-        Update a personal template.
-
-        Resolves the template by name (with optional source disambiguation),
-        then applies the partial update.
-
-        Args:
-            name: Template name (id).
-            request: UpdateTemplateRequest with fields to update.
-            source: Optional source name to disambiguate.
-            _auth: Authenticated principal (users and SAs allowed).
-
-        Returns:
-            TemplateResponse for the updated template.
-
-        Raises:
-            HTTPException: 404 if no matching template is found.
-            HTTPException: 409 if multiple templates match and source is not provided.
-      operationId: update_my_template
-      parameters:
-      - explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          title: Name
-          type: string
-        style: simple
-      - explode: true
-        in: query
-        name: source
-        required: false
-        schema:
-          nullable: true
-          type: string
-        style: form
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateTemplateRequest'
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TemplateResponse'
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Update My Template
   /ext/hindclaw/service-accounts:
     get:
       operationId: list_service_accounts
@@ -1826,266 +1558,6 @@ paths:
       security:
       - HTTPBearer: []
       summary: Debug Resolve
-  /ext/hindclaw/templates:
-    get:
-      description: |-
-        List installed templates filtered by access.
-
-        When scope is None, returns all server templates plus the caller's
-        personal templates. When scope is specified, returns only that scope.
-
-        Args:
-            scope: Optional scope filter ('server' or 'personal').
-            principal: Authenticated principal from IAM.
-
-        Returns:
-            List of template summaries.
-      operationId: list_templates
-      parameters:
-      - explode: true
-        in: query
-        name: scope
-        required: false
-        schema:
-          nullable: true
-          type: string
-        style: form
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/TemplateSummaryResponse'
-                type: array
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: List Templates
-    post:
-      description: |-
-        Create a custom template (no marketplace source).
-
-        Args:
-            request: Template creation payload.
-            principal: Authenticated principal from IAM.
-
-        Returns:
-            The created template.
-
-        Raises:
-            HTTPException: 409 if template already exists.
-            HTTPException: 403 if scope is server and user lacks template:admin.
-      operationId: create_template
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateTemplateRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TemplateResponse'
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Create Template
-  /ext/hindclaw/templates/{scope}/{name}:
-    delete:
-      description: |-
-        Delete a custom template.
-
-        Args:
-            scope: Template scope ('server' or 'personal').
-            name: Template name.
-            principal: Authenticated principal from IAM.
-
-        Raises:
-            HTTPException: 404 if template not found.
-            HTTPException: 403 if scope is server and user lacks template:admin.
-      operationId: delete_template
-      parameters:
-      - explode: false
-        in: path
-        name: scope
-        required: true
-        schema:
-          title: Scope
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          title: Name
-          type: string
-        style: simple
-      responses:
-        "204":
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Delete Template Endpoint
-    get:
-      description: |-
-        Get a template by scope and name.
-
-        Finds any template matching (scope, name) regardless of source.
-        This covers both custom templates and marketplace-installed ones.
-
-        Args:
-            scope: Template scope ('server' or 'personal').
-            name: Template name.
-            principal: Authenticated principal from IAM.
-
-        Returns:
-            Full template details.
-
-        Raises:
-            HTTPException: 404 if template not found.
-      operationId: get_template
-      parameters:
-      - explode: false
-        in: path
-        name: scope
-        required: true
-        schema:
-          title: Scope
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          title: Name
-          type: string
-        style: simple
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TemplateResponse'
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Get Template Endpoint
-    put:
-      description: |-
-        Update a custom template.
-
-        Performs cross-field validation when extraction mode or custom
-        instructions are part of the update by merging with the existing
-        record before applying.
-
-        Args:
-            scope: Template scope ('server' or 'personal').
-            name: Template name.
-            request: Partial update payload.
-            principal: Authenticated principal from IAM.
-
-        Returns:
-            The updated template.
-
-        Raises:
-            HTTPException: 404 if template not found, 422 if cross-field
-                validation fails.
-            HTTPException: 403 if scope is server and user lacks template:admin.
-      operationId: update_template
-      parameters:
-      - explode: false
-        in: path
-        name: scope
-        required: true
-        schema:
-          title: Scope
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          title: Name
-          type: string
-        style: simple
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateTemplateRequest'
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TemplateResponse'
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Update Template Endpoint
-  /ext/hindclaw/banks:
-    post:
-      description: Create a bank from an installed template.
-      operationId: create_bank_from_template
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateBankFromTemplateRequest'
-        required: true
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BankCreationResponse'
-          description: Successful Response
-        "422":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-      security:
-      - HTTPBearer: []
-      summary: Create Bank From Template
   /ext/hindclaw/admin/template-sources:
     get:
       description: List all configured marketplace sources.
@@ -2152,31 +1624,19 @@ paths:
       security:
       - HTTPBearer: []
       summary: Delete Template Source
-  /ext/hindclaw/marketplace/search:
+  /ext/hindclaw/me/templates:
     get:
-      description: Search marketplace templates across configured sources.
-      operationId: marketplace_search
+      operationId: list_my_templates
       parameters:
-      - description: Search query
-        explode: true
+      - explode: true
         in: query
-        name: q
+        name: category
         required: false
         schema:
           nullable: true
           type: string
         style: form
-      - description: Filter by source name
-        explode: true
-        in: query
-        name: source
-        required: false
-        schema:
-          nullable: true
-          type: string
-        style: form
-      - description: Filter by tag
-        explode: true
+      - explode: true
         in: query
         name: tag
         required: false
@@ -2189,7 +1649,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MarketplaceSearchResponse'
+                $ref: '#/components/schemas/ListTemplatesResponse'
           description: Successful Response
         "422":
           content:
@@ -2199,19 +1659,19 @@ paths:
           description: Validation Error
       security:
       - HTTPBearer: []
-      summary: Marketplace Search
-  /ext/hindclaw/templates/install:
+      summary: List installed personal templates
+      tags:
+      - Templates
     post:
-      description: Install a template from a registered marketplace source.
-      operationId: install_template
+      operationId: create_my_template
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InstallTemplateRequest'
+              $ref: '#/components/schemas/CreateTemplateRequest'
         required: true
       responses:
-        "201":
+        "200":
           content:
             application/json:
               schema:
@@ -2225,42 +1685,23 @@ paths:
           description: Validation Error
       security:
       - HTTPBearer: []
-      summary: Install Template
-  /ext/hindclaw/templates/{scope}/{source}/{name}/update:
-    post:
-      description: Update an installed template from its marketplace source.
-      operationId: update_template_from_marketplace
+      summary: Create a hand-authored personal template
+      tags:
+      - Templates
+  /ext/hindclaw/me/templates/{template_id}:
+    delete:
+      operationId: delete_my_template
       parameters:
       - explode: false
         in: path
-        name: scope
+        name: template_id
         required: true
         schema:
-          title: Scope
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: source
-        required: true
-        schema:
-          title: Source
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: name
-        required: true
-        schema:
-          title: Name
+          title: Template Id
           type: string
         style: simple
       responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TemplateUpdateResponse'
+        "204":
           description: Successful Response
         "422":
           content:
@@ -2270,7 +1711,472 @@ paths:
           description: Validation Error
       security:
       - HTTPBearer: []
-      summary: Update Template From Marketplace
+      summary: Delete an installed personal template
+      tags:
+      - Templates
+    get:
+      operationId: get_my_template
+      parameters:
+      - explode: false
+        in: path
+        name: template_id
+        required: true
+        schema:
+          title: Template Id
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Get an installed personal template
+      tags:
+      - Templates
+    patch:
+      operationId: patch_my_template
+      parameters:
+      - explode: false
+        in: path
+        name: template_id
+        required: true
+        schema:
+          title: Template Id
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchTemplateRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Update a hand-authored personal template
+      tags:
+      - Templates
+  /ext/hindclaw/me/templates/{template_id}/install:
+    post:
+      operationId: install_my_template
+      parameters:
+      - explode: false
+        in: path
+        name: template_id
+        required: true
+        schema:
+          title: Template Id
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallTemplateRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Install a marketplace template into the personal scope
+      tags:
+      - Templates
+  /ext/hindclaw/me/templates/{template_id}/update:
+    post:
+      operationId: update_my_template_from_source
+      parameters:
+      - explode: false
+        in: path
+        name: template_id
+        required: true
+        schema:
+          title: Template Id
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: force
+        required: false
+        schema:
+          default: false
+          title: Force
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateTemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Re-fetch an installed personal template from its source
+      tags:
+      - Templates
+  /ext/hindclaw/me/templates/{template_id}/check-update:
+    get:
+      operationId: check_my_template_update
+      parameters:
+      - explode: false
+        in: path
+        name: template_id
+        required: true
+        schema:
+          title: Template Id
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckUpdateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Check whether the source has a newer revision
+      tags:
+      - Templates
+  /ext/hindclaw/admin/templates:
+    get:
+      operationId: list_admin_templates
+      parameters:
+      - explode: true
+        in: query
+        name: category
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: tag
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTemplatesResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: List installed server-scope templates
+      tags:
+      - Templates
+      - Admin
+    post:
+      operationId: create_admin_template
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Create a hand-authored server-scope template
+      tags:
+      - Templates
+      - Admin
+  /ext/hindclaw/admin/templates/{template_id}:
+    delete:
+      operationId: delete_admin_template
+      parameters:
+      - explode: false
+        in: path
+        name: template_id
+        required: true
+        schema:
+          title: Template Id
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Delete an installed server-scope template
+      tags:
+      - Templates
+      - Admin
+    get:
+      operationId: get_admin_template
+      parameters:
+      - explode: false
+        in: path
+        name: template_id
+        required: true
+        schema:
+          title: Template Id
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Get an installed server-scope template
+      tags:
+      - Templates
+      - Admin
+    patch:
+      operationId: patch_admin_template
+      parameters:
+      - explode: false
+        in: path
+        name: template_id
+        required: true
+        schema:
+          title: Template Id
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchTemplateRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Update a hand-authored server-scope template
+      tags:
+      - Templates
+      - Admin
+  /ext/hindclaw/admin/templates/{template_id}/install:
+    post:
+      operationId: install_admin_template
+      parameters:
+      - explode: false
+        in: path
+        name: template_id
+        required: true
+        schema:
+          title: Template Id
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallTemplateRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Install a marketplace template into the server scope
+      tags:
+      - Templates
+      - Admin
+  /ext/hindclaw/admin/templates/{template_id}/update:
+    post:
+      operationId: update_admin_template_from_source
+      parameters:
+      - explode: false
+        in: path
+        name: template_id
+        required: true
+        schema:
+          title: Template Id
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: force
+        required: false
+        schema:
+          default: false
+          title: Force
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateTemplateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Re-fetch an installed server-scope template from its source
+      tags:
+      - Templates
+      - Admin
+  /ext/hindclaw/admin/templates/{template_id}/check-update:
+    get:
+      operationId: check_admin_template_update
+      parameters:
+      - explode: false
+        in: path
+        name: template_id
+        required: true
+        schema:
+          title: Template Id
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckUpdateResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Check whether the source has a newer revision
+      tags:
+      - Templates
+      - Admin
+  /ext/hindclaw/banks:
+    post:
+      operationId: create_bank_from_template
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBankFromTemplateRequest'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BankCreationResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - HTTPBearer: []
+      summary: Apply an installed template to a new or existing bank
+      tags:
+      - Banks
 components:
   schemas:
     AddChannelRequest:
@@ -2312,9 +2218,8 @@ components:
           title: Api Key
           type: string
         description:
-          title: Description
-          type: string
           nullable: true
+          type: string
       required:
       - api_key
       - id
@@ -2333,43 +2238,41 @@ components:
           title: Api Key Prefix
           type: string
         description:
-          title: Description
-          type: string
           nullable: true
+          type: string
       required:
       - api_key_prefix
       - id
       title: ApiKeyResponse
     BankCreationResponse:
-      description: Response from POST /ext/hindclaw/banks — bank creation from template.
+      description: |-
+        Response from POST /ext/hindclaw/banks — bank creation from template.
+
+        Wraps upstream's ``BankTemplateImportResponse`` so clients see the
+        same counts/errors upstream reports directly.
       example:
         template: template
-        mental_models:
-        - created: true
-          name: name
-          operation_id: operation_id
-          mental_model_id: mental_model_id
-          error: error
-        - created: true
-          name: name
-          operation_id: operation_id
-          mental_model_id: mental_model_id
-          error: error
+        import_result:
+          operation_ids:
+          - operation_ids
+          - operation_ids
+          directives_created:
+          - directives_created
+          - directives_created
+          bank_id: bank_id
+          mental_models_updated:
+          - mental_models_updated
+          - mental_models_updated
+          directives_updated:
+          - directives_updated
+          - directives_updated
+          config_applied: true
+          mental_models_created:
+          - mental_models_created
+          - mental_models_created
+          dry_run: false
         bank_created: true
-        directives:
-        - directive_id: directive_id
-          created: true
-          name: name
-          error: error
-        - directive_id: directive_id
-          created: true
-          name: name
-          error: error
         bank_id: bank_id
-        config_applied: true
-        errors:
-        - errors
-        - errors
       properties:
         bank_id:
           title: Bank Id
@@ -2380,28 +2283,12 @@ components:
         bank_created:
           title: Bank Created
           type: boolean
-        config_applied:
-          title: Config Applied
-          type: boolean
-        directives:
-          items:
-            $ref: '#/components/schemas/DirectiveSeedResult'
-          type: array
-        mental_models:
-          items:
-            $ref: '#/components/schemas/MentalModelSeedResult'
-          type: array
-        errors:
-          items:
-            type: string
-          type: array
+        import_result:
+          $ref: '#/components/schemas/BankTemplateImportResponse'
       required:
       - bank_created
       - bank_id
-      - config_applied
-      - directives
-      - errors
-      - mental_models
+      - import_result
       - template
       title: BankCreationResponse
     BankPolicyResponse:
@@ -2422,6 +2309,243 @@ components:
       - bank_id
       - document
       title: BankPolicyResponse
+    BankTemplateConfig:
+      description: |-
+        Bank configuration fields within a template manifest.
+
+        Only includes configurable (per-bank) fields. Credential fields
+        (API keys, base URLs) are intentionally excluded for security.
+      properties:
+        reflect_mission:
+          nullable: true
+          type: string
+        retain_mission:
+          nullable: true
+          type: string
+        retain_extraction_mode:
+          nullable: true
+          type: string
+        retain_custom_instructions:
+          nullable: true
+          type: string
+        retain_chunk_size:
+          nullable: true
+          type: integer
+        enable_observations:
+          nullable: true
+          type: boolean
+        observations_mission:
+          nullable: true
+          type: string
+        disposition_skepticism:
+          maximum: 5.0
+          minimum: 1.0
+          nullable: true
+          type: integer
+        disposition_literalism:
+          maximum: 5.0
+          minimum: 1.0
+          nullable: true
+          type: integer
+        disposition_empathy:
+          maximum: 5.0
+          minimum: 1.0
+          nullable: true
+          type: integer
+        entity_labels:
+          items:
+            additionalProperties: true
+            type: object
+          nullable: true
+          type: array
+        entities_allow_free_form:
+          nullable: true
+          type: boolean
+      title: BankTemplateConfig
+    BankTemplateDirective:
+      description: |-
+        A directive definition within a bank template manifest.
+
+        Directives are matched by name on re-import: existing directives
+        with the same name are updated, new ones are created.
+      properties:
+        name:
+          description: Human-readable name for the directive (used as match key on
+            re-import)
+          title: Name
+          type: string
+        content:
+          description: The directive text to inject into prompts
+          title: Content
+          type: string
+        priority:
+          default: 0
+          description: Higher priority directives are injected first
+          title: Priority
+          type: integer
+        is_active:
+          default: true
+          description: Whether this directive is active
+          title: Is Active
+          type: boolean
+        tags:
+          default: []
+          description: Tags for filtering
+          items:
+            type: string
+          type: array
+      required:
+      - content
+      - name
+      title: BankTemplateDirective
+    BankTemplateImportResponse:
+      description: Response model for the bank template import endpoint.
+      example:
+        operation_ids:
+        - operation_ids
+        - operation_ids
+        directives_created:
+        - directives_created
+        - directives_created
+        bank_id: bank_id
+        mental_models_updated:
+        - mental_models_updated
+        - mental_models_updated
+        directives_updated:
+        - directives_updated
+        - directives_updated
+        config_applied: true
+        mental_models_created:
+        - mental_models_created
+        - mental_models_created
+        dry_run: false
+      properties:
+        bank_id:
+          description: Bank that was imported into
+          title: Bank Id
+          type: string
+        config_applied:
+          description: Whether bank config was updated
+          title: Config Applied
+          type: boolean
+        mental_models_created:
+          default: []
+          description: IDs of newly created mental models
+          items:
+            type: string
+          type: array
+        mental_models_updated:
+          default: []
+          description: IDs of updated mental models
+          items:
+            type: string
+          type: array
+        directives_created:
+          default: []
+          description: Names of newly created directives
+          items:
+            type: string
+          type: array
+        directives_updated:
+          default: []
+          description: Names of updated directives
+          items:
+            type: string
+          type: array
+        operation_ids:
+          default: []
+          description: Operation IDs for mental model content generation (async)
+          items:
+            type: string
+          type: array
+        dry_run:
+          default: false
+          description: True if this was a validation-only run
+          title: Dry Run
+          type: boolean
+      required:
+      - bank_id
+      - config_applied
+      title: BankTemplateImportResponse
+    BankTemplateManifest:
+      description: |-
+        A bank template manifest for import/export.
+
+        Version field enables forward-compatible schema evolution: the API
+        auto-upgrades older manifest versions to the current schema on import.
+      example:
+        bank:
+          disposition_empathy: 5
+          enable_observations: true
+          reflect_mission: You are helping a support agent remember customer interactions.
+          retain_mission: "Extract customer issues, resolutions, and sentiment."
+        directives:
+        - content: Always respond with empathy and understanding.
+          name: Always be empathetic
+          priority: 10
+        mental_models:
+        - id: sentiment-overview
+          name: Customer Sentiment Overview
+          source_query: What is the overall sentiment trend?
+          trigger:
+            refresh_after_consolidation: true
+        version: "1"
+      properties:
+        version:
+          description: Manifest schema version (currently '1')
+          title: Version
+          type: string
+        bank:
+          $ref: '#/components/schemas/BankTemplateConfig'
+        mental_models:
+          items:
+            $ref: '#/components/schemas/BankTemplateMentalModel'
+          nullable: true
+          type: array
+        directives:
+          items:
+            $ref: '#/components/schemas/BankTemplateDirective'
+          nullable: true
+          type: array
+      required:
+      - version
+      title: BankTemplateManifest
+    BankTemplateMentalModel:
+      description: A mental model definition within a bank template manifest.
+      properties:
+        id:
+          description: Unique ID for the mental model (alphanumeric lowercase with
+            hyphens)
+          title: Id
+          type: string
+        name:
+          description: Human-readable name for the mental model
+          title: Name
+          type: string
+        source_query:
+          description: The query to run to generate content
+          title: Source Query
+          type: string
+        tags:
+          default: []
+          description: Tags for scoped visibility
+          items:
+            type: string
+          type: array
+        max_tokens:
+          default: 2048
+          description: Maximum tokens for generated content
+          maximum: 8192.0
+          minimum: 256.0
+          title: Max Tokens
+          type: integer
+        trigger:
+          $ref: '#/components/schemas/MentalModelTrigger'
+      required:
+      - id
+      - name
+      - source_query
+      title: BankTemplateMentalModel
     ChannelResponse:
       description: Channel mapping returned by GET/POST endpoints.
       example:
@@ -2438,18 +2562,44 @@ components:
       - provider
       - sender_id
       title: ChannelResponse
+    CheckUpdateResponse:
+      example:
+        has_update: true
+        current_revision: current_revision
+        source_scope: server
+        source_name: source_name
+        latest_revision: latest_revision
+      properties:
+        has_update:
+          title: Has Update
+          type: boolean
+        current_revision:
+          nullable: true
+          type: string
+        latest_revision:
+          nullable: true
+          type: string
+        source_name:
+          nullable: true
+          type: string
+        source_scope:
+          $ref: '#/components/schemas/TemplateScope'
+      required:
+      - current_revision
+      - has_update
+      - latest_revision
+      title: CheckUpdateResponse
     CreateApiKeyRequest:
       example:
         description: description
       properties:
         description:
-          title: Description
-          type: string
           nullable: true
+          type: string
       title: CreateApiKeyRequest
     CreateBankFromTemplateRequest:
       additionalProperties: true
-      description: Request to create a bank from an installed template.
+      description: Body for POST /ext/hindclaw/banks.
       example:
         template: template
         bank_id: bank_id
@@ -2466,9 +2616,8 @@ components:
           title: Template
           type: string
         name:
-          title: Name
-          type: string
           nullable: true
+          type: string
       required:
       - bank_id
       - template
@@ -2543,9 +2692,8 @@ components:
         description: description
       properties:
         description:
-          title: Description
-          type: string
           nullable: true
+          type: string
       title: CreateSAKeyRequest
     CreateSelfServiceAccountRequest:
       additionalProperties: true
@@ -2562,9 +2710,8 @@ components:
           title: Display Name
           type: string
         scoping_policy_id:
-          title: Scoping Policy Id
-          type: string
           nullable: true
+          type: string
       required:
       - display_name
       - id
@@ -2587,9 +2734,8 @@ components:
           title: Display Name
           type: string
         scoping_policy_id:
-          title: Scoping Policy Id
-          type: string
           nullable: true
+          type: string
       required:
       - display_name
       - id
@@ -2600,6 +2746,7 @@ components:
       description: Request to register a marketplace source.
       example:
         alias: alias
+        description: description
         auth_token: auth_token
         url: url
       properties:
@@ -2609,189 +2756,80 @@ components:
           title: Url
           type: string
         alias:
-          description: Override auto-derived source name
           maxLength: 128
           minLength: 1
-          title: Alias
-          type: string
           nullable: true
+          type: string
         auth_token:
-          description: Auth token for private repositories
-          title: Auth Token
-          type: string
           nullable: true
+          type: string
+        description:
+          nullable: true
+          type: string
       required:
       - url
       title: CreateSourceRequest
     CreateTemplateRequest:
-      additionalProperties: {}
-      description: Request to create a custom template.
+      additionalProperties: true
+      description: Request to create a personal template by inlining an upstream manifest.
       example:
-        disposition_literalism: 1
-        min_hindsight_version: min_hindsight_version
-        reflect_mission: reflect_mission
-        observations_mission: observations_mission
-        retain_strategies:
-          key: ""
-        description: ""
-        disposition_empathy: 3
-        consolidation_source_facts_max_tokens: 1
-        disposition_skepticism: 3
-        consolidation_llm_batch_size: 0
-        directive_seeds:
-        - is_active: true
-          name: name
-          priority: 9
-          content: content
-        - is_active: true
-          name: name
-          priority: 9
-          content: content
-        mental_model_seeds:
-        - source_query: source_query
-          name: name
-        - source_query: source_query
-          name: name
-        scope: scope
+        manifest:
+          bank:
+            disposition_empathy: 5
+            enable_observations: true
+            reflect_mission: You are helping a support agent remember customer interactions.
+            retain_mission: "Extract customer issues, resolutions, and sentiment."
+          directives:
+          - content: Always respond with empathy and understanding.
+            name: Always be empathetic
+            priority: 10
+          mental_models:
+          - id: sentiment-overview
+            name: Customer Sentiment Overview
+            source_query: What is the overall sentiment trend?
+            trigger:
+              refresh_after_consolidation: true
+          version: "1"
+        name: name
+        description: description
         id: id
-        enable_observations: true
-        retain_extraction_mode: concise
-        retain_mission: retain_mission
-        retain_chunk_size: 0
-        author: ""
-        retain_default_strategy: retain_default_strategy
-        min_hindclaw_version: min_hindclaw_version
-        entity_labels:
-        - values:
-          - description: ""
-            value: value
-          - description: ""
-            value: value
-          description: ""
-          optional: true
-          tag: false
-          type: value
-          key: key
-        - values:
-          - description: ""
-            value: value
-          - description: ""
-            value: value
-          description: ""
-          optional: true
-          tag: false
-          type: value
-          key: key
-        entities_allow_free_form: true
+        category: category
+        integrations:
+        - integrations
+        - integrations
         tags:
         - tags
         - tags
-        retain_custom_instructions: retain_custom_instructions
-        consolidation_source_facts_max_tokens_per_observation: 5
       properties:
         id:
           maxLength: 128
           minLength: 1
           title: Id
-        scope:
-          title: Scope
+          type: string
+        name:
+          minLength: 1
+          title: Name
           type: string
         description:
-          default: ""
-          title: Description
-        author:
-          default: ""
-          title: Author
+          nullable: true
+          type: string
+        category:
+          nullable: true
+          type: string
+        integrations:
+          items:
+            type: string
+          type: array
         tags:
           items:
             type: string
-          title: Tags
-        min_hindclaw_version:
-          title: Min Hindclaw Version
-          type: string
-        min_hindsight_version:
-          title: Min Hindsight Version
-          type: string
-          nullable: true
-        retain_mission:
-          title: Retain Mission
-          type: string
-        reflect_mission:
-          title: Reflect Mission
-          type: string
-        observations_mission:
-          title: Observations Mission
-          type: string
-          nullable: true
-        retain_extraction_mode:
-          default: concise
-          title: Retain Extraction Mode
-        retain_custom_instructions:
-          title: Retain Custom Instructions
-          type: string
-          nullable: true
-        retain_chunk_size:
-          minimum: 0.0
-          title: Retain Chunk Size
-          nullable: true
-        retain_default_strategy:
-          title: Retain Default Strategy
-          type: string
-          nullable: true
-        retain_strategies:
-          additionalProperties: true
-          title: Retain Strategies
-        entity_labels:
-          items:
-            $ref: '#/components/schemas/EntityLabel'
-          title: Entity Labels
-        entities_allow_free_form:
-          default: true
-          title: Entities Allow Free Form
-        enable_observations:
-          default: true
-          title: Enable Observations
-        consolidation_llm_batch_size:
-          minimum: 0.0
-          title: Consolidation Llm Batch Size
-          nullable: true
-        consolidation_source_facts_max_tokens:
-          title: Consolidation Source Facts Max Tokens
-          type: integer
-          nullable: true
-        consolidation_source_facts_max_tokens_per_observation:
-          title: Consolidation Source Facts Max Tokens Per Observation
-          type: integer
-          nullable: true
-        disposition_skepticism:
-          default: 3
-          maximum: 5.0
-          minimum: 1.0
-          title: Disposition Skepticism
-        disposition_literalism:
-          default: 3
-          maximum: 5.0
-          minimum: 1.0
-          title: Disposition Literalism
-        disposition_empathy:
-          default: 3
-          maximum: 5.0
-          minimum: 1.0
-          title: Disposition Empathy
-        directive_seeds:
-          items:
-            $ref: '#/components/schemas/DirectiveSeed'
-          title: Directive Seeds
-        mental_model_seeds:
-          items:
-            $ref: '#/components/schemas/MentalModelSeed'
-          title: Mental Model Seeds
+          type: array
+        manifest:
+          $ref: '#/components/schemas/BankTemplateManifest'
       required:
       - id
-      - min_hindclaw_version
-      - reflect_mission
-      - retain_mission
-      - scope
+      - manifest
+      - name
       title: CreateTemplateRequest
     CreateUserRequest:
       example:
@@ -2807,9 +2845,8 @@ components:
           title: Display Name
           type: string
         email:
-          title: Email
-          type: string
           nullable: true
+          type: string
         is_active:
           default: true
           title: Is Active
@@ -2818,123 +2855,6 @@ components:
       - display_name
       - id
       title: CreateUserRequest
-    DirectiveSeed:
-      description: A directive to create when bootstrapping a bank from a template.
-      example:
-        is_active: true
-        name: name
-        priority: 9
-        content: content
-      properties:
-        name:
-          title: Name
-          type: string
-        content:
-          title: Content
-          type: string
-        priority:
-          default: 0
-          title: Priority
-          type: integer
-        is_active:
-          default: true
-          title: Is Active
-          type: boolean
-      required:
-      - content
-      - name
-      title: DirectiveSeed
-    DirectiveSeedResult:
-      description: Result of creating a single directive from a template seed.
-      example:
-        directive_id: directive_id
-        created: true
-        name: name
-        error: error
-      properties:
-        name:
-          title: Name
-          type: string
-        created:
-          title: Created
-          type: boolean
-        directive_id:
-          title: Directive Id
-          type: string
-          nullable: true
-        error:
-          title: Error
-          type: string
-          nullable: true
-      required:
-      - created
-      - name
-      title: DirectiveSeedResult
-    EntityLabel:
-      description: |-
-        An entity label definition for structured classification.
-
-        Hindsight supports three label types:
-        - "value": single enum value from the values list
-        - "multi-values": multiple enum values from the values list
-        - "text": free-form text (no values list needed)
-
-        The ``tag`` field controls whether facts with this label also get tagged
-        (enabling tag-based filtering in recall/reflect).
-      example:
-        values:
-        - description: ""
-          value: value
-        - description: ""
-          value: value
-        description: ""
-        optional: true
-        tag: false
-        type: value
-        key: key
-      properties:
-        key:
-          title: Key
-          type: string
-        description:
-          default: ""
-          title: Description
-          type: string
-        type:
-          default: value
-          title: Type
-          type: string
-        optional:
-          default: true
-          title: Optional
-          type: boolean
-        tag:
-          default: false
-          title: Tag
-          type: boolean
-        values:
-          items:
-            $ref: '#/components/schemas/EntityLabelValue'
-          type: array
-      required:
-      - key
-      title: EntityLabel
-    EntityLabelValue:
-      description: A valid value for a value or multi-values entity label.
-      example:
-        description: ""
-        value: value
-      properties:
-        value:
-          title: Value
-          type: string
-        description:
-          default: ""
-          title: Description
-          type: string
-      required:
-      - value
-      title: EntityLabelValue
     GroupMemberResponse:
       description: Group membership entry.
       example:
@@ -3005,135 +2925,82 @@ components:
       title: HTTPValidationError
     InstallTemplateRequest:
       additionalProperties: true
-      description: Request to install a template from a marketplace source.
+      description: |-
+        Request to install a template from a marketplace source.
+
+        The ``{id}`` in the URL path is the template id WITHIN the source.
+        The installed-template id is ``alias_id`` if provided, else the source
+        template id. This lets a user install the same source template under a
+        different installed name (Section 4.3 identity invariant: at most one
+        row per (id, scope, owner)).
       example:
-        scope: personal
-        name: name
-        source_scope: source_scope
-        source: source
+        alias_id: alias_id
+        source_scope: server
         source_name: source_name
       properties:
         source_name:
-          description: Marketplace source name
           minLength: 1
           title: Source Name
           type: string
-        source:
-          description: Deprecated alias for source_name
-          title: Source
-          type: string
-          nullable: true
         source_scope:
-          description: '''server'' or ''personal'' — required when ambiguous'
-          title: Source Scope
-          type: string
+          $ref: '#/components/schemas/TemplateScope'
+        alias_id:
           nullable: true
-        name:
-          description: Template name within the source
-          minLength: 1
-          title: Name
-          type: string
-        scope:
-          default: personal
-          description: '''server'' or ''personal'''
-          title: Scope
           type: string
       required:
-      - name
       - source_name
       title: InstallTemplateRequest
-    MarketplaceSearchResponse:
-      description: Response for marketplace search.
+    ListTemplatesResponse:
       example:
-        total: 0
-        results:
-        - installed_in:
-          - installed_in
-          - installed_in
-          author: ""
-          name: name
-          description: ""
-          source_scope: source_scope
-          source: source
-          version: version
+        templates:
+        - owner: owner
+          source_revision: source_revision
+          installed_at: 2000-01-23T04:56:07.000+00:00
+          manifest:
+            key: ""
+          description: description
           tags:
           - tags
           - tags
-        - installed_in:
-          - installed_in
-          - installed_in
-          author: ""
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          source_owner: source_owner
+          scope: server
           name: name
-          description: ""
-          source_scope: source_scope
-          source: source
-          version: version
+          source_scope: null
+          id: id
+          category: category
+          integrations:
+          - integrations
+          - integrations
+          source_name: source_name
+        - owner: owner
+          source_revision: source_revision
+          installed_at: 2000-01-23T04:56:07.000+00:00
+          manifest:
+            key: ""
+          description: description
           tags:
           - tags
           - tags
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          source_owner: source_owner
+          scope: server
+          name: name
+          source_scope: null
+          id: id
+          category: category
+          integrations:
+          - integrations
+          - integrations
+          source_name: source_name
       properties:
-        results:
+        templates:
           items:
-            $ref: '#/components/schemas/MarketplaceSearchResult'
-          type: array
-        total:
-          title: Total
-          type: integer
-      required:
-      - results
-      - total
-      title: MarketplaceSearchResponse
-    MarketplaceSearchResult:
-      description: A template from marketplace search results with install status.
-      example:
-        installed_in:
-        - installed_in
-        - installed_in
-        author: ""
-        name: name
-        description: ""
-        source_scope: source_scope
-        source: source
-        version: version
-        tags:
-        - tags
-        - tags
-      properties:
-        source:
-          title: Source
-          type: string
-        source_scope:
-          title: Source Scope
-          type: string
-        name:
-          title: Name
-          type: string
-        version:
-          title: Version
-          type: string
-        description:
-          default: ""
-          title: Description
-          type: string
-        author:
-          default: ""
-          title: Author
-          type: string
-        tags:
-          default: []
-          items:
-            type: string
-          type: array
-        installed_in:
-          items:
-            type: string
+            $ref: '#/components/schemas/TemplateResponse'
           type: array
       required:
-      - name
-      - source
-      - source_scope
-      - version
-      title: MarketplaceSearchResult
+      - templates
+      title: ListTemplatesResponse
     MeProfileResponse:
       description: Response for GET /me — caller's own profile.
       example:
@@ -3154,9 +3021,8 @@ components:
           title: Display Name
           type: string
         email:
-          title: Email
-          type: string
           nullable: true
+          type: string
         is_active:
           title: Is Active
           type: boolean
@@ -3171,53 +3037,102 @@ components:
       - id
       - is_active
       title: MeProfileResponse
-    MentalModelSeed:
-      description: A mental model to create when bootstrapping a bank from a template.
-      example:
-        source_query: source_query
-        name: name
+    MentalModelTrigger:
+      description: Trigger settings for a mental model.
       properties:
-        name:
-          title: Name
-          type: string
-        source_query:
-          title: Source Query
-          type: string
-      required:
-      - name
-      - source_query
-      title: MentalModelSeed
-    MentalModelSeedResult:
-      description: Result of creating a single mental model from a template seed.
-      example:
-        created: true
-        name: name
-        operation_id: operation_id
-        mental_model_id: mental_model_id
-        error: error
-      properties:
-        name:
-          title: Name
-          type: string
-        created:
-          title: Created
+        refresh_after_consolidation:
+          default: false
+          description: "If true, refresh this mental model after observations consolidation\
+            \ (real-time mode)"
+          title: Refresh After Consolidation
           type: boolean
-        mental_model_id:
-          title: Mental Model Id
-          type: string
+        fact_types:
+          items:
+            enum:
+            - world
+            - experience
+            - observation
+            type: string
           nullable: true
-        operation_id:
-          title: Operation Id
-          type: string
+          type: array
+        exclude_mental_models:
+          default: false
+          description: "If true, exclude all mental models from the reflect loop (skip\
+            \ search_mental_models tool)."
+          title: Exclude Mental Models
+          type: boolean
+        exclude_mental_model_ids:
+          items:
+            type: string
           nullable: true
-        error:
-          title: Error
-          type: string
+          type: array
+        tags_match:
+          enum:
+          - any
+          - all
+          - any_strict
+          - all_strict
           nullable: true
-      required:
-      - created
-      - name
-      title: MentalModelSeedResult
+          type: string
+        tag_groups:
+          items:
+            $ref: '#/components/schemas/MentalModelTrigger_tag_groups_inner'
+          nullable: true
+          type: array
+      title: MentalModelTrigger
+    PatchTemplateRequest:
+      additionalProperties: true
+      description: Partial update for hand-edited templates. Every field is optional.
+      example:
+        manifest:
+          bank:
+            disposition_empathy: 5
+            enable_observations: true
+            reflect_mission: You are helping a support agent remember customer interactions.
+            retain_mission: "Extract customer issues, resolutions, and sentiment."
+          directives:
+          - content: Always respond with empathy and understanding.
+            name: Always be empathetic
+            priority: 10
+          mental_models:
+          - id: sentiment-overview
+            name: Customer Sentiment Overview
+            source_query: What is the overall sentiment trend?
+            trigger:
+              refresh_after_consolidation: true
+          version: "1"
+        name: name
+        description: description
+        category: category
+        integrations:
+        - integrations
+        - integrations
+        tags:
+        - tags
+        - tags
+      properties:
+        name:
+          nullable: true
+          type: string
+        description:
+          nullable: true
+          type: string
+        category:
+          nullable: true
+          type: string
+        integrations:
+          items:
+            type: string
+          nullable: true
+          type: array
+        tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+        manifest:
+          $ref: '#/components/schemas/BankTemplateManifest'
+      title: PatchTemplateRequest
     PolicyAttachmentResponse:
       description: Policy attachment resource.
       example:
@@ -3286,9 +3201,8 @@ components:
           title: Api Key
           type: string
         description:
-          title: Description
-          type: string
           nullable: true
+          type: string
       required:
       - api_key
       - description
@@ -3308,9 +3222,8 @@ components:
           title: Api Key Prefix
           type: string
         description:
-          title: Description
-          type: string
           nullable: true
+          type: string
       required:
       - api_key_prefix
       - description
@@ -3338,9 +3251,8 @@ components:
           title: Is Active
           type: boolean
         scoping_policy_id:
-          title: Scoping Policy Id
-          type: string
           nullable: true
+          type: string
       required:
       - display_name
       - id
@@ -3351,8 +3263,12 @@ components:
     SourceResponse:
       description: Response for a registered marketplace source.
       example:
+        owner: owner
         has_auth: true
+        updated_at: updated_at
+        scope: server
         name: name
+        description: description
         created_at: created_at
         url: url
       properties:
@@ -3362,377 +3278,179 @@ components:
         url:
           title: Url
           type: string
+        scope:
+          $ref: '#/components/schemas/TemplateScope'
+        owner:
+          nullable: true
+          type: string
         has_auth:
           title: Has Auth
           type: boolean
+        description:
+          nullable: true
+          type: string
         created_at:
-          title: Created At
+          nullable: true
+          type: string
+        updated_at:
+          nullable: true
           type: string
       required:
-      - created_at
       - has_auth
       - name
+      - scope
       - url
       title: SourceResponse
+    TagGroupAnd:
+      description: "Compound AND group: all child filters must match."
+      properties:
+        and:
+          items:
+            $ref: '#/components/schemas/MentalModelTrigger_tag_groups_inner'
+          type: array
+      required:
+      - and
+      title: TagGroupAnd
+    TagGroupLeaf:
+      description: "A leaf tag filter: matches memories by tag list and match mode."
+      properties:
+        tags:
+          items:
+            type: string
+          type: array
+        match:
+          default: any_strict
+          enum:
+          - any
+          - all
+          - any_strict
+          - all_strict
+          title: Match
+          type: string
+      required:
+      - tags
+      title: TagGroupLeaf
+    TagGroupNot:
+      description: "Compound NOT group: child filter must NOT match."
+      properties:
+        not:
+          $ref: '#/components/schemas/Not'
+      required:
+      - not
+      title: TagGroupNot
+    TagGroupOr:
+      description: "Compound OR group: at least one child filter must match."
+      properties:
+        or:
+          items:
+            $ref: '#/components/schemas/MentalModelTrigger_tag_groups_inner'
+          type: array
+      required:
+      - or
+      title: TagGroupOr
     TemplateResponse:
-      description: Full template details.
+      description: "Installed template, surfaced over the API."
       example:
+        owner: owner
         source_revision: source_revision
-        disposition_literalism: 7
-        min_hindsight_version: min_hindsight_version
-        reflect_mission: reflect_mission
-        observations_mission: observations_mission
-        retain_strategies:
+        installed_at: 2000-01-23T04:56:07.000+00:00
+        manifest:
           key: ""
         description: description
-        created_at: created_at
-        disposition_empathy: 9
-        consolidation_source_facts_max_tokens: 5
-        source_url: source_url
-        schema_version: 0
-        disposition_skepticism: 2
-        consolidation_llm_batch_size: 1
-        directive_seeds:
-        - key: ""
-        - key: ""
-        updated_at: updated_at
-        mental_model_seeds:
-        - key: ""
-        - key: ""
-        scope: scope
-        id: id
-        source_name: source_name
-        enable_observations: true
-        owner: owner
-        retain_extraction_mode: retain_extraction_mode
-        retain_mission: retain_mission
-        retain_chunk_size: 6
-        author: author
-        retain_default_strategy: retain_default_strategy
-        min_hindclaw_version: min_hindclaw_version
-        entity_labels:
-        - key: ""
-        - key: ""
-        version: version
-        entities_allow_free_form: true
         tags:
         - tags
         - tags
-        retain_custom_instructions: retain_custom_instructions
-        consolidation_source_facts_max_tokens_per_observation: 5
+        updated_at: 2000-01-23T04:56:07.000+00:00
+        source_owner: source_owner
+        scope: server
+        name: name
+        source_scope: null
+        id: id
+        category: category
+        integrations:
+        - integrations
+        - integrations
+        source_name: source_name
       properties:
         id:
           title: Id
           type: string
-        scope:
-          title: Scope
+        name:
+          title: Name
           type: string
+        description:
+          nullable: true
+          type: string
+        category:
+          nullable: true
+          type: string
+        integrations:
+          items:
+            type: string
+          type: array
+        tags:
+          items:
+            type: string
+          type: array
+        scope:
+          $ref: '#/components/schemas/TemplateScope'
         owner:
-          title: Owner
-          type: string
           nullable: true
+          type: string
         source_name:
-          title: Source Name
-          type: string
           nullable: true
-        schema_version:
-          title: Schema Version
-          type: integer
-        min_hindclaw_version:
-          title: Min Hindclaw Version
           type: string
-        min_hindsight_version:
-          title: Min Hindsight Version
-          type: string
+        source_scope:
+          $ref: '#/components/schemas/TemplateScope'
+        source_owner:
           nullable: true
-        version:
-          title: Version
           type: string
-          nullable: true
-        source_url:
-          title: Source Url
-          type: string
-          nullable: true
         source_revision:
-          title: Source Revision
-          type: string
           nullable: true
-        description:
-          title: Description
           type: string
-        author:
-          title: Author
+        installed_at:
+          format: date-time
+          title: Installed At
           type: string
-        tags:
-          items:
-            type: string
-          type: array
-        retain_mission:
-          title: Retain Mission
+        updated_at:
+          format: date-time
+          title: Updated At
           type: string
-        reflect_mission:
-          title: Reflect Mission
-          type: string
-        observations_mission:
-          title: Observations Mission
-          type: string
-          nullable: true
-        retain_extraction_mode:
-          title: Retain Extraction Mode
-          type: string
-        retain_custom_instructions:
-          title: Retain Custom Instructions
-          type: string
-          nullable: true
-        retain_chunk_size:
-          title: Retain Chunk Size
-          type: integer
-          nullable: true
-        retain_default_strategy:
-          title: Retain Default Strategy
-          type: string
-          nullable: true
-        retain_strategies:
+        manifest:
           additionalProperties: true
-          title: Retain Strategies
+          title: Manifest
           type: object
-        entity_labels:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-        entities_allow_free_form:
-          title: Entities Allow Free Form
-          type: boolean
-        enable_observations:
-          title: Enable Observations
-          type: boolean
-        consolidation_llm_batch_size:
-          title: Consolidation Llm Batch Size
-          type: integer
-          nullable: true
-        consolidation_source_facts_max_tokens:
-          title: Consolidation Source Facts Max Tokens
-          type: integer
-          nullable: true
-        consolidation_source_facts_max_tokens_per_observation:
-          title: Consolidation Source Facts Max Tokens Per Observation
-          type: integer
-          nullable: true
-        disposition_skepticism:
-          title: Disposition Skepticism
-          type: integer
-        disposition_literalism:
-          title: Disposition Literalism
-          type: integer
-        disposition_empathy:
-          title: Disposition Empathy
-          type: integer
-        directive_seeds:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-        mental_model_seeds:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-        created_at:
-          title: Created At
-          type: string
-        updated_at:
-          title: Updated At
-          type: string
       required:
-      - author
-      - consolidation_llm_batch_size
-      - consolidation_source_facts_max_tokens
-      - consolidation_source_facts_max_tokens_per_observation
-      - created_at
+      - category
       - description
-      - directive_seeds
-      - disposition_empathy
-      - disposition_literalism
-      - disposition_skepticism
-      - enable_observations
-      - entities_allow_free_form
-      - entity_labels
       - id
-      - mental_model_seeds
-      - min_hindclaw_version
-      - min_hindsight_version
-      - observations_mission
+      - installed_at
+      - integrations
+      - manifest
+      - name
       - owner
-      - reflect_mission
-      - retain_chunk_size
-      - retain_custom_instructions
-      - retain_default_strategy
-      - retain_extraction_mode
-      - retain_mission
-      - retain_strategies
-      - schema_version
       - scope
       - source_name
+      - source_owner
       - source_revision
-      - source_url
+      - source_scope
       - tags
       - updated_at
-      - version
       title: TemplateResponse
-    TemplateSummaryResponse:
-      description: Summary of a template for list endpoints.
-      example:
-        retain_extraction_mode: retain_extraction_mode
-        disposition_literalism: 6
-        author: author
-        description: description
-        created_at: created_at
-        disposition_empathy: 1
-        version: version
-        tags:
-        - tags
-        - tags
-        disposition_skepticism: 0
-        updated_at: updated_at
-        scope: scope
-        id: id
-        source_name: source_name
-      properties:
-        id:
-          title: Id
-          type: string
-        scope:
-          title: Scope
-          type: string
-        source_name:
-          title: Source Name
-          type: string
-          nullable: true
-        version:
-          title: Version
-          type: string
-          nullable: true
-        description:
-          title: Description
-          type: string
-        author:
-          title: Author
-          type: string
-        tags:
-          items:
-            type: string
-          type: array
-        retain_extraction_mode:
-          title: Retain Extraction Mode
-          type: string
-        disposition_skepticism:
-          title: Disposition Skepticism
-          type: integer
-        disposition_literalism:
-          title: Disposition Literalism
-          type: integer
-        disposition_empathy:
-          title: Disposition Empathy
-          type: integer
-        created_at:
-          title: Created At
-          type: string
-        updated_at:
-          title: Updated At
-          type: string
-      required:
-      - author
-      - created_at
-      - description
-      - disposition_empathy
-      - disposition_literalism
-      - disposition_skepticism
-      - id
-      - retain_extraction_mode
-      - scope
-      - source_name
-      - tags
-      - updated_at
-      - version
-      title: TemplateSummaryResponse
-    TemplateUpdateResponse:
-      description: Response for template update from marketplace.
-      example:
-        template:
-          source_revision: source_revision
-          disposition_literalism: 7
-          min_hindsight_version: min_hindsight_version
-          reflect_mission: reflect_mission
-          observations_mission: observations_mission
-          retain_strategies:
-            key: ""
-          description: description
-          created_at: created_at
-          disposition_empathy: 9
-          consolidation_source_facts_max_tokens: 5
-          source_url: source_url
-          schema_version: 0
-          disposition_skepticism: 2
-          consolidation_llm_batch_size: 1
-          directive_seeds:
-          - key: ""
-          - key: ""
-          updated_at: updated_at
-          mental_model_seeds:
-          - key: ""
-          - key: ""
-          scope: scope
-          id: id
-          source_name: source_name
-          enable_observations: true
-          owner: owner
-          retain_extraction_mode: retain_extraction_mode
-          retain_mission: retain_mission
-          retain_chunk_size: 6
-          author: author
-          retain_default_strategy: retain_default_strategy
-          min_hindclaw_version: min_hindclaw_version
-          entity_labels:
-          - key: ""
-          - key: ""
-          version: version
-          entities_allow_free_form: true
-          tags:
-          - tags
-          - tags
-          retain_custom_instructions: retain_custom_instructions
-          consolidation_source_facts_max_tokens_per_observation: 5
-        previous_version: previous_version
-        new_version: new_version
-        updated: true
-      properties:
-        updated:
-          title: Updated
-          type: boolean
-        previous_version:
-          title: Previous Version
-          type: string
-          nullable: true
-        new_version:
-          title: New Version
-          type: string
-          nullable: true
-        template:
-          $ref: '#/components/schemas/TemplateResponse'
-      required:
-      - new_version
-      - previous_version
-      - updated
-      title: TemplateUpdateResponse
+    TemplateScope:
+      description: Template visibility scope.
+      enum:
+      - server
+      - personal
+      title: TemplateScope
+      type: string
     UpdateGroupRequest:
       example:
         display_name: display_name
       properties:
         display_name:
-          title: Display Name
-          type: string
           nullable: true
+          type: string
       title: UpdateGroupRequest
     UpdatePolicyRequest:
       description: Request to update an access policy.
@@ -3742,14 +3460,12 @@ components:
         display_name: display_name
       properties:
         display_name:
-          title: Display Name
-          type: string
           nullable: true
+          type: string
         document:
           additionalProperties: true
-          title: Document
-          type: object
           nullable: true
+          type: object
       title: UpdatePolicyRequest
     UpdateSelfServiceAccountRequest:
       additionalProperties: true
@@ -3777,182 +3493,59 @@ components:
         scoping_policy_id: scoping_policy_id
       properties:
         display_name:
-          title: Display Name
-          type: string
           nullable: true
+          type: string
         scoping_policy_id:
-          title: Scoping Policy Id
-          type: string
           nullable: true
+          type: string
         is_active:
-          title: Is Active
+          nullable: true
           type: boolean
-          nullable: true
       title: UpdateServiceAccountRequest
-    UpdateTemplateRequest:
-      additionalProperties: {}
-      description: |-
-        Request to update an existing template. All fields optional.
-
-        Note: cross-field validation (e.g. custom mode requires custom instructions)
-        cannot be fully checked here because this is a partial update. The endpoint
-        must merge with the existing record and validate the final state.
+    UpdateTemplateResponse:
       example:
-        retain_extraction_mode: retain_extraction_mode
-        retain_mission: retain_mission
-        disposition_literalism: 1
-        retain_chunk_size: 0
-        author: author
-        min_hindsight_version: min_hindsight_version
-        reflect_mission: reflect_mission
-        observations_mission: observations_mission
-        retain_default_strategy: retain_default_strategy
-        retain_strategies:
-          key: ""
-        description: description
-        min_hindclaw_version: min_hindclaw_version
-        disposition_empathy: 3
-        entity_labels:
-        - values:
-          - description: ""
-            value: value
-          - description: ""
-            value: value
-          description: ""
-          optional: true
-          tag: false
-          type: value
-          key: key
-        - values:
-          - description: ""
-            value: value
-          - description: ""
-            value: value
-          description: ""
-          optional: true
-          tag: false
-          type: value
-          key: key
-        consolidation_source_facts_max_tokens: 1
-        entities_allow_free_form: true
-        tags:
-        - tags
-        - tags
-        disposition_skepticism: 3
-        consolidation_llm_batch_size: 0
-        directive_seeds:
-        - is_active: true
+        previous_revision: previous_revision
+        template:
+          owner: owner
+          source_revision: source_revision
+          installed_at: 2000-01-23T04:56:07.000+00:00
+          manifest:
+            key: ""
+          description: description
+          tags:
+          - tags
+          - tags
+          updated_at: 2000-01-23T04:56:07.000+00:00
+          source_owner: source_owner
+          scope: server
           name: name
-          priority: 9
-          content: content
-        - is_active: true
-          name: name
-          priority: 9
-          content: content
-        mental_model_seeds:
-        - source_query: source_query
-          name: name
-        - source_query: source_query
-          name: name
-        retain_custom_instructions: retain_custom_instructions
-        consolidation_source_facts_max_tokens_per_observation: 5
-        enable_observations: true
+          source_scope: null
+          id: id
+          category: category
+          integrations:
+          - integrations
+          - integrations
+          source_name: source_name
+        new_revision: new_revision
+        updated: true
       properties:
-        description:
-          title: Description
+        updated:
+          title: Updated
+          type: boolean
+        previous_revision:
           nullable: true
-        author:
-          title: Author
-          nullable: true
-        tags:
-          items: {}
-          title: Tags
-          nullable: true
-        min_hindclaw_version:
-          title: Min Hindclaw Version
-          nullable: true
-        min_hindsight_version:
-          title: Min Hindsight Version
           type: string
+        new_revision:
           nullable: true
-        retain_mission:
-          title: Retain Mission
-          nullable: true
-        reflect_mission:
-          title: Reflect Mission
-          nullable: true
-        observations_mission:
-          title: Observations Mission
           type: string
-          nullable: true
-        retain_extraction_mode:
-          title: Retain Extraction Mode
-          nullable: true
-        retain_custom_instructions:
-          title: Retain Custom Instructions
-          type: string
-          nullable: true
-        retain_chunk_size:
-          minimum: 0.0
-          title: Retain Chunk Size
-          nullable: true
-        retain_default_strategy:
-          title: Retain Default Strategy
-          type: string
-          nullable: true
-        retain_strategies:
-          additionalProperties: true
-          title: Retain Strategies
-          nullable: true
-        entity_labels:
-          items:
-            $ref: '#/components/schemas/EntityLabel'
-          title: Entity Labels
-          nullable: true
-        entities_allow_free_form:
-          title: Entities Allow Free Form
-          nullable: true
-        enable_observations:
-          title: Enable Observations
-          nullable: true
-        consolidation_llm_batch_size:
-          minimum: 0.0
-          title: Consolidation Llm Batch Size
-          nullable: true
-        consolidation_source_facts_max_tokens:
-          title: Consolidation Source Facts Max Tokens
-          type: integer
-          nullable: true
-        consolidation_source_facts_max_tokens_per_observation:
-          title: Consolidation Source Facts Max Tokens Per Observation
-          type: integer
-          nullable: true
-        disposition_skepticism:
-          maximum: 5.0
-          minimum: 1.0
-          title: Disposition Skepticism
-          nullable: true
-        disposition_literalism:
-          maximum: 5.0
-          minimum: 1.0
-          title: Disposition Literalism
-          nullable: true
-        disposition_empathy:
-          maximum: 5.0
-          minimum: 1.0
-          title: Disposition Empathy
-          nullable: true
-        directive_seeds:
-          items:
-            $ref: '#/components/schemas/DirectiveSeed'
-          title: Directive Seeds
-          nullable: true
-        mental_model_seeds:
-          items:
-            $ref: '#/components/schemas/MentalModelSeed'
-          title: Mental Model Seeds
-          nullable: true
-      title: UpdateTemplateRequest
+        template:
+          $ref: '#/components/schemas/TemplateResponse'
+      required:
+      - new_revision
+      - previous_revision
+      - template
+      - updated
+      title: UpdateTemplateResponse
     UpdateUserRequest:
       example:
         is_active: true
@@ -3960,17 +3553,14 @@ components:
         email: email
       properties:
         display_name:
-          title: Display Name
-          type: string
           nullable: true
+          type: string
         email:
-          title: Email
+          nullable: true
           type: string
-          nullable: true
         is_active:
-          title: Is Active
-          type: boolean
           nullable: true
+          type: boolean
       title: UpdateUserRequest
     UpsertBankPolicyRequest:
       description: Request to create/update a bank policy.
@@ -4000,9 +3590,8 @@ components:
           title: Display Name
           type: string
         email:
-          title: Email
-          type: string
           nullable: true
+          type: string
         is_active:
           default: true
           title: Is Active
@@ -4044,6 +3633,19 @@ components:
       - msg
       - type
       title: ValidationError
+    MentalModelTrigger_tag_groups_inner:
+      anyOf:
+      - $ref: '#/components/schemas/TagGroupLeaf'
+      - $ref: '#/components/schemas/TagGroupAnd'
+      - $ref: '#/components/schemas/TagGroupOr'
+      - $ref: '#/components/schemas/TagGroupNot'
+    Not:
+      anyOf:
+      - $ref: '#/components/schemas/TagGroupLeaf'
+      - $ref: '#/components/schemas/TagGroupAnd'
+      - $ref: '#/components/schemas/TagGroupOr'
+      - $ref: '#/components/schemas/TagGroupNot'
+      title: Not
     ValidationError_loc_inner:
       anyOf:
       - type: string

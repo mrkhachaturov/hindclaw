@@ -17,24 +17,21 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class MarketplaceSearchResult(BaseModel):
+class BankTemplateDirective(BaseModel):
     """
-    A template from marketplace search results with install status.
+    A directive definition within a bank template manifest.  Directives are matched by name on re-import: existing directives with the same name are updated, new ones are created.
     """ # noqa: E501
-    source: StrictStr
-    source_scope: StrictStr
-    name: StrictStr
-    version: StrictStr
-    description: Optional[StrictStr] = ''
-    author: Optional[StrictStr] = ''
-    tags: Optional[List[StrictStr]] = None
-    installed_in: Optional[List[StrictStr]] = None
-    __properties: ClassVar[List[str]] = ["source", "source_scope", "name", "version", "description", "author", "tags", "installed_in"]
+    name: StrictStr = Field(description="Human-readable name for the directive (used as match key on re-import)")
+    content: StrictStr = Field(description="The directive text to inject into prompts")
+    priority: Optional[StrictInt] = Field(default=0, description="Higher priority directives are injected first")
+    is_active: Optional[StrictBool] = Field(default=True, description="Whether this directive is active")
+    tags: Optional[List[StrictStr]] = Field(default=None, description="Tags for filtering")
+    __properties: ClassVar[List[str]] = ["name", "content", "priority", "is_active", "tags"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -54,7 +51,7 @@ class MarketplaceSearchResult(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of MarketplaceSearchResult from a JSON string"""
+        """Create an instance of BankTemplateDirective from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -79,7 +76,7 @@ class MarketplaceSearchResult(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of MarketplaceSearchResult from a dict"""
+        """Create an instance of BankTemplateDirective from a dict"""
         if obj is None:
             return None
 
@@ -87,14 +84,11 @@ class MarketplaceSearchResult(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "source": obj.get("source"),
-            "source_scope": obj.get("source_scope"),
             "name": obj.get("name"),
-            "version": obj.get("version"),
-            "description": obj.get("description") if obj.get("description") is not None else '',
-            "author": obj.get("author") if obj.get("author") is not None else '',
-            "tags": obj.get("tags"),
-            "installed_in": obj.get("installed_in")
+            "content": obj.get("content"),
+            "priority": obj.get("priority") if obj.get("priority") is not None else 0,
+            "is_active": obj.get("is_active") if obj.get("is_active") is not None else True,
+            "tags": obj.get("tags")
         })
         return _obj
 

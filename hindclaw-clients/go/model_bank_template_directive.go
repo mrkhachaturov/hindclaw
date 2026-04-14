@@ -16,25 +16,31 @@ import (
 	"fmt"
 )
 
-// checks if the DirectiveSeed type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &DirectiveSeed{}
+// checks if the BankTemplateDirective type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &BankTemplateDirective{}
 
-// DirectiveSeed A directive to create when bootstrapping a bank from a template.
-type DirectiveSeed struct {
+// BankTemplateDirective A directive definition within a bank template manifest.  Directives are matched by name on re-import: existing directives with the same name are updated, new ones are created.
+type BankTemplateDirective struct {
+	// Human-readable name for the directive (used as match key on re-import)
 	Name string `json:"name"`
+	// The directive text to inject into prompts
 	Content string `json:"content"`
+	// Higher priority directives are injected first
 	Priority *int32 `json:"priority,omitempty"`
+	// Whether this directive is active
 	IsActive *bool `json:"is_active,omitempty"`
+	// Tags for filtering
+	Tags []string `json:"tags,omitempty"`
 }
 
-type _DirectiveSeed DirectiveSeed
+type _BankTemplateDirective BankTemplateDirective
 
-// NewDirectiveSeed instantiates a new DirectiveSeed object
+// NewBankTemplateDirective instantiates a new BankTemplateDirective object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDirectiveSeed(name string, content string) *DirectiveSeed {
-	this := DirectiveSeed{}
+func NewBankTemplateDirective(name string, content string) *BankTemplateDirective {
+	this := BankTemplateDirective{}
 	this.Name = name
 	this.Content = content
 	var priority int32 = 0
@@ -44,11 +50,11 @@ func NewDirectiveSeed(name string, content string) *DirectiveSeed {
 	return &this
 }
 
-// NewDirectiveSeedWithDefaults instantiates a new DirectiveSeed object
+// NewBankTemplateDirectiveWithDefaults instantiates a new BankTemplateDirective object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewDirectiveSeedWithDefaults() *DirectiveSeed {
-	this := DirectiveSeed{}
+func NewBankTemplateDirectiveWithDefaults() *BankTemplateDirective {
+	this := BankTemplateDirective{}
 	var priority int32 = 0
 	this.Priority = &priority
 	var isActive bool = true
@@ -57,7 +63,7 @@ func NewDirectiveSeedWithDefaults() *DirectiveSeed {
 }
 
 // GetName returns the Name field value
-func (o *DirectiveSeed) GetName() string {
+func (o *BankTemplateDirective) GetName() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -68,7 +74,7 @@ func (o *DirectiveSeed) GetName() string {
 
 // GetNameOk returns a tuple with the Name field value
 // and a boolean to check if the value has been set.
-func (o *DirectiveSeed) GetNameOk() (*string, bool) {
+func (o *BankTemplateDirective) GetNameOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -76,12 +82,12 @@ func (o *DirectiveSeed) GetNameOk() (*string, bool) {
 }
 
 // SetName sets field value
-func (o *DirectiveSeed) SetName(v string) {
+func (o *BankTemplateDirective) SetName(v string) {
 	o.Name = v
 }
 
 // GetContent returns the Content field value
-func (o *DirectiveSeed) GetContent() string {
+func (o *BankTemplateDirective) GetContent() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -92,7 +98,7 @@ func (o *DirectiveSeed) GetContent() string {
 
 // GetContentOk returns a tuple with the Content field value
 // and a boolean to check if the value has been set.
-func (o *DirectiveSeed) GetContentOk() (*string, bool) {
+func (o *BankTemplateDirective) GetContentOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -100,12 +106,12 @@ func (o *DirectiveSeed) GetContentOk() (*string, bool) {
 }
 
 // SetContent sets field value
-func (o *DirectiveSeed) SetContent(v string) {
+func (o *BankTemplateDirective) SetContent(v string) {
 	o.Content = v
 }
 
 // GetPriority returns the Priority field value if set, zero value otherwise.
-func (o *DirectiveSeed) GetPriority() int32 {
+func (o *BankTemplateDirective) GetPriority() int32 {
 	if o == nil || IsNil(o.Priority) {
 		var ret int32
 		return ret
@@ -115,7 +121,7 @@ func (o *DirectiveSeed) GetPriority() int32 {
 
 // GetPriorityOk returns a tuple with the Priority field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *DirectiveSeed) GetPriorityOk() (*int32, bool) {
+func (o *BankTemplateDirective) GetPriorityOk() (*int32, bool) {
 	if o == nil || IsNil(o.Priority) {
 		return nil, false
 	}
@@ -123,7 +129,7 @@ func (o *DirectiveSeed) GetPriorityOk() (*int32, bool) {
 }
 
 // HasPriority returns a boolean if a field has been set.
-func (o *DirectiveSeed) HasPriority() bool {
+func (o *BankTemplateDirective) HasPriority() bool {
 	if o != nil && !IsNil(o.Priority) {
 		return true
 	}
@@ -132,12 +138,12 @@ func (o *DirectiveSeed) HasPriority() bool {
 }
 
 // SetPriority gets a reference to the given int32 and assigns it to the Priority field.
-func (o *DirectiveSeed) SetPriority(v int32) {
+func (o *BankTemplateDirective) SetPriority(v int32) {
 	o.Priority = &v
 }
 
 // GetIsActive returns the IsActive field value if set, zero value otherwise.
-func (o *DirectiveSeed) GetIsActive() bool {
+func (o *BankTemplateDirective) GetIsActive() bool {
 	if o == nil || IsNil(o.IsActive) {
 		var ret bool
 		return ret
@@ -147,7 +153,7 @@ func (o *DirectiveSeed) GetIsActive() bool {
 
 // GetIsActiveOk returns a tuple with the IsActive field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *DirectiveSeed) GetIsActiveOk() (*bool, bool) {
+func (o *BankTemplateDirective) GetIsActiveOk() (*bool, bool) {
 	if o == nil || IsNil(o.IsActive) {
 		return nil, false
 	}
@@ -155,7 +161,7 @@ func (o *DirectiveSeed) GetIsActiveOk() (*bool, bool) {
 }
 
 // HasIsActive returns a boolean if a field has been set.
-func (o *DirectiveSeed) HasIsActive() bool {
+func (o *BankTemplateDirective) HasIsActive() bool {
 	if o != nil && !IsNil(o.IsActive) {
 		return true
 	}
@@ -164,11 +170,43 @@ func (o *DirectiveSeed) HasIsActive() bool {
 }
 
 // SetIsActive gets a reference to the given bool and assigns it to the IsActive field.
-func (o *DirectiveSeed) SetIsActive(v bool) {
+func (o *BankTemplateDirective) SetIsActive(v bool) {
 	o.IsActive = &v
 }
 
-func (o DirectiveSeed) MarshalJSON() ([]byte, error) {
+// GetTags returns the Tags field value if set, zero value otherwise.
+func (o *BankTemplateDirective) GetTags() []string {
+	if o == nil || IsNil(o.Tags) {
+		var ret []string
+		return ret
+	}
+	return o.Tags
+}
+
+// GetTagsOk returns a tuple with the Tags field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *BankTemplateDirective) GetTagsOk() ([]string, bool) {
+	if o == nil || IsNil(o.Tags) {
+		return nil, false
+	}
+	return o.Tags, true
+}
+
+// HasTags returns a boolean if a field has been set.
+func (o *BankTemplateDirective) HasTags() bool {
+	if o != nil && !IsNil(o.Tags) {
+		return true
+	}
+
+	return false
+}
+
+// SetTags gets a reference to the given []string and assigns it to the Tags field.
+func (o *BankTemplateDirective) SetTags(v []string) {
+	o.Tags = v
+}
+
+func (o BankTemplateDirective) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -176,7 +214,7 @@ func (o DirectiveSeed) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o DirectiveSeed) ToMap() (map[string]interface{}, error) {
+func (o BankTemplateDirective) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
 	toSerialize["content"] = o.Content
@@ -186,10 +224,13 @@ func (o DirectiveSeed) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.IsActive) {
 		toSerialize["is_active"] = o.IsActive
 	}
+	if !IsNil(o.Tags) {
+		toSerialize["tags"] = o.Tags
+	}
 	return toSerialize, nil
 }
 
-func (o *DirectiveSeed) UnmarshalJSON(data []byte) (err error) {
+func (o *BankTemplateDirective) UnmarshalJSON(data []byte) (err error) {
 	// This validates that all required properties are included in the JSON object
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
@@ -212,53 +253,53 @@ func (o *DirectiveSeed) UnmarshalJSON(data []byte) (err error) {
 		}
 	}
 
-	varDirectiveSeed := _DirectiveSeed{}
+	varBankTemplateDirective := _BankTemplateDirective{}
 
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varDirectiveSeed)
+	err = decoder.Decode(&varBankTemplateDirective)
 
 	if err != nil {
 		return err
 	}
 
-	*o = DirectiveSeed(varDirectiveSeed)
+	*o = BankTemplateDirective(varBankTemplateDirective)
 
 	return err
 }
 
-type NullableDirectiveSeed struct {
-	value *DirectiveSeed
+type NullableBankTemplateDirective struct {
+	value *BankTemplateDirective
 	isSet bool
 }
 
-func (v NullableDirectiveSeed) Get() *DirectiveSeed {
+func (v NullableBankTemplateDirective) Get() *BankTemplateDirective {
 	return v.value
 }
 
-func (v *NullableDirectiveSeed) Set(val *DirectiveSeed) {
+func (v *NullableBankTemplateDirective) Set(val *BankTemplateDirective) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableDirectiveSeed) IsSet() bool {
+func (v NullableBankTemplateDirective) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableDirectiveSeed) Unset() {
+func (v *NullableBankTemplateDirective) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableDirectiveSeed(val *DirectiveSeed) *NullableDirectiveSeed {
-	return &NullableDirectiveSeed{value: val, isSet: true}
+func NewNullableBankTemplateDirective(val *BankTemplateDirective) *NullableBankTemplateDirective {
+	return &NullableBankTemplateDirective{value: val, isSet: true}
 }
 
-func (v NullableDirectiveSeed) MarshalJSON() ([]byte, error) {
+func (v NullableBankTemplateDirective) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableDirectiveSeed) UnmarshalJSON(src []byte) error {
+func (v *NullableBankTemplateDirective) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

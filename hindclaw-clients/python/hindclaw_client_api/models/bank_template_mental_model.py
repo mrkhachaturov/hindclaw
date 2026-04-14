@@ -17,21 +17,24 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from hindclaw_client_api.models.template_response import TemplateResponse
+from typing_extensions import Annotated
+from hindclaw_client_api.models.mental_model_trigger import MentalModelTrigger
 from typing import Optional, Set
 from typing_extensions import Self
 
-class TemplateUpdateResponse(BaseModel):
+class BankTemplateMentalModel(BaseModel):
     """
-    Response for template update from marketplace.
+    A mental model definition within a bank template manifest.
     """ # noqa: E501
-    updated: StrictBool
-    previous_version: StrictStr
-    new_version: StrictStr
-    template: Optional[TemplateResponse] = None
-    __properties: ClassVar[List[str]] = ["updated", "previous_version", "new_version", "template"]
+    id: StrictStr = Field(description="Unique ID for the mental model (alphanumeric lowercase with hyphens)")
+    name: StrictStr = Field(description="Human-readable name for the mental model")
+    source_query: StrictStr = Field(description="The query to run to generate content")
+    tags: Optional[List[StrictStr]] = Field(default=None, description="Tags for scoped visibility")
+    max_tokens: Optional[Annotated[int, Field(le=8192, strict=True, ge=256)]] = Field(default=2048, description="Maximum tokens for generated content")
+    trigger: Optional[MentalModelTrigger] = Field(default=None, description="Trigger settings")
+    __properties: ClassVar[List[str]] = ["id", "name", "source_query", "tags", "max_tokens", "trigger"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -51,7 +54,7 @@ class TemplateUpdateResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TemplateUpdateResponse from a JSON string"""
+        """Create an instance of BankTemplateMentalModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,14 +75,14 @@ class TemplateUpdateResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of template
-        if self.template:
-            _dict['template'] = self.template.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of trigger
+        if self.trigger:
+            _dict['trigger'] = self.trigger.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TemplateUpdateResponse from a dict"""
+        """Create an instance of BankTemplateMentalModel from a dict"""
         if obj is None:
             return None
 
@@ -87,10 +90,12 @@ class TemplateUpdateResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "updated": obj.get("updated"),
-            "previous_version": obj.get("previous_version"),
-            "new_version": obj.get("new_version"),
-            "template": TemplateResponse.from_dict(obj["template"]) if obj.get("template") is not None else None
+            "id": obj.get("id"),
+            "name": obj.get("name"),
+            "source_query": obj.get("source_query"),
+            "tags": obj.get("tags"),
+            "max_tokens": obj.get("max_tokens") if obj.get("max_tokens") is not None else 2048,
+            "trigger": MentalModelTrigger.from_dict(obj["trigger"]) if obj.get("trigger") is not None else None
         })
         return _obj
 

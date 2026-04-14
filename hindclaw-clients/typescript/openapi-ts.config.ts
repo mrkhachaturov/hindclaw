@@ -8,8 +8,8 @@ export default defineConfig({
     format: 'prettier',
   },
   plugins: [
+    '@hey-api/typescript',
     '@hey-api/sdk',
-    '@hey-api/types',
     '@hey-api/schemas',
   ],
 });

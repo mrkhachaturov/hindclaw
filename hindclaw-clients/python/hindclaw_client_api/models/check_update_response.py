@@ -17,18 +17,22 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from hindclaw_client_api.models.template_scope import TemplateScope
 from typing import Optional, Set
 from typing_extensions import Self
 
-class EntityLabelValue(BaseModel):
+class CheckUpdateResponse(BaseModel):
     """
-    A valid value for a value or multi-values entity label.
+    CheckUpdateResponse
     """ # noqa: E501
-    value: StrictStr
-    description: Optional[StrictStr] = ''
-    __properties: ClassVar[List[str]] = ["value", "description"]
+    has_update: StrictBool
+    current_revision: Optional[StrictStr]
+    latest_revision: Optional[StrictStr]
+    source_name: Optional[StrictStr] = None
+    source_scope: Optional[TemplateScope] = None
+    __properties: ClassVar[List[str]] = ["has_update", "current_revision", "latest_revision", "source_name", "source_scope"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -48,7 +52,7 @@ class EntityLabelValue(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of EntityLabelValue from a JSON string"""
+        """Create an instance of CheckUpdateResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -69,11 +73,31 @@ class EntityLabelValue(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if current_revision (nullable) is None
+        # and model_fields_set contains the field
+        if self.current_revision is None and "current_revision" in self.model_fields_set:
+            _dict['current_revision'] = None
+
+        # set to None if latest_revision (nullable) is None
+        # and model_fields_set contains the field
+        if self.latest_revision is None and "latest_revision" in self.model_fields_set:
+            _dict['latest_revision'] = None
+
+        # set to None if source_name (nullable) is None
+        # and model_fields_set contains the field
+        if self.source_name is None and "source_name" in self.model_fields_set:
+            _dict['source_name'] = None
+
+        # set to None if source_scope (nullable) is None
+        # and model_fields_set contains the field
+        if self.source_scope is None and "source_scope" in self.model_fields_set:
+            _dict['source_scope'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of EntityLabelValue from a dict"""
+        """Create an instance of CheckUpdateResponse from a dict"""
         if obj is None:
             return None
 
@@ -81,8 +105,11 @@ class EntityLabelValue(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "value": obj.get("value"),
-            "description": obj.get("description") if obj.get("description") is not None else ''
+            "has_update": obj.get("has_update"),
+            "current_revision": obj.get("current_revision"),
+            "latest_revision": obj.get("latest_revision"),
+            "source_name": obj.get("source_name"),
+            "source_scope": obj.get("source_scope")
         })
         return _obj
 

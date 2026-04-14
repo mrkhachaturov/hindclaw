@@ -52,9 +52,9 @@ class RESTResponse(io.IOBase):
 class RESTClientObject:
 
     def __init__(self, configuration) -> None:
-        # Store configuration for deferred initialization.
+        # Store configuration for deferred initialization
         # aiohttp.TCPConnector requires a running event loop, so we defer
-        # creation until the first request (which runs in async context).
+        # creation until the first request (which runs in async context)
         self._configuration = configuration
         self._pool_manager: Optional[aiohttp.ClientSession] = None
         self._retry_client: Optional[aiohttp_retry.RetryClient] = None

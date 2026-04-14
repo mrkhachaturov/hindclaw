@@ -375,24 +375,38 @@ npm run generate
 # -------------------------------------------------------------------------
 echo "Patching client.gen.ts for Deno compatibility..."
 cd "$PROJECT_ROOT"
-python3 << PATCH_SCRIPT
-CLIENT_GEN = "$TYPESCRIPT_CLIENT_DIR/generated/client/client.gen.ts"
+export TYPESCRIPT_CLIENT_DIR
+python3 << 'PATCH_SCRIPT'
+import os
+import re
+
+CLIENT_GEN = os.environ["TYPESCRIPT_CLIENT_DIR"] + "/generated/client/client.gen.ts"
 with open(CLIENT_GEN) as f:
     content = f.read()
-OLD = '''    const requestInit: ReqInit = {
-      redirect: "follow",
-      ...opts,
-      body: getValidRequestBody(opts),
-    };'''
-NEW = '''    // Exclude hey-api internal fields that conflict with Deno's RequestInit.client
-    const { client: _client, ...optsForRequest } = opts as typeof opts & { client?: unknown };
-    const requestInit: ReqInit = {
-      redirect: "follow",
-      ...optsForRequest,
-      body: getValidRequestBody(opts),
-    };'''
-if OLD in content:
-    content = content.replace(OLD, NEW)
+
+# Match either single- or double-quoted "follow" (prettier quote style varies
+# between upstream Hindsight and HindClaw).
+pattern = re.compile(
+    r'(    const requestInit: ReqInit = \{\n'
+    r'      redirect: ["\']follow["\'],\n)'
+    r'(      \.\.\.opts,\n'
+    r'      body: getValidRequestBody\(opts\),\n'
+    r'    \};)'
+)
+replacement = (
+    r"    // Exclude hey-api internal fields that conflict with Deno's RequestInit.client\n"
+    r"    const { client: _client, ...optsForRequest } = opts as typeof opts & { client?: unknown };\n"
+    r"\1"
+    r"      ...optsForRequest,\n"
+    r"      body: getValidRequestBody(opts),\n"
+    r"    };"
+)
+
+# Skip if already patched (idempotent).
+if "optsForRequest" in content:
+    print("  client.gen.ts already patched (optsForRequest present) - skipping")
+elif pattern.search(content):
+    content = pattern.sub(replacement, content)
     with open(CLIENT_GEN, "w") as f:
         f.write(content)
     print("  client.gen.ts patched successfully")

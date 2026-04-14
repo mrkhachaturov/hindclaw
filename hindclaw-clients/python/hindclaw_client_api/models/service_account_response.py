@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -30,7 +30,7 @@ class ServiceAccountResponse(BaseModel):
     owner_user_id: StrictStr
     display_name: StrictStr
     is_active: StrictBool
-    scoping_policy_id: StrictStr
+    scoping_policy_id: Optional[StrictStr]
     __properties: ClassVar[List[str]] = ["id", "owner_user_id", "display_name", "is_active", "scoping_policy_id"]
 
     model_config = ConfigDict(
@@ -72,6 +72,11 @@ class ServiceAccountResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if scoping_policy_id (nullable) is None
+        # and model_fields_set contains the field
+        if self.scoping_policy_id is None and "scoping_policy_id" in self.model_fields_set:
+            _dict['scoping_policy_id'] = None
+
         return _dict
 
     @classmethod

@@ -17,50 +17,33 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr
-from typing import Any, ClassVar, Dict, List
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from hindclaw_client_api.models.template_scope import TemplateScope
 from typing import Optional, Set
 from typing_extensions import Self
 
 class TemplateResponse(BaseModel):
     """
-    Full template details.
+    Installed template, surfaced over the API.
     """ # noqa: E501
     id: StrictStr
-    scope: StrictStr
-    owner: StrictStr
-    source_name: StrictStr
-    schema_version: StrictInt
-    min_hindclaw_version: StrictStr
-    min_hindsight_version: StrictStr
-    version: StrictStr
-    source_url: StrictStr
-    source_revision: StrictStr
-    description: StrictStr
-    author: StrictStr
+    name: StrictStr
+    description: Optional[StrictStr]
+    category: Optional[StrictStr]
+    integrations: List[StrictStr]
     tags: List[StrictStr]
-    retain_mission: StrictStr
-    reflect_mission: StrictStr
-    observations_mission: StrictStr
-    retain_extraction_mode: StrictStr
-    retain_custom_instructions: StrictStr
-    retain_chunk_size: StrictInt
-    retain_default_strategy: StrictStr
-    retain_strategies: Dict[str, Any]
-    entity_labels: List[Dict[str, Any]]
-    entities_allow_free_form: StrictBool
-    enable_observations: StrictBool
-    consolidation_llm_batch_size: StrictInt
-    consolidation_source_facts_max_tokens: StrictInt
-    consolidation_source_facts_max_tokens_per_observation: StrictInt
-    disposition_skepticism: StrictInt
-    disposition_literalism: StrictInt
-    disposition_empathy: StrictInt
-    directive_seeds: List[Dict[str, Any]]
-    mental_model_seeds: List[Dict[str, Any]]
-    created_at: StrictStr
-    updated_at: StrictStr
-    __properties: ClassVar[List[str]] = ["id", "scope", "owner", "source_name", "schema_version", "min_hindclaw_version", "min_hindsight_version", "version", "source_url", "source_revision", "description", "author", "tags", "retain_mission", "reflect_mission", "observations_mission", "retain_extraction_mode", "retain_custom_instructions", "retain_chunk_size", "retain_default_strategy", "retain_strategies", "entity_labels", "entities_allow_free_form", "enable_observations", "consolidation_llm_batch_size", "consolidation_source_facts_max_tokens", "consolidation_source_facts_max_tokens_per_observation", "disposition_skepticism", "disposition_literalism", "disposition_empathy", "directive_seeds", "mental_model_seeds", "created_at", "updated_at"]
+    scope: TemplateScope
+    owner: Optional[StrictStr]
+    source_name: Optional[StrictStr]
+    source_scope: Optional[TemplateScope]
+    source_owner: Optional[StrictStr]
+    source_revision: Optional[StrictStr]
+    installed_at: datetime
+    updated_at: datetime
+    manifest: Dict[str, Any]
+    __properties: ClassVar[List[str]] = ["id", "name", "description", "category", "integrations", "tags", "scope", "owner", "source_name", "source_scope", "source_owner", "source_revision", "installed_at", "updated_at", "manifest"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -101,6 +84,41 @@ class TemplateResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if description (nullable) is None
+        # and model_fields_set contains the field
+        if self.description is None and "description" in self.model_fields_set:
+            _dict['description'] = None
+
+        # set to None if category (nullable) is None
+        # and model_fields_set contains the field
+        if self.category is None and "category" in self.model_fields_set:
+            _dict['category'] = None
+
+        # set to None if owner (nullable) is None
+        # and model_fields_set contains the field
+        if self.owner is None and "owner" in self.model_fields_set:
+            _dict['owner'] = None
+
+        # set to None if source_name (nullable) is None
+        # and model_fields_set contains the field
+        if self.source_name is None and "source_name" in self.model_fields_set:
+            _dict['source_name'] = None
+
+        # set to None if source_scope (nullable) is None
+        # and model_fields_set contains the field
+        if self.source_scope is None and "source_scope" in self.model_fields_set:
+            _dict['source_scope'] = None
+
+        # set to None if source_owner (nullable) is None
+        # and model_fields_set contains the field
+        if self.source_owner is None and "source_owner" in self.model_fields_set:
+            _dict['source_owner'] = None
+
+        # set to None if source_revision (nullable) is None
+        # and model_fields_set contains the field
+        if self.source_revision is None and "source_revision" in self.model_fields_set:
+            _dict['source_revision'] = None
+
         return _dict
 
     @classmethod
@@ -114,39 +132,20 @@ class TemplateResponse(BaseModel):
 
         _obj = cls.model_validate({
             "id": obj.get("id"),
+            "name": obj.get("name"),
+            "description": obj.get("description"),
+            "category": obj.get("category"),
+            "integrations": obj.get("integrations"),
+            "tags": obj.get("tags"),
             "scope": obj.get("scope"),
             "owner": obj.get("owner"),
             "source_name": obj.get("source_name"),
-            "schema_version": obj.get("schema_version"),
-            "min_hindclaw_version": obj.get("min_hindclaw_version"),
-            "min_hindsight_version": obj.get("min_hindsight_version"),
-            "version": obj.get("version"),
-            "source_url": obj.get("source_url"),
+            "source_scope": obj.get("source_scope"),
+            "source_owner": obj.get("source_owner"),
             "source_revision": obj.get("source_revision"),
-            "description": obj.get("description"),
-            "author": obj.get("author"),
-            "tags": obj.get("tags"),
-            "retain_mission": obj.get("retain_mission"),
-            "reflect_mission": obj.get("reflect_mission"),
-            "observations_mission": obj.get("observations_mission"),
-            "retain_extraction_mode": obj.get("retain_extraction_mode"),
-            "retain_custom_instructions": obj.get("retain_custom_instructions"),
-            "retain_chunk_size": obj.get("retain_chunk_size"),
-            "retain_default_strategy": obj.get("retain_default_strategy"),
-            "retain_strategies": obj.get("retain_strategies"),
-            "entity_labels": obj.get("entity_labels"),
-            "entities_allow_free_form": obj.get("entities_allow_free_form"),
-            "enable_observations": obj.get("enable_observations"),
-            "consolidation_llm_batch_size": obj.get("consolidation_llm_batch_size"),
-            "consolidation_source_facts_max_tokens": obj.get("consolidation_source_facts_max_tokens"),
-            "consolidation_source_facts_max_tokens_per_observation": obj.get("consolidation_source_facts_max_tokens_per_observation"),
-            "disposition_skepticism": obj.get("disposition_skepticism"),
-            "disposition_literalism": obj.get("disposition_literalism"),
-            "disposition_empathy": obj.get("disposition_empathy"),
-            "directive_seeds": obj.get("directive_seeds"),
-            "mental_model_seeds": obj.get("mental_model_seeds"),
-            "created_at": obj.get("created_at"),
-            "updated_at": obj.get("updated_at")
+            "installed_at": obj.get("installed_at"),
+            "updated_at": obj.get("updated_at"),
+            "manifest": obj.get("manifest")
         })
         return _obj
 

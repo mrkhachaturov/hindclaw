@@ -17,47 +17,26 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
-from hindclaw_client_api.models.directive_seed import DirectiveSeed
-from hindclaw_client_api.models.entity_label import EntityLabel
-from hindclaw_client_api.models.mental_model_seed import MentalModelSeed
+from hindclaw_client_api.models.bank_template_manifest import BankTemplateManifest
 from typing import Optional, Set
 from typing_extensions import Self
 
 class CreateTemplateRequest(BaseModel):
     """
-    Request to create a custom template.
+    Request to create a personal template by inlining an upstream manifest.
     """ # noqa: E501
     id: Annotated[str, Field(min_length=1, strict=True, max_length=128)]
-    scope: StrictStr
-    description: Optional[StrictStr] = ''
-    author: Optional[StrictStr] = ''
+    name: Annotated[str, Field(min_length=1, strict=True)]
+    description: Optional[StrictStr] = None
+    category: Optional[StrictStr] = None
+    integrations: Optional[List[StrictStr]] = None
     tags: Optional[List[StrictStr]] = None
-    min_hindclaw_version: StrictStr
-    min_hindsight_version: Optional[StrictStr] = None
-    retain_mission: StrictStr
-    reflect_mission: StrictStr
-    observations_mission: Optional[StrictStr] = None
-    retain_extraction_mode: Optional[StrictStr] = 'concise'
-    retain_custom_instructions: Optional[StrictStr] = None
-    retain_chunk_size: Optional[Annotated[int, Field(strict=True, ge=0)]] = None
-    retain_default_strategy: Optional[StrictStr] = None
-    retain_strategies: Optional[Dict[str, Any]] = None
-    entity_labels: Optional[List[EntityLabel]] = None
-    entities_allow_free_form: Optional[StrictBool] = True
-    enable_observations: Optional[StrictBool] = True
-    consolidation_llm_batch_size: Optional[Annotated[int, Field(strict=True, ge=0)]] = None
-    consolidation_source_facts_max_tokens: Optional[StrictInt] = None
-    consolidation_source_facts_max_tokens_per_observation: Optional[StrictInt] = None
-    disposition_skepticism: Optional[Annotated[int, Field(le=5, strict=True, ge=1)]] = 3
-    disposition_literalism: Optional[Annotated[int, Field(le=5, strict=True, ge=1)]] = 3
-    disposition_empathy: Optional[Annotated[int, Field(le=5, strict=True, ge=1)]] = 3
-    directive_seeds: Optional[List[DirectiveSeed]] = None
-    mental_model_seeds: Optional[List[MentalModelSeed]] = None
+    manifest: BankTemplateManifest
     additional_properties: Dict[str, Any] = {}
-    __properties: ClassVar[List[str]] = ["id", "scope", "description", "author", "tags", "min_hindclaw_version", "min_hindsight_version", "retain_mission", "reflect_mission", "observations_mission", "retain_extraction_mode", "retain_custom_instructions", "retain_chunk_size", "retain_default_strategy", "retain_strategies", "entity_labels", "entities_allow_free_form", "enable_observations", "consolidation_llm_batch_size", "consolidation_source_facts_max_tokens", "consolidation_source_facts_max_tokens_per_observation", "disposition_skepticism", "disposition_literalism", "disposition_empathy", "directive_seeds", "mental_model_seeds"]
+    __properties: ClassVar[List[str]] = ["id", "name", "description", "category", "integrations", "tags", "manifest"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -100,31 +79,23 @@ class CreateTemplateRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in entity_labels (list)
-        _items = []
-        if self.entity_labels:
-            for _item_entity_labels in self.entity_labels:
-                if _item_entity_labels:
-                    _items.append(_item_entity_labels.to_dict())
-            _dict['entity_labels'] = _items
-        # override the default output from pydantic by calling `to_dict()` of each item in directive_seeds (list)
-        _items = []
-        if self.directive_seeds:
-            for _item_directive_seeds in self.directive_seeds:
-                if _item_directive_seeds:
-                    _items.append(_item_directive_seeds.to_dict())
-            _dict['directive_seeds'] = _items
-        # override the default output from pydantic by calling `to_dict()` of each item in mental_model_seeds (list)
-        _items = []
-        if self.mental_model_seeds:
-            for _item_mental_model_seeds in self.mental_model_seeds:
-                if _item_mental_model_seeds:
-                    _items.append(_item_mental_model_seeds.to_dict())
-            _dict['mental_model_seeds'] = _items
+        # override the default output from pydantic by calling `to_dict()` of manifest
+        if self.manifest:
+            _dict['manifest'] = self.manifest.to_dict()
         # puts key-value pairs in additional_properties in the top level
         if self.additional_properties is not None:
             for _key, _value in self.additional_properties.items():
                 _dict[_key] = _value
+
+        # set to None if description (nullable) is None
+        # and model_fields_set contains the field
+        if self.description is None and "description" in self.model_fields_set:
+            _dict['description'] = None
+
+        # set to None if category (nullable) is None
+        # and model_fields_set contains the field
+        if self.category is None and "category" in self.model_fields_set:
+            _dict['category'] = None
 
         return _dict
 
@@ -139,31 +110,12 @@ class CreateTemplateRequest(BaseModel):
 
         _obj = cls.model_validate({
             "id": obj.get("id"),
-            "scope": obj.get("scope"),
-            "description": obj.get("description") if obj.get("description") is not None else '',
-            "author": obj.get("author") if obj.get("author") is not None else '',
+            "name": obj.get("name"),
+            "description": obj.get("description"),
+            "category": obj.get("category"),
+            "integrations": obj.get("integrations"),
             "tags": obj.get("tags"),
-            "min_hindclaw_version": obj.get("min_hindclaw_version"),
-            "min_hindsight_version": obj.get("min_hindsight_version"),
-            "retain_mission": obj.get("retain_mission"),
-            "reflect_mission": obj.get("reflect_mission"),
-            "observations_mission": obj.get("observations_mission"),
-            "retain_extraction_mode": obj.get("retain_extraction_mode") if obj.get("retain_extraction_mode") is not None else 'concise',
-            "retain_custom_instructions": obj.get("retain_custom_instructions"),
-            "retain_chunk_size": obj.get("retain_chunk_size"),
-            "retain_default_strategy": obj.get("retain_default_strategy"),
-            "retain_strategies": obj.get("retain_strategies"),
-            "entity_labels": [EntityLabel.from_dict(_item) for _item in obj["entity_labels"]] if obj.get("entity_labels") is not None else None,
-            "entities_allow_free_form": obj.get("entities_allow_free_form") if obj.get("entities_allow_free_form") is not None else True,
-            "enable_observations": obj.get("enable_observations") if obj.get("enable_observations") is not None else True,
-            "consolidation_llm_batch_size": obj.get("consolidation_llm_batch_size"),
-            "consolidation_source_facts_max_tokens": obj.get("consolidation_source_facts_max_tokens"),
-            "consolidation_source_facts_max_tokens_per_observation": obj.get("consolidation_source_facts_max_tokens_per_observation"),
-            "disposition_skepticism": obj.get("disposition_skepticism") if obj.get("disposition_skepticism") is not None else 3,
-            "disposition_literalism": obj.get("disposition_literalism") if obj.get("disposition_literalism") is not None else 3,
-            "disposition_empathy": obj.get("disposition_empathy") if obj.get("disposition_empathy") is not None else 3,
-            "directive_seeds": [DirectiveSeed.from_dict(_item) for _item in obj["directive_seeds"]] if obj.get("directive_seeds") is not None else None,
-            "mental_model_seeds": [MentalModelSeed.from_dict(_item) for _item in obj["mental_model_seeds"]] if obj.get("mental_model_seeds") is not None else None
+            "manifest": BankTemplateManifest.from_dict(obj["manifest"]) if obj.get("manifest") is not None else None
         })
         # store additional fields in additional_properties
         for _key in obj.keys():

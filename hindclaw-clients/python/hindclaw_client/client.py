@@ -12,7 +12,7 @@ from typing import Any
 import hindclaw_client_api.models as _local_models
 import hindsight_client_api.models as _upstream_models
 from hindclaw_client_api import ApiClient, Configuration
-from hindclaw_client_api.api import DefaultApi
+from hindclaw_client_api.api import BanksApi, DefaultApi, TemplatesApi
 
 
 def _local_manifest_from_upstream(
@@ -89,7 +89,15 @@ class HindclawClient:
         config = Configuration(host=base_url)
         config.api_key["HTTPBearer"] = api_key
         self._client = ApiClient(config)
+        # Plan B added OpenAPI tags to the HindClaw HTTP routes, so the
+        # generator now splits methods across tagged API classes (DefaultApi
+        # for untagged, TemplatesApi for Templates, BanksApi for Banks,
+        # AdminApi for Admin). DefaultApi still hosts the untagged surface
+        # (users, groups, policies, etc.) and the wrapper keeps `self.api`
+        # pointing at it for backwards compatibility with the Task 4 layout.
         self.api = DefaultApi(self._client)
+        self._templates_api = TemplatesApi(self._client)
+        self._banks_api = BanksApi(self._client)
 
     async def close(self):
         """Close the underlying HTTP client."""
@@ -147,8 +155,12 @@ class HindclawClient:
             manifest=manifest_payload,
         )
         if scope == "my":
-            return await self.api.create_my_template(create_template_request=request)
-        return await self.api.create_admin_template(create_template_request=request)
+            return await self._templates_api.create_my_template(
+                create_template_request=request,
+            )
+        return await self._templates_api.create_admin_template(
+            create_template_request=request,
+        )
 
     async def _do_patch_template(
         self,
@@ -173,11 +185,11 @@ class HindclawClient:
             manifest=manifest_payload,
         )
         if scope == "my":
-            return await self.api.patch_my_template(
+            return await self._templates_api.patch_my_template(
                 template_id=template_id,
                 patch_template_request=patch,
             )
-        return await self.api.patch_admin_template(
+        return await self._templates_api.patch_admin_template(
             template_id=template_id,
             patch_template_request=patch,
         )
@@ -304,7 +316,7 @@ class HindclawClient:
             template=template,
             name=name,
         )
-        raw = await self.api.create_bank_from_template(
+        raw = await self._banks_api.create_bank_from_template(
             create_bank_from_template_request=request,
         )
         return CreateBankFromTemplateResult(

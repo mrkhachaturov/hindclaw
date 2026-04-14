@@ -17,20 +17,24 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class DirectiveSeed(BaseModel):
+class BankTemplateImportResponse(BaseModel):
     """
-    A directive to create when bootstrapping a bank from a template.
+    Response model for the bank template import endpoint.
     """ # noqa: E501
-    name: StrictStr
-    content: StrictStr
-    priority: Optional[StrictInt] = 0
-    is_active: Optional[StrictBool] = True
-    __properties: ClassVar[List[str]] = ["name", "content", "priority", "is_active"]
+    bank_id: StrictStr = Field(description="Bank that was imported into")
+    config_applied: StrictBool = Field(description="Whether bank config was updated")
+    mental_models_created: Optional[List[StrictStr]] = Field(default=None, description="IDs of newly created mental models")
+    mental_models_updated: Optional[List[StrictStr]] = Field(default=None, description="IDs of updated mental models")
+    directives_created: Optional[List[StrictStr]] = Field(default=None, description="Names of newly created directives")
+    directives_updated: Optional[List[StrictStr]] = Field(default=None, description="Names of updated directives")
+    operation_ids: Optional[List[StrictStr]] = Field(default=None, description="Operation IDs for mental model content generation (async)")
+    dry_run: Optional[StrictBool] = Field(default=False, description="True if this was a validation-only run")
+    __properties: ClassVar[List[str]] = ["bank_id", "config_applied", "mental_models_created", "mental_models_updated", "directives_created", "directives_updated", "operation_ids", "dry_run"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -50,7 +54,7 @@ class DirectiveSeed(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of DirectiveSeed from a JSON string"""
+        """Create an instance of BankTemplateImportResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -75,7 +79,7 @@ class DirectiveSeed(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of DirectiveSeed from a dict"""
+        """Create an instance of BankTemplateImportResponse from a dict"""
         if obj is None:
             return None
 
@@ -83,10 +87,14 @@ class DirectiveSeed(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "content": obj.get("content"),
-            "priority": obj.get("priority") if obj.get("priority") is not None else 0,
-            "is_active": obj.get("is_active") if obj.get("is_active") is not None else True
+            "bank_id": obj.get("bank_id"),
+            "config_applied": obj.get("config_applied"),
+            "mental_models_created": obj.get("mental_models_created"),
+            "mental_models_updated": obj.get("mental_models_updated"),
+            "directives_created": obj.get("directives_created"),
+            "directives_updated": obj.get("directives_updated"),
+            "operation_ids": obj.get("operation_ids"),
+            "dry_run": obj.get("dry_run") if obj.get("dry_run") is not None else False
         })
         return _obj
 

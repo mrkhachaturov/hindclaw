@@ -22,7 +22,7 @@ var _ MappedNullable = &CreateSelfServiceAccountRequest{}
 type CreateSelfServiceAccountRequest struct {
 	Id string `json:"id"`
 	DisplayName string `json:"display_name"`
-	ScopingPolicyId *string `json:"scoping_policy_id,omitempty"`
+	ScopingPolicyId NullableString `json:"scoping_policy_id,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -95,36 +95,46 @@ func (o *CreateSelfServiceAccountRequest) SetDisplayName(v string) {
 	o.DisplayName = v
 }
 
-// GetScopingPolicyId returns the ScopingPolicyId field value if set, zero value otherwise.
+// GetScopingPolicyId returns the ScopingPolicyId field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *CreateSelfServiceAccountRequest) GetScopingPolicyId() string {
-	if o == nil || IsNil(o.ScopingPolicyId) {
+	if o == nil || IsNil(o.ScopingPolicyId.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.ScopingPolicyId
+	return *o.ScopingPolicyId.Get()
 }
 
 // GetScopingPolicyIdOk returns a tuple with the ScopingPolicyId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *CreateSelfServiceAccountRequest) GetScopingPolicyIdOk() (*string, bool) {
-	if o == nil || IsNil(o.ScopingPolicyId) {
+	if o == nil {
 		return nil, false
 	}
-	return o.ScopingPolicyId, true
+	return o.ScopingPolicyId.Get(), o.ScopingPolicyId.IsSet()
 }
 
 // HasScopingPolicyId returns a boolean if a field has been set.
 func (o *CreateSelfServiceAccountRequest) HasScopingPolicyId() bool {
-	if o != nil && !IsNil(o.ScopingPolicyId) {
+	if o != nil && o.ScopingPolicyId.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetScopingPolicyId gets a reference to the given string and assigns it to the ScopingPolicyId field.
+// SetScopingPolicyId gets a reference to the given NullableString and assigns it to the ScopingPolicyId field.
 func (o *CreateSelfServiceAccountRequest) SetScopingPolicyId(v string) {
-	o.ScopingPolicyId = &v
+	o.ScopingPolicyId.Set(&v)
+}
+// SetScopingPolicyIdNil sets the value for ScopingPolicyId to be an explicit nil
+func (o *CreateSelfServiceAccountRequest) SetScopingPolicyIdNil() {
+	o.ScopingPolicyId.Set(nil)
+}
+
+// UnsetScopingPolicyId ensures that no value is present for ScopingPolicyId, not even an explicit nil
+func (o *CreateSelfServiceAccountRequest) UnsetScopingPolicyId() {
+	o.ScopingPolicyId.Unset()
 }
 
 func (o CreateSelfServiceAccountRequest) MarshalJSON() ([]byte, error) {
@@ -139,8 +149,8 @@ func (o CreateSelfServiceAccountRequest) ToMap() (map[string]interface{}, error)
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["display_name"] = o.DisplayName
-	if !IsNil(o.ScopingPolicyId) {
-		toSerialize["scoping_policy_id"] = o.ScopingPolicyId
+	if o.ScopingPolicyId.IsSet() {
+		toSerialize["scoping_policy_id"] = o.ScopingPolicyId.Get()
 	}
 
 	for key, value := range o.AdditionalProperties {

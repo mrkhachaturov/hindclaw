@@ -18,7 +18,8 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
+from hindclaw_client_api.models.template_scope import TemplateScope
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -28,9 +29,13 @@ class SourceResponse(BaseModel):
     """ # noqa: E501
     name: StrictStr
     url: StrictStr
+    scope: TemplateScope
+    owner: Optional[StrictStr] = None
     has_auth: StrictBool
-    created_at: StrictStr
-    __properties: ClassVar[List[str]] = ["name", "url", "has_auth", "created_at"]
+    description: Optional[StrictStr] = None
+    created_at: Optional[StrictStr] = None
+    updated_at: Optional[StrictStr] = None
+    __properties: ClassVar[List[str]] = ["name", "url", "scope", "owner", "has_auth", "description", "created_at", "updated_at"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -71,6 +76,26 @@ class SourceResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if owner (nullable) is None
+        # and model_fields_set contains the field
+        if self.owner is None and "owner" in self.model_fields_set:
+            _dict['owner'] = None
+
+        # set to None if description (nullable) is None
+        # and model_fields_set contains the field
+        if self.description is None and "description" in self.model_fields_set:
+            _dict['description'] = None
+
+        # set to None if created_at (nullable) is None
+        # and model_fields_set contains the field
+        if self.created_at is None and "created_at" in self.model_fields_set:
+            _dict['created_at'] = None
+
+        # set to None if updated_at (nullable) is None
+        # and model_fields_set contains the field
+        if self.updated_at is None and "updated_at" in self.model_fields_set:
+            _dict['updated_at'] = None
+
         return _dict
 
     @classmethod
@@ -85,8 +110,12 @@ class SourceResponse(BaseModel):
         _obj = cls.model_validate({
             "name": obj.get("name"),
             "url": obj.get("url"),
+            "scope": obj.get("scope"),
+            "owner": obj.get("owner"),
             "has_auth": obj.get("has_auth"),
-            "created_at": obj.get("created_at")
+            "description": obj.get("description"),
+            "created_at": obj.get("created_at"),
+            "updated_at": obj.get("updated_at")
         })
         return _obj
 

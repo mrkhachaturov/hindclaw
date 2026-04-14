@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from hindclaw_client_api.models.channel_response import ChannelResponse
 from typing import Optional, Set
 from typing_extensions import Self
@@ -29,7 +29,7 @@ class MeProfileResponse(BaseModel):
     """ # noqa: E501
     id: StrictStr
     display_name: StrictStr
-    email: StrictStr
+    email: Optional[StrictStr]
     is_active: StrictBool
     channels: List[ChannelResponse]
     __properties: ClassVar[List[str]] = ["id", "display_name", "email", "is_active", "channels"]
@@ -80,6 +80,11 @@ class MeProfileResponse(BaseModel):
                 if _item_channels:
                     _items.append(_item_channels.to_dict())
             _dict['channels'] = _items
+        # set to None if email (nullable) is None
+        # and model_fields_set contains the field
+        if self.email is None and "email" in self.model_fields_set:
+            _dict['email'] = None
+
         return _dict
 
     @classmethod

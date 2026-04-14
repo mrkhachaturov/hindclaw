@@ -78,6 +78,11 @@ class CreateSelfServiceAccountRequest(BaseModel):
             for _key, _value in self.additional_properties.items():
                 _dict[_key] = _value
 
+        # set to None if scoping_policy_id (nullable) is None
+        # and model_fields_set contains the field
+        if self.scoping_policy_id is None and "scoping_policy_id" in self.model_fields_set:
+            _dict['scoping_policy_id'] = None
+
         return _dict
 
     @classmethod

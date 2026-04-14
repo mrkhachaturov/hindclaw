@@ -25,7 +25,7 @@ from typing_extensions import Self
 
 class CreateBankFromTemplateRequest(BaseModel):
     """
-    Request to create a bank from an installed template.
+    Body for POST /ext/hindclaw/banks.
     """ # noqa: E501
     bank_id: Annotated[str, Field(min_length=1, strict=True, max_length=128)]
     template: Annotated[str, Field(min_length=1, strict=True, max_length=256)]
@@ -78,6 +78,11 @@ class CreateBankFromTemplateRequest(BaseModel):
         if self.additional_properties is not None:
             for _key, _value in self.additional_properties.items():
                 _dict[_key] = _value
+
+        # set to None if name (nullable) is None
+        # and model_fields_set contains the field
+        if self.name is None and "name" in self.model_fields_set:
+            _dict['name'] = None
 
         return _dict
 

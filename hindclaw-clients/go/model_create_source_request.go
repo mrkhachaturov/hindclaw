@@ -22,10 +22,9 @@ var _ MappedNullable = &CreateSourceRequest{}
 type CreateSourceRequest struct {
 	// Marketplace repository URL
 	Url string `json:"url"`
-	// Override auto-derived source name
-	Alias *string `json:"alias,omitempty"`
-	// Auth token for private repositories
-	AuthToken *string `json:"auth_token,omitempty"`
+	Alias NullableString `json:"alias,omitempty"`
+	AuthToken NullableString `json:"auth_token,omitempty"`
+	Description NullableString `json:"description,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -73,68 +72,130 @@ func (o *CreateSourceRequest) SetUrl(v string) {
 	o.Url = v
 }
 
-// GetAlias returns the Alias field value if set, zero value otherwise.
+// GetAlias returns the Alias field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *CreateSourceRequest) GetAlias() string {
-	if o == nil || IsNil(o.Alias) {
+	if o == nil || IsNil(o.Alias.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.Alias
+	return *o.Alias.Get()
 }
 
 // GetAliasOk returns a tuple with the Alias field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *CreateSourceRequest) GetAliasOk() (*string, bool) {
-	if o == nil || IsNil(o.Alias) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Alias, true
+	return o.Alias.Get(), o.Alias.IsSet()
 }
 
 // HasAlias returns a boolean if a field has been set.
 func (o *CreateSourceRequest) HasAlias() bool {
-	if o != nil && !IsNil(o.Alias) {
+	if o != nil && o.Alias.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetAlias gets a reference to the given string and assigns it to the Alias field.
+// SetAlias gets a reference to the given NullableString and assigns it to the Alias field.
 func (o *CreateSourceRequest) SetAlias(v string) {
-	o.Alias = &v
+	o.Alias.Set(&v)
+}
+// SetAliasNil sets the value for Alias to be an explicit nil
+func (o *CreateSourceRequest) SetAliasNil() {
+	o.Alias.Set(nil)
 }
 
-// GetAuthToken returns the AuthToken field value if set, zero value otherwise.
+// UnsetAlias ensures that no value is present for Alias, not even an explicit nil
+func (o *CreateSourceRequest) UnsetAlias() {
+	o.Alias.Unset()
+}
+
+// GetAuthToken returns the AuthToken field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *CreateSourceRequest) GetAuthToken() string {
-	if o == nil || IsNil(o.AuthToken) {
+	if o == nil || IsNil(o.AuthToken.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.AuthToken
+	return *o.AuthToken.Get()
 }
 
 // GetAuthTokenOk returns a tuple with the AuthToken field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *CreateSourceRequest) GetAuthTokenOk() (*string, bool) {
-	if o == nil || IsNil(o.AuthToken) {
+	if o == nil {
 		return nil, false
 	}
-	return o.AuthToken, true
+	return o.AuthToken.Get(), o.AuthToken.IsSet()
 }
 
 // HasAuthToken returns a boolean if a field has been set.
 func (o *CreateSourceRequest) HasAuthToken() bool {
-	if o != nil && !IsNil(o.AuthToken) {
+	if o != nil && o.AuthToken.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetAuthToken gets a reference to the given string and assigns it to the AuthToken field.
+// SetAuthToken gets a reference to the given NullableString and assigns it to the AuthToken field.
 func (o *CreateSourceRequest) SetAuthToken(v string) {
-	o.AuthToken = &v
+	o.AuthToken.Set(&v)
+}
+// SetAuthTokenNil sets the value for AuthToken to be an explicit nil
+func (o *CreateSourceRequest) SetAuthTokenNil() {
+	o.AuthToken.Set(nil)
+}
+
+// UnsetAuthToken ensures that no value is present for AuthToken, not even an explicit nil
+func (o *CreateSourceRequest) UnsetAuthToken() {
+	o.AuthToken.Unset()
+}
+
+// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *CreateSourceRequest) GetDescription() string {
+	if o == nil || IsNil(o.Description.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.Description.Get()
+}
+
+// GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *CreateSourceRequest) GetDescriptionOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Description.Get(), o.Description.IsSet()
+}
+
+// HasDescription returns a boolean if a field has been set.
+func (o *CreateSourceRequest) HasDescription() bool {
+	if o != nil && o.Description.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetDescription gets a reference to the given NullableString and assigns it to the Description field.
+func (o *CreateSourceRequest) SetDescription(v string) {
+	o.Description.Set(&v)
+}
+// SetDescriptionNil sets the value for Description to be an explicit nil
+func (o *CreateSourceRequest) SetDescriptionNil() {
+	o.Description.Set(nil)
+}
+
+// UnsetDescription ensures that no value is present for Description, not even an explicit nil
+func (o *CreateSourceRequest) UnsetDescription() {
+	o.Description.Unset()
 }
 
 func (o CreateSourceRequest) MarshalJSON() ([]byte, error) {
@@ -148,11 +209,14 @@ func (o CreateSourceRequest) MarshalJSON() ([]byte, error) {
 func (o CreateSourceRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["url"] = o.Url
-	if !IsNil(o.Alias) {
-		toSerialize["alias"] = o.Alias
+	if o.Alias.IsSet() {
+		toSerialize["alias"] = o.Alias.Get()
 	}
-	if !IsNil(o.AuthToken) {
-		toSerialize["auth_token"] = o.AuthToken
+	if o.AuthToken.IsSet() {
+		toSerialize["auth_token"] = o.AuthToken.Get()
+	}
+	if o.Description.IsSet() {
+		toSerialize["description"] = o.Description.Get()
 	}
 
 	for key, value := range o.AdditionalProperties {
@@ -200,6 +264,7 @@ func (o *CreateSourceRequest) UnmarshalJSON(data []byte) (err error) {
 		delete(additionalProperties, "url")
 		delete(additionalProperties, "alias")
 		delete(additionalProperties, "auth_token")
+		delete(additionalProperties, "description")
 		o.AdditionalProperties = additionalProperties
 	}
 

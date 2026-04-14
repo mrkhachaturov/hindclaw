@@ -23,7 +23,7 @@ var _ MappedNullable = &SAKeyCreateResponse{}
 type SAKeyCreateResponse struct {
 	Id string `json:"id"`
 	ApiKey string `json:"api_key"`
-	Description string `json:"description"`
+	Description NullableString `json:"description"`
 }
 
 type _SAKeyCreateResponse SAKeyCreateResponse
@@ -32,7 +32,7 @@ type _SAKeyCreateResponse SAKeyCreateResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSAKeyCreateResponse(id string, apiKey string, description string) *SAKeyCreateResponse {
+func NewSAKeyCreateResponse(id string, apiKey string, description NullableString) *SAKeyCreateResponse {
 	this := SAKeyCreateResponse{}
 	this.Id = id
 	this.ApiKey = apiKey
@@ -97,27 +97,29 @@ func (o *SAKeyCreateResponse) SetApiKey(v string) {
 }
 
 // GetDescription returns the Description field value
+// If the value is explicit nil, the zero value for string will be returned
 func (o *SAKeyCreateResponse) GetDescription() string {
-	if o == nil {
+	if o == nil || o.Description.Get() == nil {
 		var ret string
 		return ret
 	}
 
-	return o.Description
+	return *o.Description.Get()
 }
 
 // GetDescriptionOk returns a tuple with the Description field value
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *SAKeyCreateResponse) GetDescriptionOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Description, true
+	return o.Description.Get(), o.Description.IsSet()
 }
 
 // SetDescription sets field value
 func (o *SAKeyCreateResponse) SetDescription(v string) {
-	o.Description = v
+	o.Description.Set(&v)
 }
 
 func (o SAKeyCreateResponse) MarshalJSON() ([]byte, error) {
@@ -132,7 +134,7 @@ func (o SAKeyCreateResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["api_key"] = o.ApiKey
-	toSerialize["description"] = o.Description
+	toSerialize["description"] = o.Description.Get()
 	return toSerialize, nil
 }
 

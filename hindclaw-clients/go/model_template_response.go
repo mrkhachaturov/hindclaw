@@ -12,6 +12,7 @@ package hindclaw
 
 import (
 	"encoding/json"
+	"time"
 	"bytes"
 	"fmt"
 )
@@ -19,42 +20,23 @@ import (
 // checks if the TemplateResponse type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &TemplateResponse{}
 
-// TemplateResponse Full template details.
+// TemplateResponse Installed template, surfaced over the API.
 type TemplateResponse struct {
 	Id string `json:"id"`
-	Scope string `json:"scope"`
-	Owner string `json:"owner"`
-	SourceName string `json:"source_name"`
-	SchemaVersion int32 `json:"schema_version"`
-	MinHindclawVersion string `json:"min_hindclaw_version"`
-	MinHindsightVersion string `json:"min_hindsight_version"`
-	Version string `json:"version"`
-	SourceUrl string `json:"source_url"`
-	SourceRevision string `json:"source_revision"`
-	Description string `json:"description"`
-	Author string `json:"author"`
+	Name string `json:"name"`
+	Description NullableString `json:"description"`
+	Category NullableString `json:"category"`
+	Integrations []string `json:"integrations"`
 	Tags []string `json:"tags"`
-	RetainMission string `json:"retain_mission"`
-	ReflectMission string `json:"reflect_mission"`
-	ObservationsMission string `json:"observations_mission"`
-	RetainExtractionMode string `json:"retain_extraction_mode"`
-	RetainCustomInstructions string `json:"retain_custom_instructions"`
-	RetainChunkSize int32 `json:"retain_chunk_size"`
-	RetainDefaultStrategy string `json:"retain_default_strategy"`
-	RetainStrategies map[string]interface{} `json:"retain_strategies"`
-	EntityLabels []map[string]interface{} `json:"entity_labels"`
-	EntitiesAllowFreeForm bool `json:"entities_allow_free_form"`
-	EnableObservations bool `json:"enable_observations"`
-	ConsolidationLlmBatchSize int32 `json:"consolidation_llm_batch_size"`
-	ConsolidationSourceFactsMaxTokens int32 `json:"consolidation_source_facts_max_tokens"`
-	ConsolidationSourceFactsMaxTokensPerObservation int32 `json:"consolidation_source_facts_max_tokens_per_observation"`
-	DispositionSkepticism int32 `json:"disposition_skepticism"`
-	DispositionLiteralism int32 `json:"disposition_literalism"`
-	DispositionEmpathy int32 `json:"disposition_empathy"`
-	DirectiveSeeds []map[string]interface{} `json:"directive_seeds"`
-	MentalModelSeeds []map[string]interface{} `json:"mental_model_seeds"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	Scope TemplateScope `json:"scope"`
+	Owner NullableString `json:"owner"`
+	SourceName NullableString `json:"source_name"`
+	SourceScope NullableTemplateScope `json:"source_scope"`
+	SourceOwner NullableString `json:"source_owner"`
+	SourceRevision NullableString `json:"source_revision"`
+	InstalledAt time.Time `json:"installed_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Manifest map[string]interface{} `json:"manifest"`
 }
 
 type _TemplateResponse TemplateResponse
@@ -63,42 +45,23 @@ type _TemplateResponse TemplateResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTemplateResponse(id string, scope string, owner string, sourceName string, schemaVersion int32, minHindclawVersion string, minHindsightVersion string, version string, sourceUrl string, sourceRevision string, description string, author string, tags []string, retainMission string, reflectMission string, observationsMission string, retainExtractionMode string, retainCustomInstructions string, retainChunkSize int32, retainDefaultStrategy string, retainStrategies map[string]interface{}, entityLabels []map[string]interface{}, entitiesAllowFreeForm bool, enableObservations bool, consolidationLlmBatchSize int32, consolidationSourceFactsMaxTokens int32, consolidationSourceFactsMaxTokensPerObservation int32, dispositionSkepticism int32, dispositionLiteralism int32, dispositionEmpathy int32, directiveSeeds []map[string]interface{}, mentalModelSeeds []map[string]interface{}, createdAt string, updatedAt string) *TemplateResponse {
+func NewTemplateResponse(id string, name string, description NullableString, category NullableString, integrations []string, tags []string, scope TemplateScope, owner NullableString, sourceName NullableString, sourceScope NullableTemplateScope, sourceOwner NullableString, sourceRevision NullableString, installedAt time.Time, updatedAt time.Time, manifest map[string]interface{}) *TemplateResponse {
 	this := TemplateResponse{}
 	this.Id = id
+	this.Name = name
+	this.Description = description
+	this.Category = category
+	this.Integrations = integrations
+	this.Tags = tags
 	this.Scope = scope
 	this.Owner = owner
 	this.SourceName = sourceName
-	this.SchemaVersion = schemaVersion
-	this.MinHindclawVersion = minHindclawVersion
-	this.MinHindsightVersion = minHindsightVersion
-	this.Version = version
-	this.SourceUrl = sourceUrl
+	this.SourceScope = sourceScope
+	this.SourceOwner = sourceOwner
 	this.SourceRevision = sourceRevision
-	this.Description = description
-	this.Author = author
-	this.Tags = tags
-	this.RetainMission = retainMission
-	this.ReflectMission = reflectMission
-	this.ObservationsMission = observationsMission
-	this.RetainExtractionMode = retainExtractionMode
-	this.RetainCustomInstructions = retainCustomInstructions
-	this.RetainChunkSize = retainChunkSize
-	this.RetainDefaultStrategy = retainDefaultStrategy
-	this.RetainStrategies = retainStrategies
-	this.EntityLabels = entityLabels
-	this.EntitiesAllowFreeForm = entitiesAllowFreeForm
-	this.EnableObservations = enableObservations
-	this.ConsolidationLlmBatchSize = consolidationLlmBatchSize
-	this.ConsolidationSourceFactsMaxTokens = consolidationSourceFactsMaxTokens
-	this.ConsolidationSourceFactsMaxTokensPerObservation = consolidationSourceFactsMaxTokensPerObservation
-	this.DispositionSkepticism = dispositionSkepticism
-	this.DispositionLiteralism = dispositionLiteralism
-	this.DispositionEmpathy = dispositionEmpathy
-	this.DirectiveSeeds = directiveSeeds
-	this.MentalModelSeeds = mentalModelSeeds
-	this.CreatedAt = createdAt
+	this.InstalledAt = installedAt
 	this.UpdatedAt = updatedAt
+	this.Manifest = manifest
 	return &this
 }
 
@@ -134,268 +97,104 @@ func (o *TemplateResponse) SetId(v string) {
 	o.Id = v
 }
 
-// GetScope returns the Scope field value
-func (o *TemplateResponse) GetScope() string {
+// GetName returns the Name field value
+func (o *TemplateResponse) GetName() string {
 	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return o.Scope
+	return o.Name
 }
 
-// GetScopeOk returns a tuple with the Scope field value
+// GetNameOk returns a tuple with the Name field value
 // and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetScopeOk() (*string, bool) {
+func (o *TemplateResponse) GetNameOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Scope, true
+	return &o.Name, true
 }
 
-// SetScope sets field value
-func (o *TemplateResponse) SetScope(v string) {
-	o.Scope = v
-}
-
-// GetOwner returns the Owner field value
-func (o *TemplateResponse) GetOwner() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.Owner
-}
-
-// GetOwnerOk returns a tuple with the Owner field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetOwnerOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Owner, true
-}
-
-// SetOwner sets field value
-func (o *TemplateResponse) SetOwner(v string) {
-	o.Owner = v
-}
-
-// GetSourceName returns the SourceName field value
-func (o *TemplateResponse) GetSourceName() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceName
-}
-
-// GetSourceNameOk returns a tuple with the SourceName field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetSourceNameOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceName, true
-}
-
-// SetSourceName sets field value
-func (o *TemplateResponse) SetSourceName(v string) {
-	o.SourceName = v
-}
-
-// GetSchemaVersion returns the SchemaVersion field value
-func (o *TemplateResponse) GetSchemaVersion() int32 {
-	if o == nil {
-		var ret int32
-		return ret
-	}
-
-	return o.SchemaVersion
-}
-
-// GetSchemaVersionOk returns a tuple with the SchemaVersion field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetSchemaVersionOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SchemaVersion, true
-}
-
-// SetSchemaVersion sets field value
-func (o *TemplateResponse) SetSchemaVersion(v int32) {
-	o.SchemaVersion = v
-}
-
-// GetMinHindclawVersion returns the MinHindclawVersion field value
-func (o *TemplateResponse) GetMinHindclawVersion() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.MinHindclawVersion
-}
-
-// GetMinHindclawVersionOk returns a tuple with the MinHindclawVersion field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetMinHindclawVersionOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.MinHindclawVersion, true
-}
-
-// SetMinHindclawVersion sets field value
-func (o *TemplateResponse) SetMinHindclawVersion(v string) {
-	o.MinHindclawVersion = v
-}
-
-// GetMinHindsightVersion returns the MinHindsightVersion field value
-func (o *TemplateResponse) GetMinHindsightVersion() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.MinHindsightVersion
-}
-
-// GetMinHindsightVersionOk returns a tuple with the MinHindsightVersion field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetMinHindsightVersionOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.MinHindsightVersion, true
-}
-
-// SetMinHindsightVersion sets field value
-func (o *TemplateResponse) SetMinHindsightVersion(v string) {
-	o.MinHindsightVersion = v
-}
-
-// GetVersion returns the Version field value
-func (o *TemplateResponse) GetVersion() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.Version
-}
-
-// GetVersionOk returns a tuple with the Version field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetVersionOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Version, true
-}
-
-// SetVersion sets field value
-func (o *TemplateResponse) SetVersion(v string) {
-	o.Version = v
-}
-
-// GetSourceUrl returns the SourceUrl field value
-func (o *TemplateResponse) GetSourceUrl() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceUrl
-}
-
-// GetSourceUrlOk returns a tuple with the SourceUrl field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetSourceUrlOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceUrl, true
-}
-
-// SetSourceUrl sets field value
-func (o *TemplateResponse) SetSourceUrl(v string) {
-	o.SourceUrl = v
-}
-
-// GetSourceRevision returns the SourceRevision field value
-func (o *TemplateResponse) GetSourceRevision() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceRevision
-}
-
-// GetSourceRevisionOk returns a tuple with the SourceRevision field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetSourceRevisionOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceRevision, true
-}
-
-// SetSourceRevision sets field value
-func (o *TemplateResponse) SetSourceRevision(v string) {
-	o.SourceRevision = v
+// SetName sets field value
+func (o *TemplateResponse) SetName(v string) {
+	o.Name = v
 }
 
 // GetDescription returns the Description field value
+// If the value is explicit nil, the zero value for string will be returned
 func (o *TemplateResponse) GetDescription() string {
-	if o == nil {
+	if o == nil || o.Description.Get() == nil {
 		var ret string
 		return ret
 	}
 
-	return o.Description
+	return *o.Description.Get()
 }
 
 // GetDescriptionOk returns a tuple with the Description field value
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *TemplateResponse) GetDescriptionOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Description, true
+	return o.Description.Get(), o.Description.IsSet()
 }
 
 // SetDescription sets field value
 func (o *TemplateResponse) SetDescription(v string) {
-	o.Description = v
+	o.Description.Set(&v)
 }
 
-// GetAuthor returns the Author field value
-func (o *TemplateResponse) GetAuthor() string {
-	if o == nil {
+// GetCategory returns the Category field value
+// If the value is explicit nil, the zero value for string will be returned
+func (o *TemplateResponse) GetCategory() string {
+	if o == nil || o.Category.Get() == nil {
 		var ret string
 		return ret
 	}
 
-	return o.Author
+	return *o.Category.Get()
 }
 
-// GetAuthorOk returns a tuple with the Author field value
+// GetCategoryOk returns a tuple with the Category field value
 // and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetAuthorOk() (*string, bool) {
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *TemplateResponse) GetCategoryOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Author, true
+	return o.Category.Get(), o.Category.IsSet()
 }
 
-// SetAuthor sets field value
-func (o *TemplateResponse) SetAuthor(v string) {
-	o.Author = v
+// SetCategory sets field value
+func (o *TemplateResponse) SetCategory(v string) {
+	o.Category.Set(&v)
+}
+
+// GetIntegrations returns the Integrations field value
+func (o *TemplateResponse) GetIntegrations() []string {
+	if o == nil {
+		var ret []string
+		return ret
+	}
+
+	return o.Integrations
+}
+
+// GetIntegrationsOk returns a tuple with the Integrations field value
+// and a boolean to check if the value has been set.
+func (o *TemplateResponse) GetIntegrationsOk() ([]string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Integrations, true
+}
+
+// SetIntegrations sets field value
+func (o *TemplateResponse) SetIntegrations(v []string) {
+	o.Integrations = v
 }
 
 // GetTags returns the Tags field value
@@ -422,490 +221,188 @@ func (o *TemplateResponse) SetTags(v []string) {
 	o.Tags = v
 }
 
-// GetRetainMission returns the RetainMission field value
-func (o *TemplateResponse) GetRetainMission() string {
+// GetScope returns the Scope field value
+func (o *TemplateResponse) GetScope() TemplateScope {
 	if o == nil {
+		var ret TemplateScope
+		return ret
+	}
+
+	return o.Scope
+}
+
+// GetScopeOk returns a tuple with the Scope field value
+// and a boolean to check if the value has been set.
+func (o *TemplateResponse) GetScopeOk() (*TemplateScope, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Scope, true
+}
+
+// SetScope sets field value
+func (o *TemplateResponse) SetScope(v TemplateScope) {
+	o.Scope = v
+}
+
+// GetOwner returns the Owner field value
+// If the value is explicit nil, the zero value for string will be returned
+func (o *TemplateResponse) GetOwner() string {
+	if o == nil || o.Owner.Get() == nil {
 		var ret string
 		return ret
 	}
 
-	return o.RetainMission
+	return *o.Owner.Get()
 }
 
-// GetRetainMissionOk returns a tuple with the RetainMission field value
+// GetOwnerOk returns a tuple with the Owner field value
 // and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetRetainMissionOk() (*string, bool) {
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *TemplateResponse) GetOwnerOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.RetainMission, true
+	return o.Owner.Get(), o.Owner.IsSet()
 }
 
-// SetRetainMission sets field value
-func (o *TemplateResponse) SetRetainMission(v string) {
-	o.RetainMission = v
+// SetOwner sets field value
+func (o *TemplateResponse) SetOwner(v string) {
+	o.Owner.Set(&v)
 }
 
-// GetReflectMission returns the ReflectMission field value
-func (o *TemplateResponse) GetReflectMission() string {
-	if o == nil {
+// GetSourceName returns the SourceName field value
+// If the value is explicit nil, the zero value for string will be returned
+func (o *TemplateResponse) GetSourceName() string {
+	if o == nil || o.SourceName.Get() == nil {
 		var ret string
 		return ret
 	}
 
-	return o.ReflectMission
+	return *o.SourceName.Get()
 }
 
-// GetReflectMissionOk returns a tuple with the ReflectMission field value
+// GetSourceNameOk returns a tuple with the SourceName field value
 // and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetReflectMissionOk() (*string, bool) {
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *TemplateResponse) GetSourceNameOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.ReflectMission, true
+	return o.SourceName.Get(), o.SourceName.IsSet()
 }
 
-// SetReflectMission sets field value
-func (o *TemplateResponse) SetReflectMission(v string) {
-	o.ReflectMission = v
+// SetSourceName sets field value
+func (o *TemplateResponse) SetSourceName(v string) {
+	o.SourceName.Set(&v)
 }
 
-// GetObservationsMission returns the ObservationsMission field value
-func (o *TemplateResponse) GetObservationsMission() string {
+// GetSourceScope returns the SourceScope field value
+// If the value is explicit nil, the zero value for TemplateScope will be returned
+func (o *TemplateResponse) GetSourceScope() TemplateScope {
+	if o == nil || o.SourceScope.Get() == nil {
+		var ret TemplateScope
+		return ret
+	}
+
+	return *o.SourceScope.Get()
+}
+
+// GetSourceScopeOk returns a tuple with the SourceScope field value
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *TemplateResponse) GetSourceScopeOk() (*TemplateScope, bool) {
 	if o == nil {
+		return nil, false
+	}
+	return o.SourceScope.Get(), o.SourceScope.IsSet()
+}
+
+// SetSourceScope sets field value
+func (o *TemplateResponse) SetSourceScope(v TemplateScope) {
+	o.SourceScope.Set(&v)
+}
+
+// GetSourceOwner returns the SourceOwner field value
+// If the value is explicit nil, the zero value for string will be returned
+func (o *TemplateResponse) GetSourceOwner() string {
+	if o == nil || o.SourceOwner.Get() == nil {
 		var ret string
 		return ret
 	}
 
-	return o.ObservationsMission
+	return *o.SourceOwner.Get()
 }
 
-// GetObservationsMissionOk returns a tuple with the ObservationsMission field value
+// GetSourceOwnerOk returns a tuple with the SourceOwner field value
 // and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetObservationsMissionOk() (*string, bool) {
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *TemplateResponse) GetSourceOwnerOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.ObservationsMission, true
+	return o.SourceOwner.Get(), o.SourceOwner.IsSet()
 }
 
-// SetObservationsMission sets field value
-func (o *TemplateResponse) SetObservationsMission(v string) {
-	o.ObservationsMission = v
+// SetSourceOwner sets field value
+func (o *TemplateResponse) SetSourceOwner(v string) {
+	o.SourceOwner.Set(&v)
 }
 
-// GetRetainExtractionMode returns the RetainExtractionMode field value
-func (o *TemplateResponse) GetRetainExtractionMode() string {
-	if o == nil {
+// GetSourceRevision returns the SourceRevision field value
+// If the value is explicit nil, the zero value for string will be returned
+func (o *TemplateResponse) GetSourceRevision() string {
+	if o == nil || o.SourceRevision.Get() == nil {
 		var ret string
 		return ret
 	}
 
-	return o.RetainExtractionMode
+	return *o.SourceRevision.Get()
 }
 
-// GetRetainExtractionModeOk returns a tuple with the RetainExtractionMode field value
+// GetSourceRevisionOk returns a tuple with the SourceRevision field value
 // and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetRetainExtractionModeOk() (*string, bool) {
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *TemplateResponse) GetSourceRevisionOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.RetainExtractionMode, true
+	return o.SourceRevision.Get(), o.SourceRevision.IsSet()
 }
 
-// SetRetainExtractionMode sets field value
-func (o *TemplateResponse) SetRetainExtractionMode(v string) {
-	o.RetainExtractionMode = v
+// SetSourceRevision sets field value
+func (o *TemplateResponse) SetSourceRevision(v string) {
+	o.SourceRevision.Set(&v)
 }
 
-// GetRetainCustomInstructions returns the RetainCustomInstructions field value
-func (o *TemplateResponse) GetRetainCustomInstructions() string {
+// GetInstalledAt returns the InstalledAt field value
+func (o *TemplateResponse) GetInstalledAt() time.Time {
 	if o == nil {
-		var ret string
+		var ret time.Time
 		return ret
 	}
 
-	return o.RetainCustomInstructions
+	return o.InstalledAt
 }
 
-// GetRetainCustomInstructionsOk returns a tuple with the RetainCustomInstructions field value
+// GetInstalledAtOk returns a tuple with the InstalledAt field value
 // and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetRetainCustomInstructionsOk() (*string, bool) {
+func (o *TemplateResponse) GetInstalledAtOk() (*time.Time, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.RetainCustomInstructions, true
+	return &o.InstalledAt, true
 }
 
-// SetRetainCustomInstructions sets field value
-func (o *TemplateResponse) SetRetainCustomInstructions(v string) {
-	o.RetainCustomInstructions = v
-}
-
-// GetRetainChunkSize returns the RetainChunkSize field value
-func (o *TemplateResponse) GetRetainChunkSize() int32 {
-	if o == nil {
-		var ret int32
-		return ret
-	}
-
-	return o.RetainChunkSize
-}
-
-// GetRetainChunkSizeOk returns a tuple with the RetainChunkSize field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetRetainChunkSizeOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.RetainChunkSize, true
-}
-
-// SetRetainChunkSize sets field value
-func (o *TemplateResponse) SetRetainChunkSize(v int32) {
-	o.RetainChunkSize = v
-}
-
-// GetRetainDefaultStrategy returns the RetainDefaultStrategy field value
-func (o *TemplateResponse) GetRetainDefaultStrategy() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.RetainDefaultStrategy
-}
-
-// GetRetainDefaultStrategyOk returns a tuple with the RetainDefaultStrategy field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetRetainDefaultStrategyOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.RetainDefaultStrategy, true
-}
-
-// SetRetainDefaultStrategy sets field value
-func (o *TemplateResponse) SetRetainDefaultStrategy(v string) {
-	o.RetainDefaultStrategy = v
-}
-
-// GetRetainStrategies returns the RetainStrategies field value
-func (o *TemplateResponse) GetRetainStrategies() map[string]interface{} {
-	if o == nil {
-		var ret map[string]interface{}
-		return ret
-	}
-
-	return o.RetainStrategies
-}
-
-// GetRetainStrategiesOk returns a tuple with the RetainStrategies field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetRetainStrategiesOk() (map[string]interface{}, bool) {
-	if o == nil {
-		return map[string]interface{}{}, false
-	}
-	return o.RetainStrategies, true
-}
-
-// SetRetainStrategies sets field value
-func (o *TemplateResponse) SetRetainStrategies(v map[string]interface{}) {
-	o.RetainStrategies = v
-}
-
-// GetEntityLabels returns the EntityLabels field value
-func (o *TemplateResponse) GetEntityLabels() []map[string]interface{} {
-	if o == nil {
-		var ret []map[string]interface{}
-		return ret
-	}
-
-	return o.EntityLabels
-}
-
-// GetEntityLabelsOk returns a tuple with the EntityLabels field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetEntityLabelsOk() ([]map[string]interface{}, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.EntityLabels, true
-}
-
-// SetEntityLabels sets field value
-func (o *TemplateResponse) SetEntityLabels(v []map[string]interface{}) {
-	o.EntityLabels = v
-}
-
-// GetEntitiesAllowFreeForm returns the EntitiesAllowFreeForm field value
-func (o *TemplateResponse) GetEntitiesAllowFreeForm() bool {
-	if o == nil {
-		var ret bool
-		return ret
-	}
-
-	return o.EntitiesAllowFreeForm
-}
-
-// GetEntitiesAllowFreeFormOk returns a tuple with the EntitiesAllowFreeForm field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetEntitiesAllowFreeFormOk() (*bool, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.EntitiesAllowFreeForm, true
-}
-
-// SetEntitiesAllowFreeForm sets field value
-func (o *TemplateResponse) SetEntitiesAllowFreeForm(v bool) {
-	o.EntitiesAllowFreeForm = v
-}
-
-// GetEnableObservations returns the EnableObservations field value
-func (o *TemplateResponse) GetEnableObservations() bool {
-	if o == nil {
-		var ret bool
-		return ret
-	}
-
-	return o.EnableObservations
-}
-
-// GetEnableObservationsOk returns a tuple with the EnableObservations field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetEnableObservationsOk() (*bool, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.EnableObservations, true
-}
-
-// SetEnableObservations sets field value
-func (o *TemplateResponse) SetEnableObservations(v bool) {
-	o.EnableObservations = v
-}
-
-// GetConsolidationLlmBatchSize returns the ConsolidationLlmBatchSize field value
-func (o *TemplateResponse) GetConsolidationLlmBatchSize() int32 {
-	if o == nil {
-		var ret int32
-		return ret
-	}
-
-	return o.ConsolidationLlmBatchSize
-}
-
-// GetConsolidationLlmBatchSizeOk returns a tuple with the ConsolidationLlmBatchSize field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetConsolidationLlmBatchSizeOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.ConsolidationLlmBatchSize, true
-}
-
-// SetConsolidationLlmBatchSize sets field value
-func (o *TemplateResponse) SetConsolidationLlmBatchSize(v int32) {
-	o.ConsolidationLlmBatchSize = v
-}
-
-// GetConsolidationSourceFactsMaxTokens returns the ConsolidationSourceFactsMaxTokens field value
-func (o *TemplateResponse) GetConsolidationSourceFactsMaxTokens() int32 {
-	if o == nil {
-		var ret int32
-		return ret
-	}
-
-	return o.ConsolidationSourceFactsMaxTokens
-}
-
-// GetConsolidationSourceFactsMaxTokensOk returns a tuple with the ConsolidationSourceFactsMaxTokens field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetConsolidationSourceFactsMaxTokensOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.ConsolidationSourceFactsMaxTokens, true
-}
-
-// SetConsolidationSourceFactsMaxTokens sets field value
-func (o *TemplateResponse) SetConsolidationSourceFactsMaxTokens(v int32) {
-	o.ConsolidationSourceFactsMaxTokens = v
-}
-
-// GetConsolidationSourceFactsMaxTokensPerObservation returns the ConsolidationSourceFactsMaxTokensPerObservation field value
-func (o *TemplateResponse) GetConsolidationSourceFactsMaxTokensPerObservation() int32 {
-	if o == nil {
-		var ret int32
-		return ret
-	}
-
-	return o.ConsolidationSourceFactsMaxTokensPerObservation
-}
-
-// GetConsolidationSourceFactsMaxTokensPerObservationOk returns a tuple with the ConsolidationSourceFactsMaxTokensPerObservation field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetConsolidationSourceFactsMaxTokensPerObservationOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.ConsolidationSourceFactsMaxTokensPerObservation, true
-}
-
-// SetConsolidationSourceFactsMaxTokensPerObservation sets field value
-func (o *TemplateResponse) SetConsolidationSourceFactsMaxTokensPerObservation(v int32) {
-	o.ConsolidationSourceFactsMaxTokensPerObservation = v
-}
-
-// GetDispositionSkepticism returns the DispositionSkepticism field value
-func (o *TemplateResponse) GetDispositionSkepticism() int32 {
-	if o == nil {
-		var ret int32
-		return ret
-	}
-
-	return o.DispositionSkepticism
-}
-
-// GetDispositionSkepticismOk returns a tuple with the DispositionSkepticism field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetDispositionSkepticismOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.DispositionSkepticism, true
-}
-
-// SetDispositionSkepticism sets field value
-func (o *TemplateResponse) SetDispositionSkepticism(v int32) {
-	o.DispositionSkepticism = v
-}
-
-// GetDispositionLiteralism returns the DispositionLiteralism field value
-func (o *TemplateResponse) GetDispositionLiteralism() int32 {
-	if o == nil {
-		var ret int32
-		return ret
-	}
-
-	return o.DispositionLiteralism
-}
-
-// GetDispositionLiteralismOk returns a tuple with the DispositionLiteralism field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetDispositionLiteralismOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.DispositionLiteralism, true
-}
-
-// SetDispositionLiteralism sets field value
-func (o *TemplateResponse) SetDispositionLiteralism(v int32) {
-	o.DispositionLiteralism = v
-}
-
-// GetDispositionEmpathy returns the DispositionEmpathy field value
-func (o *TemplateResponse) GetDispositionEmpathy() int32 {
-	if o == nil {
-		var ret int32
-		return ret
-	}
-
-	return o.DispositionEmpathy
-}
-
-// GetDispositionEmpathyOk returns a tuple with the DispositionEmpathy field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetDispositionEmpathyOk() (*int32, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.DispositionEmpathy, true
-}
-
-// SetDispositionEmpathy sets field value
-func (o *TemplateResponse) SetDispositionEmpathy(v int32) {
-	o.DispositionEmpathy = v
-}
-
-// GetDirectiveSeeds returns the DirectiveSeeds field value
-func (o *TemplateResponse) GetDirectiveSeeds() []map[string]interface{} {
-	if o == nil {
-		var ret []map[string]interface{}
-		return ret
-	}
-
-	return o.DirectiveSeeds
-}
-
-// GetDirectiveSeedsOk returns a tuple with the DirectiveSeeds field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetDirectiveSeedsOk() ([]map[string]interface{}, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.DirectiveSeeds, true
-}
-
-// SetDirectiveSeeds sets field value
-func (o *TemplateResponse) SetDirectiveSeeds(v []map[string]interface{}) {
-	o.DirectiveSeeds = v
-}
-
-// GetMentalModelSeeds returns the MentalModelSeeds field value
-func (o *TemplateResponse) GetMentalModelSeeds() []map[string]interface{} {
-	if o == nil {
-		var ret []map[string]interface{}
-		return ret
-	}
-
-	return o.MentalModelSeeds
-}
-
-// GetMentalModelSeedsOk returns a tuple with the MentalModelSeeds field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetMentalModelSeedsOk() ([]map[string]interface{}, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.MentalModelSeeds, true
-}
-
-// SetMentalModelSeeds sets field value
-func (o *TemplateResponse) SetMentalModelSeeds(v []map[string]interface{}) {
-	o.MentalModelSeeds = v
-}
-
-// GetCreatedAt returns the CreatedAt field value
-func (o *TemplateResponse) GetCreatedAt() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.CreatedAt
-}
-
-// GetCreatedAtOk returns a tuple with the CreatedAt field value
-// and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetCreatedAtOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.CreatedAt, true
-}
-
-// SetCreatedAt sets field value
-func (o *TemplateResponse) SetCreatedAt(v string) {
-	o.CreatedAt = v
+// SetInstalledAt sets field value
+func (o *TemplateResponse) SetInstalledAt(v time.Time) {
+	o.InstalledAt = v
 }
 
 // GetUpdatedAt returns the UpdatedAt field value
-func (o *TemplateResponse) GetUpdatedAt() string {
+func (o *TemplateResponse) GetUpdatedAt() time.Time {
 	if o == nil {
-		var ret string
+		var ret time.Time
 		return ret
 	}
 
@@ -914,7 +411,7 @@ func (o *TemplateResponse) GetUpdatedAt() string {
 
 // GetUpdatedAtOk returns a tuple with the UpdatedAt field value
 // and a boolean to check if the value has been set.
-func (o *TemplateResponse) GetUpdatedAtOk() (*string, bool) {
+func (o *TemplateResponse) GetUpdatedAtOk() (*time.Time, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -922,8 +419,32 @@ func (o *TemplateResponse) GetUpdatedAtOk() (*string, bool) {
 }
 
 // SetUpdatedAt sets field value
-func (o *TemplateResponse) SetUpdatedAt(v string) {
+func (o *TemplateResponse) SetUpdatedAt(v time.Time) {
 	o.UpdatedAt = v
+}
+
+// GetManifest returns the Manifest field value
+func (o *TemplateResponse) GetManifest() map[string]interface{} {
+	if o == nil {
+		var ret map[string]interface{}
+		return ret
+	}
+
+	return o.Manifest
+}
+
+// GetManifestOk returns a tuple with the Manifest field value
+// and a boolean to check if the value has been set.
+func (o *TemplateResponse) GetManifestOk() (map[string]interface{}, bool) {
+	if o == nil {
+		return map[string]interface{}{}, false
+	}
+	return o.Manifest, true
+}
+
+// SetManifest sets field value
+func (o *TemplateResponse) SetManifest(v map[string]interface{}) {
+	o.Manifest = v
 }
 
 func (o TemplateResponse) MarshalJSON() ([]byte, error) {
@@ -937,39 +458,20 @@ func (o TemplateResponse) MarshalJSON() ([]byte, error) {
 func (o TemplateResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["scope"] = o.Scope
-	toSerialize["owner"] = o.Owner
-	toSerialize["source_name"] = o.SourceName
-	toSerialize["schema_version"] = o.SchemaVersion
-	toSerialize["min_hindclaw_version"] = o.MinHindclawVersion
-	toSerialize["min_hindsight_version"] = o.MinHindsightVersion
-	toSerialize["version"] = o.Version
-	toSerialize["source_url"] = o.SourceUrl
-	toSerialize["source_revision"] = o.SourceRevision
-	toSerialize["description"] = o.Description
-	toSerialize["author"] = o.Author
+	toSerialize["name"] = o.Name
+	toSerialize["description"] = o.Description.Get()
+	toSerialize["category"] = o.Category.Get()
+	toSerialize["integrations"] = o.Integrations
 	toSerialize["tags"] = o.Tags
-	toSerialize["retain_mission"] = o.RetainMission
-	toSerialize["reflect_mission"] = o.ReflectMission
-	toSerialize["observations_mission"] = o.ObservationsMission
-	toSerialize["retain_extraction_mode"] = o.RetainExtractionMode
-	toSerialize["retain_custom_instructions"] = o.RetainCustomInstructions
-	toSerialize["retain_chunk_size"] = o.RetainChunkSize
-	toSerialize["retain_default_strategy"] = o.RetainDefaultStrategy
-	toSerialize["retain_strategies"] = o.RetainStrategies
-	toSerialize["entity_labels"] = o.EntityLabels
-	toSerialize["entities_allow_free_form"] = o.EntitiesAllowFreeForm
-	toSerialize["enable_observations"] = o.EnableObservations
-	toSerialize["consolidation_llm_batch_size"] = o.ConsolidationLlmBatchSize
-	toSerialize["consolidation_source_facts_max_tokens"] = o.ConsolidationSourceFactsMaxTokens
-	toSerialize["consolidation_source_facts_max_tokens_per_observation"] = o.ConsolidationSourceFactsMaxTokensPerObservation
-	toSerialize["disposition_skepticism"] = o.DispositionSkepticism
-	toSerialize["disposition_literalism"] = o.DispositionLiteralism
-	toSerialize["disposition_empathy"] = o.DispositionEmpathy
-	toSerialize["directive_seeds"] = o.DirectiveSeeds
-	toSerialize["mental_model_seeds"] = o.MentalModelSeeds
-	toSerialize["created_at"] = o.CreatedAt
+	toSerialize["scope"] = o.Scope
+	toSerialize["owner"] = o.Owner.Get()
+	toSerialize["source_name"] = o.SourceName.Get()
+	toSerialize["source_scope"] = o.SourceScope.Get()
+	toSerialize["source_owner"] = o.SourceOwner.Get()
+	toSerialize["source_revision"] = o.SourceRevision.Get()
+	toSerialize["installed_at"] = o.InstalledAt
 	toSerialize["updated_at"] = o.UpdatedAt
+	toSerialize["manifest"] = o.Manifest
 	return toSerialize, nil
 }
 
@@ -979,39 +481,20 @@ func (o *TemplateResponse) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
+		"name",
+		"description",
+		"category",
+		"integrations",
+		"tags",
 		"scope",
 		"owner",
 		"source_name",
-		"schema_version",
-		"min_hindclaw_version",
-		"min_hindsight_version",
-		"version",
-		"source_url",
+		"source_scope",
+		"source_owner",
 		"source_revision",
-		"description",
-		"author",
-		"tags",
-		"retain_mission",
-		"reflect_mission",
-		"observations_mission",
-		"retain_extraction_mode",
-		"retain_custom_instructions",
-		"retain_chunk_size",
-		"retain_default_strategy",
-		"retain_strategies",
-		"entity_labels",
-		"entities_allow_free_form",
-		"enable_observations",
-		"consolidation_llm_batch_size",
-		"consolidation_source_facts_max_tokens",
-		"consolidation_source_facts_max_tokens_per_observation",
-		"disposition_skepticism",
-		"disposition_literalism",
-		"disposition_empathy",
-		"directive_seeds",
-		"mental_model_seeds",
-		"created_at",
+		"installed_at",
 		"updated_at",
+		"manifest",
 	}
 
 	allProperties := make(map[string]interface{})

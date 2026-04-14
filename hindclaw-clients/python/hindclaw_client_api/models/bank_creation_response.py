@@ -19,23 +19,19 @@ import json
 
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List
-from hindclaw_client_api.models.directive_seed_result import DirectiveSeedResult
-from hindclaw_client_api.models.mental_model_seed_result import MentalModelSeedResult
+from hindclaw_client_api.models.bank_template_import_response import BankTemplateImportResponse
 from typing import Optional, Set
 from typing_extensions import Self
 
 class BankCreationResponse(BaseModel):
     """
-    Response from POST /ext/hindclaw/banks — bank creation from template.
+    Response from POST /ext/hindclaw/banks — bank creation from template.  Wraps upstream's ``BankTemplateImportResponse`` so clients see the same counts/errors upstream reports directly.
     """ # noqa: E501
     bank_id: StrictStr
     template: StrictStr
     bank_created: StrictBool
-    config_applied: StrictBool
-    directives: List[DirectiveSeedResult]
-    mental_models: List[MentalModelSeedResult]
-    errors: List[StrictStr]
-    __properties: ClassVar[List[str]] = ["bank_id", "template", "bank_created", "config_applied", "directives", "mental_models", "errors"]
+    import_result: BankTemplateImportResponse
+    __properties: ClassVar[List[str]] = ["bank_id", "template", "bank_created", "import_result"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -76,20 +72,9 @@ class BankCreationResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in directives (list)
-        _items = []
-        if self.directives:
-            for _item_directives in self.directives:
-                if _item_directives:
-                    _items.append(_item_directives.to_dict())
-            _dict['directives'] = _items
-        # override the default output from pydantic by calling `to_dict()` of each item in mental_models (list)
-        _items = []
-        if self.mental_models:
-            for _item_mental_models in self.mental_models:
-                if _item_mental_models:
-                    _items.append(_item_mental_models.to_dict())
-            _dict['mental_models'] = _items
+        # override the default output from pydantic by calling `to_dict()` of import_result
+        if self.import_result:
+            _dict['import_result'] = self.import_result.to_dict()
         return _dict
 
     @classmethod
@@ -105,10 +90,7 @@ class BankCreationResponse(BaseModel):
             "bank_id": obj.get("bank_id"),
             "template": obj.get("template"),
             "bank_created": obj.get("bank_created"),
-            "config_applied": obj.get("config_applied"),
-            "directives": [DirectiveSeedResult.from_dict(_item) for _item in obj["directives"]] if obj.get("directives") is not None else None,
-            "mental_models": [MentalModelSeedResult.from_dict(_item) for _item in obj["mental_models"]] if obj.get("mental_models") is not None else None,
-            "errors": obj.get("errors")
+            "import_result": BankTemplateImportResponse.from_dict(obj["import_result"]) if obj.get("import_result") is not None else None
         })
         return _obj
 

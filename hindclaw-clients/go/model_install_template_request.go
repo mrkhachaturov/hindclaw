@@ -18,18 +18,11 @@ import (
 // checks if the InstallTemplateRequest type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &InstallTemplateRequest{}
 
-// InstallTemplateRequest Request to install a template from a marketplace source.
+// InstallTemplateRequest Request to install a template from a marketplace source.  The ``{id}`` in the URL path is the template id WITHIN the source. The installed-template id is ``alias_id`` if provided, else the source template id. This lets a user install the same source template under a different installed name (Section 4.3 identity invariant: at most one row per (id, scope, owner)).
 type InstallTemplateRequest struct {
-	// Marketplace source name
 	SourceName string `json:"source_name"`
-	// Deprecated alias for source_name
-	Source *string `json:"source,omitempty"`
-	// 'server' or 'personal' — required when ambiguous
-	SourceScope *string `json:"source_scope,omitempty"`
-	// Template name within the source
-	Name string `json:"name"`
-	// 'server' or 'personal'
-	Scope *string `json:"scope,omitempty"`
+	SourceScope *TemplateScope `json:"source_scope,omitempty"`
+	AliasId NullableString `json:"alias_id,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -39,12 +32,9 @@ type _InstallTemplateRequest InstallTemplateRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewInstallTemplateRequest(sourceName string, name string) *InstallTemplateRequest {
+func NewInstallTemplateRequest(sourceName string) *InstallTemplateRequest {
 	this := InstallTemplateRequest{}
 	this.SourceName = sourceName
-	this.Name = name
-	var scope string = "personal"
-	this.Scope = &scope
 	return &this
 }
 
@@ -53,8 +43,6 @@ func NewInstallTemplateRequest(sourceName string, name string) *InstallTemplateR
 // but it doesn't guarantee that properties required by API are set
 func NewInstallTemplateRequestWithDefaults() *InstallTemplateRequest {
 	this := InstallTemplateRequest{}
-	var scope string = "personal"
-	this.Scope = &scope
 	return &this
 }
 
@@ -82,42 +70,10 @@ func (o *InstallTemplateRequest) SetSourceName(v string) {
 	o.SourceName = v
 }
 
-// GetSource returns the Source field value if set, zero value otherwise.
-func (o *InstallTemplateRequest) GetSource() string {
-	if o == nil || IsNil(o.Source) {
-		var ret string
-		return ret
-	}
-	return *o.Source
-}
-
-// GetSourceOk returns a tuple with the Source field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *InstallTemplateRequest) GetSourceOk() (*string, bool) {
-	if o == nil || IsNil(o.Source) {
-		return nil, false
-	}
-	return o.Source, true
-}
-
-// HasSource returns a boolean if a field has been set.
-func (o *InstallTemplateRequest) HasSource() bool {
-	if o != nil && !IsNil(o.Source) {
-		return true
-	}
-
-	return false
-}
-
-// SetSource gets a reference to the given string and assigns it to the Source field.
-func (o *InstallTemplateRequest) SetSource(v string) {
-	o.Source = &v
-}
-
 // GetSourceScope returns the SourceScope field value if set, zero value otherwise.
-func (o *InstallTemplateRequest) GetSourceScope() string {
+func (o *InstallTemplateRequest) GetSourceScope() TemplateScope {
 	if o == nil || IsNil(o.SourceScope) {
-		var ret string
+		var ret TemplateScope
 		return ret
 	}
 	return *o.SourceScope
@@ -125,7 +81,7 @@ func (o *InstallTemplateRequest) GetSourceScope() string {
 
 // GetSourceScopeOk returns a tuple with the SourceScope field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *InstallTemplateRequest) GetSourceScopeOk() (*string, bool) {
+func (o *InstallTemplateRequest) GetSourceScopeOk() (*TemplateScope, bool) {
 	if o == nil || IsNil(o.SourceScope) {
 		return nil, false
 	}
@@ -141,65 +97,51 @@ func (o *InstallTemplateRequest) HasSourceScope() bool {
 	return false
 }
 
-// SetSourceScope gets a reference to the given string and assigns it to the SourceScope field.
-func (o *InstallTemplateRequest) SetSourceScope(v string) {
+// SetSourceScope gets a reference to the given TemplateScope and assigns it to the SourceScope field.
+func (o *InstallTemplateRequest) SetSourceScope(v TemplateScope) {
 	o.SourceScope = &v
 }
 
-// GetName returns the Name field value
-func (o *InstallTemplateRequest) GetName() string {
-	if o == nil {
+// GetAliasId returns the AliasId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *InstallTemplateRequest) GetAliasId() string {
+	if o == nil || IsNil(o.AliasId.Get()) {
 		var ret string
 		return ret
 	}
-
-	return o.Name
+	return *o.AliasId.Get()
 }
 
-// GetNameOk returns a tuple with the Name field value
+// GetAliasIdOk returns a tuple with the AliasId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *InstallTemplateRequest) GetNameOk() (*string, bool) {
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *InstallTemplateRequest) GetAliasIdOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Name, true
+	return o.AliasId.Get(), o.AliasId.IsSet()
 }
 
-// SetName sets field value
-func (o *InstallTemplateRequest) SetName(v string) {
-	o.Name = v
-}
-
-// GetScope returns the Scope field value if set, zero value otherwise.
-func (o *InstallTemplateRequest) GetScope() string {
-	if o == nil || IsNil(o.Scope) {
-		var ret string
-		return ret
-	}
-	return *o.Scope
-}
-
-// GetScopeOk returns a tuple with the Scope field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *InstallTemplateRequest) GetScopeOk() (*string, bool) {
-	if o == nil || IsNil(o.Scope) {
-		return nil, false
-	}
-	return o.Scope, true
-}
-
-// HasScope returns a boolean if a field has been set.
-func (o *InstallTemplateRequest) HasScope() bool {
-	if o != nil && !IsNil(o.Scope) {
+// HasAliasId returns a boolean if a field has been set.
+func (o *InstallTemplateRequest) HasAliasId() bool {
+	if o != nil && o.AliasId.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetScope gets a reference to the given string and assigns it to the Scope field.
-func (o *InstallTemplateRequest) SetScope(v string) {
-	o.Scope = &v
+// SetAliasId gets a reference to the given NullableString and assigns it to the AliasId field.
+func (o *InstallTemplateRequest) SetAliasId(v string) {
+	o.AliasId.Set(&v)
+}
+// SetAliasIdNil sets the value for AliasId to be an explicit nil
+func (o *InstallTemplateRequest) SetAliasIdNil() {
+	o.AliasId.Set(nil)
+}
+
+// UnsetAliasId ensures that no value is present for AliasId, not even an explicit nil
+func (o *InstallTemplateRequest) UnsetAliasId() {
+	o.AliasId.Unset()
 }
 
 func (o InstallTemplateRequest) MarshalJSON() ([]byte, error) {
@@ -213,15 +155,11 @@ func (o InstallTemplateRequest) MarshalJSON() ([]byte, error) {
 func (o InstallTemplateRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["source_name"] = o.SourceName
-	if !IsNil(o.Source) {
-		toSerialize["source"] = o.Source
-	}
 	if !IsNil(o.SourceScope) {
 		toSerialize["source_scope"] = o.SourceScope
 	}
-	toSerialize["name"] = o.Name
-	if !IsNil(o.Scope) {
-		toSerialize["scope"] = o.Scope
+	if o.AliasId.IsSet() {
+		toSerialize["alias_id"] = o.AliasId.Get()
 	}
 
 	for key, value := range o.AdditionalProperties {
@@ -237,7 +175,6 @@ func (o *InstallTemplateRequest) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"source_name",
-		"name",
 	}
 
 	allProperties := make(map[string]interface{})
@@ -268,10 +205,8 @@ func (o *InstallTemplateRequest) UnmarshalJSON(data []byte) (err error) {
 
 	if err = json.Unmarshal(data, &additionalProperties); err == nil {
 		delete(additionalProperties, "source_name")
-		delete(additionalProperties, "source")
 		delete(additionalProperties, "source_scope")
-		delete(additionalProperties, "name")
-		delete(additionalProperties, "scope")
+		delete(additionalProperties, "alias_id")
 		o.AdditionalProperties = additionalProperties
 	}
 

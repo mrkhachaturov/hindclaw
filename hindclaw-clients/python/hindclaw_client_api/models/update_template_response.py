@@ -17,29 +17,21 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
-from typing import Any, ClassVar, Dict, List
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from hindclaw_client_api.models.template_response import TemplateResponse
 from typing import Optional, Set
 from typing_extensions import Self
 
-class TemplateSummaryResponse(BaseModel):
+class UpdateTemplateResponse(BaseModel):
     """
-    Summary of a template for list endpoints.
+    UpdateTemplateResponse
     """ # noqa: E501
-    id: StrictStr
-    scope: StrictStr
-    source_name: StrictStr
-    version: StrictStr
-    description: StrictStr
-    author: StrictStr
-    tags: List[StrictStr]
-    retain_extraction_mode: StrictStr
-    disposition_skepticism: StrictInt
-    disposition_literalism: StrictInt
-    disposition_empathy: StrictInt
-    created_at: StrictStr
-    updated_at: StrictStr
-    __properties: ClassVar[List[str]] = ["id", "scope", "source_name", "version", "description", "author", "tags", "retain_extraction_mode", "disposition_skepticism", "disposition_literalism", "disposition_empathy", "created_at", "updated_at"]
+    updated: StrictBool
+    previous_revision: Optional[StrictStr]
+    new_revision: Optional[StrictStr]
+    template: TemplateResponse
+    __properties: ClassVar[List[str]] = ["updated", "previous_revision", "new_revision", "template"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -59,7 +51,7 @@ class TemplateSummaryResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of TemplateSummaryResponse from a JSON string"""
+        """Create an instance of UpdateTemplateResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -80,11 +72,24 @@ class TemplateSummaryResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of template
+        if self.template:
+            _dict['template'] = self.template.to_dict()
+        # set to None if previous_revision (nullable) is None
+        # and model_fields_set contains the field
+        if self.previous_revision is None and "previous_revision" in self.model_fields_set:
+            _dict['previous_revision'] = None
+
+        # set to None if new_revision (nullable) is None
+        # and model_fields_set contains the field
+        if self.new_revision is None and "new_revision" in self.model_fields_set:
+            _dict['new_revision'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of TemplateSummaryResponse from a dict"""
+        """Create an instance of UpdateTemplateResponse from a dict"""
         if obj is None:
             return None
 
@@ -92,19 +97,10 @@ class TemplateSummaryResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "id": obj.get("id"),
-            "scope": obj.get("scope"),
-            "source_name": obj.get("source_name"),
-            "version": obj.get("version"),
-            "description": obj.get("description"),
-            "author": obj.get("author"),
-            "tags": obj.get("tags"),
-            "retain_extraction_mode": obj.get("retain_extraction_mode"),
-            "disposition_skepticism": obj.get("disposition_skepticism"),
-            "disposition_literalism": obj.get("disposition_literalism"),
-            "disposition_empathy": obj.get("disposition_empathy"),
-            "created_at": obj.get("created_at"),
-            "updated_at": obj.get("updated_at")
+            "updated": obj.get("updated"),
+            "previous_revision": obj.get("previous_revision"),
+            "new_revision": obj.get("new_revision"),
+            "template": TemplateResponse.from_dict(obj["template"]) if obj.get("template") is not None else None
         })
         return _obj
 

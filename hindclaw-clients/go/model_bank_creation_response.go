@@ -19,15 +19,12 @@ import (
 // checks if the BankCreationResponse type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &BankCreationResponse{}
 
-// BankCreationResponse Response from POST /ext/hindclaw/banks — bank creation from template.
+// BankCreationResponse Response from POST /ext/hindclaw/banks — bank creation from template.  Wraps upstream's ``BankTemplateImportResponse`` so clients see the same counts/errors upstream reports directly.
 type BankCreationResponse struct {
 	BankId string `json:"bank_id"`
 	Template string `json:"template"`
 	BankCreated bool `json:"bank_created"`
-	ConfigApplied bool `json:"config_applied"`
-	Directives []DirectiveSeedResult `json:"directives"`
-	MentalModels []MentalModelSeedResult `json:"mental_models"`
-	Errors []string `json:"errors"`
+	ImportResult BankTemplateImportResponse `json:"import_result"`
 }
 
 type _BankCreationResponse BankCreationResponse
@@ -36,15 +33,12 @@ type _BankCreationResponse BankCreationResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewBankCreationResponse(bankId string, template string, bankCreated bool, configApplied bool, directives []DirectiveSeedResult, mentalModels []MentalModelSeedResult, errors []string) *BankCreationResponse {
+func NewBankCreationResponse(bankId string, template string, bankCreated bool, importResult BankTemplateImportResponse) *BankCreationResponse {
 	this := BankCreationResponse{}
 	this.BankId = bankId
 	this.Template = template
 	this.BankCreated = bankCreated
-	this.ConfigApplied = configApplied
-	this.Directives = directives
-	this.MentalModels = mentalModels
-	this.Errors = errors
+	this.ImportResult = importResult
 	return &this
 }
 
@@ -128,100 +122,28 @@ func (o *BankCreationResponse) SetBankCreated(v bool) {
 	o.BankCreated = v
 }
 
-// GetConfigApplied returns the ConfigApplied field value
-func (o *BankCreationResponse) GetConfigApplied() bool {
+// GetImportResult returns the ImportResult field value
+func (o *BankCreationResponse) GetImportResult() BankTemplateImportResponse {
 	if o == nil {
-		var ret bool
+		var ret BankTemplateImportResponse
 		return ret
 	}
 
-	return o.ConfigApplied
+	return o.ImportResult
 }
 
-// GetConfigAppliedOk returns a tuple with the ConfigApplied field value
+// GetImportResultOk returns a tuple with the ImportResult field value
 // and a boolean to check if the value has been set.
-func (o *BankCreationResponse) GetConfigAppliedOk() (*bool, bool) {
+func (o *BankCreationResponse) GetImportResultOk() (*BankTemplateImportResponse, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.ConfigApplied, true
+	return &o.ImportResult, true
 }
 
-// SetConfigApplied sets field value
-func (o *BankCreationResponse) SetConfigApplied(v bool) {
-	o.ConfigApplied = v
-}
-
-// GetDirectives returns the Directives field value
-func (o *BankCreationResponse) GetDirectives() []DirectiveSeedResult {
-	if o == nil {
-		var ret []DirectiveSeedResult
-		return ret
-	}
-
-	return o.Directives
-}
-
-// GetDirectivesOk returns a tuple with the Directives field value
-// and a boolean to check if the value has been set.
-func (o *BankCreationResponse) GetDirectivesOk() ([]DirectiveSeedResult, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.Directives, true
-}
-
-// SetDirectives sets field value
-func (o *BankCreationResponse) SetDirectives(v []DirectiveSeedResult) {
-	o.Directives = v
-}
-
-// GetMentalModels returns the MentalModels field value
-func (o *BankCreationResponse) GetMentalModels() []MentalModelSeedResult {
-	if o == nil {
-		var ret []MentalModelSeedResult
-		return ret
-	}
-
-	return o.MentalModels
-}
-
-// GetMentalModelsOk returns a tuple with the MentalModels field value
-// and a boolean to check if the value has been set.
-func (o *BankCreationResponse) GetMentalModelsOk() ([]MentalModelSeedResult, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.MentalModels, true
-}
-
-// SetMentalModels sets field value
-func (o *BankCreationResponse) SetMentalModels(v []MentalModelSeedResult) {
-	o.MentalModels = v
-}
-
-// GetErrors returns the Errors field value
-func (o *BankCreationResponse) GetErrors() []string {
-	if o == nil {
-		var ret []string
-		return ret
-	}
-
-	return o.Errors
-}
-
-// GetErrorsOk returns a tuple with the Errors field value
-// and a boolean to check if the value has been set.
-func (o *BankCreationResponse) GetErrorsOk() ([]string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.Errors, true
-}
-
-// SetErrors sets field value
-func (o *BankCreationResponse) SetErrors(v []string) {
-	o.Errors = v
+// SetImportResult sets field value
+func (o *BankCreationResponse) SetImportResult(v BankTemplateImportResponse) {
+	o.ImportResult = v
 }
 
 func (o BankCreationResponse) MarshalJSON() ([]byte, error) {
@@ -237,10 +159,7 @@ func (o BankCreationResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["bank_id"] = o.BankId
 	toSerialize["template"] = o.Template
 	toSerialize["bank_created"] = o.BankCreated
-	toSerialize["config_applied"] = o.ConfigApplied
-	toSerialize["directives"] = o.Directives
-	toSerialize["mental_models"] = o.MentalModels
-	toSerialize["errors"] = o.Errors
+	toSerialize["import_result"] = o.ImportResult
 	return toSerialize, nil
 }
 
@@ -252,10 +171,7 @@ func (o *BankCreationResponse) UnmarshalJSON(data []byte) (err error) {
 		"bank_id",
 		"template",
 		"bank_created",
-		"config_applied",
-		"directives",
-		"mental_models",
-		"errors",
+		"import_result",
 	}
 
 	allProperties := make(map[string]interface{})

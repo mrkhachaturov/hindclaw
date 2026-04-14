@@ -20,20 +20,19 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
+from hindclaw_client_api.models.template_scope import TemplateScope
 from typing import Optional, Set
 from typing_extensions import Self
 
 class InstallTemplateRequest(BaseModel):
     """
-    Request to install a template from a marketplace source.
+    Request to install a template from a marketplace source.  The ``{id}`` in the URL path is the template id WITHIN the source. The installed-template id is ``alias_id`` if provided, else the source template id. This lets a user install the same source template under a different installed name (Section 4.3 identity invariant: at most one row per (id, scope, owner)).
     """ # noqa: E501
-    source_name: Annotated[str, Field(min_length=1, strict=True)] = Field(description="Marketplace source name")
-    source: Optional[StrictStr] = Field(default=None, description="Deprecated alias for source_name")
-    source_scope: Optional[StrictStr] = Field(default=None, description="'server' or 'personal' — required when ambiguous")
-    name: Annotated[str, Field(min_length=1, strict=True)] = Field(description="Template name within the source")
-    scope: Optional[StrictStr] = Field(default='personal', description="'server' or 'personal'")
+    source_name: Annotated[str, Field(min_length=1, strict=True)]
+    source_scope: Optional[TemplateScope] = None
+    alias_id: Optional[StrictStr] = None
     additional_properties: Dict[str, Any] = {}
-    __properties: ClassVar[List[str]] = ["source_name", "source", "source_scope", "name", "scope"]
+    __properties: ClassVar[List[str]] = ["source_name", "source_scope", "alias_id"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -81,6 +80,11 @@ class InstallTemplateRequest(BaseModel):
             for _key, _value in self.additional_properties.items():
                 _dict[_key] = _value
 
+        # set to None if alias_id (nullable) is None
+        # and model_fields_set contains the field
+        if self.alias_id is None and "alias_id" in self.model_fields_set:
+            _dict['alias_id'] = None
+
         return _dict
 
     @classmethod
@@ -94,10 +98,8 @@ class InstallTemplateRequest(BaseModel):
 
         _obj = cls.model_validate({
             "source_name": obj.get("source_name"),
-            "source": obj.get("source"),
             "source_scope": obj.get("source_scope"),
-            "name": obj.get("name"),
-            "scope": obj.get("scope") if obj.get("scope") is not None else 'personal'
+            "alias_id": obj.get("alias_id")
         })
         # store additional fields in additional_properties
         for _key in obj.keys():

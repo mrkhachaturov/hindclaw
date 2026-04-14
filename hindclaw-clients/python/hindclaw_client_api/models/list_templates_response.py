@@ -17,19 +17,18 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictInt
+from pydantic import BaseModel, ConfigDict
 from typing import Any, ClassVar, Dict, List
-from hindclaw_client_api.models.marketplace_search_result import MarketplaceSearchResult
+from hindclaw_client_api.models.template_response import TemplateResponse
 from typing import Optional, Set
 from typing_extensions import Self
 
-class MarketplaceSearchResponse(BaseModel):
+class ListTemplatesResponse(BaseModel):
     """
-    Response for marketplace search.
+    ListTemplatesResponse
     """ # noqa: E501
-    results: List[MarketplaceSearchResult]
-    total: StrictInt
-    __properties: ClassVar[List[str]] = ["results", "total"]
+    templates: List[TemplateResponse]
+    __properties: ClassVar[List[str]] = ["templates"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -49,7 +48,7 @@ class MarketplaceSearchResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of MarketplaceSearchResponse from a JSON string"""
+        """Create an instance of ListTemplatesResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -70,18 +69,18 @@ class MarketplaceSearchResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in results (list)
+        # override the default output from pydantic by calling `to_dict()` of each item in templates (list)
         _items = []
-        if self.results:
-            for _item_results in self.results:
-                if _item_results:
-                    _items.append(_item_results.to_dict())
-            _dict['results'] = _items
+        if self.templates:
+            for _item_templates in self.templates:
+                if _item_templates:
+                    _items.append(_item_templates.to_dict())
+            _dict['templates'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of MarketplaceSearchResponse from a dict"""
+        """Create an instance of ListTemplatesResponse from a dict"""
         if obj is None:
             return None
 
@@ -89,8 +88,7 @@ class MarketplaceSearchResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "results": [MarketplaceSearchResult.from_dict(_item) for _item in obj["results"]] if obj.get("results") is not None else None,
-            "total": obj.get("total")
+            "templates": [TemplateResponse.from_dict(_item) for _item in obj["templates"]] if obj.get("templates") is not None else None
         })
         return _obj
 

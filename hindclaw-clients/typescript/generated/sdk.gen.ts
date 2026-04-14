@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddGroupMemberData, AddGroupMemberErrors, AddGroupMemberResponses, AddUserChannelData, AddUserChannelErrors, AddUserChannelResponses, CreateApiKeyData, CreateApiKeyErrors, CreateApiKeyResponses, CreateBankFromTemplateData, CreateBankFromTemplateErrors, CreateBankFromTemplateResponses, CreateGroupData, CreateGroupErrors, CreateGroupResponses, CreateMyApiKeyData, CreateMyApiKeyErrors, CreateMyApiKeyResponses, CreateMySaKeyData, CreateMySaKeyErrors, CreateMySaKeyResponses, CreateMyServiceAccountData, CreateMyServiceAccountErrors, CreateMyServiceAccountResponses, CreateMyTemplateData, CreateMyTemplateErrors, CreateMyTemplateResponses, CreateMyTemplateSourceData, CreateMyTemplateSourceErrors, CreateMyTemplateSourceResponses, CreatePolicyData, CreatePolicyErrors, CreatePolicyResponses, CreateSaKeyData, CreateSaKeyErrors, CreateSaKeyResponses, CreateServiceAccountData, CreateServiceAccountErrors, CreateServiceAccountResponses, CreateTemplateData, CreateTemplateErrors, CreateTemplateResponses, CreateTemplateSourceData, CreateTemplateSourceErrors, CreateTemplateSourceResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DebugResolveData, DebugResolveErrors, DebugResolveResponses, DeleteApiKeyData, DeleteApiKeyErrors, DeleteApiKeyResponses, DeleteBankPolicyData, DeleteBankPolicyErrors, DeleteBankPolicyResponses, DeleteGroupData, DeleteGroupErrors, DeleteGroupResponses, DeleteMyApiKeyData, DeleteMyApiKeyErrors, DeleteMyApiKeyResponses, DeleteMySaKeyData, DeleteMySaKeyErrors, DeleteMySaKeyResponses, DeleteMyServiceAccountData, DeleteMyServiceAccountErrors, DeleteMyServiceAccountResponses, DeleteMyTemplateData, DeleteMyTemplateErrors, DeleteMyTemplateResponses, DeleteMyTemplateSourceData, DeleteMyTemplateSourceErrors, DeleteMyTemplateSourceResponses, DeletePolicyAttachmentData, DeletePolicyAttachmentErrors, DeletePolicyAttachmentResponses, DeletePolicyData, DeletePolicyErrors, DeletePolicyResponses, DeleteSaKeyData, DeleteSaKeyErrors, DeleteSaKeyResponses, DeleteServiceAccountData, DeleteServiceAccountErrors, DeleteServiceAccountResponses, DeleteTemplateData, DeleteTemplateErrors, DeleteTemplateResponses, DeleteTemplateSourceData, DeleteTemplateSourceErrors, DeleteTemplateSourceResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetBankPolicyData, GetBankPolicyErrors, GetBankPolicyResponses, GetGroupData, GetGroupErrors, GetGroupResponses, GetMyProfileData, GetMyProfileResponses, GetMyServiceAccountData, GetMyServiceAccountErrors, GetMyServiceAccountResponses, GetMyTemplateData, GetMyTemplateErrors, GetMyTemplateResponses, GetPolicyData, GetPolicyErrors, GetPolicyResponses, GetServiceAccountData, GetServiceAccountErrors, GetServiceAccountResponses, GetTemplateData, GetTemplateErrors, GetTemplateResponses, GetUserData, GetUserErrors, GetUserResponses, InstallMyTemplateData, InstallMyTemplateErrors, InstallMyTemplateResponses, InstallTemplateData, InstallTemplateErrors, InstallTemplateResponses, ListApiKeysData, ListApiKeysErrors, ListApiKeysResponses, ListGroupMembersData, ListGroupMembersErrors, ListGroupMembersResponses, ListGroupsData, ListGroupsResponses, ListMyApiKeysData, ListMyApiKeysResponses, ListMySaKeysData, ListMySaKeysErrors, ListMySaKeysResponses, ListMyServiceAccountsData, ListMyServiceAccountsResponses, ListMyTemplatesData, ListMyTemplateSourcesData, ListMyTemplateSourcesResponses, ListMyTemplatesResponses, ListPoliciesData, ListPoliciesResponses, ListPolicyAttachmentsData, ListPolicyAttachmentsErrors, ListPolicyAttachmentsResponses, ListSaKeysData, ListSaKeysErrors, ListSaKeysResponses, ListServiceAccountsData, ListServiceAccountsResponses, ListTemplatesData, ListTemplatesErrors, ListTemplateSourcesData, ListTemplateSourcesResponses, ListTemplatesResponses, ListUserChannelsData, ListUserChannelsErrors, ListUserChannelsResponses, ListUsersData, ListUsersResponses, MarketplaceSearchData, MarketplaceSearchErrors, MarketplaceSearchResponses, RemoveGroupMemberData, RemoveGroupMemberErrors, RemoveGroupMemberResponses, RemoveUserChannelData, RemoveUserChannelErrors, RemoveUserChannelResponses, UpdateGroupData, UpdateGroupErrors, UpdateGroupResponses, UpdateMyServiceAccountData, UpdateMyServiceAccountErrors, UpdateMyServiceAccountResponses, UpdateMyTemplateData, UpdateMyTemplateErrors, UpdateMyTemplateResponses, UpdatePolicyData, UpdatePolicyErrors, UpdatePolicyResponses, UpdateServiceAccountData, UpdateServiceAccountErrors, UpdateServiceAccountResponses, UpdateTemplateData, UpdateTemplateErrors, UpdateTemplateFromMarketplaceData, UpdateTemplateFromMarketplaceErrors, UpdateTemplateFromMarketplaceResponses, UpdateTemplateResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpsertBankPolicyData, UpsertBankPolicyErrors, UpsertBankPolicyResponses, UpsertPolicyAttachmentData, UpsertPolicyAttachmentErrors, UpsertPolicyAttachmentResponses } from './types.gen';
+import type { AddGroupMemberData, AddGroupMemberErrors, AddGroupMemberResponses, AddUserChannelData, AddUserChannelErrors, AddUserChannelResponses, CheckAdminTemplateUpdateData, CheckAdminTemplateUpdateErrors, CheckAdminTemplateUpdateResponses, CheckMyTemplateUpdateData, CheckMyTemplateUpdateErrors, CheckMyTemplateUpdateResponses, CreateAdminTemplateData, CreateAdminTemplateErrors, CreateAdminTemplateResponses, CreateApiKeyData, CreateApiKeyErrors, CreateApiKeyResponses, CreateBankFromTemplateData, CreateBankFromTemplateErrors, CreateBankFromTemplateResponses, CreateGroupData, CreateGroupErrors, CreateGroupResponses, CreateMyApiKeyData, CreateMyApiKeyErrors, CreateMyApiKeyResponses, CreateMySaKeyData, CreateMySaKeyErrors, CreateMySaKeyResponses, CreateMyServiceAccountData, CreateMyServiceAccountErrors, CreateMyServiceAccountResponses, CreateMyTemplateData, CreateMyTemplateErrors, CreateMyTemplateResponses, CreateMyTemplateSourceData, CreateMyTemplateSourceErrors, CreateMyTemplateSourceResponses, CreatePolicyData, CreatePolicyErrors, CreatePolicyResponses, CreateSaKeyData, CreateSaKeyErrors, CreateSaKeyResponses, CreateServiceAccountData, CreateServiceAccountErrors, CreateServiceAccountResponses, CreateTemplateSourceData, CreateTemplateSourceErrors, CreateTemplateSourceResponses, CreateUserData, CreateUserErrors, CreateUserResponses, DebugResolveData, DebugResolveErrors, DebugResolveResponses, DeleteAdminTemplateData, DeleteAdminTemplateErrors, DeleteAdminTemplateResponses, DeleteApiKeyData, DeleteApiKeyErrors, DeleteApiKeyResponses, DeleteBankPolicyData, DeleteBankPolicyErrors, DeleteBankPolicyResponses, DeleteGroupData, DeleteGroupErrors, DeleteGroupResponses, DeleteMyApiKeyData, DeleteMyApiKeyErrors, DeleteMyApiKeyResponses, DeleteMySaKeyData, DeleteMySaKeyErrors, DeleteMySaKeyResponses, DeleteMyServiceAccountData, DeleteMyServiceAccountErrors, DeleteMyServiceAccountResponses, DeleteMyTemplateData, DeleteMyTemplateErrors, DeleteMyTemplateResponses, DeleteMyTemplateSourceData, DeleteMyTemplateSourceErrors, DeleteMyTemplateSourceResponses, DeletePolicyAttachmentData, DeletePolicyAttachmentErrors, DeletePolicyAttachmentResponses, DeletePolicyData, DeletePolicyErrors, DeletePolicyResponses, DeleteSaKeyData, DeleteSaKeyErrors, DeleteSaKeyResponses, DeleteServiceAccountData, DeleteServiceAccountErrors, DeleteServiceAccountResponses, DeleteTemplateSourceData, DeleteTemplateSourceErrors, DeleteTemplateSourceResponses, DeleteUserData, DeleteUserErrors, DeleteUserResponses, GetAdminTemplateData, GetAdminTemplateErrors, GetAdminTemplateResponses, GetBankPolicyData, GetBankPolicyErrors, GetBankPolicyResponses, GetGroupData, GetGroupErrors, GetGroupResponses, GetMyProfileData, GetMyProfileResponses, GetMyServiceAccountData, GetMyServiceAccountErrors, GetMyServiceAccountResponses, GetMyTemplateData, GetMyTemplateErrors, GetMyTemplateResponses, GetPolicyData, GetPolicyErrors, GetPolicyResponses, GetServiceAccountData, GetServiceAccountErrors, GetServiceAccountResponses, GetUserData, GetUserErrors, GetUserResponses, InstallAdminTemplateData, InstallAdminTemplateErrors, InstallAdminTemplateResponses, InstallMyTemplateData, InstallMyTemplateErrors, InstallMyTemplateResponses, ListAdminTemplatesData, ListAdminTemplatesErrors, ListAdminTemplatesResponses, ListApiKeysData, ListApiKeysErrors, ListApiKeysResponses, ListGroupMembersData, ListGroupMembersErrors, ListGroupMembersResponses, ListGroupsData, ListGroupsResponses, ListMyApiKeysData, ListMyApiKeysResponses, ListMySaKeysData, ListMySaKeysErrors, ListMySaKeysResponses, ListMyServiceAccountsData, ListMyServiceAccountsResponses, ListMyTemplatesData, ListMyTemplatesErrors, ListMyTemplateSourcesData, ListMyTemplateSourcesResponses, ListMyTemplatesResponses, ListPoliciesData, ListPoliciesResponses, ListPolicyAttachmentsData, ListPolicyAttachmentsErrors, ListPolicyAttachmentsResponses, ListSaKeysData, ListSaKeysErrors, ListSaKeysResponses, ListServiceAccountsData, ListServiceAccountsResponses, ListTemplateSourcesData, ListTemplateSourcesResponses, ListUserChannelsData, ListUserChannelsErrors, ListUserChannelsResponses, ListUsersData, ListUsersResponses, PatchAdminTemplateData, PatchAdminTemplateErrors, PatchAdminTemplateResponses, PatchMyTemplateData, PatchMyTemplateErrors, PatchMyTemplateResponses, RemoveGroupMemberData, RemoveGroupMemberErrors, RemoveGroupMemberResponses, RemoveUserChannelData, RemoveUserChannelErrors, RemoveUserChannelResponses, UpdateAdminTemplateFromSourceData, UpdateAdminTemplateFromSourceErrors, UpdateAdminTemplateFromSourceResponses, UpdateGroupData, UpdateGroupErrors, UpdateGroupResponses, UpdateMyServiceAccountData, UpdateMyServiceAccountErrors, UpdateMyServiceAccountResponses, UpdateMyTemplateFromSourceData, UpdateMyTemplateFromSourceErrors, UpdateMyTemplateFromSourceResponses, UpdatePolicyData, UpdatePolicyErrors, UpdatePolicyResponses, UpdateServiceAccountData, UpdateServiceAccountErrors, UpdateServiceAccountResponses, UpdateUserData, UpdateUserErrors, UpdateUserResponses, UpsertBankPolicyData, UpsertBankPolicyErrors, UpsertBankPolicyResponses, UpsertPolicyAttachmentData, UpsertPolicyAttachmentErrors, UpsertPolicyAttachmentResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -533,168 +533,6 @@ export const deleteMyTemplateSource = <ThrowOnError extends boolean = false>(opt
 });
 
 /**
- * List My Templates
- *
- * List the caller's personal templates.
- *
- * Scoped to the caller's user_id — only returns templates with
- * scope='personal' owned by the authenticated principal.
- *
- * Args:
- * _auth: Authenticated principal (users and SAs allowed).
- *
- * Returns:
- * List of TemplateSummaryResponse for the caller's personal templates.
- */
-export const listMyTemplates = <ThrowOnError extends boolean = false>(options?: Options<ListMyTemplatesData, ThrowOnError>) => (options?.client ?? client).get<ListMyTemplatesResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/me/templates',
-    ...options
-});
-
-/**
- * Create My Template
- *
- * Create a personal template for the caller.
- *
- * Template is created with scope='personal' and owner set to the
- * caller's user_id. The scope field in the request body is ignored —
- * personal scope is always used.
- *
- * Args:
- * request: CreateTemplateRequest with template fields.
- * _auth: Authenticated principal (users and SAs allowed).
- *
- * Returns:
- * TemplateResponse for the newly created personal template.
- *
- * Raises:
- * HTTPException: 409 if a personal template with that id already exists.
- */
-export const createMyTemplate = <ThrowOnError extends boolean = false>(options: Options<CreateMyTemplateData, ThrowOnError>) => (options.client ?? client).post<CreateMyTemplateResponses, CreateMyTemplateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/me/templates',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Install My Template
- *
- * Install a template from a visible source to personal scope.
- *
- * Resolves the named source (visible to the caller), fetches the
- * template from the marketplace, validates it, and upserts it into
- * the caller's personal scope.
- *
- * Args:
- * request: InstallTemplateRequest with source_name and template name.
- * _auth: Authenticated principal (users and SAs allowed).
- *
- * Returns:
- * TemplateResponse for the installed template.
- *
- * Raises:
- * HTTPException: 404 if the source or template is not found.
- * HTTPException: 409 if the source name is ambiguous or template already installed.
- * HTTPException: 422 if template validation fails or name mismatches.
- */
-export const installMyTemplate = <ThrowOnError extends boolean = false>(options: Options<InstallMyTemplateData, ThrowOnError>) => (options.client ?? client).post<InstallMyTemplateResponses, InstallMyTemplateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/me/templates/install',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete My Template
- *
- * Delete a personal template.
- *
- * Resolves the template by name (with optional source disambiguation),
- * then deletes it.
- *
- * Args:
- * name: Template name (id).
- * source: Optional source name to disambiguate.
- * _auth: Authenticated principal (users and SAs allowed).
- *
- * Raises:
- * HTTPException: 404 if no matching template is found.
- * HTTPException: 409 if multiple templates match and source is not provided.
- */
-export const deleteMyTemplate = <ThrowOnError extends boolean = false>(options: Options<DeleteMyTemplateData, ThrowOnError>) => (options.client ?? client).delete<DeleteMyTemplateResponses, DeleteMyTemplateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/me/templates/{name}',
-    ...options
-});
-
-/**
- * Get My Template
- *
- * Get a single personal template by name.
- *
- * When multiple personal templates share the same name (installed from
- * different sources), use the ``source`` query parameter to disambiguate.
- * Pass an empty string to select a custom (non-marketplace) template.
- *
- * Args:
- * name: Template name (id).
- * source: Optional source name to disambiguate. Empty string selects
- * custom templates (source_name=None).
- * _auth: Authenticated principal (users and SAs allowed).
- *
- * Returns:
- * TemplateResponse for the matched template.
- *
- * Raises:
- * HTTPException: 404 if no matching template is found.
- * HTTPException: 409 if multiple templates match and source is not provided.
- */
-export const getMyTemplate = <ThrowOnError extends boolean = false>(options: Options<GetMyTemplateData, ThrowOnError>) => (options.client ?? client).get<GetMyTemplateResponses, GetMyTemplateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/me/templates/{name}',
-    ...options
-});
-
-/**
- * Update My Template
- *
- * Update a personal template.
- *
- * Resolves the template by name (with optional source disambiguation),
- * then applies the partial update.
- *
- * Args:
- * name: Template name (id).
- * request: UpdateTemplateRequest with fields to update.
- * source: Optional source name to disambiguate.
- * _auth: Authenticated principal (users and SAs allowed).
- *
- * Returns:
- * TemplateResponse for the updated template.
- *
- * Raises:
- * HTTPException: 404 if no matching template is found.
- * HTTPException: 409 if multiple templates match and source is not provided.
- */
-export const updateMyTemplate = <ThrowOnError extends boolean = false>(options: Options<UpdateMyTemplateData, ThrowOnError>) => (options.client ?? client).put<UpdateMyTemplateResponses, UpdateMyTemplateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/me/templates/{name}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
  * List Service Accounts
  */
 export const listServiceAccounts = <ThrowOnError extends boolean = false>(options?: Options<ListServiceAccountsData, ThrowOnError>) => (options?.client ?? client).get<ListServiceAccountsResponses, unknown, ThrowOnError>({
@@ -821,146 +659,6 @@ export const debugResolve = <ThrowOnError extends boolean = false>(options: Opti
 });
 
 /**
- * List Templates
- *
- * List installed templates filtered by access.
- *
- * When scope is None, returns all server templates plus the caller's
- * personal templates. When scope is specified, returns only that scope.
- *
- * Args:
- * scope: Optional scope filter ('server' or 'personal').
- * principal: Authenticated principal from IAM.
- *
- * Returns:
- * List of template summaries.
- */
-export const listTemplates = <ThrowOnError extends boolean = false>(options?: Options<ListTemplatesData, ThrowOnError>) => (options?.client ?? client).get<ListTemplatesResponses, ListTemplatesErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/templates',
-    ...options
-});
-
-/**
- * Create Template
- *
- * Create a custom template (no marketplace source).
- *
- * Args:
- * request: Template creation payload.
- * principal: Authenticated principal from IAM.
- *
- * Returns:
- * The created template.
- *
- * Raises:
- * HTTPException: 409 if template already exists.
- * HTTPException: 403 if scope is server and user lacks template:admin.
- */
-export const createTemplate = <ThrowOnError extends boolean = false>(options: Options<CreateTemplateData, ThrowOnError>) => (options.client ?? client).post<CreateTemplateResponses, CreateTemplateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/templates',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Delete Template Endpoint
- *
- * Delete a custom template.
- *
- * Args:
- * scope: Template scope ('server' or 'personal').
- * name: Template name.
- * principal: Authenticated principal from IAM.
- *
- * Raises:
- * HTTPException: 404 if template not found.
- * HTTPException: 403 if scope is server and user lacks template:admin.
- */
-export const deleteTemplate = <ThrowOnError extends boolean = false>(options: Options<DeleteTemplateData, ThrowOnError>) => (options.client ?? client).delete<DeleteTemplateResponses, DeleteTemplateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/templates/{scope}/{name}',
-    ...options
-});
-
-/**
- * Get Template Endpoint
- *
- * Get a template by scope and name.
- *
- * Finds any template matching (scope, name) regardless of source.
- * This covers both custom templates and marketplace-installed ones.
- *
- * Args:
- * scope: Template scope ('server' or 'personal').
- * name: Template name.
- * principal: Authenticated principal from IAM.
- *
- * Returns:
- * Full template details.
- *
- * Raises:
- * HTTPException: 404 if template not found.
- */
-export const getTemplate = <ThrowOnError extends boolean = false>(options: Options<GetTemplateData, ThrowOnError>) => (options.client ?? client).get<GetTemplateResponses, GetTemplateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/templates/{scope}/{name}',
-    ...options
-});
-
-/**
- * Update Template Endpoint
- *
- * Update a custom template.
- *
- * Performs cross-field validation when extraction mode or custom
- * instructions are part of the update by merging with the existing
- * record before applying.
- *
- * Args:
- * scope: Template scope ('server' or 'personal').
- * name: Template name.
- * request: Partial update payload.
- * principal: Authenticated principal from IAM.
- *
- * Returns:
- * The updated template.
- *
- * Raises:
- * HTTPException: 404 if template not found, 422 if cross-field
- * validation fails.
- * HTTPException: 403 if scope is server and user lacks template:admin.
- */
-export const updateTemplate = <ThrowOnError extends boolean = false>(options: Options<UpdateTemplateData, ThrowOnError>) => (options.client ?? client).put<UpdateTemplateResponses, UpdateTemplateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/templates/{scope}/{name}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Create Bank From Template
- *
- * Create a bank from an installed template.
- */
-export const createBankFromTemplate = <ThrowOnError extends boolean = false>(options: Options<CreateBankFromTemplateData, ThrowOnError>) => (options.client ?? client).post<CreateBankFromTemplateResponses, CreateBankFromTemplateErrors, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/banks',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
  * List Template Sources
  *
  * List all configured marketplace sources.
@@ -998,24 +696,20 @@ export const deleteTemplateSource = <ThrowOnError extends boolean = false>(optio
 });
 
 /**
- * Marketplace Search
- *
- * Search marketplace templates across configured sources.
+ * List installed personal templates
  */
-export const marketplaceSearch = <ThrowOnError extends boolean = false>(options?: Options<MarketplaceSearchData, ThrowOnError>) => (options?.client ?? client).get<MarketplaceSearchResponses, MarketplaceSearchErrors, ThrowOnError>({
+export const listMyTemplates = <ThrowOnError extends boolean = false>(options?: Options<ListMyTemplatesData, ThrowOnError>) => (options?.client ?? client).get<ListMyTemplatesResponses, ListMyTemplatesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/marketplace/search',
+    url: '/ext/hindclaw/me/templates',
     ...options
 });
 
 /**
- * Install Template
- *
- * Install a template from a registered marketplace source.
+ * Create a hand-authored personal template
  */
-export const installTemplate = <ThrowOnError extends boolean = false>(options: Options<InstallTemplateData, ThrowOnError>) => (options.client ?? client).post<InstallTemplateResponses, InstallTemplateErrors, ThrowOnError>({
+export const createMyTemplate = <ThrowOnError extends boolean = false>(options: Options<CreateMyTemplateData, ThrowOnError>) => (options.client ?? client).post<CreateMyTemplateResponses, CreateMyTemplateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/templates/install',
+    url: '/ext/hindclaw/me/templates',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1024,12 +718,160 @@ export const installTemplate = <ThrowOnError extends boolean = false>(options: O
 });
 
 /**
- * Update Template From Marketplace
- *
- * Update an installed template from its marketplace source.
+ * Delete an installed personal template
  */
-export const updateTemplateFromMarketplace = <ThrowOnError extends boolean = false>(options: Options<UpdateTemplateFromMarketplaceData, ThrowOnError>) => (options.client ?? client).post<UpdateTemplateFromMarketplaceResponses, UpdateTemplateFromMarketplaceErrors, ThrowOnError>({
+export const deleteMyTemplate = <ThrowOnError extends boolean = false>(options: Options<DeleteMyTemplateData, ThrowOnError>) => (options.client ?? client).delete<DeleteMyTemplateResponses, DeleteMyTemplateErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/ext/hindclaw/templates/{scope}/{source}/{name}/update',
+    url: '/ext/hindclaw/me/templates/{template_id}',
     ...options
+});
+
+/**
+ * Get an installed personal template
+ */
+export const getMyTemplate = <ThrowOnError extends boolean = false>(options: Options<GetMyTemplateData, ThrowOnError>) => (options.client ?? client).get<GetMyTemplateResponses, GetMyTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/templates/{template_id}',
+    ...options
+});
+
+/**
+ * Update a hand-authored personal template
+ */
+export const patchMyTemplate = <ThrowOnError extends boolean = false>(options: Options<PatchMyTemplateData, ThrowOnError>) => (options.client ?? client).patch<PatchMyTemplateResponses, PatchMyTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/templates/{template_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Install a marketplace template into the personal scope
+ */
+export const installMyTemplate = <ThrowOnError extends boolean = false>(options: Options<InstallMyTemplateData, ThrowOnError>) => (options.client ?? client).post<InstallMyTemplateResponses, InstallMyTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/templates/{template_id}/install',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Re-fetch an installed personal template from its source
+ */
+export const updateMyTemplateFromSource = <ThrowOnError extends boolean = false>(options: Options<UpdateMyTemplateFromSourceData, ThrowOnError>) => (options.client ?? client).post<UpdateMyTemplateFromSourceResponses, UpdateMyTemplateFromSourceErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/templates/{template_id}/update',
+    ...options
+});
+
+/**
+ * Check whether the source has a newer revision
+ */
+export const checkMyTemplateUpdate = <ThrowOnError extends boolean = false>(options: Options<CheckMyTemplateUpdateData, ThrowOnError>) => (options.client ?? client).get<CheckMyTemplateUpdateResponses, CheckMyTemplateUpdateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/me/templates/{template_id}/check-update',
+    ...options
+});
+
+/**
+ * List installed server-scope templates
+ */
+export const listAdminTemplates = <ThrowOnError extends boolean = false>(options?: Options<ListAdminTemplatesData, ThrowOnError>) => (options?.client ?? client).get<ListAdminTemplatesResponses, ListAdminTemplatesErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/admin/templates',
+    ...options
+});
+
+/**
+ * Create a hand-authored server-scope template
+ */
+export const createAdminTemplate = <ThrowOnError extends boolean = false>(options: Options<CreateAdminTemplateData, ThrowOnError>) => (options.client ?? client).post<CreateAdminTemplateResponses, CreateAdminTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/admin/templates',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete an installed server-scope template
+ */
+export const deleteAdminTemplate = <ThrowOnError extends boolean = false>(options: Options<DeleteAdminTemplateData, ThrowOnError>) => (options.client ?? client).delete<DeleteAdminTemplateResponses, DeleteAdminTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/admin/templates/{template_id}',
+    ...options
+});
+
+/**
+ * Get an installed server-scope template
+ */
+export const getAdminTemplate = <ThrowOnError extends boolean = false>(options: Options<GetAdminTemplateData, ThrowOnError>) => (options.client ?? client).get<GetAdminTemplateResponses, GetAdminTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/admin/templates/{template_id}',
+    ...options
+});
+
+/**
+ * Update a hand-authored server-scope template
+ */
+export const patchAdminTemplate = <ThrowOnError extends boolean = false>(options: Options<PatchAdminTemplateData, ThrowOnError>) => (options.client ?? client).patch<PatchAdminTemplateResponses, PatchAdminTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/admin/templates/{template_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Install a marketplace template into the server scope
+ */
+export const installAdminTemplate = <ThrowOnError extends boolean = false>(options: Options<InstallAdminTemplateData, ThrowOnError>) => (options.client ?? client).post<InstallAdminTemplateResponses, InstallAdminTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/admin/templates/{template_id}/install',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Re-fetch an installed server-scope template from its source
+ */
+export const updateAdminTemplateFromSource = <ThrowOnError extends boolean = false>(options: Options<UpdateAdminTemplateFromSourceData, ThrowOnError>) => (options.client ?? client).post<UpdateAdminTemplateFromSourceResponses, UpdateAdminTemplateFromSourceErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/admin/templates/{template_id}/update',
+    ...options
+});
+
+/**
+ * Check whether the source has a newer revision
+ */
+export const checkAdminTemplateUpdate = <ThrowOnError extends boolean = false>(options: Options<CheckAdminTemplateUpdateData, ThrowOnError>) => (options.client ?? client).get<CheckAdminTemplateUpdateResponses, CheckAdminTemplateUpdateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/admin/templates/{template_id}/check-update',
+    ...options
+});
+
+/**
+ * Apply an installed template to a new or existing bank
+ */
+export const createBankFromTemplate = <ThrowOnError extends boolean = false>(options: Options<CreateBankFromTemplateData, ThrowOnError>) => (options.client ?? client).post<CreateBankFromTemplateResponses, CreateBankFromTemplateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/ext/hindclaw/banks',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });

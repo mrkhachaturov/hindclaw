@@ -23,7 +23,7 @@ var _ MappedNullable = &MeProfileResponse{}
 type MeProfileResponse struct {
 	Id string `json:"id"`
 	DisplayName string `json:"display_name"`
-	Email string `json:"email"`
+	Email NullableString `json:"email"`
 	IsActive bool `json:"is_active"`
 	Channels []ChannelResponse `json:"channels"`
 }
@@ -34,7 +34,7 @@ type _MeProfileResponse MeProfileResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewMeProfileResponse(id string, displayName string, email string, isActive bool, channels []ChannelResponse) *MeProfileResponse {
+func NewMeProfileResponse(id string, displayName string, email NullableString, isActive bool, channels []ChannelResponse) *MeProfileResponse {
 	this := MeProfileResponse{}
 	this.Id = id
 	this.DisplayName = displayName
@@ -101,27 +101,29 @@ func (o *MeProfileResponse) SetDisplayName(v string) {
 }
 
 // GetEmail returns the Email field value
+// If the value is explicit nil, the zero value for string will be returned
 func (o *MeProfileResponse) GetEmail() string {
-	if o == nil {
+	if o == nil || o.Email.Get() == nil {
 		var ret string
 		return ret
 	}
 
-	return o.Email
+	return *o.Email.Get()
 }
 
 // GetEmailOk returns a tuple with the Email field value
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *MeProfileResponse) GetEmailOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Email, true
+	return o.Email.Get(), o.Email.IsSet()
 }
 
 // SetEmail sets field value
 func (o *MeProfileResponse) SetEmail(v string) {
-	o.Email = v
+	o.Email.Set(&v)
 }
 
 // GetIsActive returns the IsActive field value
@@ -184,7 +186,7 @@ func (o MeProfileResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
 	toSerialize["display_name"] = o.DisplayName
-	toSerialize["email"] = o.Email
+	toSerialize["email"] = o.Email.Get()
 	toSerialize["is_active"] = o.IsActive
 	toSerialize["channels"] = o.Channels
 	return toSerialize, nil

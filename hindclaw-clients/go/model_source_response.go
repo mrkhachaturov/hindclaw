@@ -23,8 +23,12 @@ var _ MappedNullable = &SourceResponse{}
 type SourceResponse struct {
 	Name string `json:"name"`
 	Url string `json:"url"`
+	Scope TemplateScope `json:"scope"`
+	Owner NullableString `json:"owner,omitempty"`
 	HasAuth bool `json:"has_auth"`
-	CreatedAt string `json:"created_at"`
+	Description NullableString `json:"description,omitempty"`
+	CreatedAt NullableString `json:"created_at,omitempty"`
+	UpdatedAt NullableString `json:"updated_at,omitempty"`
 }
 
 type _SourceResponse SourceResponse
@@ -33,12 +37,12 @@ type _SourceResponse SourceResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSourceResponse(name string, url string, hasAuth bool, createdAt string) *SourceResponse {
+func NewSourceResponse(name string, url string, scope TemplateScope, hasAuth bool) *SourceResponse {
 	this := SourceResponse{}
 	this.Name = name
 	this.Url = url
+	this.Scope = scope
 	this.HasAuth = hasAuth
-	this.CreatedAt = createdAt
 	return &this
 }
 
@@ -98,6 +102,72 @@ func (o *SourceResponse) SetUrl(v string) {
 	o.Url = v
 }
 
+// GetScope returns the Scope field value
+func (o *SourceResponse) GetScope() TemplateScope {
+	if o == nil {
+		var ret TemplateScope
+		return ret
+	}
+
+	return o.Scope
+}
+
+// GetScopeOk returns a tuple with the Scope field value
+// and a boolean to check if the value has been set.
+func (o *SourceResponse) GetScopeOk() (*TemplateScope, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Scope, true
+}
+
+// SetScope sets field value
+func (o *SourceResponse) SetScope(v TemplateScope) {
+	o.Scope = v
+}
+
+// GetOwner returns the Owner field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SourceResponse) GetOwner() string {
+	if o == nil || IsNil(o.Owner.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.Owner.Get()
+}
+
+// GetOwnerOk returns a tuple with the Owner field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SourceResponse) GetOwnerOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Owner.Get(), o.Owner.IsSet()
+}
+
+// HasOwner returns a boolean if a field has been set.
+func (o *SourceResponse) HasOwner() bool {
+	if o != nil && o.Owner.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetOwner gets a reference to the given NullableString and assigns it to the Owner field.
+func (o *SourceResponse) SetOwner(v string) {
+	o.Owner.Set(&v)
+}
+// SetOwnerNil sets the value for Owner to be an explicit nil
+func (o *SourceResponse) SetOwnerNil() {
+	o.Owner.Set(nil)
+}
+
+// UnsetOwner ensures that no value is present for Owner, not even an explicit nil
+func (o *SourceResponse) UnsetOwner() {
+	o.Owner.Unset()
+}
+
 // GetHasAuth returns the HasAuth field value
 func (o *SourceResponse) GetHasAuth() bool {
 	if o == nil {
@@ -122,28 +192,130 @@ func (o *SourceResponse) SetHasAuth(v bool) {
 	o.HasAuth = v
 }
 
-// GetCreatedAt returns the CreatedAt field value
-func (o *SourceResponse) GetCreatedAt() string {
-	if o == nil {
+// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SourceResponse) GetDescription() string {
+	if o == nil || IsNil(o.Description.Get()) {
 		var ret string
 		return ret
 	}
-
-	return o.CreatedAt
+	return *o.Description.Get()
 }
 
-// GetCreatedAtOk returns a tuple with the CreatedAt field value
+// GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SourceResponse) GetDescriptionOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Description.Get(), o.Description.IsSet()
+}
+
+// HasDescription returns a boolean if a field has been set.
+func (o *SourceResponse) HasDescription() bool {
+	if o != nil && o.Description.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetDescription gets a reference to the given NullableString and assigns it to the Description field.
+func (o *SourceResponse) SetDescription(v string) {
+	o.Description.Set(&v)
+}
+// SetDescriptionNil sets the value for Description to be an explicit nil
+func (o *SourceResponse) SetDescriptionNil() {
+	o.Description.Set(nil)
+}
+
+// UnsetDescription ensures that no value is present for Description, not even an explicit nil
+func (o *SourceResponse) UnsetDescription() {
+	o.Description.Unset()
+}
+
+// GetCreatedAt returns the CreatedAt field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SourceResponse) GetCreatedAt() string {
+	if o == nil || IsNil(o.CreatedAt.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.CreatedAt.Get()
+}
+
+// GetCreatedAtOk returns a tuple with the CreatedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *SourceResponse) GetCreatedAtOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.CreatedAt, true
+	return o.CreatedAt.Get(), o.CreatedAt.IsSet()
 }
 
-// SetCreatedAt sets field value
+// HasCreatedAt returns a boolean if a field has been set.
+func (o *SourceResponse) HasCreatedAt() bool {
+	if o != nil && o.CreatedAt.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetCreatedAt gets a reference to the given NullableString and assigns it to the CreatedAt field.
 func (o *SourceResponse) SetCreatedAt(v string) {
-	o.CreatedAt = v
+	o.CreatedAt.Set(&v)
+}
+// SetCreatedAtNil sets the value for CreatedAt to be an explicit nil
+func (o *SourceResponse) SetCreatedAtNil() {
+	o.CreatedAt.Set(nil)
+}
+
+// UnsetCreatedAt ensures that no value is present for CreatedAt, not even an explicit nil
+func (o *SourceResponse) UnsetCreatedAt() {
+	o.CreatedAt.Unset()
+}
+
+// GetUpdatedAt returns the UpdatedAt field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SourceResponse) GetUpdatedAt() string {
+	if o == nil || IsNil(o.UpdatedAt.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.UpdatedAt.Get()
+}
+
+// GetUpdatedAtOk returns a tuple with the UpdatedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SourceResponse) GetUpdatedAtOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.UpdatedAt.Get(), o.UpdatedAt.IsSet()
+}
+
+// HasUpdatedAt returns a boolean if a field has been set.
+func (o *SourceResponse) HasUpdatedAt() bool {
+	if o != nil && o.UpdatedAt.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetUpdatedAt gets a reference to the given NullableString and assigns it to the UpdatedAt field.
+func (o *SourceResponse) SetUpdatedAt(v string) {
+	o.UpdatedAt.Set(&v)
+}
+// SetUpdatedAtNil sets the value for UpdatedAt to be an explicit nil
+func (o *SourceResponse) SetUpdatedAtNil() {
+	o.UpdatedAt.Set(nil)
+}
+
+// UnsetUpdatedAt ensures that no value is present for UpdatedAt, not even an explicit nil
+func (o *SourceResponse) UnsetUpdatedAt() {
+	o.UpdatedAt.Unset()
 }
 
 func (o SourceResponse) MarshalJSON() ([]byte, error) {
@@ -158,8 +330,20 @@ func (o SourceResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
 	toSerialize["url"] = o.Url
+	toSerialize["scope"] = o.Scope
+	if o.Owner.IsSet() {
+		toSerialize["owner"] = o.Owner.Get()
+	}
 	toSerialize["has_auth"] = o.HasAuth
-	toSerialize["created_at"] = o.CreatedAt
+	if o.Description.IsSet() {
+		toSerialize["description"] = o.Description.Get()
+	}
+	if o.CreatedAt.IsSet() {
+		toSerialize["created_at"] = o.CreatedAt.Get()
+	}
+	if o.UpdatedAt.IsSet() {
+		toSerialize["updated_at"] = o.UpdatedAt.Get()
+	}
 	return toSerialize, nil
 }
 
@@ -170,8 +354,8 @@ func (o *SourceResponse) UnmarshalJSON(data []byte) (err error) {
 	requiredProperties := []string{
 		"name",
 		"url",
+		"scope",
 		"has_auth",
-		"created_at",
 	}
 
 	allProperties := make(map[string]interface{})
