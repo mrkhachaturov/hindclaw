@@ -194,7 +194,7 @@ The recall step adds context before the LLM sees the prompt. The retain step cap
 
 Memory is working. From here you can:
 
-- Add more agents with their own bank configs via the [Terraform provider](/docs/guides/terraform)
+- Add more agents with their own bank configs via the Terraform provider
 - Set up named retain strategies to route different topics to different extraction rules
-- Configure [access control](/docs/guides/access-control) for multi-user deployments
-- Enable [cross-agent recall](/docs/guides/multi-bank-recall) so agents can read each other's memories
+- Configure access control for multi-user deployments
+- Enable cross-agent recall so agents can read each other's memories

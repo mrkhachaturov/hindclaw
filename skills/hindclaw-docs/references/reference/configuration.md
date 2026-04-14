@@ -21,8 +21,9 @@ openclaw.json (plugin config)          Terraform (server-side)
   Daemon (global only)                     retain_strategies
     apiPort, embedVersion
     embedPackagePath, daemonIdleTimeout  Access control
-                                           users, groups, permissions
-  Defaults (overridable per-agent)         strategy scopes
+                                           users, groups, policies
+  Defaults (overridable per-agent)         policy attachments, service accounts
+                                           bank policies (strategy overrides)
     llmProvider, llmModel
     autoRecall, autoRetain, ...
     recallBudget, retainEveryNTurns
@@ -213,6 +214,6 @@ These fields can still be set in the plugin config as behavioral overrides.
 
 ## User and Group Management
 
-When running with the hindclaw-extension, users, groups, permissions, and strategy scopes are managed via the [Terraform provider](../guides/terraform) -- not via config files. The plugin does not store or resolve any user/group/permission data.
+When running with the hindclaw-extension, users, groups, policies, policy attachments, service accounts, and bank policies (which contain strategy overrides) are managed via the [Terraform provider](../guides/terraform) -- not via config files. The plugin does not store or resolve any user/group/permission data.
 
 See the [Access Control guide](../guides/access-control) for setup instructions and the [Terraform guide](../guides/terraform) for resource definitions.
