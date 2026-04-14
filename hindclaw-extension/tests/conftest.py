@@ -1,4 +1,5 @@
 """Shared test fixtures for hindclaw-extension tests."""
+
 from unittest.mock import AsyncMock
 
 import pytest

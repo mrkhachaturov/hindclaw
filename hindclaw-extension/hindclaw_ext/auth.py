@@ -4,6 +4,7 @@ Used by both HindclawTenant (core API auth) and HindclawHttp (/ext/ route auth).
 Reads HINDCLAW_JWT_SECRET from os.environ on each call (not at import time —
 the env var may not be set yet when the module is first imported by the extension loader).
 """
+
 import os
 
 import jwt

@@ -1,10 +1,12 @@
 """Test utilities — mock asyncpg Record and fake context objects."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class MockRecord:
     """Simulate asyncpg Record for unit tests."""
+
     _data: dict
 
     def __getitem__(self, key):
@@ -38,7 +40,12 @@ class FakeRecallContext:
 class FakeRetainContext:
     """Fake RetainContext for validator tests."""
 
-    def __init__(self, bank_id: str = "agent-alpha", tenant_id: str = "alice", contents: list[dict] | None = None):
+    def __init__(
+        self,
+        bank_id: str = "agent-alpha",
+        tenant_id: str = "alice",
+        contents: list[dict] | None = None,
+    ):
         self.bank_id = bank_id
         self.request_context = FakeRequestContext(tenant_id=tenant_id)
         self.contents = contents or [{"content": "test conversation", "tags": ["existing:tag"]}]

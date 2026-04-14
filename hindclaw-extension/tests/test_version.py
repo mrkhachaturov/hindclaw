@@ -1,7 +1,5 @@
 """Tests for version constants and semver comparison."""
 
-import pytest
-
 from hindclaw_ext.version import (
     HINDCLAW_VERSION,
     SUPPORTED_SCHEMA_VERSIONS,
@@ -16,6 +14,7 @@ class TestVersionConstants:
 
     def test_hindclaw_version_matches_pyproject(self):
         import importlib.metadata
+
         pkg_version = importlib.metadata.version("hindclaw-extension")
         assert HINDCLAW_VERSION == pkg_version
 

@@ -1,4 +1,5 @@
 """Tests for hindclaw_ext.auth — shared JWT parsing."""
+
 import time
 
 import jwt as pyjwt
@@ -20,12 +21,14 @@ def _set_jwt_secret(monkeypatch):
 
 
 def test_decode_valid_jwt():
-    token = _make_jwt({
-        "client_id": "app-prod",
-        "sender": "telegram:100001",
-        "agent": "agent-alpha",
-        "exp": int(time.time()) + 300,
-    })
+    token = _make_jwt(
+        {
+            "client_id": "app-prod",
+            "sender": "telegram:100001",
+            "agent": "agent-alpha",
+            "exp": int(time.time()) + 300,
+        }
+    )
     claims = decode_jwt(token)
     assert claims["client_id"] == "app-prod"
     assert claims["sender"] == "telegram:100001"

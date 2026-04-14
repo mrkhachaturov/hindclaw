@@ -9,7 +9,11 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 from hindclaw_ext.models import AttachedPolicyRecord
-from hindclaw_ext.policy_models import BankPolicyDocument, PolicyDocument, PolicyStatement
+from hindclaw_ext.policy_models import (
+    BankPolicyDocument,
+    PolicyDocument,
+    PolicyStatement,
+)
 
 # Budget ordering for merge rules
 _BUDGET_ORDER = {"low": 0, "mid": 1, "high": 2}
@@ -170,9 +174,18 @@ def evaluate_access(
     best_every_n: int | None = None
 
     # Single-value fields: track best source by (principal_spec, bank_spec, priority, policy_id)
-    best_llm_model: tuple[tuple[int, int, int, str], str | None] = ((-1, -1, -1, ""), None)
-    best_llm_provider: tuple[tuple[int, int, int, str], str | None] = ((-1, -1, -1, ""), None)
-    best_strategy: tuple[tuple[int, int, int, str], str | None] = ((-1, -1, -1, ""), None)
+    best_llm_model: tuple[tuple[int, int, int, str], str | None] = (
+        (-1, -1, -1, ""),
+        None,
+    )
+    best_llm_provider: tuple[tuple[int, int, int, str], str | None] = (
+        (-1, -1, -1, ""),
+        None,
+    )
+    best_strategy: tuple[tuple[int, int, int, str], str | None] = (
+        (-1, -1, -1, ""),
+        None,
+    )
 
     for stmt, principal_spec, best_bank_spec, priority, policy_id in allows:
         specificity_key = (principal_spec, best_bank_spec, priority, policy_id)
@@ -260,7 +273,11 @@ def intersect_sa_policy(
     # Access-adjacent: more restrictive
     budget = None
     if parent.recall_budget is not None and scoping.recall_budget is not None:
-        budget = parent.recall_budget if _BUDGET_ORDER.get(parent.recall_budget, 0) < _BUDGET_ORDER.get(scoping.recall_budget, 0) else scoping.recall_budget
+        budget = (
+            parent.recall_budget
+            if _BUDGET_ORDER.get(parent.recall_budget, 0) < _BUDGET_ORDER.get(scoping.recall_budget, 0)
+            else scoping.recall_budget
+        )
     elif scoping.recall_budget is not None:
         budget = scoping.recall_budget
     else:
@@ -389,10 +406,13 @@ async def apply_sa_scoping(
         return parent_access
 
     scoping_attached = AttachedPolicyRecord(
-        id=scoping_policy.id, display_name=scoping_policy.display_name,
+        id=scoping_policy.id,
+        display_name=scoping_policy.display_name,
         document_json=scoping_policy.document_json,
         is_builtin=scoping_policy.is_builtin,
-        principal_type="user", principal_id=sa_id, priority=0,
+        principal_type="user",
+        principal_id=sa_id,
+        priority=0,
     )
     scoping_access = evaluate_access([scoping_attached], action=action, bank_id=bank_id)
     return intersect_sa_policy(parent_access, scoping_access)

@@ -9,8 +9,6 @@ See spec Sections 5, 6, 9.
 
 import logging
 
-from pydantic import TypeAdapter
-
 from hindsight_api.engine.search.tags import TagGroup
 from hindsight_api.extensions import (
     OperationValidatorExtension,
@@ -19,13 +17,13 @@ from hindsight_api.extensions import (
     RetainContext,
     ValidationResult,
 )
+from pydantic import TypeAdapter
 
 from hindclaw_ext import db
 from hindclaw_ext.policy_engine import (
     AccessResult,
     apply_sa_scoping,
     evaluate_access,
-    intersect_sa_policy,
     resolve_bank_strategy,
 )
 from hindclaw_ext.policy_models import BankPolicyDocument

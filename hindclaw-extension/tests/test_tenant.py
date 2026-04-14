@@ -1,10 +1,10 @@
 """Tests for hindclaw_ext.tenant — HindclawTenant extension."""
+
 import time
 from unittest.mock import patch
 
 import jwt as pyjwt
 import pytest
-
 from hindsight_api.extensions import AuthenticationError
 
 from hindclaw_ext.models import ApiKeyRecord, UserRecord
@@ -36,17 +36,21 @@ def _make_jwt(claims: dict, secret: str = TEST_SECRET) -> str:
 async def test_jwt_auth_known_sender():
     """JWT with known sender resolves to user_id."""
     tenant = HindclawTenant({})
-    token = _make_jwt({
-        "client_id": "app-prod",
-        "sender": "telegram:100001",
-        "agent": "agent-alpha",
-        "exp": int(time.time()) + 300,
-    })
+    token = _make_jwt(
+        {
+            "client_id": "app-prod",
+            "sender": "telegram:100001",
+            "agent": "agent-alpha",
+            "exp": int(time.time()) + 300,
+        }
+    )
     ctx = FakeRequestContext(api_key=token)
     user = UserRecord(id="alice", display_name="Alice", email=None, is_active=True)
 
-    with patch("hindclaw_ext.tenant.db.get_user_by_channel", return_value=user), \
-         patch("hindclaw_ext.tenant.db.get_user", return_value=user):
+    with (
+        patch("hindclaw_ext.tenant.db.get_user_by_channel", return_value=user),
+        patch("hindclaw_ext.tenant.db.get_user", return_value=user),
+    ):
         result = await tenant.authenticate(ctx)
 
     assert ctx.tenant_id == "alice"
@@ -60,10 +64,12 @@ async def test_jwt_auth_known_sender():
 async def test_jwt_auth_unknown_sender_unmapped():
     """JWT with unknown sender sets tenant_id to _unmapped (not _anonymous)."""
     tenant = HindclawTenant({})
-    token = _make_jwt({
-        "sender": "telegram:999999",
-        "exp": int(time.time()) + 300,
-    })
+    token = _make_jwt(
+        {
+            "sender": "telegram:999999",
+            "exp": int(time.time()) + 300,
+        }
+    )
     ctx = FakeRequestContext(api_key=token)
 
     with patch("hindclaw_ext.tenant.db.get_user_by_channel", return_value=None):
@@ -88,17 +94,21 @@ async def test_jwt_auth_no_sender_rejected():
 async def test_jwt_auth_inactive_user():
     """JWT with sender mapping to inactive user sets _unmapped."""
     tenant = HindclawTenant({})
-    token = _make_jwt({
-        "sender": "telegram:100001",
-        "exp": int(time.time()) + 300,
-    })
+    token = _make_jwt(
+        {
+            "sender": "telegram:100001",
+            "exp": int(time.time()) + 300,
+        }
+    )
     ctx = FakeRequestContext(api_key=token)
     channel_user = UserRecord(id="alice", display_name="Alice", email=None, is_active=True)
     inactive_user = UserRecord(id="alice", display_name="Alice", email=None, is_active=False)
 
-    with patch("hindclaw_ext.tenant.db.get_user_by_channel", return_value=channel_user), \
-         patch("hindclaw_ext.tenant.db.get_user", return_value=inactive_user):
-        result = await tenant.authenticate(ctx)
+    with (
+        patch("hindclaw_ext.tenant.db.get_user_by_channel", return_value=channel_user),
+        patch("hindclaw_ext.tenant.db.get_user", return_value=inactive_user),
+    ):
+        await tenant.authenticate(ctx)
 
     assert ctx.tenant_id == "_unmapped"
 
@@ -111,8 +121,10 @@ async def test_api_key_auth():
     key_record = ApiKeyRecord(id="k1", api_key="hc_alice_xxxx", user_id="alice")
     user = UserRecord(id="alice", display_name="Alice", email=None, is_active=True)
 
-    with patch("hindclaw_ext.tenant.db.get_api_key", return_value=key_record), \
-         patch("hindclaw_ext.tenant.db.get_user", return_value=user):
+    with (
+        patch("hindclaw_ext.tenant.db.get_api_key", return_value=key_record),
+        patch("hindclaw_ext.tenant.db.get_user", return_value=user),
+    ):
         result = await tenant.authenticate(ctx)
 
     assert ctx.tenant_id == "alice"
@@ -159,13 +171,18 @@ async def test_sa_api_key_auth():
     tenant = HindclawTenant({})
     ctx = FakeRequestContext(api_key="hc_sa_ceo_claude_xxx")
     sa = ServiceAccountRecord(
-        id="ceo-claude", owner_user_id="ceo@astrateam.net",
-        display_name="CEO Claude", is_active=True, scoping_policy_id=None,
+        id="ceo-claude",
+        owner_user_id="ceo@astrateam.net",
+        display_name="CEO Claude",
+        is_active=True,
+        scoping_policy_id=None,
     )
     parent = UserRecord(id="ceo@astrateam.net", display_name="CEO", is_active=True)
 
-    with patch("hindclaw_ext.tenant.db.get_service_account_by_api_key", return_value=sa), \
-         patch("hindclaw_ext.tenant.db.get_user", return_value=parent):
+    with (
+        patch("hindclaw_ext.tenant.db.get_service_account_by_api_key", return_value=sa),
+        patch("hindclaw_ext.tenant.db.get_user", return_value=parent),
+    ):
         result = await tenant.authenticate(ctx)
 
     assert ctx.tenant_id == "sa:ceo-claude"
@@ -180,8 +197,11 @@ async def test_sa_api_key_inactive():
     tenant = HindclawTenant({})
     ctx = FakeRequestContext(api_key="hc_sa_disabled_xxx")
     sa = ServiceAccountRecord(
-        id="disabled-sa", owner_user_id="ceo@astrateam.net",
-        display_name="Disabled", is_active=False, scoping_policy_id=None,
+        id="disabled-sa",
+        owner_user_id="ceo@astrateam.net",
+        display_name="Disabled",
+        is_active=False,
+        scoping_policy_id=None,
     )
 
     with patch("hindclaw_ext.tenant.db.get_service_account_by_api_key", return_value=sa):
@@ -208,8 +228,10 @@ async def test_user_api_key_prefix():
     key_record = ApiKeyRecord(id="k1", api_key="hc_u_alice_xxx", user_id="alice")
     user = UserRecord(id="alice", display_name="Alice", email=None, is_active=True)
 
-    with patch("hindclaw_ext.tenant.db.get_api_key", return_value=key_record), \
-         patch("hindclaw_ext.tenant.db.get_user", return_value=user):
-        result = await tenant.authenticate(ctx)
+    with (
+        patch("hindclaw_ext.tenant.db.get_api_key", return_value=key_record),
+        patch("hindclaw_ext.tenant.db.get_user", return_value=user),
+    ):
+        await tenant.authenticate(ctx)
 
     assert ctx.tenant_id == "alice"

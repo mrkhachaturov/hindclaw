@@ -41,10 +41,22 @@ def test_evaluate_allows_recall():
     from hindclaw_ext.policy_engine import evaluate_access
     from hindclaw_ext.policy_models import PolicyDocument
 
-    doc = PolicyDocument(version="2026-03-24", statements=[
-        {"effect": "allow", "actions": ["bank:recall"], "banks": ["yoda"]},
-    ])
-    policies = [AttachedPolicyRecord(id="test", display_name="Test", document_json=doc.model_dump(), principal_type="user", principal_id="alice", priority=0)]
+    doc = PolicyDocument(
+        version="2026-03-24",
+        statements=[
+            {"effect": "allow", "actions": ["bank:recall"], "banks": ["yoda"]},
+        ],
+    )
+    policies = [
+        AttachedPolicyRecord(
+            id="test",
+            display_name="Test",
+            document_json=doc.model_dump(),
+            principal_type="user",
+            principal_id="alice",
+            priority=0,
+        )
+    ]
 
     result = evaluate_access(policies, action="bank:recall", bank_id="yoda")
     assert result.allowed is True
@@ -56,11 +68,23 @@ def test_evaluate_deny_overrides_allow():
     from hindclaw_ext.policy_engine import evaluate_access
     from hindclaw_ext.policy_models import PolicyDocument
 
-    doc = PolicyDocument(version="2026-03-24", statements=[
-        {"effect": "allow", "actions": ["bank:recall"], "banks": ["*"]},
-        {"effect": "deny", "actions": ["bank:recall"], "banks": ["r2d2"]},
-    ])
-    policies = [AttachedPolicyRecord(id="test", display_name="Test", document_json=doc.model_dump(), principal_type="user", principal_id="alice", priority=0)]
+    doc = PolicyDocument(
+        version="2026-03-24",
+        statements=[
+            {"effect": "allow", "actions": ["bank:recall"], "banks": ["*"]},
+            {"effect": "deny", "actions": ["bank:recall"], "banks": ["r2d2"]},
+        ],
+    )
+    policies = [
+        AttachedPolicyRecord(
+            id="test",
+            display_name="Test",
+            document_json=doc.model_dump(),
+            principal_type="user",
+            principal_id="alice",
+            priority=0,
+        )
+    ]
 
     result = evaluate_access(policies, action="bank:recall", bank_id="r2d2")
     assert result.allowed is False
@@ -72,10 +96,22 @@ def test_evaluate_no_matching_statement():
     from hindclaw_ext.policy_engine import evaluate_access
     from hindclaw_ext.policy_models import PolicyDocument
 
-    doc = PolicyDocument(version="2026-03-24", statements=[
-        {"effect": "allow", "actions": ["bank:recall"], "banks": ["yoda"]},
-    ])
-    policies = [AttachedPolicyRecord(id="test", display_name="Test", document_json=doc.model_dump(), principal_type="user", principal_id="alice", priority=0)]
+    doc = PolicyDocument(
+        version="2026-03-24",
+        statements=[
+            {"effect": "allow", "actions": ["bank:recall"], "banks": ["yoda"]},
+        ],
+    )
+    policies = [
+        AttachedPolicyRecord(
+            id="test",
+            display_name="Test",
+            document_json=doc.model_dump(),
+            principal_type="user",
+            principal_id="alice",
+            priority=0,
+        )
+    ]
 
     result = evaluate_access(policies, action="bank:recall", bank_id="r2d2")
     assert result.allowed is False
@@ -88,18 +124,42 @@ def test_evaluate_merges_behavioral_params():
 
     policies = [
         AttachedPolicyRecord(
-            id="default-access", display_name="Default",
-            document_json={"version": "2026-03-24", "statements": [
-                {"effect": "allow", "actions": ["bank:recall"], "banks": ["*"], "recall_budget": "mid", "recall_max_tokens": 1024},
-            ]},
-            principal_type="group", principal_id="default", priority=0,
+            id="default-access",
+            display_name="Default",
+            document_json={
+                "version": "2026-03-24",
+                "statements": [
+                    {
+                        "effect": "allow",
+                        "actions": ["bank:recall"],
+                        "banks": ["*"],
+                        "recall_budget": "mid",
+                        "recall_max_tokens": 1024,
+                    },
+                ],
+            },
+            principal_type="group",
+            principal_id="default",
+            priority=0,
         ),
         AttachedPolicyRecord(
-            id="executive-upgrade", display_name="Executive",
-            document_json={"version": "2026-03-24", "statements": [
-                {"effect": "allow", "actions": ["bank:recall"], "banks": ["*"], "recall_budget": "high", "recall_max_tokens": 2048},
-            ]},
-            principal_type="group", principal_id="executive", priority=10,
+            id="executive-upgrade",
+            display_name="Executive",
+            document_json={
+                "version": "2026-03-24",
+                "statements": [
+                    {
+                        "effect": "allow",
+                        "actions": ["bank:recall"],
+                        "banks": ["*"],
+                        "recall_budget": "high",
+                        "recall_max_tokens": 2048,
+                    },
+                ],
+            },
+            principal_type="group",
+            principal_id="executive",
+            priority=10,
         ),
     ]
 
@@ -116,18 +176,40 @@ def test_evaluate_priority_breaks_tie_for_scalar():
 
     policies = [
         AttachedPolicyRecord(
-            id="default-access", display_name="Default",
-            document_json={"version": "2026-03-24", "statements": [
-                {"effect": "allow", "actions": ["bank:recall"], "banks": ["*"], "llm_model": "gpt-4o-mini"},
-            ]},
-            principal_type="group", principal_id="default", priority=0,
+            id="default-access",
+            display_name="Default",
+            document_json={
+                "version": "2026-03-24",
+                "statements": [
+                    {
+                        "effect": "allow",
+                        "actions": ["bank:recall"],
+                        "banks": ["*"],
+                        "llm_model": "gpt-4o-mini",
+                    },
+                ],
+            },
+            principal_type="group",
+            principal_id="default",
+            priority=0,
         ),
         AttachedPolicyRecord(
-            id="executive-upgrade", display_name="Executive",
-            document_json={"version": "2026-03-24", "statements": [
-                {"effect": "allow", "actions": ["bank:recall"], "banks": ["*"], "llm_model": "claude-sonnet-4-6"},
-            ]},
-            principal_type="group", principal_id="executive", priority=10,
+            id="executive-upgrade",
+            display_name="Executive",
+            document_json={
+                "version": "2026-03-24",
+                "statements": [
+                    {
+                        "effect": "allow",
+                        "actions": ["bank:recall"],
+                        "banks": ["*"],
+                        "llm_model": "claude-sonnet-4-6",
+                    },
+                ],
+            },
+            principal_type="group",
+            principal_id="executive",
+            priority=10,
         ),
     ]
 
@@ -142,18 +224,40 @@ def test_evaluate_user_beats_group():
 
     policies = [
         AttachedPolicyRecord(
-            id="default-access", display_name="Default",
-            document_json={"version": "2026-03-24", "statements": [
-                {"effect": "allow", "actions": ["bank:recall"], "banks": ["*"], "llm_model": "gpt-4o-mini"},
-            ]},
-            principal_type="group", principal_id="default", priority=100,
+            id="default-access",
+            display_name="Default",
+            document_json={
+                "version": "2026-03-24",
+                "statements": [
+                    {
+                        "effect": "allow",
+                        "actions": ["bank:recall"],
+                        "banks": ["*"],
+                        "llm_model": "gpt-4o-mini",
+                    },
+                ],
+            },
+            principal_type="group",
+            principal_id="default",
+            priority=100,
         ),
         AttachedPolicyRecord(
-            id="alice-override", display_name="Alice Override",
-            document_json={"version": "2026-03-24", "statements": [
-                {"effect": "allow", "actions": ["bank:recall"], "banks": ["*"], "llm_model": "claude-opus-4-6"},
-            ]},
-            principal_type="user", principal_id="alice", priority=0,
+            id="alice-override",
+            display_name="Alice Override",
+            document_json={
+                "version": "2026-03-24",
+                "statements": [
+                    {
+                        "effect": "allow",
+                        "actions": ["bank:recall"],
+                        "banks": ["*"],
+                        "llm_model": "claude-opus-4-6",
+                    },
+                ],
+            },
+            principal_type="user",
+            principal_id="alice",
+            priority=0,
         ),
     ]
 
@@ -166,13 +270,21 @@ def test_evaluate_action_wildcard():
     from hindclaw_ext.models import AttachedPolicyRecord
     from hindclaw_ext.policy_engine import evaluate_access
 
-    policies = [AttachedPolicyRecord(
-        id="admin", display_name="Admin",
-        document_json={"version": "2026-03-24", "statements": [
-            {"effect": "allow", "actions": ["bank:*"], "banks": ["*"]},
-        ]},
-        principal_type="user", principal_id="alice", priority=0,
-    )]
+    policies = [
+        AttachedPolicyRecord(
+            id="admin",
+            display_name="Admin",
+            document_json={
+                "version": "2026-03-24",
+                "statements": [
+                    {"effect": "allow", "actions": ["bank:*"], "banks": ["*"]},
+                ],
+            },
+            principal_type="user",
+            principal_id="alice",
+            priority=0,
+        )
+    ]
 
     result = evaluate_access(policies, action="bank:memories:delete", bank_id="yoda")
     assert result.allowed is True
@@ -183,13 +295,21 @@ def test_evaluate_core_action_grants_extended():
     from hindclaw_ext.models import AttachedPolicyRecord
     from hindclaw_ext.policy_engine import evaluate_access
 
-    policies = [AttachedPolicyRecord(
-        id="readonly", display_name="Read Only",
-        document_json={"version": "2026-03-24", "statements": [
-            {"effect": "allow", "actions": ["bank:recall"], "banks": ["*"]},
-        ]},
-        principal_type="user", principal_id="alice", priority=0,
-    )]
+    policies = [
+        AttachedPolicyRecord(
+            id="readonly",
+            display_name="Read Only",
+            document_json={
+                "version": "2026-03-24",
+                "statements": [
+                    {"effect": "allow", "actions": ["bank:recall"], "banks": ["*"]},
+                ],
+            },
+            principal_type="user",
+            principal_id="alice",
+            priority=0,
+        )
+    ]
 
     assert evaluate_access(policies, action="bank:memories:list", bank_id="yoda").allowed is True
     assert evaluate_access(policies, action="bank:memories:get", bank_id="yoda").allowed is True
@@ -201,13 +321,21 @@ def test_evaluate_iam_wildcard():
     from hindclaw_ext.models import AttachedPolicyRecord
     from hindclaw_ext.policy_engine import evaluate_access
 
-    policies = [AttachedPolicyRecord(
-        id="iam-admin", display_name="IAM Admin",
-        document_json={"version": "2026-03-24", "statements": [
-            {"effect": "allow", "actions": ["iam:*"], "banks": ["*"]},
-        ]},
-        principal_type="user", principal_id="alice", priority=0,
-    )]
+    policies = [
+        AttachedPolicyRecord(
+            id="iam-admin",
+            display_name="IAM Admin",
+            document_json={
+                "version": "2026-03-24",
+                "statements": [
+                    {"effect": "allow", "actions": ["iam:*"], "banks": ["*"]},
+                ],
+            },
+            principal_type="user",
+            principal_id="alice",
+            priority=0,
+        )
+    ]
 
     result = evaluate_access(policies, action="iam:users:read", bank_id="")
     assert result.allowed is True
@@ -215,7 +343,7 @@ def test_evaluate_iam_wildcard():
 
 def test_sa_intersect_narrows_actions():
     """SA scoping policy removes actions not in scoping policy."""
-    from hindclaw_ext.policy_engine import intersect_sa_policy, AccessResult
+    from hindclaw_ext.policy_engine import AccessResult, intersect_sa_policy
 
     parent = AccessResult(allowed=True, recall_budget="high", recall_max_tokens=2048)
     scoping = AccessResult(allowed=True, recall_budget="mid", recall_max_tokens=1024)
@@ -228,7 +356,7 @@ def test_sa_intersect_narrows_actions():
 
 def test_sa_intersect_denied_parent():
     """If parent denies, SA is denied."""
-    from hindclaw_ext.policy_engine import intersect_sa_policy, AccessResult
+    from hindclaw_ext.policy_engine import AccessResult, intersect_sa_policy
 
     parent = AccessResult(allowed=False)
     scoping = AccessResult(allowed=True, recall_budget="high")
@@ -239,7 +367,7 @@ def test_sa_intersect_denied_parent():
 
 def test_sa_intersect_denied_scoping():
     """If scoping denies, SA is denied."""
-    from hindclaw_ext.policy_engine import intersect_sa_policy, AccessResult
+    from hindclaw_ext.policy_engine import AccessResult, intersect_sa_policy
 
     parent = AccessResult(allowed=True, recall_budget="high")
     scoping = AccessResult(allowed=False)
@@ -250,7 +378,7 @@ def test_sa_intersect_denied_scoping():
 
 def test_sa_intersect_roles():
     """Retain roles are intersected (only roles in both)."""
-    from hindclaw_ext.policy_engine import intersect_sa_policy, AccessResult
+    from hindclaw_ext.policy_engine import AccessResult, intersect_sa_policy
 
     parent = AccessResult(allowed=True, retain_roles=["user", "assistant", "system"])
     scoping = AccessResult(allowed=True, retain_roles=["user", "assistant"])
@@ -261,7 +389,7 @@ def test_sa_intersect_roles():
 
 def test_sa_intersect_scoping_strategy_wins():
     """Scoping policy's strategy wins over parent."""
-    from hindclaw_ext.policy_engine import intersect_sa_policy, AccessResult
+    from hindclaw_ext.policy_engine import AccessResult, intersect_sa_policy
 
     parent = AccessResult(allowed=True, retain_strategy="deep", llm_model="claude-opus-4-6")
     scoping = AccessResult(allowed=True, retain_strategy="light", llm_model=None)
@@ -273,7 +401,7 @@ def test_sa_intersect_scoping_strategy_wins():
 
 def test_sa_no_scoping_inherits_parent():
     """No scoping policy = full inheritance."""
-    from hindclaw_ext.policy_engine import intersect_sa_policy, AccessResult
+    from hindclaw_ext.policy_engine import AccessResult, intersect_sa_policy
 
     parent = AccessResult(allowed=True, recall_budget="high", llm_model="claude-opus-4-6")
 
@@ -350,40 +478,78 @@ def test_full_evaluation_scenario():
     policies = [
         # Group: default — baseline on all banks
         AttachedPolicyRecord(
-            id="default-access", display_name="Default Access",
-            document_json={"version": "2026-03-24", "statements": [
-                {"effect": "allow", "actions": ["bank:recall", "bank:reflect", "bank:retain"], "banks": ["*"],
-                 "recall_budget": "mid", "recall_max_tokens": 1024, "retain_roles": ["user", "assistant"],
-                 "retain_every_n_turns": 1},
-            ]},
-            principal_type="group", principal_id="default", priority=0,
+            id="default-access",
+            display_name="Default Access",
+            document_json={
+                "version": "2026-03-24",
+                "statements": [
+                    {
+                        "effect": "allow",
+                        "actions": ["bank:recall", "bank:reflect", "bank:retain"],
+                        "banks": ["*"],
+                        "recall_budget": "mid",
+                        "recall_max_tokens": 1024,
+                        "retain_roles": ["user", "assistant"],
+                        "retain_every_n_turns": 1,
+                    },
+                ],
+            },
+            principal_type="group",
+            principal_id="default",
+            priority=0,
         ),
         # Group: executive — higher budget
         AttachedPolicyRecord(
-            id="executive-upgrade", display_name="Executive Upgrade",
-            document_json={"version": "2026-03-24", "statements": [
-                {"effect": "allow", "actions": ["bank:recall"], "banks": ["*"],
-                 "recall_budget": "high", "recall_max_tokens": 2048},
-            ]},
-            principal_type="group", principal_id="executive", priority=10,
+            id="executive-upgrade",
+            display_name="Executive Upgrade",
+            document_json={
+                "version": "2026-03-24",
+                "statements": [
+                    {
+                        "effect": "allow",
+                        "actions": ["bank:recall"],
+                        "banks": ["*"],
+                        "recall_budget": "high",
+                        "recall_max_tokens": 2048,
+                    },
+                ],
+            },
+            principal_type="group",
+            principal_id="executive",
+            priority=10,
         ),
         # User: premium on yoda, deny on bb9e
         AttachedPolicyRecord(
-            id="ceo-overrides", display_name="CEO Overrides",
-            document_json={"version": "2026-03-24", "statements": [
-                {"effect": "allow", "actions": ["bank:recall"], "banks": ["yoda"],
-                 "recall_max_tokens": 8192, "retain_strategy": "yoda-thorough"},
-                {"effect": "deny", "actions": ["bank:recall", "bank:retain"], "banks": ["bb9e"]},
-            ]},
-            principal_type="user", principal_id="ceo", priority=0,
+            id="ceo-overrides",
+            display_name="CEO Overrides",
+            document_json={
+                "version": "2026-03-24",
+                "statements": [
+                    {
+                        "effect": "allow",
+                        "actions": ["bank:recall"],
+                        "banks": ["yoda"],
+                        "recall_max_tokens": 8192,
+                        "retain_strategy": "yoda-thorough",
+                    },
+                    {
+                        "effect": "deny",
+                        "actions": ["bank:recall", "bank:retain"],
+                        "banks": ["bb9e"],
+                    },
+                ],
+            },
+            principal_type="user",
+            principal_id="ceo",
+            priority=0,
         ),
     ]
 
     # Recall on yoda: allowed, merged params
     r = evaluate_access(policies, "bank:recall", "yoda")
     assert r.allowed is True
-    assert r.recall_budget == "high"       # most permissive (executive)
-    assert r.recall_max_tokens == 8192     # highest (user override)
+    assert r.recall_budget == "high"  # most permissive (executive)
+    assert r.recall_max_tokens == 8192  # highest (user override)
     assert r.retain_strategy == "yoda-thorough"  # user > group
 
     # Recall on bb9e: denied by user policy

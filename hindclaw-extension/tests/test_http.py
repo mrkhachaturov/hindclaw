@@ -1,14 +1,15 @@
 """Tests for hindclaw_ext.http — HindclawHttp extension."""
+
 import time
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import jwt as pyjwt
 import pytest
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 from hindsight_api.extensions import AuthenticationError
+
 from hindclaw_ext.http import HindclawHttp
 
 TEST_SECRET = "test-secret-key-for-http-tests!!"
@@ -37,6 +38,7 @@ def app():
     @app.exception_handler(AuthenticationError)
     async def auth_error_handler(request, exc):
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=401, content={"detail": str(exc)})
 
     ext = HindclawHttp({})
@@ -108,6 +110,7 @@ def real_auth_app():
     @app.exception_handler(AuthenticationError)
     async def auth_error_handler(request, exc):
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=401, content={"detail": str(exc)})
 
     ext = HindclawHttp({})
@@ -152,9 +155,16 @@ def test_create_user(client, admin_headers, mock_db_pool):
 def test_list_users(client, admin_headers, mock_db_pool):
     """GET /ext/hindclaw/users returns user list."""
     _, pool = mock_db_pool
-    pool.fetch = AsyncMock(return_value=[
-        {"id": "alice", "display_name": "Alice", "email": "alice@example.com", "is_active": True},
-    ])
+    pool.fetch = AsyncMock(
+        return_value=[
+            {
+                "id": "alice",
+                "display_name": "Alice",
+                "email": "alice@example.com",
+                "is_active": True,
+            },
+        ]
+    )
 
     resp = client.get("/ext/hindclaw/users", headers=admin_headers)
     assert resp.status_code == 200
@@ -197,9 +207,12 @@ def test_create_group(client, admin_headers, mock_db_pool):
 def test_get_group(client, admin_headers, mock_db_pool):
     """GET /ext/hindclaw/groups/:id returns group identity fields."""
     _, pool = mock_db_pool
-    pool.fetchrow = AsyncMock(return_value={
-        "id": "engineering", "display_name": "Engineering",
-    })
+    pool.fetchrow = AsyncMock(
+        return_value={
+            "id": "engineering",
+            "display_name": "Engineering",
+        }
+    )
 
     resp = client.get("/ext/hindclaw/groups/engineering", headers=admin_headers)
     assert resp.status_code == 200
@@ -237,8 +250,18 @@ def test_debug_resolve_user(client, admin_headers):
 
     mock_access = AccessResult(allowed=True, recall_budget="high")
 
-    with patch("hindclaw_ext.validator._resolve_user_access", new_callable=AsyncMock, return_value=mock_access), \
-         patch("hindclaw_ext.http.db.get_bank_policy", new_callable=AsyncMock, return_value=None):
+    with (
+        patch(
+            "hindclaw_ext.validator._resolve_user_access",
+            new_callable=AsyncMock,
+            return_value=mock_access,
+        ),
+        patch(
+            "hindclaw_ext.http.db.get_bank_policy",
+            new_callable=AsyncMock,
+            return_value=None,
+        ),
+    ):
         resp = client.get(
             "/ext/hindclaw/debug/resolve?bank=yoda&action=bank:recall&user_id=alice",
             headers=admin_headers,
@@ -273,10 +296,12 @@ def test_debug_resolve_no_params(client, admin_headers):
 def test_list_user_channels(client, admin_headers, mock_db_pool):
     """GET /ext/hindclaw/users/:id/channels returns channel list."""
     _, pool = mock_db_pool
-    pool.fetch = AsyncMock(return_value=[
-        {"provider": "telegram", "sender_id": "100001"},
-        {"provider": "slack", "sender_id": "U100001"},
-    ])
+    pool.fetch = AsyncMock(
+        return_value=[
+            {"provider": "telegram", "sender_id": "100001"},
+            {"provider": "slack", "sender_id": "U100001"},
+        ]
+    )
 
     resp = client.get("/ext/hindclaw/users/alice/channels", headers=admin_headers)
     assert resp.status_code == 200
@@ -336,7 +361,14 @@ def test_update_user_empty_body(client, admin_headers, mock_db_pool):
 def test_get_user(client, admin_headers, mock_db_pool):
     """GET /ext/hindclaw/users/:id returns user."""
     _, pool = mock_db_pool
-    pool.fetchrow = AsyncMock(return_value={"id": "alice", "display_name": "Alice", "email": "alice@example.com", "is_active": True})
+    pool.fetchrow = AsyncMock(
+        return_value={
+            "id": "alice",
+            "display_name": "Alice",
+            "email": "alice@example.com",
+            "is_active": True,
+        }
+    )
 
     resp = client.get("/ext/hindclaw/users/alice", headers=admin_headers)
     assert resp.status_code == 200
@@ -347,9 +379,14 @@ def test_update_user(client, admin_headers, mock_db_pool):
     """PUT /ext/hindclaw/users/:id updates and returns full user."""
     _, pool = mock_db_pool
     pool.execute = AsyncMock(return_value="UPDATE 1")
-    pool.fetchrow = AsyncMock(return_value={
-        "id": "alice", "display_name": "Alice K.", "email": "alice@example.com", "is_active": True,
-    })
+    pool.fetchrow = AsyncMock(
+        return_value={
+            "id": "alice",
+            "display_name": "Alice K.",
+            "email": "alice@example.com",
+            "is_active": True,
+        }
+    )
 
     resp = client.put(
         "/ext/hindclaw/users/alice",
@@ -377,9 +414,12 @@ def test_update_user_not_found(client, admin_headers, mock_db_pool):
 def test_update_group(client, admin_headers, mock_db_pool):
     """PUT /ext/hindclaw/groups/:id updates display_name."""
     _, pool = mock_db_pool
-    pool.fetchrow = AsyncMock(return_value={
-        "id": "engineering", "display_name": "Eng Team",
-    })
+    pool.fetchrow = AsyncMock(
+        return_value={
+            "id": "engineering",
+            "display_name": "Eng Team",
+        }
+    )
 
     resp = client.put(
         "/ext/hindclaw/groups/engineering",
@@ -423,9 +463,11 @@ def test_remove_group_member(client, admin_headers, mock_db_pool):
 def test_list_api_keys(client, admin_headers, mock_db_pool):
     """GET /ext/hindclaw/users/:id/api-keys returns keys with masked values."""
     _, pool = mock_db_pool
-    pool.fetch = AsyncMock(return_value=[
-        {"id": "k1", "api_key": "hc_alice_xxxxxxxxxxxx", "description": "test"},
-    ])
+    pool.fetch = AsyncMock(
+        return_value=[
+            {"id": "k1", "api_key": "hc_alice_xxxxxxxxxxxx", "description": "test"},
+        ]
+    )
 
     resp = client.get("/ext/hindclaw/users/alice/api-keys", headers=admin_headers)
     assert resp.status_code == 200

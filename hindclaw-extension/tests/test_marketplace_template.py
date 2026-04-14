@@ -1,129 +1,149 @@
-"""Tests for MarketplaceTemplate model (raw marketplace JSON parsing)."""
+"""Tests for marketplace.fetch_and_resolve_template() after the refactor."""
+
+from __future__ import annotations
+
+from unittest.mock import AsyncMock, patch
 
 import pytest
-from pydantic import ValidationError
 
-from hindclaw_ext.template_models import MarketplaceTemplate
+from hindclaw_ext.marketplace import clear_cache, fetch_and_resolve_template
+from hindclaw_ext.template_models import TemplateScope
 
-
-def _valid_template(**overrides) -> dict:
-    """Build a valid marketplace template JSON dict."""
-    defaults = {
-        "schema_version": 1,
-        "min_hindclaw_version": "0.2.0",
-        "min_hindsight_version": "0.4.20",
-        "name": "backend-python",
-        "version": "2.1.0",
-        "description": "Backend patterns for Python projects",
-        "author": "community",
-        "tags": ["python", "backend"],
-        "retain_mission": "Extract backend patterns.",
-        "reflect_mission": "You are a backend engineer.",
-        "observations_mission": None,
-        "retain_extraction_mode": "verbose",
-        "retain_custom_instructions": None,
-        "retain_chunk_size": None,
-        "retain_default_strategy": None,
-        "retain_strategies": {},
-        "entity_labels": [],
-        "entities_allow_free_form": True,
-        "enable_observations": True,
-        "consolidation_llm_batch_size": None,
-        "consolidation_source_facts_max_tokens": None,
-        "consolidation_source_facts_max_tokens_per_observation": None,
-        "disposition_skepticism": 3,
-        "disposition_literalism": 3,
-        "disposition_empathy": 3,
-        "directive_seeds": [],
-        "mental_model_seeds": [],
-    }
-    defaults.update(overrides)
-    return defaults
+pytestmark = pytest.mark.asyncio
 
 
-class TestMarketplaceTemplateValid:
-    def test_minimal(self):
-        t = MarketplaceTemplate(**_valid_template())
-        assert t.name == "backend-python"
-        assert t.version == "2.1.0"
-        assert t.schema_version == 1
+INLINE_CATALOG = (
+    b'{"catalog_version": "1", "templates": [{"id": "conversation", '
+    b'"name": "Conversation", "manifest": {"version": "1", "bank": {"reflect_mission": "m"}}}]}'
+)
 
-    def test_with_entity_labels(self):
-        t = MarketplaceTemplate(**_valid_template(
-            entity_labels=[{
-                "key": "domain",
-                "type": "value",
-                "values": [{"value": "api", "description": "API patterns"}],
-            }],
-        ))
-        assert len(t.entity_labels) == 1
-        assert t.entity_labels[0].key == "domain"
+REFERENCE_CATALOG = (
+    b'{"catalog_version": "1", "templates": [{"id": "backend-python", '
+    b'"name": "Backend Python", "manifest_file": "templates/backend-python.json"}]}'
+)
 
-    def test_with_directive_seeds(self):
-        t = MarketplaceTemplate(**_valid_template(
-            directive_seeds=[
-                {"name": "No PII", "content": "Never store PII."},
-            ],
-        ))
-        assert len(t.directive_seeds) == 1
-        assert t.directive_seeds[0].name == "No PII"
-
-    def test_with_mental_model_seeds(self):
-        t = MarketplaceTemplate(**_valid_template(
-            mental_model_seeds=[
-                {"name": "Patterns", "source_query": "What patterns exist?"},
-            ],
-        ))
-        assert len(t.mental_model_seeds) == 1
-
-    def test_custom_extraction_mode_with_instructions(self):
-        t = MarketplaceTemplate(**_valid_template(
-            retain_extraction_mode="custom",
-            retain_custom_instructions="Extract only architecture decisions.",
-        ))
-        assert t.retain_extraction_mode == "custom"
+REFERENCED_MANIFEST = b'{"version": "1", "bank": {"reflect_mission": "m", "retain_extraction_mode": "verbose"}}'
 
 
-class TestMarketplaceTemplateInvalid:
-    def test_unknown_field_rejected(self):
-        with pytest.raises(ValidationError):
-            MarketplaceTemplate(**_valid_template(unknown_field="bad"))
+class _StubSource:
+    def __init__(self, url: str, auth_token: str | None = None):
+        self.url = url
+        self.auth_token = auth_token
+        self.name = "stub"
+        self.scope = "server"
+        self.owner = None
 
-    def test_missing_name(self):
-        data = _valid_template()
-        del data["name"]
-        with pytest.raises(ValidationError):
-            MarketplaceTemplate(**data)
 
-    def test_missing_version(self):
-        data = _valid_template()
-        del data["version"]
-        with pytest.raises(ValidationError):
-            MarketplaceTemplate(**data)
+@pytest.fixture(autouse=True)
+def _reset_cache():
+    clear_cache()
+    yield
+    clear_cache()
 
-    def test_invalid_extraction_mode(self):
-        with pytest.raises(ValidationError):
-            MarketplaceTemplate(**_valid_template(retain_extraction_mode="invalid"))
 
-    def test_disposition_out_of_range(self):
-        with pytest.raises(ValidationError):
-            MarketplaceTemplate(**_valid_template(disposition_skepticism=6))
+async def test_fetch_and_resolve_inline_entry_single_http_call():
+    source = _StubSource("https://example.com/hub")
+    with patch(
+        "hindclaw_ext.marketplace.db.get_template_source",
+        new=AsyncMock(return_value=source),
+    ):
+        with patch(
+            "hindclaw_ext.marketplace._fetch_raw",
+            new=AsyncMock(return_value=(INLINE_CATALOG, "etag-inline")),
+        ) as fetch_mock:
+            entry, manifest, revision = await fetch_and_resolve_template(
+                source_name="stub",
+                source_scope=TemplateScope.SERVER,
+                source_owner=None,
+                template_id="conversation",
+            )
 
-    def test_custom_mode_without_instructions(self):
-        with pytest.raises(ValidationError):
-            MarketplaceTemplate(**_valid_template(
-                retain_extraction_mode="custom",
-                retain_custom_instructions=None,
-            ))
+    assert entry.id == "conversation"
+    assert manifest.bank.reflect_mission == "m"
+    assert revision == "etag-inline"
+    assert fetch_mock.await_count == 1
 
-    def test_instructions_without_custom_mode(self):
-        with pytest.raises(ValidationError):
-            MarketplaceTemplate(**_valid_template(
-                retain_extraction_mode="verbose",
-                retain_custom_instructions="Some instructions",
-            ))
 
-    def test_invalid_schema_version(self):
-        # schema_version must be a positive integer
-        with pytest.raises(ValidationError):
-            MarketplaceTemplate(**_valid_template(schema_version=0))
+async def test_fetch_and_resolve_reference_entry_composite_revision():
+    source = _StubSource("https://example.com/hub")
+
+    async def _cached(url, token, session=None):
+        if url.endswith("templates.json"):
+            return REFERENCE_CATALOG, "etag-catalog"
+        return REFERENCED_MANIFEST, "etag-manifest"
+
+    with patch(
+        "hindclaw_ext.marketplace.db.get_template_source",
+        new=AsyncMock(return_value=source),
+    ):
+        with patch("hindclaw_ext.marketplace._fetch_raw", side_effect=_cached):
+            entry, manifest, revision = await fetch_and_resolve_template(
+                source_name="stub",
+                source_scope=TemplateScope.SERVER,
+                source_owner=None,
+                template_id="backend-python",
+            )
+
+    assert entry.id == "backend-python"
+    assert entry.manifest_file == "templates/backend-python.json"
+    assert manifest.bank.retain_extraction_mode == "verbose"
+    assert revision == "etag-catalog|etag-manifest"
+
+
+async def test_fetch_and_resolve_unknown_template_id_raises():
+    source = _StubSource("https://example.com/hub")
+    with patch(
+        "hindclaw_ext.marketplace.db.get_template_source",
+        new=AsyncMock(return_value=source),
+    ):
+        with patch(
+            "hindclaw_ext.marketplace._fetch_raw",
+            new=AsyncMock(return_value=(INLINE_CATALOG, "etag")),
+        ):
+            with pytest.raises(ValueError) as exc:
+                await fetch_and_resolve_template(
+                    source_name="stub",
+                    source_scope=TemplateScope.SERVER,
+                    source_owner=None,
+                    template_id="missing",
+                )
+    assert "missing" in str(exc.value)
+
+
+async def test_fetch_and_resolve_unknown_source_raises():
+    with patch(
+        "hindclaw_ext.marketplace.db.get_template_source",
+        new=AsyncMock(return_value=None),
+    ):
+        with pytest.raises(ValueError) as exc:
+            await fetch_and_resolve_template(
+                source_name="stub",
+                source_scope=TemplateScope.SERVER,
+                source_owner=None,
+                template_id="x",
+            )
+    assert "Unknown template source" in str(exc.value)
+
+
+async def test_fetch_and_resolve_invalid_manifest_raises():
+    bad_catalog = (
+        b'{"catalog_version": "1", "templates": [{"id": "x", "name": "X", '
+        b'"manifest": {"version": "1", "mental_models": [{"id": "dup", "name": "A", "source_query": "q"},'
+        b' {"id": "dup", "name": "B", "source_query": "q"}]}}]}'
+    )
+    source = _StubSource("https://example.com/hub")
+    with patch(
+        "hindclaw_ext.marketplace.db.get_template_source",
+        new=AsyncMock(return_value=source),
+    ):
+        with patch(
+            "hindclaw_ext.marketplace._fetch_raw",
+            new=AsyncMock(return_value=(bad_catalog, "etag")),
+        ):
+            with pytest.raises(ValueError):
+                await fetch_and_resolve_template(
+                    source_name="stub",
+                    source_scope=TemplateScope.SERVER,
+                    source_owner=None,
+                    template_id="x",
+                )

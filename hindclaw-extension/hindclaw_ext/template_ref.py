@@ -58,36 +58,26 @@ def parse_template_ref(ref: str) -> TemplateRef:
 
     if len(parts) < 2:
         raise ValueError(
-            f"Invalid template reference {ref!r}: must include scope "
-            f"(e.g., 'server/name' or 'server/source/name')"
+            f"Invalid template reference {ref!r}: must include scope (e.g., 'server/name' or 'server/source/name')"
         )
 
     if len(parts) > 3:
-        raise ValueError(
-            f"Invalid template reference format {ref!r}: "
-            f"expected 'scope/name' or 'scope/source/name'"
-        )
+        raise ValueError(f"Invalid template reference format {ref!r}: expected 'scope/name' or 'scope/source/name'")
 
     scope = parts[0]
     if scope not in _VALID_SCOPES:
-        raise ValueError(
-            f"Invalid scope {scope!r}: must be one of {sorted(_VALID_SCOPES)}"
-        )
+        raise ValueError(f"Invalid scope {scope!r}: must be one of {sorted(_VALID_SCOPES)}")
 
     if len(parts) == 3:
         source = parts[1]
         name = parts[2]
         if not source:
-            raise ValueError(
-                f"Invalid template reference {ref!r}: source must not be empty"
-            )
+            raise ValueError(f"Invalid template reference {ref!r}: source must not be empty")
     else:
         source = None
         name = parts[1]
 
     if not name:
-        raise ValueError(
-            f"Invalid template reference {ref!r}: name must not be empty"
-        )
+        raise ValueError(f"Invalid template reference {ref!r}: name must not be empty")
 
     return TemplateRef(scope=scope, source=source, name=name)

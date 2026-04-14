@@ -1,12 +1,18 @@
 """Tests for hindclaw_ext.validator — policy-based access control."""
-from unittest.mock import patch, AsyncMock
+
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from hindclaw_ext.validator import HindclawValidator, _resolve_user_access, _resolve_public_access, _TOOL_ACTION_MAP
-from hindclaw_ext.tenant import _jwt_claims
 from hindclaw_ext.policy_engine import AccessResult
-from tests.helpers import FakeRecallContext, FakeRetainContext, FakeReflectContext, FakeRequestContext
+from hindclaw_ext.tenant import _jwt_claims
+from hindclaw_ext.validator import HindclawValidator
+from tests.helpers import (
+    FakeRecallContext,
+    FakeReflectContext,
+    FakeRequestContext,
+    FakeRetainContext,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -22,6 +28,7 @@ def _reset_jwt_claims():
 
 
 # --- Recall ---
+
 
 @pytest.mark.asyncio
 async def test_recall_allowed_with_tag_groups():
@@ -50,7 +57,10 @@ async def test_recall_denied():
     ctx = FakeRecallContext(bank_id="r2d2", tenant_id="alice")
     _jwt_claims.set({})
 
-    with patch("hindclaw_ext.validator._resolve_user_access", return_value=AccessResult(allowed=False)):
+    with patch(
+        "hindclaw_ext.validator._resolve_user_access",
+        return_value=AccessResult(allowed=False),
+    ):
         result = await validator.validate_recall(ctx)
 
     assert result.allowed is False
@@ -64,7 +74,10 @@ async def test_recall_no_tag_groups():
     ctx = FakeRecallContext(bank_id="yoda", tenant_id="alice")
     _jwt_claims.set({})
 
-    with patch("hindclaw_ext.validator._resolve_user_access", return_value=AccessResult(allowed=True)):
+    with patch(
+        "hindclaw_ext.validator._resolve_user_access",
+        return_value=AccessResult(allowed=True),
+    ):
         result = await validator.validate_recall(ctx)
 
     assert result.allowed is True
@@ -73,13 +86,18 @@ async def test_recall_no_tag_groups():
 
 # --- Retain ---
 
+
 @pytest.mark.asyncio
 async def test_retain_enriches_tags_and_strategy():
     """Retain enriches content with policy tags, auto tags, and strategy."""
     validator = HindclawValidator({})
-    ctx = FakeRetainContext(bank_id="yoda", tenant_id="alice", contents=[
-        {"content": "conversation", "tags": ["existing:tag"]},
-    ])
+    ctx = FakeRetainContext(
+        bank_id="yoda",
+        tenant_id="alice",
+        contents=[
+            {"content": "conversation", "tags": ["existing:tag"]},
+        ],
+    )
     _jwt_claims.set({"agent": "yoda", "channel": "telegram"})
 
     access = AccessResult(
@@ -89,8 +107,10 @@ async def test_retain_enriches_tags_and_strategy():
         resolved_user_id="alice",
     )
 
-    with patch("hindclaw_ext.validator._resolve_user_access", return_value=access), \
-         patch("hindclaw_ext.validator.db.get_bank_policy", return_value=None):
+    with (
+        patch("hindclaw_ext.validator._resolve_user_access", return_value=access),
+        patch("hindclaw_ext.validator.db.get_bank_policy", return_value=None),
+    ):
         result = await validator.validate_retain(ctx)
 
     assert result.allowed is True
@@ -124,8 +144,10 @@ async def test_retain_strategy_falls_back_to_bank_policy():
         },
     )
 
-    with patch("hindclaw_ext.validator._resolve_user_access", return_value=access), \
-         patch("hindclaw_ext.validator.db.get_bank_policy", return_value=bank_policy):
+    with (
+        patch("hindclaw_ext.validator._resolve_user_access", return_value=access),
+        patch("hindclaw_ext.validator.db.get_bank_policy", return_value=bank_policy),
+    ):
         result = await validator.validate_retain(ctx)
 
     assert result.contents[0]["strategy"] == "yoda-telegram"
@@ -138,7 +160,10 @@ async def test_retain_denied():
     ctx = FakeRetainContext(bank_id="yoda", tenant_id="alice")
     _jwt_claims.set({})
 
-    with patch("hindclaw_ext.validator._resolve_user_access", return_value=AccessResult(allowed=False)):
+    with patch(
+        "hindclaw_ext.validator._resolve_user_access",
+        return_value=AccessResult(allowed=False),
+    ):
         result = await validator.validate_retain(ctx)
 
     assert result.allowed is False
@@ -153,14 +178,17 @@ async def test_retain_no_existing_tags():
 
     access = AccessResult(allowed=True, resolved_user_id="alice")
 
-    with patch("hindclaw_ext.validator._resolve_user_access", return_value=access), \
-         patch("hindclaw_ext.validator.db.get_bank_policy", return_value=None):
+    with (
+        patch("hindclaw_ext.validator._resolve_user_access", return_value=access),
+        patch("hindclaw_ext.validator.db.get_bank_policy", return_value=None),
+    ):
         result = await validator.validate_retain(ctx)
 
     assert "user:alice" in result.contents[0]["tags"]
 
 
 # --- Reflect ---
+
 
 @pytest.mark.asyncio
 async def test_reflect_independent_of_recall():
@@ -185,13 +213,17 @@ async def test_reflect_denied():
     ctx = FakeReflectContext(bank_id="yoda", tenant_id="alice")
     _jwt_claims.set({})
 
-    with patch("hindclaw_ext.validator._resolve_user_access", return_value=AccessResult(allowed=False)):
+    with patch(
+        "hindclaw_ext.validator._resolve_user_access",
+        return_value=AccessResult(allowed=False),
+    ):
         result = await validator.validate_reflect(ctx)
 
     assert result.allowed is False
 
 
 # --- Internal bypass ---
+
 
 @pytest.mark.asyncio
 async def test_internal_bypass_recall():
@@ -237,6 +269,7 @@ async def test_internal_bypass_reflect():
 
 # --- SA access ---
 
+
 @pytest.mark.asyncio
 async def test_sa_access_routed():
     """sa: prefixed tenant_id routes to SA access resolver."""
@@ -254,6 +287,7 @@ async def test_sa_access_routed():
 
 
 # --- Public access ---
+
 
 @pytest.mark.asyncio
 async def test_unmapped_recall_public_access():
@@ -277,8 +311,10 @@ async def test_unmapped_retain_denied_no_public():
     ctx = FakeRetainContext(bank_id="r2d2", tenant_id="_unmapped")
     _jwt_claims.set({})
 
-    with patch("hindclaw_ext.validator._resolve_public_access",
-               return_value=AccessResult(allowed=False)):
+    with patch(
+        "hindclaw_ext.validator._resolve_public_access",
+        return_value=AccessResult(allowed=False),
+    ):
         result = await validator.validate_retain(ctx)
 
     assert result.allowed is False
@@ -286,19 +322,16 @@ async def test_unmapped_retain_denied_no_public():
 
 # --- Internal bypass edge cases ---
 
+
 @pytest.mark.asyncio
 async def test_unmapped_with_jwt_is_not_internal():
     """_unmapped with JWT claims present is NOT internal."""
     from tests.helpers import FakeRequestContext
 
     validator = HindclawValidator({})
-    assert not validator._is_internal_server_call(
-        FakeRequestContext(api_key="eyJtoken", tenant_id="_unmapped")
-    )
+    assert not validator._is_internal_server_call(FakeRequestContext(api_key="eyJtoken", tenant_id="_unmapped"))
     _jwt_claims.set({"sender": "telegram:999"})
-    assert not validator._is_internal_server_call(
-        FakeRequestContext(api_key="eyJtoken", tenant_id="_unmapped")
-    )
+    assert not validator._is_internal_server_call(FakeRequestContext(api_key="eyJtoken", tenant_id="_unmapped"))
 
 
 def test_internal_check_true_when_no_auth():
@@ -307,12 +340,11 @@ def test_internal_check_true_when_no_auth():
 
     validator = HindclawValidator({})
     _jwt_claims.set({})
-    assert validator._is_internal_server_call(
-        FakeRequestContext(api_key=None, tenant_id=None)
-    )
+    assert validator._is_internal_server_call(FakeRequestContext(api_key=None, tenant_id=None))
 
 
 # --- filter_mcp_tools ---
+
 
 @pytest.mark.asyncio
 async def test_filter_mcp_tools_recall_only():
@@ -320,12 +352,20 @@ async def test_filter_mcp_tools_recall_only():
     validator = HindclawValidator({})
     ctx = FakeRequestContext(tenant_id="alice")
 
-    all_tools = frozenset({
-        "recall", "retain", "reflect",
-        "list_memories", "get_memory", "delete_memory",
-        "list_mental_models", "create_mental_model",
-        "get_bank", "update_bank",
-    })
+    all_tools = frozenset(
+        {
+            "recall",
+            "retain",
+            "reflect",
+            "list_memories",
+            "get_memory",
+            "delete_memory",
+            "list_mental_models",
+            "create_mental_model",
+            "get_bank",
+            "update_bank",
+        }
+    )
 
     recall_allowed = AccessResult(allowed=True)
     retain_denied = AccessResult(allowed=False)
@@ -401,7 +441,10 @@ async def test_filter_mcp_tools_unknown_tools_pass_through():
 
     tools = frozenset({"recall", "some_future_tool"})
 
-    with patch("hindclaw_ext.validator._resolve_user_access", return_value=AccessResult(allowed=True)):
+    with patch(
+        "hindclaw_ext.validator._resolve_user_access",
+        return_value=AccessResult(allowed=True),
+    ):
         result = await validator.filter_mcp_tools("test-bank", ctx, tools)
 
     assert "recall" in result
@@ -471,7 +514,10 @@ async def test_filter_mcp_tools_sa_identity():
 
     tools = frozenset({"recall", "retain", "reflect"})
 
-    with patch("hindclaw_ext.validator._resolve_sa_access", return_value=AccessResult(allowed=True)) as mock_sa:
+    with patch(
+        "hindclaw_ext.validator._resolve_sa_access",
+        return_value=AccessResult(allowed=True),
+    ) as mock_sa:
         result = await validator.filter_mcp_tools("test-bank", ctx, tools)
 
     assert result == tools

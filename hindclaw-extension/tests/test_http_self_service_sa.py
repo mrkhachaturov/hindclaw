@@ -1,14 +1,14 @@
 """Tests for self-service SA endpoints at /me/service-accounts."""
+
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 from hindsight_api.extensions import AuthenticationError
-from hindclaw_ext.http import HindclawHttp
-from hindclaw_ext.models import ServiceAccountRecord, ServiceAccountKeyRecord
 
+from hindclaw_ext.http import HindclawHttp
+from hindclaw_ext.models import ServiceAccountKeyRecord, ServiceAccountRecord
 
 # --- Fixtures ---
 # NOTE: require_admin_for_action is resolved by name at call time (not
@@ -30,6 +30,7 @@ def alice_app():
     @app.exception_handler(AuthenticationError)
     async def auth_error_handler(request, exc):
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=401, content={"detail": str(exc)})
 
     ext = HindclawHttp({})
@@ -58,6 +59,7 @@ def bob_app():
     @app.exception_handler(AuthenticationError)
     async def auth_error_handler(request, exc):
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=401, content={"detail": str(exc)})
 
     ext = HindclawHttp({})
@@ -91,13 +93,19 @@ def mock_db():
 
 
 ALICE_SA = ServiceAccountRecord(
-    id="alice-sa", owner_user_id="alice",
-    display_name="Alice SA", is_active=True, scoping_policy_id=None,
+    id="alice-sa",
+    owner_user_id="alice",
+    display_name="Alice SA",
+    is_active=True,
+    scoping_policy_id=None,
 )
 
 BOB_SA = ServiceAccountRecord(
-    id="bob-sa", owner_user_id="bob",
-    display_name="Bob SA", is_active=True, scoping_policy_id="policy-1",
+    id="bob-sa",
+    owner_user_id="bob",
+    display_name="Bob SA",
+    is_active=True,
+    scoping_policy_id="policy-1",
 )
 
 
@@ -130,7 +138,10 @@ def test_create_my_service_account(alice_client, headers, mock_db):
     assert body["id"] == "new-sa"
     assert body["owner_user_id"] == "alice"
     mock_db.create_service_account.assert_called_once_with(
-        "new-sa", "alice", "New SA", None,
+        "new-sa",
+        "alice",
+        "New SA",
+        None,
     )
 
 
@@ -150,13 +161,20 @@ def test_create_my_service_account_with_scoping_policy(alice_client, headers, mo
     mock_db.create_service_account = AsyncMock()
     resp = alice_client.post(
         "/ext/hindclaw/me/service-accounts",
-        json={"id": "scoped-sa", "display_name": "Scoped", "scoping_policy_id": "readonly"},
+        json={
+            "id": "scoped-sa",
+            "display_name": "Scoped",
+            "scoping_policy_id": "readonly",
+        },
         headers=headers,
     )
     assert resp.status_code == 201
     assert resp.json()["scoping_policy_id"] == "readonly"
     mock_db.create_service_account.assert_called_once_with(
-        "scoped-sa", "alice", "Scoped", "readonly",
+        "scoped-sa",
+        "alice",
+        "Scoped",
+        "readonly",
     )
 
 
@@ -191,8 +209,11 @@ def test_get_my_service_account_nonexistent_returns_404(alice_client, headers, m
 def test_update_my_service_account_display_name(alice_client, headers, mock_db):
     """PUT /me/service-accounts/{id} updates display_name only."""
     updated_sa = ServiceAccountRecord(
-        id="alice-sa", owner_user_id="alice",
-        display_name="Renamed", is_active=True, scoping_policy_id=None,
+        id="alice-sa",
+        owner_user_id="alice",
+        display_name="Renamed",
+        is_active=True,
+        scoping_policy_id=None,
     )
     mock_db.get_service_account = AsyncMock(side_effect=[ALICE_SA, updated_sa])
     mock_db.update_service_account = AsyncMock(return_value=True)
@@ -255,9 +276,16 @@ def test_delete_my_service_account_not_owned_returns_404(alice_client, headers, 
 def test_list_my_sa_keys(alice_client, headers, mock_db):
     """GET /me/service-accounts/{id}/keys lists keys for owned SA."""
     mock_db.get_service_account = AsyncMock(return_value=ALICE_SA)
-    mock_db.list_sa_keys = AsyncMock(return_value=[
-        ServiceAccountKeyRecord(id="k1", service_account_id="alice-sa", api_key="hc_sa_alice-sa_abc123def456", description="CI"),
-    ])
+    mock_db.list_sa_keys = AsyncMock(
+        return_value=[
+            ServiceAccountKeyRecord(
+                id="k1",
+                service_account_id="alice-sa",
+                api_key="hc_sa_alice-sa_abc123def456",
+                description="CI",
+            ),
+        ]
+    )
     resp = alice_client.get("/ext/hindclaw/me/service-accounts/alice-sa/keys", headers=headers)
     assert resp.status_code == 200
     assert len(resp.json()) == 1
@@ -302,9 +330,14 @@ def test_create_my_sa_key_not_owned_returns_404(alice_client, headers, mock_db):
 def test_delete_my_sa_key(alice_client, headers, mock_db):
     """DELETE /me/service-accounts/{id}/keys/{kid} deletes key for owned SA."""
     mock_db.get_service_account = AsyncMock(return_value=ALICE_SA)
-    mock_db.get_sa_key = AsyncMock(return_value=ServiceAccountKeyRecord(
-        id="k1", service_account_id="alice-sa", api_key="hc_sa_alice-sa_x", description=None,
-    ))
+    mock_db.get_sa_key = AsyncMock(
+        return_value=ServiceAccountKeyRecord(
+            id="k1",
+            service_account_id="alice-sa",
+            api_key="hc_sa_alice-sa_x",
+            description=None,
+        )
+    )
     mock_db.delete_sa_key = AsyncMock()
     resp = alice_client.delete("/ext/hindclaw/me/service-accounts/alice-sa/keys/k1", headers=headers)
     assert resp.status_code == 204
@@ -337,6 +370,7 @@ def test_admin_list_uses_manage_action(headers):
     @app.exception_handler(AuthenticationError)
     async def auth_error_handler(request, exc):
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=401, content={"detail": str(exc)})
 
     ext = HindclawHttp({})
@@ -364,6 +398,7 @@ def test_sa_caller_sees_owner_sas(headers, mock_db):
     @app.exception_handler(AuthenticationError)
     async def auth_error_handler(request, exc):
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=401, content={"detail": str(exc)})
 
     ext = HindclawHttp({})
@@ -372,7 +407,11 @@ def test_sa_caller_sees_owner_sas(headers, mock_db):
     with patch(
         "hindclaw_ext.http.require_admin_for_action",
         new_callable=AsyncMock,
-        return_value={"principal_type": "service_account", "user_id": "alice", "sa_id": "alice-sa"},
+        return_value={
+            "principal_type": "service_account",
+            "user_id": "alice",
+            "sa_id": "alice-sa",
+        },
     ):
         router = ext.get_router(memory)
         app.include_router(router, prefix="/ext")

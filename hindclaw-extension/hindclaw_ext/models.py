@@ -1,6 +1,13 @@
 """Pydantic models for hindclaw access control."""
 
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import datetime
+
 from pydantic import BaseModel
+
+from hindclaw_ext.template_models import TemplateScope
 
 
 class UserRecord(BaseModel):
@@ -84,43 +91,39 @@ class AttachedPolicyRecord(BaseModel):
     priority: int = 0
 
 
-class TemplateRecord(BaseModel):
-    """A bank template stored in the database."""
+@dataclass
+class TemplateRecord:
+    """An installed template, stored in the bank_templates table.
+
+    The manifest is an opaque BankTemplateManifest JSON dict — HindClaw
+    does not introspect it. Validation happens upstream via
+    BankTemplateManifest.model_validate() + validate_bank_template().
+
+    Identity invariant: a TemplateRecord is uniquely keyed by
+    (id, scope, owner). Source attribution (source_name, source_scope,
+    source_template_id, source_url, source_revision) is informational
+    only — re-installing a template with the same id replaces the
+    existing row regardless of which source it came from. To install
+    two templates with the same id from different sources, rename one
+    before installing via the install request's `alias_id`.
+    """
 
     id: str
-    scope: str
+    scope: TemplateScope
     owner: str | None
     source_name: str | None
-    schema_version: int
-    min_hindclaw_version: str
-    min_hindsight_version: str | None
-    version: str | None
+    source_scope: TemplateScope | None
+    source_template_id: str | None
     source_url: str | None
     source_revision: str | None
-    description: str
-    author: str
+    name: str
+    description: str | None
+    category: str | None
+    integrations: list[str]
     tags: list[str]
-    retain_mission: str
-    reflect_mission: str
-    observations_mission: str | None
-    retain_extraction_mode: str
-    retain_custom_instructions: str | None
-    retain_chunk_size: int | None
-    retain_default_strategy: str | None
-    retain_strategies: dict
-    entity_labels: list[dict]
-    entities_allow_free_form: bool
-    enable_observations: bool
-    consolidation_llm_batch_size: int | None
-    consolidation_source_facts_max_tokens: int | None
-    consolidation_source_facts_max_tokens_per_observation: int | None
-    disposition_skepticism: int
-    disposition_literalism: int
-    disposition_empathy: int
-    directive_seeds: list[dict]
-    mental_model_seeds: list[dict]
-    created_at: str
-    updated_at: str
+    manifest: dict
+    installed_at: datetime
+    updated_at: datetime
 
 
 class TemplateSourceRecord(BaseModel):
@@ -131,4 +134,6 @@ class TemplateSourceRecord(BaseModel):
     scope: str = "server"
     owner: str | None = None
     auth_token: str | None = None
+    description: str | None = None
     created_at: str | None = None  # Always set from DB; None only in test construction
+    updated_at: str | None = None

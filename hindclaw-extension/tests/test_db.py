@@ -1,4 +1,5 @@
 """Tests for hindclaw_ext.db — connection pool and queries."""
+
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -11,6 +12,7 @@ from tests.helpers import MockRecord, make_records
 def _reset_pool():
     """Ensure db._pool is reset before and after each test."""
     from hindclaw_ext import db
+
     original = db._pool
     db._pool = None
     yield
@@ -54,7 +56,14 @@ async def test_get_user_by_channel(mock_pool):
     """Resolve sender ID to user."""
     from hindclaw_ext import db
 
-    mock_pool.fetchrow.return_value = MockRecord({"id": "alice", "display_name": "Alice", "email": "alice@example.com", "is_active": True})
+    mock_pool.fetchrow.return_value = MockRecord(
+        {
+            "id": "alice",
+            "display_name": "Alice",
+            "email": "alice@example.com",
+            "is_active": True,
+        }
+    )
 
     with patch.object(db, "_pool", mock_pool):
         user = await db.get_user_by_channel("telegram", "100001")
@@ -82,7 +91,14 @@ async def test_get_api_key(mock_pool):
     """Look up API key."""
     from hindclaw_ext import db
 
-    mock_pool.fetchrow.return_value = MockRecord({"id": "key1", "api_key": "hc_alice_xxx", "user_id": "alice", "description": "test"})
+    mock_pool.fetchrow.return_value = MockRecord(
+        {
+            "id": "key1",
+            "api_key": "hc_alice_xxx",
+            "user_id": "alice",
+            "description": "test",
+        }
+    )
 
     with patch.object(db, "_pool", mock_pool):
         key = await db.get_api_key("hc_alice_xxx")
@@ -95,9 +111,11 @@ async def test_get_user_groups(mock_pool):
     """Get groups for a user."""
     from hindclaw_ext import db
 
-    mock_pool.fetch.return_value = make_records([
-        {"id": "team-lead", "display_name": "Team Lead"},
-    ])
+    mock_pool.fetch.return_value = make_records(
+        [
+            {"id": "team-lead", "display_name": "Team Lead"},
+        ]
+    )
 
     with patch.object(db, "_pool", mock_pool):
         groups = await db.get_user_groups("alice")
@@ -195,9 +213,14 @@ async def test_get_user_found(mock_pool):
     """get_user returns UserRecord for an existing user."""
     from hindclaw_ext import db
 
-    mock_pool.fetchrow.return_value = MockRecord({
-        "id": "alice", "display_name": "Alice", "email": "alice@example.com", "is_active": True,
-    })
+    mock_pool.fetchrow.return_value = MockRecord(
+        {
+            "id": "alice",
+            "display_name": "Alice",
+            "email": "alice@example.com",
+            "is_active": True,
+        }
+    )
 
     with patch.object(db, "_pool", mock_pool):
         result = await db.get_user("alice")
@@ -223,11 +246,15 @@ async def test_get_service_account_found(mock_pool):
     """get_service_account returns ServiceAccountRecord."""
     from hindclaw_ext import db
 
-    mock_pool.fetchrow.return_value = MockRecord({
-        "id": "ceo-claude", "owner_user_id": "ruben",
-        "display_name": "CEO Claude", "is_active": True,
-        "scoping_policy_id": None,
-    })
+    mock_pool.fetchrow.return_value = MockRecord(
+        {
+            "id": "ceo-claude",
+            "owner_user_id": "ruben",
+            "display_name": "CEO Claude",
+            "is_active": True,
+            "scoping_policy_id": None,
+        }
+    )
 
     with patch.object(db, "_pool", mock_pool):
         result = await db.get_service_account("ceo-claude")
@@ -315,7 +342,15 @@ async def test_list_service_accounts_by_owner(mock_pool):
     from hindclaw_ext import db
 
     mock_pool.fetch.return_value = [
-        MockRecord({"id": "sa-1", "owner_user_id": "alice", "display_name": "Alice SA", "is_active": True, "scoping_policy_id": None}),
+        MockRecord(
+            {
+                "id": "sa-1",
+                "owner_user_id": "alice",
+                "display_name": "Alice SA",
+                "is_active": True,
+                "scoping_policy_id": None,
+            }
+        ),
     ]
 
     with patch.object(db, "_pool", mock_pool):
@@ -345,7 +380,9 @@ async def test_seed_includes_template_user_policy(mock_pool):
     """DDL seeds template:user built-in policy with valid JSON document."""
     import json
     import re
+
     from hindclaw_ext.db import _DDL
+
     assert "'template:user'" in _DDL
     assert "Template User" in _DDL
     # Extract and validate the JSON document
@@ -364,7 +401,9 @@ async def test_seed_includes_iam_self_service_policy(mock_pool):
     """DDL seeds iam:self-service built-in policy with valid JSON document."""
     import json
     import re
+
     from hindclaw_ext.db import _DDL
+
     assert "'iam:self-service'" in _DDL
     assert "IAM Self-Service" in _DDL
     # Extract and validate the JSON document
@@ -387,9 +426,10 @@ async def test_template_admin_policy_grants_template_admin_action(mock_pool):
     """
     import json
     import re
+
     from hindclaw_ext.db import _DDL
-    from hindclaw_ext.policy_engine import evaluate_access
     from hindclaw_ext.models import AttachedPolicyRecord
+    from hindclaw_ext.policy_engine import evaluate_access
 
     match = re.search(r"'template:admin',\s*'Template Admin',\s*'(\{[^']+\})'", _DDL)
     assert match, "Could not extract template:admin JSON from DDL"
@@ -397,9 +437,13 @@ async def test_template_admin_policy_grants_template_admin_action(mock_pool):
     doc = json.loads(doc_json)
 
     attached = AttachedPolicyRecord(
-        id="template:admin", display_name="Template Admin",
-        document_json=doc, is_builtin=True,
-        principal_type="user", principal_id="root", priority=0,
+        id="template:admin",
+        display_name="Template Admin",
+        document_json=doc,
+        is_builtin=True,
+        principal_type="user",
+        principal_id="root",
+        priority=0,
     )
     result = evaluate_access([attached], action="template:admin", bank_id="*")
     assert result.allowed, "template:admin policy must grant template:admin action"

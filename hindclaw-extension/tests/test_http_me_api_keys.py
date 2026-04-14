@@ -1,13 +1,13 @@
 """Tests for self-service /me/api-keys endpoints."""
+
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 from hindsight_api.extensions import AuthenticationError
-from hindclaw_ext.http import HindclawHttp
 
+from hindclaw_ext.http import HindclawHttp
 
 # --- Fixtures ---
 
@@ -25,6 +25,7 @@ def alice_app():
     @app.exception_handler(AuthenticationError)
     async def auth_error_handler(request, exc):
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=401, content={"detail": str(exc)})
 
     ext = HindclawHttp({})
@@ -65,6 +66,7 @@ def sa_test_app():
     @app.exception_handler(AuthenticationError)
     async def auth_error_handler(request, exc):
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=401, content={"detail": str(exc)})
 
     ext = HindclawHttp({})
@@ -86,9 +88,11 @@ def test_list_my_api_keys(alice_client, headers, mock_db):
     """GET /me/api-keys returns masked keys for the caller."""
     pool = AsyncMock()
     mock_db.get_pool = AsyncMock(return_value=pool)
-    pool.fetch = AsyncMock(return_value=[
-        {"id": "k1", "api_key": "hc_u_alice_abcdef123456xyz0", "description": "CI"},
-    ])
+    pool.fetch = AsyncMock(
+        return_value=[
+            {"id": "k1", "api_key": "hc_u_alice_abcdef123456xyz0", "description": "CI"},
+        ]
+    )
     resp = alice_client.get("/ext/hindclaw/me/api-keys", headers=headers)
     assert resp.status_code == 200
     body = resp.json()

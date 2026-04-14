@@ -1,14 +1,14 @@
 """Tests for GET /me profile endpoint."""
+
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 from hindsight_api.extensions import AuthenticationError
+
 from hindclaw_ext.http import HindclawHttp
 from hindclaw_ext.models import UserRecord
-
 
 # --- Fixtures ---
 
@@ -39,6 +39,7 @@ def alice_app():
     @app.exception_handler(AuthenticationError)
     async def auth_error_handler(request, exc):
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=401, content={"detail": str(exc)})
 
     ext = HindclawHttp({})
@@ -75,6 +76,7 @@ def sa_test_app():
     @app.exception_handler(AuthenticationError)
     async def auth_error_handler(request, exc):
         from fastapi.responses import JSONResponse
+
         return JSONResponse(status_code=401, content={"detail": str(exc)})
 
     ext = HindclawHttp({})
@@ -105,9 +107,11 @@ def test_get_me_profile(alice_client, headers, mock_db):
     pool = AsyncMock()
     mock_db.get_pool = AsyncMock(return_value=pool)
     mock_db.get_user = AsyncMock(return_value=ALICE_USER)
-    pool.fetch = AsyncMock(return_value=[
-        {"provider": "telegram", "sender_id": "123456"},
-    ])
+    pool.fetch = AsyncMock(
+        return_value=[
+            {"provider": "telegram", "sender_id": "123456"},
+        ]
+    )
     resp = alice_client.get("/ext/hindclaw/me", headers=headers)
     assert resp.status_code == 200
     body = resp.json()

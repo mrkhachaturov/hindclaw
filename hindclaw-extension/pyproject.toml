@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "hindclaw-extension"
 version = "0.4.0"
@@ -25,9 +29,14 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.23.0",
+    "pytest>=9.0.0",
+    "pytest-asyncio>=1.3.0",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
+    "pytest-rerunfailures>=15.0",
     "httpx>=0.27.0",
+    "ruff>=0.8.0",
+    "ty>=0.0.1",
     "hindsight-api-slim",
 ]
 
@@ -36,12 +45,82 @@ Homepage = "https://hindclaw.pro"
 Repository = "https://github.com/mrkhachaturov/hindclaw"
 Documentation = "https://hindclaw.pro/docs/extension"
 
-[tool.pytest.ini_options]
-asyncio_mode = "strict"
-
 [tool.hatch.build.targets.wheel]
 packages = ["hindclaw_ext"]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "--timeout 60 --durations=10 -v"
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+log_auto_indent = true
+filterwarnings = [
+    "ignore::RuntimeWarning:asyncio",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.0",
+    "pytest-asyncio>=1.3.0",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
+    "pytest-rerunfailures>=15.0",
+    "httpx>=0.27.0",
+    "ruff>=0.8.0",
+    "ty>=0.0.1",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = [
+    "tests/",
+    "**/tests/",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "E402",   # module import not at top of file
+    "F401",   # unused import (too noisy during development)
+    "F841",   # unused variable (too noisy during development)
+    "F811",   # redefined while unused
+    "F821",   # undefined name (forward references in type hints)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ty]
+# Type checking configuration
+# ty is an extremely fast Python type checker from Astral (same team as ruff/uv)
+
+[tool.ty.environment]
+python-version = "3.11"
+
+[tool.ty.src]
+exclude = [
+    "tests/",
+]
+
+[tool.ty.rules]
+# Mirror upstream Hindsight: disable noisy rules while keeping important ones.
+invalid-argument-type = "ignore"      # False positives with **kwargs patterns
+invalid-return-type = "ignore"        # Often intentional in async code
+invalid-parameter-default = "ignore"  # Optional params with None default
+possibly-missing-attribute = "ignore" # Common with Optional types
+invalid-raise = "ignore"              # False positives with exception tracking
+call-non-callable = "ignore"          # False positives with Optional types
+invalid-key = "ignore"                # Pydantic ConfigDict not understood
+invalid-method-override = "ignore"    # Intentional signature differences
+unresolved-reference = "ignore"       # Forward references not always resolved

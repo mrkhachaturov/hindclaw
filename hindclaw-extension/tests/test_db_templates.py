@@ -1,276 +1,275 @@
-"""Tests for template database queries."""
+"""Tests for the bank_templates schema and query functions after the
+convergence refactor. All tests mock asyncpg per the project convention
+(pytest-asyncio strict + mocked pool fixtures in conftest.py)."""
 
-import json
-from unittest.mock import AsyncMock, patch
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock
 
 import pytest
 
-from hindclaw_ext import db
+from hindclaw_ext.db import (
+    BANK_TEMPLATES_DDL,
+    create_template,
+    delete_template,
+    fetch_installed_template_for_apply,
+    get_template,
+    list_templates,
+    update_template,
+)
 from hindclaw_ext.models import TemplateRecord
+from hindclaw_ext.template_models import TemplateScope
+
+# Note: Async tests in this file use @pytest.mark.asyncio individually (rather
+# than a module-level pytestmark) because the DDL string assertions are sync.
 
 
-def _fake_template_row(**overrides) -> dict:
-    """Build a complete template row dict suitable for mocking asyncpg results.
-
-    All JSONB columns are pre-serialized as strings (matching asyncpg behavior).
-    Override any field by passing keyword arguments.
-    """
-    defaults = {
-        "id": "backend-python",
-        "scope": "server",
-        "owner": None,
-        "source_name": None,
-        "schema_version": 1,
-        "min_hindclaw_version": "0.2.0",
-        "min_hindsight_version": "0.4.20",
-        "version": None,
-        "source_url": None,
-        "source_revision": None,
-        "description": "Backend patterns",
-        "author": "",
-        "tags": "[]",
-        "retain_mission": "Extract backend patterns.",
-        "reflect_mission": "You are a backend engineer.",
-        "observations_mission": None,
-        "retain_extraction_mode": "verbose",
-        "retain_custom_instructions": None,
-        "retain_chunk_size": None,
-        "retain_default_strategy": None,
-        "retain_strategies": "{}",
-        "entity_labels": "[]",
-        "entities_allow_free_form": True,
-        "enable_observations": True,
-        "consolidation_llm_batch_size": None,
-        "consolidation_source_facts_max_tokens": None,
-        "consolidation_source_facts_max_tokens_per_observation": None,
-        "disposition_skepticism": 3,
-        "disposition_literalism": 3,
-        "disposition_empathy": 3,
-        "directive_seeds": "[]",
-        "mental_model_seeds": "[]",
-        "created_at": "2026-03-25T12:00:00+00:00",
-        "updated_at": "2026-03-25T12:00:00+00:00",
-    }
-    defaults.update(overrides)
-    return defaults
+def _fixed_now() -> datetime:
+    return datetime(2026, 4, 14, 12, 0, 0, tzinfo=timezone.utc)
 
 
-@pytest.fixture
-def mock_pool():
-    pool = AsyncMock()
-    pool.fetch = AsyncMock(return_value=[])
-    pool.fetchrow = AsyncMock(return_value=None)
-    pool.execute = AsyncMock()
-    return pool
+def _sample_record(
+    *,
+    id: str = "backend-python",
+    scope: TemplateScope = TemplateScope.PERSONAL,
+    owner: str | None = "user-1",
+    source_name: str | None = "hindclaw-official",
+    source_scope: TemplateScope | None = TemplateScope.SERVER,
+) -> TemplateRecord:
+    now = _fixed_now()
+    return TemplateRecord(
+        id=id,
+        scope=scope,
+        owner=owner,
+        source_name=source_name,
+        source_scope=source_scope,
+        source_template_id=id,
+        source_url="https://example.com/raw",
+        source_revision="etag-abc",
+        name=f"{id} name",
+        description="desc",
+        category="coding",
+        integrations=["claude-code"],
+        tags=["python"],
+        manifest={"version": "1", "bank": {"reflect_mission": "m"}},
+        installed_at=now,
+        updated_at=now,
+    )
 
 
-@pytest.fixture(autouse=True)
-def _reset_pool():
-    """Reset the module-level pool before and after each test."""
-    db._pool = None
-    yield
-    db._pool = None
+# --------------------------------------------------------------------------- #
+# DDL — guarantees from Section 4.3 of the spec
+# --------------------------------------------------------------------------- #
 
 
-class TestCreateTemplate:
-    @pytest.mark.asyncio
-    async def test_creates_template(self, mock_pool):
-        mock_pool.fetchrow.return_value = _fake_template_row()
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.create_template(
-                id="backend-python",
-                scope="server",
-                owner=None,
-                source_name=None,
-                schema_version=1,
-                min_hindclaw_version="0.2.0",
-                min_hindsight_version="0.4.20",
-                description="Backend patterns",
-                author="",
-                tags=["python"],
-                retain_mission="Extract.",
-                reflect_mission="You are.",
-                retain_extraction_mode="verbose",
-                entity_labels=[],
-                entities_allow_free_form=True,
-                enable_observations=True,
-                disposition_skepticism=3,
-                disposition_literalism=3,
-                disposition_empathy=3,
-                directive_seeds=[],
-                mental_model_seeds=[],
-            )
-        assert isinstance(result, TemplateRecord)
-        assert result.id == "backend-python"
-        mock_pool.fetchrow.assert_called_once()
-        call_args = mock_pool.fetchrow.call_args
-        assert "INSERT INTO bank_templates" in call_args[0][0]
+def test_ddl_has_surrogate_row_id_primary_key():
+    assert "row_id" in BANK_TEMPLATES_DDL
+    assert "BIGSERIAL PRIMARY KEY" in BANK_TEMPLATES_DDL
 
 
-class TestGetTemplate:
-    @pytest.mark.asyncio
-    async def test_returns_none_when_missing(self, mock_pool):
-        mock_pool.fetchrow.return_value = None
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.get_template("backend-python", "server", source_name=None, owner=None)
-        assert result is None
-
-    @pytest.mark.asyncio
-    async def test_returns_record_when_found(self, mock_pool):
-        mock_pool.fetchrow.return_value = _fake_template_row()
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.get_template("backend-python", "server", source_name=None, owner=None)
-        assert isinstance(result, TemplateRecord)
-        assert result.id == "backend-python"
-        assert result.scope == "server"
+def test_ddl_has_nulls_not_distinct_natural_key_index():
+    assert "bank_templates_natural_key" in BANK_TEMPLATES_DDL
+    assert "NULLS NOT DISTINCT" in BANK_TEMPLATES_DDL
+    assert "(id, scope, owner)" in BANK_TEMPLATES_DDL
 
 
-class TestListTemplates:
-    @pytest.mark.asyncio
-    async def test_list_server_templates(self, mock_pool):
-        mock_pool.fetch.return_value = []
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.list_templates(scope="server")
-        assert result == []
-        mock_pool.fetch.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_list_returns_records(self, mock_pool):
-        mock_pool.fetch.return_value = [_fake_template_row(), _fake_template_row(id="frontend-react")]
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.list_templates(scope="server")
-        assert len(result) == 2
-        assert all(isinstance(r, TemplateRecord) for r in result)
+def test_ddl_has_scope_owner_check_constraint():
+    assert "bank_templates_scope_owner" in BANK_TEMPLATES_DDL
+    assert "scope = 'personal' AND owner IS NOT NULL" in BANK_TEMPLATES_DDL
+    assert "scope = 'server' AND owner IS NULL" in BANK_TEMPLATES_DDL
 
 
-class TestUpdateTemplate:
-    @pytest.mark.asyncio
-    async def test_update_returns_none_when_missing(self, mock_pool):
-        mock_pool.fetchrow.return_value = None
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.update_template(
-                "backend-python", "server",
-                source_name=None, owner=None,
-                updates={"description": "Updated"},
-            )
-        assert result is None
-
-    @pytest.mark.asyncio
-    async def test_update_returns_record(self, mock_pool):
-        mock_pool.fetchrow.return_value = _fake_template_row(description="Updated")
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.update_template(
-                "backend-python", "server",
-                source_name=None, owner=None,
-                updates={"description": "Updated"},
-            )
-        assert isinstance(result, TemplateRecord)
-        assert result.description == "Updated"
-
-    @pytest.mark.asyncio
-    async def test_update_jsonb_column(self, mock_pool):
-        mock_pool.fetchrow.return_value = _fake_template_row(tags='["python", "updated"]')
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.update_template(
-                "backend-python", "server",
-                source_name=None, owner=None,
-                updates={"tags": ["python", "updated"]},
-            )
-        assert isinstance(result, TemplateRecord)
-        call_args = mock_pool.fetchrow.call_args
-        sql = call_args[0][0]
-        assert "tags = $1::jsonb" in sql
-
-    @pytest.mark.asyncio
-    async def test_update_empty_updates_delegates_to_get(self, mock_pool):
-        mock_pool.fetchrow.return_value = _fake_template_row()
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.update_template(
-                "backend-python", "server",
-                source_name=None, owner=None,
-                updates={},
-            )
-        assert isinstance(result, TemplateRecord)
+def test_ddl_has_tags_gin_index():
+    assert "bank_templates_tags_gin" in BANK_TEMPLATES_DDL
+    assert "USING GIN (tags jsonb_path_ops)" in BANK_TEMPLATES_DDL
 
 
-class TestDeleteTemplate:
-    @pytest.mark.asyncio
-    async def test_delete_returns_true(self, mock_pool):
-        mock_pool.execute.return_value = "DELETE 1"
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.delete_template("backend-python", "server", source_name=None, owner=None)
-        assert result is True
-
-    @pytest.mark.asyncio
-    async def test_delete_returns_false_when_missing(self, mock_pool):
-        mock_pool.execute.return_value = "DELETE 0"
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.delete_template("backend-python", "server", source_name=None, owner=None)
-        assert result is False
+def test_ddl_has_category_index():
+    assert "bank_templates_category_idx" in BANK_TEMPLATES_DDL
 
 
-class TestUpsertTemplateFromMarketplace:
-    @pytest.mark.asyncio
-    async def test_upsert_inserts_new(self, mock_pool):
-        """When template doesn't exist, delegates to create_template."""
-        # get_template returns None (not found)
-        mock_pool.fetchrow.side_effect = [
-            None,  # get_template lookup
-            _fake_template_row(source_name="hindclaw", version="2.1.0"),  # create_template INSERT
-        ]
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.upsert_template_from_marketplace(
-                id="backend-python",
-                scope="server",
-                owner=None,
-                source_name="hindclaw",
-                source_url="https://github.com/hindclaw/community-templates",
-                source_revision=None,
-                schema_version=1,
-                min_hindclaw_version="0.2.0",
-                min_hindsight_version="0.4.20",
-                version="2.1.0",
-                description="Backend patterns",
-                author="community",
-                tags=["python"],
-                retain_mission="Extract backend patterns.",
-                reflect_mission="You are a backend engineer.",
-                retain_extraction_mode="verbose",
-                entity_labels=[],
-                directive_seeds=[],
-                mental_model_seeds=[],
-            )
-        assert isinstance(result, TemplateRecord)
+def test_ddl_has_source_attribution_columns():
+    for col in (
+        "source_name",
+        "source_scope",
+        "source_template_id",
+        "source_url",
+        "source_revision",
+    ):
+        assert col in BANK_TEMPLATES_DDL, f"column {col} missing from DDL"
 
-    @pytest.mark.asyncio
-    async def test_upsert_updates_existing(self, mock_pool):
-        """When template exists, delegates to update_template."""
-        existing_row = _fake_template_row(source_name="hindclaw", version="2.0.0")
-        updated_row = _fake_template_row(source_name="hindclaw", version="3.0.0")
-        mock_pool.fetchrow.side_effect = [
-            existing_row,  # get_template finds existing
-            updated_row,   # update_template RETURNING
-        ]
-        with patch.object(db, "_pool", mock_pool):
-            result = await db.upsert_template_from_marketplace(
-                id="backend-python",
-                scope="server",
-                owner=None,
-                source_name="hindclaw",
-                source_url="https://github.com/hindclaw/community-templates",
-                source_revision=None,
-                schema_version=1,
-                min_hindclaw_version="0.2.0",
-                version="3.0.0",
-                description="Updated patterns",
-                author="community",
-                tags=["python"],
-                retain_mission="Extract patterns.",
-                reflect_mission="You are an engineer.",
-                retain_extraction_mode="verbose",
-                entity_labels=[],
-                directive_seeds=[],
-                mental_model_seeds=[],
-            )
-        assert isinstance(result, TemplateRecord)
-        assert result.version == "3.0.0"
+
+# --------------------------------------------------------------------------- #
+# Query functions
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.asyncio
+async def test_create_template_inserts_record(mock_pool):
+    record = _sample_record()
+    await create_template(mock_pool, record)
+
+    mock_pool.execute.assert_awaited()
+    call_args = mock_pool.execute.call_args_list[-1]
+    sql = call_args.args[0]
+    assert "INSERT INTO bank_templates" in sql
+    assert "ON CONFLICT" in sql
+
+
+@pytest.mark.asyncio
+async def test_get_template_takes_natural_key_tuple(mock_pool):
+    mock_pool.fetchrow = AsyncMock(
+        return_value={
+            "id": "backend-python",
+            "scope": "personal",
+            "owner": "user-1",
+            "source_name": "hindclaw-official",
+            "source_scope": "server",
+            "source_template_id": "backend-python",
+            "source_url": "https://example.com/raw",
+            "source_revision": "etag",
+            "name": "Backend Python",
+            "description": "d",
+            "category": "coding",
+            "integrations": '["claude-code"]',
+            "tags": '["python"]',
+            "manifest": '{"version": "1", "bank": {}}',
+            "installed_at": _fixed_now(),
+            "updated_at": _fixed_now(),
+        }
+    )
+
+    record = await get_template(
+        mock_pool,
+        id="backend-python",
+        scope=TemplateScope.PERSONAL,
+        owner="user-1",
+    )
+    assert record is not None
+    assert record.id == "backend-python"
+    assert record.scope is TemplateScope.PERSONAL
+    assert record.owner == "user-1"
+    assert record.manifest == {"version": "1", "bank": {}}
+
+
+@pytest.mark.asyncio
+async def test_get_template_returns_none_on_miss(mock_pool):
+    mock_pool.fetchrow = AsyncMock(return_value=None)
+    record = await get_template(
+        mock_pool,
+        id="missing",
+        scope=TemplateScope.PERSONAL,
+        owner="user-1",
+    )
+    assert record is None
+
+
+@pytest.mark.asyncio
+async def test_list_templates_filters_by_scope_and_owner(mock_pool):
+    mock_pool.fetch = AsyncMock(return_value=[])
+    await list_templates(mock_pool, scope=TemplateScope.PERSONAL, owner="user-1")
+    assert mock_pool.fetch.await_count == 1
+    sql, *params = mock_pool.fetch.call_args.args
+    assert "WHERE scope" in sql
+    assert "owner" in sql
+
+
+@pytest.mark.asyncio
+async def test_list_templates_filter_by_category(mock_pool):
+    mock_pool.fetch = AsyncMock(return_value=[])
+    await list_templates(
+        mock_pool,
+        scope=TemplateScope.SERVER,
+        owner=None,
+        category="coding",
+    )
+    sql, *params = mock_pool.fetch.call_args.args
+    assert "category" in sql
+    assert "coding" in params
+
+
+@pytest.mark.asyncio
+async def test_list_templates_filter_by_tag(mock_pool):
+    mock_pool.fetch = AsyncMock(return_value=[])
+    await list_templates(
+        mock_pool,
+        scope=TemplateScope.SERVER,
+        owner=None,
+        tag="python",
+    )
+    sql, *params = mock_pool.fetch.call_args.args
+    assert "tags @>" in sql or "tags ? " in sql
+
+
+@pytest.mark.asyncio
+async def test_update_template_replaces_manifest(mock_pool):
+    record = _sample_record()
+    mock_pool.execute = AsyncMock()
+    await update_template(mock_pool, record)
+    sql, *params = mock_pool.execute.call_args.args
+    assert "UPDATE bank_templates" in sql
+    assert "SET" in sql
+
+
+@pytest.mark.asyncio
+async def test_delete_template_uses_natural_key(mock_pool):
+    mock_pool.execute = AsyncMock(return_value="DELETE 1")
+    deleted = await delete_template(
+        mock_pool,
+        id="backend-python",
+        scope=TemplateScope.PERSONAL,
+        owner="user-1",
+    )
+    assert deleted is True
+    sql, *params = mock_pool.execute.call_args.args
+    assert "DELETE FROM bank_templates" in sql
+    assert "id = $1" in sql
+
+
+@pytest.mark.asyncio
+async def test_delete_template_returns_false_on_miss(mock_pool):
+    mock_pool.execute = AsyncMock(return_value="DELETE 0")
+    deleted = await delete_template(
+        mock_pool,
+        id="missing",
+        scope=TemplateScope.PERSONAL,
+        owner="user-1",
+    )
+    assert deleted is False
+
+
+@pytest.mark.asyncio
+async def test_fetch_installed_template_for_apply_parses_personal_ref(mock_pool):
+    mock_pool.fetchrow = AsyncMock(return_value=None)
+    await fetch_installed_template_for_apply(
+        mock_pool,
+        template="personal/backend-python",
+        current_user="user-1",
+    )
+    sql, *params = mock_pool.fetchrow.call_args.args
+    assert "id = $1" in sql
+    assert "backend-python" in params
+    assert "user-1" in params
+
+
+@pytest.mark.asyncio
+async def test_fetch_installed_template_for_apply_parses_server_ref(mock_pool):
+    mock_pool.fetchrow = AsyncMock(return_value=None)
+    await fetch_installed_template_for_apply(
+        mock_pool,
+        template="server/conversation",
+        current_user="user-1",
+    )
+    sql, *params = mock_pool.fetchrow.call_args.args
+    assert "owner IS NULL" in sql
+
+
+@pytest.mark.asyncio
+async def test_fetch_installed_template_for_apply_rejects_bad_ref(mock_pool):
+    with pytest.raises(ValueError):
+        await fetch_installed_template_for_apply(
+            mock_pool,
+            template="not-a-ref",
+            current_user="user-1",
+        )

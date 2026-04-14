@@ -1,132 +1,271 @@
-"""Tests for template Pydantic models."""
+"""Tests for hindclaw_ext.template_models — Catalog, CatalogEntry, TemplateScope.
+
+The parallel Pydantic hierarchy (MarketplaceTemplate, DirectiveSeed,
+MentalModelSeed, EntityLabel, EntityLabelValue, _VALID_EXTRACTION_MODES)
+has been deleted. Template content validation is now performed by
+upstream's BankTemplateManifest, which is exercised inline through
+CatalogEntry's `manifest` field (a `BankTemplateManifest | None` typed
+slot).
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
-from hindclaw_ext.template_models import (
-    DirectiveSeed,
-    EntityLabel,
-    EntityLabelValue,
-    MentalModelSeed,
-    TemplateScope,
+from hindclaw_ext.template_models import Catalog, CatalogEntry, TemplateScope
+
+# --------------------------------------------------------------------------- #
+# TemplateScope
+# --------------------------------------------------------------------------- #
+
+
+def test_template_scope_values():
+    assert TemplateScope.SERVER.value == "server"
+    assert TemplateScope.PERSONAL.value == "personal"
+
+
+def test_template_scope_round_trip_through_str():
+    assert TemplateScope("server") is TemplateScope.SERVER
+    assert TemplateScope("personal") is TemplateScope.PERSONAL
+
+
+# --------------------------------------------------------------------------- #
+# CatalogEntry — inline body
+# --------------------------------------------------------------------------- #
+
+
+def _minimal_manifest_dict() -> dict:
+    return {
+        "version": "1",
+        "bank": {"reflect_mission": "test mission"},
+    }
+
+
+def test_catalog_entry_inline_parses_upstream_format():
+    entry = CatalogEntry.model_validate(
+        {
+            "id": "starter",
+            "name": "Starter",
+            "description": "A starter template",
+            "category": "coding",
+            "integrations": ["claude-code"],
+            "tags": ["python"],
+            "manifest": _minimal_manifest_dict(),
+        }
+    )
+    assert entry.id == "starter"
+    assert entry.manifest is not None
+    assert entry.manifest_file is None
+
+
+def test_catalog_entry_reference_parses_our_format():
+    entry = CatalogEntry.model_validate(
+        {
+            "id": "backend-python",
+            "name": "Backend Python",
+            "manifest_file": "templates/backend-python.json",
+        }
+    )
+    assert entry.manifest is None
+    assert entry.manifest_file == "templates/backend-python.json"
+
+
+def test_catalog_entry_rejects_both_manifest_and_file():
+    with pytest.raises(ValidationError) as exc:
+        CatalogEntry.model_validate(
+            {
+                "id": "bad",
+                "name": "Bad",
+                "manifest": _minimal_manifest_dict(),
+                "manifest_file": "templates/bad.json",
+            }
+        )
+    assert "both 'manifest' and 'manifest_file'" in str(exc.value)
+
+
+def test_catalog_entry_rejects_neither():
+    with pytest.raises(ValidationError) as exc:
+        CatalogEntry.model_validate({"id": "bad", "name": "Bad"})
+    assert "neither 'manifest' nor 'manifest_file'" in str(exc.value)
+
+
+def test_catalog_entry_rejects_unknown_fields():
+    with pytest.raises(ValidationError):
+        CatalogEntry.model_validate(
+            {
+                "id": "bad",
+                "name": "Bad",
+                "manifest_file": "templates/bad.json",
+                "unknown_field": "nope",
+            }
+        )
+
+
+# --------------------------------------------------------------------------- #
+# Catalog
+# --------------------------------------------------------------------------- #
+
+
+def test_catalog_top_level_shape():
+    catalog = Catalog.model_validate(
+        {
+            "catalog_version": "1",
+            "name": "hindclaw-official",
+            "description": "Official templates",
+            "templates": [
+                {
+                    "id": "a",
+                    "name": "A",
+                    "manifest_file": "templates/a.json",
+                },
+                {
+                    "id": "b",
+                    "name": "B",
+                    "manifest": _minimal_manifest_dict(),
+                },
+            ],
+        }
+    )
+    assert catalog.catalog_version == "1"
+    assert [e.id for e in catalog.templates] == ["a", "b"]
+
+
+def test_catalog_rejects_unknown_top_level_fields():
+    with pytest.raises(ValidationError):
+        Catalog.model_validate(
+            {
+                "catalog_version": "1",
+                "templates": [],
+                "extra_field": "nope",
+            }
+        )
+
+
+def test_catalog_accepts_minimal_shape_matching_upstream_hub():
+    """Upstream hindsight-docs/src/data/templates.json carries only a top-level
+    `templates` array. HindClaw's Catalog Pydantic must accept that minimal
+    shape verbatim, which proves the 'zero adapter code' compatibility claim."""
+    catalog = Catalog.model_validate(
+        {
+            "templates": [
+                {
+                    "id": "conversation",
+                    "name": "Conversation",
+                    "manifest": _minimal_manifest_dict(),
+                }
+            ]
+        }
+    )
+    assert catalog.name is None
+    assert len(catalog.templates) == 1
+
+
+def test_catalog_accepts_upstream_templates_json_verbatim():
+    """Parse the literal byte content of
+    build/hindsight/.upstream/hindsight-docs/src/data/templates.json via
+    Catalog.model_validate_json() with no transformation.
+
+    Load-bearing test for the spec's 'zero adapter code' claim. Skips if
+    the upstream data file is not present in the current checkout
+    (e.g. shallow-submodule environments) so the test doesn't break a
+    minimal clone.
+    """
+    upstream_catalog = (
+        Path(__file__).resolve().parents[3]
+        / "hindsight"
+        / ".upstream"
+        / "hindsight-docs"
+        / "src"
+        / "data"
+        / "templates.json"
+    )
+    if not upstream_catalog.exists():
+        pytest.skip(f"upstream catalog not present at {upstream_catalog}")
+    catalog = Catalog.model_validate_json(upstream_catalog.read_text())
+    assert len(catalog.templates) >= 1
+    for entry in catalog.templates:
+        assert entry.manifest is not None, f"upstream catalog entry {entry.id!r} missing inline manifest"
+
+
+def test_mental_model_id_regex_matches_upstream():
+    """Upstream's BankTemplateMentalModel enforces id ~= ^[a-z0-9][a-z0-9-]*$.
+    Parse valid and invalid ids through upstream's own Pydantic to prove
+    the HindClaw manifest wrapper inherits that constraint."""
+    from hindsight_api.api.http import BankTemplateMentalModel
+
+    good_ids = [
+        "python-best-practices",
+        "x",
+        "a1",
+        "with-many-hyphens",
+        "0-starts-with-digit",
+    ]
+    for good in good_ids:
+        BankTemplateMentalModel.model_validate({"id": good, "name": "n", "source_query": "q"})
+
+    bad_ids = [
+        "",
+        "-leading-hyphen",
+        "Upper",
+        "with space",
+        "with_underscore",
+        "with/slash",
+    ]
+    for bad in bad_ids:
+        with pytest.raises(ValidationError):
+            BankTemplateMentalModel.model_validate({"id": bad, "name": "n", "source_query": "q"})
+
+
+# --------------------------------------------------------------------------- #
+# Regression: no reference to deleted identifiers
+# --------------------------------------------------------------------------- #
+
+
+def test_no_legacy_identifiers_in_template_models_module():
+    import hindclaw_ext.template_models as mod
+
+    deleted = {
+        "MarketplaceTemplate",
+        "DirectiveSeed",
+        "MentalModelSeed",
+        "EntityLabel",
+        "EntityLabelValue",
+        "_VALID_EXTRACTION_MODES",
+    }
+    assert deleted.isdisjoint(vars(mod)), (
+        f"template_models still exports legacy identifiers: {deleted & vars(mod).keys()}"
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Bundled templates — drop-zone regression guards
+# --------------------------------------------------------------------------- #
+
+BUNDLED_TEMPLATE_ROOT = Path(__file__).parent.parent.parent / "hindclaw-templates" / "templates"
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["backend-python", "fullstack-typescript", "astromech-test"],
 )
-from hindclaw_ext.models import TemplateRecord
+def test_bundled_template_parses_via_upstream_pydantic(name: str):
+    from hindsight_api.api.http import BankTemplateManifest, validate_bank_template
+
+    data = json.loads((BUNDLED_TEMPLATE_ROOT / f"{name}.json").read_text())
+    manifest = BankTemplateManifest.model_validate(data)
+    errors = validate_bank_template(manifest)
+    assert not errors, f"{name}: {errors}"
 
 
-class TestDirectiveSeed:
-    def test_minimal(self):
-        seed = DirectiveSeed(name="no-pii", content="Never store PII.")
-        assert seed.name == "no-pii"
-        assert seed.content == "Never store PII."
-        assert seed.priority == 0
-        assert seed.is_active is True
-
-    def test_full(self):
-        seed = DirectiveSeed(
-            name="cite", content="Always cite.", priority=5, is_active=False
-        )
-        assert seed.priority == 5
-        assert seed.is_active is False
-
-
-class TestMentalModelSeed:
-    def test_valid(self):
-        seed = MentalModelSeed(name="Best Practices", source_query="What patterns?")
-        assert seed.name == "Best Practices"
-        assert seed.source_query == "What patterns?"
-
-
-class TestEntityLabel:
-    def test_value_type_requires_values(self):
-        with pytest.raises(ValueError):
-            EntityLabel(key="domain", type="value")
-
-    def test_value_type_with_values(self):
-        label = EntityLabel(
-            key="domain",
-            type="value",
-            values=[EntityLabelValue(value="api", description="API design")],
-        )
-        assert label.key == "domain"
-        assert len(label.values) == 1
-
-    def test_text_type_no_values_needed(self):
-        label = EntityLabel(key="notes", type="text")
-        assert label.type == "text"
-        assert label.values == []
-
-    def test_multi_values_type(self):
-        label = EntityLabel(
-            key="tags",
-            type="multi-values",
-            values=[EntityLabelValue(value="a"), EntityLabelValue(value="b")],
-        )
-        assert label.type == "multi-values"
-
-    def test_invalid_type(self):
-        with pytest.raises(ValueError):
-            EntityLabel(key="x", type="categorical")
-
-    def test_tag_field(self):
-        label = EntityLabel(
-            key="domain", type="value", tag=True,
-            values=[EntityLabelValue(value="api")],
-        )
-        assert label.tag is True
-
-    def test_defaults(self):
-        label = EntityLabel(
-            key="x", type="value",
-            values=[EntityLabelValue(value="a")],
-        )
-        assert label.optional is True
-        assert label.tag is False
-
-
-class TestTemplateScope:
-    def test_valid_scopes(self):
-        assert TemplateScope.SERVER == "server"
-        assert TemplateScope.PERSONAL == "personal"
-
-
-class TestTemplateRecord:
-    def test_minimal(self):
-        rec = TemplateRecord(
-            id="backend-python",
-            scope="server",
-            owner=None,
-            source_name="hindclaw",
-            schema_version=1,
-            min_hindclaw_version="0.2.0",
-            min_hindsight_version="0.4.20",
-            version="1.0.0",
-            source_url=None,
-            source_revision=None,
-            description="Backend patterns",
-            author="community",
-            tags=["python", "backend"],
-            retain_mission="Extract backend patterns.",
-            reflect_mission="You are a backend engineer.",
-            observations_mission=None,
-            retain_extraction_mode="verbose",
-            retain_custom_instructions=None,
-            retain_chunk_size=None,
-            retain_default_strategy=None,
-            retain_strategies={},
-            entity_labels=[],
-            entities_allow_free_form=True,
-            enable_observations=True,
-            consolidation_llm_batch_size=None,
-            consolidation_source_facts_max_tokens=None,
-            consolidation_source_facts_max_tokens_per_observation=None,
-            disposition_skepticism=3,
-            disposition_literalism=3,
-            disposition_empathy=3,
-            directive_seeds=[],
-            mental_model_seeds=[],
-            created_at="2026-03-25T12:00:00+00:00",
-            updated_at="2026-03-25T12:00:00+00:00",
-        )
-        assert rec.id == "backend-python"
-        assert rec.scope == "server"
-        assert rec.owner is None
-        assert rec.source_name == "hindclaw"
+def test_no_bundled_template_uses_verbatim_extraction_mode():
+    """Regression guard — `verbatim` was dropped from HindClaw in the
+    convergence refactor because upstream's validator only accepts
+    concise/verbose/custom/chunks."""
+    for name in ("backend-python", "fullstack-typescript", "astromech-test"):
+        data = json.loads((BUNDLED_TEMPLATE_ROOT / f"{name}.json").read_text())
+        mode = data.get("bank", {}).get("retain_extraction_mode")
+        assert mode != "verbatim", f"{name} still uses verbatim extraction mode"

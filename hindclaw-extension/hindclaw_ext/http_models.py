@@ -1,11 +1,14 @@
 """Pydantic request and response models for HindclawHttp API endpoints."""
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from datetime import datetime
 
-from hindclaw_ext.template_models import DirectiveSeed, EntityLabel, MentalModelSeed
+from hindsight_api.api.http import BankTemplateImportResponse, BankTemplateManifest  # type: ignore[attr-defined]
+from pydantic import BaseModel, ConfigDict, Field
 
+from hindclaw_ext.template_models import TemplateScope
 
 # --- Users ---
+
 
 class CreateUserRequest(BaseModel):
     id: str
@@ -22,12 +25,14 @@ class UpdateUserRequest(BaseModel):
 
 # --- Channels ---
 
+
 class AddChannelRequest(BaseModel):
     provider: str
     sender_id: str
 
 
 # --- Groups (identity-only) ---
+
 
 class CreateGroupRequest(BaseModel):
     id: str
@@ -40,11 +45,13 @@ class UpdateGroupRequest(BaseModel):
 
 # --- Group Members ---
 
+
 class AddMemberRequest(BaseModel):
     user_id: str
 
 
 # --- API Keys ---
+
 
 class CreateApiKeyRequest(BaseModel):
     description: str | None = None
@@ -266,207 +273,120 @@ class DebugResolveResponse(BaseModel):
 # --- Templates ---
 
 
-_VALID_SCOPES = ("server", "personal")
-_VALID_EXTRACTION_MODES = ("concise", "verbose", "custom", "verbatim", "chunks")
-
-
 class CreateTemplateRequest(BaseModel):
-    """Request to create a custom template."""
+    """Request to create a personal template by inlining an upstream manifest."""
 
-    model_config = {"extra": "forbid"}
+    model_config = ConfigDict(extra="forbid")
 
     id: str = Field(min_length=1, max_length=128)
-    scope: str
-    description: str = ""
-    author: str = ""
+    name: str = Field(min_length=1)
+    description: str | None = None
+    category: str | None = None
+    integrations: list[str] = Field(default_factory=list)
     tags: list[str] = Field(default_factory=list)
-    min_hindclaw_version: str
-    min_hindsight_version: str | None = None
-    retain_mission: str
-    reflect_mission: str
-    observations_mission: str | None = None
-    retain_extraction_mode: str = "concise"
-    retain_custom_instructions: str | None = None
-    retain_chunk_size: int | None = Field(default=None, gt=0)
-    retain_default_strategy: str | None = None
-    retain_strategies: dict = Field(default_factory=dict)
-    entity_labels: list[EntityLabel] = Field(default_factory=list)
-    entities_allow_free_form: bool = True
-    enable_observations: bool = True
-    consolidation_llm_batch_size: int | None = Field(default=None, gt=0)
-    consolidation_source_facts_max_tokens: int | None = None
-    consolidation_source_facts_max_tokens_per_observation: int | None = None
-    disposition_skepticism: int = Field(default=3, ge=1, le=5)
-    disposition_literalism: int = Field(default=3, ge=1, le=5)
-    disposition_empathy: int = Field(default=3, ge=1, le=5)
-    directive_seeds: list[DirectiveSeed] = Field(default_factory=list)
-    mental_model_seeds: list[MentalModelSeed] = Field(default_factory=list)
+    manifest: BankTemplateManifest
 
-    @field_validator("scope")
-    @classmethod
-    def _validate_scope(cls, v: str) -> str:
-        if v not in _VALID_SCOPES:
-            raise ValueError(f"scope must be one of {_VALID_SCOPES}")
-        return v
 
-    @field_validator("retain_extraction_mode")
-    @classmethod
-    def _validate_extraction_mode(cls, v: str) -> str:
-        if v not in _VALID_EXTRACTION_MODES:
-            raise ValueError(f"retain_extraction_mode must be one of {_VALID_EXTRACTION_MODES}")
-        return v
+class PatchTemplateRequest(BaseModel):
+    """Partial update for hand-edited templates. Every field is optional."""
 
-    @model_validator(mode="after")
-    def _validate_cross_fields(self) -> "CreateTemplateRequest":
-        if self.retain_extraction_mode == "custom" and not self.retain_custom_instructions:
-            raise ValueError("retain_custom_instructions required when retain_extraction_mode is 'custom'")
-        if self.retain_extraction_mode != "custom" and self.retain_custom_instructions is not None:
-            raise ValueError("retain_custom_instructions only valid when retain_extraction_mode is 'custom'")
-        return self
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = None
+    description: str | None = None
+    category: str | None = None
+    integrations: list[str] | None = None
+    tags: list[str] | None = None
+    manifest: BankTemplateManifest | None = None
+
+
+class InstallTemplateRequest(BaseModel):
+    """Request to install a template from a marketplace source.
+
+    The ``{id}`` in the URL path is the template id WITHIN the source.
+    The installed-template id is ``alias_id`` if provided, else the source
+    template id. This lets a user install the same source template under a
+    different installed name (Section 4.3 identity invariant: at most one
+    row per (id, scope, owner)).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_name: str = Field(min_length=1)
+    source_scope: TemplateScope = TemplateScope.SERVER
+    alias_id: str | None = None
 
 
 class UpdateTemplateRequest(BaseModel):
-    """Request to update an existing template. All fields optional.
+    """Query knobs for /me/templates/{id}/update — body is empty by default."""
 
-    Note: cross-field validation (e.g. custom mode requires custom instructions)
-    cannot be fully checked here because this is a partial update. The endpoint
-    must merge with the existing record and validate the final state.
-    """
+    model_config = ConfigDict(extra="forbid")
 
-    model_config = {"extra": "forbid"}
-
-    description: str | None = None
-    author: str | None = None
-    tags: list[str] | None = None
-    min_hindclaw_version: str | None = None
-    min_hindsight_version: str | None = None
-    retain_mission: str | None = None
-    reflect_mission: str | None = None
-    observations_mission: str | None = None
-    retain_extraction_mode: str | None = None
-    retain_custom_instructions: str | None = None
-    retain_chunk_size: int | None = Field(default=None, gt=0)
-    retain_default_strategy: str | None = None
-    retain_strategies: dict | None = None
-    entity_labels: list[EntityLabel] | None = None
-    entities_allow_free_form: bool | None = None
-    enable_observations: bool | None = None
-    consolidation_llm_batch_size: int | None = Field(default=None, gt=0)
-    consolidation_source_facts_max_tokens: int | None = None
-    consolidation_source_facts_max_tokens_per_observation: int | None = None
-    disposition_skepticism: int | None = Field(default=None, ge=1, le=5)
-    disposition_literalism: int | None = Field(default=None, ge=1, le=5)
-    disposition_empathy: int | None = Field(default=None, ge=1, le=5)
-    directive_seeds: list[DirectiveSeed] | None = None
-    mental_model_seeds: list[MentalModelSeed] | None = None
-
-    @field_validator("retain_extraction_mode")
-    @classmethod
-    def _validate_extraction_mode(cls, v: str | None) -> str | None:
-        if v is not None and v not in _VALID_EXTRACTION_MODES:
-            raise ValueError(f"retain_extraction_mode must be one of {_VALID_EXTRACTION_MODES}")
-        return v
+    force: bool = False
 
 
-class TemplateSummaryResponse(BaseModel):
-    """Summary of a template for list endpoints."""
-
-    id: str
-    scope: str
-    source_name: str | None
-    version: str | None
-    description: str
-    author: str
-    tags: list[str]
-    retain_extraction_mode: str
-    disposition_skepticism: int
-    disposition_literalism: int
-    disposition_empathy: int
-    created_at: str
-    updated_at: str
+class CheckUpdateResponse(BaseModel):
+    has_update: bool
+    current_revision: str | None
+    latest_revision: str | None
+    source_name: str | None = None
+    source_scope: TemplateScope | None = None
 
 
 class TemplateResponse(BaseModel):
-    """Full template details."""
+    """Installed template, surfaced over the API."""
 
     id: str
-    scope: str
+    name: str
+    description: str | None
+    category: str | None
+    integrations: list[str]
+    tags: list[str]
+    scope: TemplateScope
     owner: str | None
     source_name: str | None
-    schema_version: int
-    min_hindclaw_version: str
-    min_hindsight_version: str | None
-    version: str | None
-    source_url: str | None
+    source_scope: TemplateScope | None
     source_revision: str | None
-    description: str
-    author: str
-    tags: list[str]
-    retain_mission: str
-    reflect_mission: str
-    observations_mission: str | None
-    retain_extraction_mode: str
-    retain_custom_instructions: str | None
-    retain_chunk_size: int | None
-    retain_default_strategy: str | None
-    retain_strategies: dict
-    entity_labels: list[dict]
-    entities_allow_free_form: bool
-    enable_observations: bool
-    consolidation_llm_batch_size: int | None
-    consolidation_source_facts_max_tokens: int | None
-    consolidation_source_facts_max_tokens_per_observation: int | None
-    disposition_skepticism: int
-    disposition_literalism: int
-    disposition_empathy: int
-    directive_seeds: list[dict]
-    mental_model_seeds: list[dict]
-    created_at: str
-    updated_at: str
+    installed_at: datetime
+    updated_at: datetime
+    manifest: dict
+
+
+class UpdateTemplateResponse(BaseModel):
+    updated: bool
+    previous_revision: str | None
+    new_revision: str | None
+    template: TemplateResponse
+
+
+class ListTemplatesResponse(BaseModel):
+    templates: list[TemplateResponse]
 
 
 # --- Bank Creation from Template ---
 
 
 class CreateBankFromTemplateRequest(BaseModel):
-    """Request to create a bank from an installed template."""
+    """Body for POST /ext/hindclaw/banks."""
 
-    model_config = {"extra": "forbid"}
+    model_config = ConfigDict(extra="forbid")
 
     bank_id: str = Field(min_length=1, max_length=128)
     template: str = Field(min_length=1, max_length=256)
     name: str | None = None
 
 
-class DirectiveSeedResult(BaseModel):
-    """Result of creating a single directive from a template seed."""
-
-    name: str
-    created: bool
-    directive_id: str | None = None
-    error: str | None = None
-
-
-class MentalModelSeedResult(BaseModel):
-    """Result of creating a single mental model from a template seed."""
-
-    name: str
-    created: bool
-    mental_model_id: str | None = None
-    operation_id: str | None = None
-    error: str | None = None
-
-
 class BankCreationResponse(BaseModel):
-    """Response from POST /ext/hindclaw/banks — bank creation from template."""
+    """Response from POST /ext/hindclaw/banks — bank creation from template.
+
+    Wraps upstream's ``BankTemplateImportResponse`` so clients see the
+    same counts/errors upstream reports directly.
+    """
 
     bank_id: str
     template: str
     bank_created: bool
-    config_applied: bool
-    directives: list[DirectiveSeedResult]
-    mental_models: list[MentalModelSeedResult]
-    errors: list[str]
+    import_result: BankTemplateImportResponse
 
 
 # --- Template Source Models ---
@@ -474,6 +394,8 @@ class BankCreationResponse(BaseModel):
 
 class CreateSourceRequest(BaseModel):
     """Request to register a marketplace source."""
+
+    model_config = ConfigDict(extra="forbid")
 
     url: str = Field(min_length=1, description="Marketplace repository URL")
     alias: str | None = Field(
@@ -486,8 +408,7 @@ class CreateSourceRequest(BaseModel):
         default=None,
         description="Auth token for private repositories",
     )
-
-    model_config = {"extra": "forbid"}
+    description: str | None = None
 
 
 class SourceResponse(BaseModel):
@@ -495,38 +416,12 @@ class SourceResponse(BaseModel):
 
     name: str
     url: str
+    scope: TemplateScope
+    owner: str | None = None
     has_auth: bool
-    created_at: str
-
-
-class MarketplaceTemplateEntry(BaseModel):
-    """A single template entry from a marketplace index."""
-
-    name: str
-    version: str
-    description: str = ""
-    author: str = ""
-    tags: list[str] = []
-
-
-class MarketplaceSearchResult(BaseModel):
-    """A template from marketplace search results with install status."""
-
-    source: str
-    source_scope: str
-    name: str
-    version: str
-    description: str = ""
-    author: str = ""
-    tags: list[str] = []
-    installed_in: list[str] = Field(default_factory=list)
-
-
-class MarketplaceSearchResponse(BaseModel):
-    """Response for marketplace search."""
-
-    results: list[MarketplaceSearchResult]
-    total: int
+    description: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
 
 
 class MeProfileResponse(BaseModel):
@@ -537,51 +432,3 @@ class MeProfileResponse(BaseModel):
     email: str | None
     is_active: bool
     channels: list[ChannelResponse]
-
-
-# --- Install / Update ---
-
-
-class InstallTemplateRequest(BaseModel):
-    """Request to install a template from a marketplace source."""
-
-    source_name: str = Field(min_length=1, description="Marketplace source name")
-    source: str | None = Field(default=None, exclude=True, description="Deprecated alias for source_name")
-    source_scope: str | None = Field(default=None, description="'server' or 'personal' — required when ambiguous")
-    name: str = Field(min_length=1, description="Template name within the source")
-    scope: str = Field(default="personal", description="'server' or 'personal'")
-
-    model_config = {"extra": "forbid"}
-
-    @model_validator(mode="before")
-    @classmethod
-    def resolve_source_alias(cls, data):
-        """Accept deprecated 'source' field as alias for source_name."""
-        if isinstance(data, dict) and "source" in data and "source_name" not in data:
-            data["source_name"] = data.pop("source")
-        elif isinstance(data, dict) and "source" in data and "source_name" in data:
-            data.pop("source")
-        return data
-
-    @field_validator("source_scope")
-    @classmethod
-    def _validate_source_scope(cls, v: str | None) -> str | None:
-        if v is not None and v not in _VALID_SCOPES:
-            raise ValueError(f"source_scope must be one of {_VALID_SCOPES}")
-        return v
-
-    @field_validator("scope")
-    @classmethod
-    def _validate_scope(cls, v: str) -> str:
-        if v not in _VALID_SCOPES:
-            raise ValueError(f"scope must be one of {_VALID_SCOPES}")
-        return v
-
-
-class TemplateUpdateResponse(BaseModel):
-    """Response for template update from marketplace."""
-
-    updated: bool
-    previous_version: str | None
-    new_version: str | None
-    template: TemplateResponse | None = None

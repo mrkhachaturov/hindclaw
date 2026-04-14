@@ -7,31 +7,31 @@ See spec Section 8.
 """
 
 import logging
-import os
 import secrets
+from datetime import datetime, timezone
 
 import asyncpg
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
+from hindsight_api.api.http import (  # type: ignore[attr-defined]
+    BankTemplateManifest,
+    validate_bank_template,
+)
 from hindsight_api.extensions import AuthenticationError, HttpExtension
+from hindsight_api.models import RequestContext  # type: ignore[attr-defined]
 
 from hindclaw_ext import db, marketplace
-from hindclaw_ext.models import ServiceAccountRecord
 from hindclaw_ext.auth import decode_jwt
 from hindclaw_ext.bank_bootstrap import bootstrap_bank_from_template
-from hindclaw_ext.marketplace import derive_source_name
-from hindclaw_ext.version import is_version_compatible
-from hindclaw_ext.policy_engine import AccessResult, apply_sa_scoping, evaluate_access, intersect_sa_policy
-from hindclaw_ext.template_ref import parse_template_ref
 from hindclaw_ext.http_models import (
     AddChannelRequest,
     AddMemberRequest,
     ApiKeyCreateResponse,
     ApiKeyResponse,
-    BankCreationResponse,
     BankPolicyResponse,
     ChannelResponse,
+    CheckUpdateResponse,
     CreateApiKeyRequest,
     CreateBankFromTemplateRequest,
     CreateGroupRequest,
@@ -43,33 +43,34 @@ from hindclaw_ext.http_models import (
     CreateSourceRequest,
     CreateTemplateRequest,
     CreateUserRequest,
-    DirectiveSeedResult,
     GroupMemberResponse,
     GroupMembershipConfirmation,
     GroupSummaryResponse,
     InstallTemplateRequest,
-    MarketplaceSearchResponse,
+    ListTemplatesResponse,
     MeProfileResponse,
-    MentalModelSeedResult,
+    PatchTemplateRequest,
     PolicyAttachmentResponse,
     PolicyResponse,
     SAKeyCreateResponse,
     SAKeyResponse,
     ServiceAccountResponse,
     SourceResponse,
-    TemplateSummaryResponse,
     TemplateResponse,
-    TemplateUpdateResponse,
     UpdateGroupRequest,
-    UpdateSelfServiceAccountRequest,
-    UpdateTemplateRequest,
     UpdatePolicyRequest,
+    UpdateSelfServiceAccountRequest,
     UpdateServiceAccountRequest,
+    UpdateTemplateResponse,
     UpdateUserRequest,
     UpsertBankPolicyRequest,
     UserResponse,
 )
+from hindclaw_ext.marketplace import derive_source_name
+from hindclaw_ext.models import ServiceAccountRecord, TemplateRecord
+from hindclaw_ext.policy_engine import AccessResult, apply_sa_scoping, evaluate_access
 from hindclaw_ext.policy_models import BankPolicyDocument, PolicyDocument
+from hindclaw_ext.template_models import CatalogEntry, TemplateScope
 
 logger = logging.getLogger(__name__)
 
@@ -149,10 +150,22 @@ async def require_admin_for_action(
             final = await apply_sa_scoping(parent_access, sa.scoping_policy_id, sa.id, action, "*")
             if not final.allowed:
                 raise AuthenticationError(f"{action} denied for sa:{sa.id}")
-            return {"principal_type": "service_account", "principal_id": f"sa:{sa.id}", "action": action, "user_id": user_id, "sa_id": sa.id}
+            return {
+                "principal_type": "service_account",
+                "principal_id": f"sa:{sa.id}",
+                "action": action,
+                "user_id": user_id,
+                "sa_id": sa.id,
+            }
         if not parent_access.allowed:
             raise AuthenticationError(f"{action} denied for {user_id}")
-        return {"principal_type": "service_account", "principal_id": f"sa:{sa.id}", "action": action, "user_id": user_id, "sa_id": sa.id}
+        return {
+            "principal_type": "service_account",
+            "principal_id": f"sa:{sa.id}",
+            "action": action,
+            "user_id": user_id,
+            "sa_id": sa.id,
+        }
 
     else:
         # User key path
@@ -169,7 +182,12 @@ async def require_admin_for_action(
     if not access.allowed:
         raise AuthenticationError(f"{action} denied for {user_id}")
 
-    return {"principal_type": "user", "principal_id": user_id, "action": action, "user_id": user_id}
+    return {
+        "principal_type": "user",
+        "principal_id": user_id,
+        "action": action,
+        "user_id": user_id,
+    }
 
 
 def _require_iam(action: str):
@@ -181,8 +199,10 @@ def _require_iam(action: str):
     Returns:
         Async dependency function.
     """
+
     async def dependency(credentials: HTTPAuthorizationCredentials = Depends(_bearer)):
         return await require_admin_for_action(action, credentials)
+
     return dependency
 
 
@@ -212,11 +232,13 @@ def _require_iam_user_only(action: str):
     Returns:
         Async FastAPI dependency function.
     """
+
     async def dependency(credentials: HTTPAuthorizationCredentials = Depends(_bearer)):
         token = credentials.credentials
         if token.startswith("hc_sa_"):
             raise HTTPException(403, "Service account credentials not accepted on /me/ endpoints")
         return await require_admin_for_action(action, credentials)
+
     return dependency
 
 
@@ -251,7 +273,11 @@ async def _authenticate_user(
             user = await db.get_user(channel_user.id) if channel_user else None
             if not user or not user.is_active:
                 raise AuthenticationError("User not found or inactive")
-            return {"principal_type": "user", "principal_id": user.id, "user_id": user.id}
+            return {
+                "principal_type": "user",
+                "principal_id": user.id,
+                "user_id": user.id,
+            }
         raise AuthenticationError("JWT must have sender")
     else:
         key_record = await db.get_api_key(token)
@@ -260,48 +286,11 @@ async def _authenticate_user(
         user = await db.get_user(key_record.user_id)
         if not user or not user.is_active:
             raise AuthenticationError("User not found or inactive")
-        return {"principal_type": "user", "principal_id": key_record.user_id, "user_id": key_record.user_id}
-
-
-async def _resolve_my_template(name: str, owner: str, source: str | None = None) -> "TemplateRecord":
-    """Resolve a personal template with ambiguity detection.
-
-    Returns the unique match for the given owner's personal templates.
-    When the ``source`` parameter is provided it is used to filter by
-    source_name — pass an empty string to select custom (non-marketplace)
-    templates (source_name=None).
-
-    Args:
-        name: Template id to resolve.
-        owner: User id of the template owner.
-        source: Optional source name filter. Empty string selects templates
-            with source_name=None (custom). None means no filter.
-
-    Returns:
-        The unique matching TemplateRecord.
-
-    Raises:
-        HTTPException: 404 if no template matches.
-        HTTPException: 409 if multiple templates match and source is not provided.
-    """
-    templates = await db.list_templates(scope="personal", owner=owner)
-    matches = [t for t in templates if t.id == name]
-
-    if source is not None:
-        src = source if source else None  # empty string -> None (custom)
-        matches = [t for t in matches if t.source_name == src]
-
-    if len(matches) == 0:
-        raise HTTPException(404, f"Template '{name}' not found")
-    if len(matches) == 1:
-        return matches[0]
-
-    sources = [t.source_name or "(custom)" for t in matches]
-    raise HTTPException(
-        409,
-        f"Ambiguous template '{name}' — exists from sources: {', '.join(sources)}. "
-        f"Use ?source= to disambiguate.",
-    )
+        return {
+            "principal_type": "user",
+            "principal_id": key_record.user_id,
+            "user_id": key_record.user_id,
+        }
 
 
 class HindclawHttp(HttpExtension):
@@ -333,44 +322,83 @@ class HindclawHttp(HttpExtension):
         async def list_users(_auth=Depends(_require_iam("iam:users:read"))):
             pool = await db.get_pool()
             rows = await pool.fetch("SELECT id, display_name, email, is_active FROM hindclaw_users ORDER BY id")
-            return [{"id": r["id"], "display_name": r["display_name"], "email": r["email"], "is_active": r["is_active"]} for r in rows]
+            return [
+                {
+                    "id": r["id"],
+                    "display_name": r["display_name"],
+                    "email": r["email"],
+                    "is_active": r["is_active"],
+                }
+                for r in rows
+            ]
 
-        @router.post("/users", status_code=201, response_model=UserResponse, operation_id="create_user")
+        @router.post(
+            "/users",
+            status_code=201,
+            response_model=UserResponse,
+            operation_id="create_user",
+        )
         async def create_user(req: CreateUserRequest, _auth=Depends(_require_iam("iam:users:write"))):
             pool = await db.get_pool()
             try:
                 await pool.execute(
                     "INSERT INTO hindclaw_users (id, display_name, email, is_active) VALUES ($1, $2, $3, $4)",
-                    req.id, req.display_name, req.email, req.is_active,
+                    req.id,
+                    req.display_name,
+                    req.email,
+                    req.is_active,
                 )
             except asyncpg.UniqueViolationError:
                 raise HTTPException(409, f"User {req.id} already exists")
-            return {"id": req.id, "display_name": req.display_name, "email": req.email, "is_active": req.is_active}
+            return {
+                "id": req.id,
+                "display_name": req.display_name,
+                "email": req.email,
+                "is_active": req.is_active,
+            }
 
         @router.get("/users/{user_id}", response_model=UserResponse, operation_id="get_user")
         async def get_user(user_id: str, _auth=Depends(_require_iam("iam:users:read"))):
             pool = await db.get_pool()
-            row = await pool.fetchrow("SELECT id, display_name, email, is_active FROM hindclaw_users WHERE id = $1", user_id)
+            row = await pool.fetchrow(
+                "SELECT id, display_name, email, is_active FROM hindclaw_users WHERE id = $1",
+                user_id,
+            )
             if not row:
                 raise HTTPException(404, f"User {user_id} not found")
-            return {"id": row["id"], "display_name": row["display_name"], "email": row["email"], "is_active": row["is_active"]}
+            return {
+                "id": row["id"],
+                "display_name": row["display_name"],
+                "email": row["email"],
+                "is_active": row["is_active"],
+            }
 
         @router.put("/users/{user_id}", response_model=UserResponse, operation_id="update_user")
-        async def update_user(user_id: str, req: UpdateUserRequest, _auth=Depends(_require_iam("iam:users:write"))):
+        async def update_user(
+            user_id: str,
+            req: UpdateUserRequest,
+            _auth=Depends(_require_iam("iam:users:write")),
+        ):
             pool = await db.get_pool()
             updates = req.model_dump(exclude_none=True)
             if not updates:
                 raise HTTPException(400, "No fields to update")
             # Column names come from Pydantic model field names (not user input) — safe
-            set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates.keys()))
+            set_clause = ", ".join(f"{k} = ${i + 2}" for i, k in enumerate(updates.keys()))
             set_clause += ", updated_at = NOW()"
             row = await pool.fetchrow(
                 f"UPDATE hindclaw_users SET {set_clause} WHERE id = $1 RETURNING id, display_name, email, is_active",
-                user_id, *updates.values(),
+                user_id,
+                *updates.values(),
             )
             if not row:
                 raise HTTPException(404, f"User {user_id} not found")
-            return {"id": row["id"], "display_name": row["display_name"], "email": row["email"], "is_active": row["is_active"]}
+            return {
+                "id": row["id"],
+                "display_name": row["display_name"],
+                "email": row["email"],
+                "is_active": row["is_active"],
+            }
 
         @router.delete("/users/{user_id}", status_code=204, operation_id="delete_user")
         async def delete_user(user_id: str, _auth=Depends(_require_iam("iam:users:write"))):
@@ -383,75 +411,126 @@ class HindclawHttp(HttpExtension):
 
         # --- User Channels ---
 
-        @router.get("/users/{user_id}/channels", response_model=list[ChannelResponse], operation_id="list_user_channels")
+        @router.get(
+            "/users/{user_id}/channels",
+            response_model=list[ChannelResponse],
+            operation_id="list_user_channels",
+        )
         async def list_user_channels(user_id: str, _auth=Depends(_require_iam("iam:users:read"))):
             pool = await db.get_pool()
             rows = await pool.fetch(
-                "SELECT provider, sender_id FROM hindclaw_user_channels WHERE user_id = $1", user_id
+                "SELECT provider, sender_id FROM hindclaw_user_channels WHERE user_id = $1",
+                user_id,
             )
             return [{"provider": r["provider"], "sender_id": r["sender_id"]} for r in rows]
 
-        @router.post("/users/{user_id}/channels", status_code=201, response_model=ChannelResponse, operation_id="add_user_channel")
-        async def add_user_channel(user_id: str, req: AddChannelRequest, _auth=Depends(_require_iam("iam:users:write"))):
+        @router.post(
+            "/users/{user_id}/channels",
+            status_code=201,
+            response_model=ChannelResponse,
+            operation_id="add_user_channel",
+        )
+        async def add_user_channel(
+            user_id: str,
+            req: AddChannelRequest,
+            _auth=Depends(_require_iam("iam:users:write")),
+        ):
             pool = await db.get_pool()
             try:
                 await pool.execute(
                     "INSERT INTO hindclaw_user_channels (user_id, provider, sender_id) VALUES ($1, $2, $3)",
-                    user_id, req.provider, req.sender_id,
+                    user_id,
+                    req.provider,
+                    req.sender_id,
                 )
             except asyncpg.UniqueViolationError:
                 raise HTTPException(409, f"Channel {req.provider}:{req.sender_id} already mapped")
             return {"provider": req.provider, "sender_id": req.sender_id}
 
-        @router.delete("/users/{user_id}/channels/{provider}/{sender_id}", status_code=204, operation_id="remove_user_channel")
-        async def remove_user_channel(user_id: str, provider: str, sender_id: str, _auth=Depends(_require_iam("iam:users:write"))):
+        @router.delete(
+            "/users/{user_id}/channels/{provider}/{sender_id}",
+            status_code=204,
+            operation_id="remove_user_channel",
+        )
+        async def remove_user_channel(
+            user_id: str,
+            provider: str,
+            sender_id: str,
+            _auth=Depends(_require_iam("iam:users:write")),
+        ):
             pool = await db.get_pool()
             await pool.execute(
                 "DELETE FROM hindclaw_user_channels WHERE user_id = $1 AND provider = $2 AND sender_id = $3",
-                user_id, provider, sender_id,
+                user_id,
+                provider,
+                sender_id,
             )
 
         # --- Groups ---
 
-        @router.get("/groups", response_model=list[GroupSummaryResponse], operation_id="list_groups")
+        @router.get(
+            "/groups",
+            response_model=list[GroupSummaryResponse],
+            operation_id="list_groups",
+        )
         async def list_groups(_auth=Depends(_require_iam("iam:groups:read"))):
             pool = await db.get_pool()
             rows = await pool.fetch("SELECT id, display_name FROM hindclaw_groups ORDER BY id")
             return [{"id": r["id"], "display_name": r["display_name"]} for r in rows]
 
-        @router.post("/groups", status_code=201, response_model=GroupSummaryResponse, operation_id="create_group")
+        @router.post(
+            "/groups",
+            status_code=201,
+            response_model=GroupSummaryResponse,
+            operation_id="create_group",
+        )
         async def create_group(req: CreateGroupRequest, _auth=Depends(_require_iam("iam:groups:write"))):
             pool = await db.get_pool()
             try:
                 await pool.execute(
                     "INSERT INTO hindclaw_groups (id, display_name) VALUES ($1, $2)",
-                    req.id, req.display_name,
+                    req.id,
+                    req.display_name,
                 )
             except asyncpg.UniqueViolationError:
                 raise HTTPException(409, f"Group {req.id} already exists")
             return {"id": req.id, "display_name": req.display_name}
 
-        @router.get("/groups/{group_id}", response_model=GroupSummaryResponse, operation_id="get_group")
+        @router.get(
+            "/groups/{group_id}",
+            response_model=GroupSummaryResponse,
+            operation_id="get_group",
+        )
         async def get_group(group_id: str, _auth=Depends(_require_iam("iam:groups:read"))):
             pool = await db.get_pool()
             row = await pool.fetchrow(
-                "SELECT id, display_name FROM hindclaw_groups WHERE id = $1", group_id,
+                "SELECT id, display_name FROM hindclaw_groups WHERE id = $1",
+                group_id,
             )
             if not row:
                 raise HTTPException(404, f"Group {group_id} not found")
             return {"id": row["id"], "display_name": row["display_name"]}
 
-        @router.put("/groups/{group_id}", response_model=GroupSummaryResponse, operation_id="update_group")
-        async def update_group(group_id: str, req: UpdateGroupRequest, _auth=Depends(_require_iam("iam:groups:write"))):
+        @router.put(
+            "/groups/{group_id}",
+            response_model=GroupSummaryResponse,
+            operation_id="update_group",
+        )
+        async def update_group(
+            group_id: str,
+            req: UpdateGroupRequest,
+            _auth=Depends(_require_iam("iam:groups:write")),
+        ):
             pool = await db.get_pool()
             updates = req.model_dump(exclude_none=True)
             if not updates:
                 raise HTTPException(400, "No fields to update")
-            set_clause = ", ".join(f"{k} = ${i+2}" for i, k in enumerate(updates.keys()))
+            set_clause = ", ".join(f"{k} = ${i + 2}" for i, k in enumerate(updates.keys()))
             set_clause += ", updated_at = NOW()"
             row = await pool.fetchrow(
                 f"UPDATE hindclaw_groups SET {set_clause} WHERE id = $1 RETURNING id, display_name",
-                group_id, *updates.values(),
+                group_id,
+                *updates.values(),
             )
             if not row:
                 raise HTTPException(404, f"Group {group_id} not found")
@@ -468,34 +547,58 @@ class HindclawHttp(HttpExtension):
 
         # --- Group Members ---
 
-        @router.get("/groups/{group_id}/members", response_model=list[GroupMemberResponse], operation_id="list_group_members")
+        @router.get(
+            "/groups/{group_id}/members",
+            response_model=list[GroupMemberResponse],
+            operation_id="list_group_members",
+        )
         async def list_group_members(group_id: str, _auth=Depends(_require_iam("iam:groups:read"))):
             pool = await db.get_pool()
             rows = await pool.fetch(
-                "SELECT user_id FROM hindclaw_group_members WHERE group_id = $1 ORDER BY user_id", group_id
+                "SELECT user_id FROM hindclaw_group_members WHERE group_id = $1 ORDER BY user_id",
+                group_id,
             )
             return [{"user_id": r["user_id"]} for r in rows]
 
-        @router.post("/groups/{group_id}/members", status_code=201, response_model=GroupMembershipConfirmation, operation_id="add_group_member")
-        async def add_group_member(group_id: str, req: AddMemberRequest, _auth=Depends(_require_iam("iam:groups:write"))):
+        @router.post(
+            "/groups/{group_id}/members",
+            status_code=201,
+            response_model=GroupMembershipConfirmation,
+            operation_id="add_group_member",
+        )
+        async def add_group_member(
+            group_id: str,
+            req: AddMemberRequest,
+            _auth=Depends(_require_iam("iam:groups:write")),
+        ):
             pool = await db.get_pool()
             await pool.execute(
                 "INSERT INTO hindclaw_group_members (group_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-                group_id, req.user_id,
+                group_id,
+                req.user_id,
             )
             return {"group_id": group_id, "user_id": req.user_id}
 
-        @router.delete("/groups/{group_id}/members/{user_id}", status_code=204, operation_id="remove_group_member")
+        @router.delete(
+            "/groups/{group_id}/members/{user_id}",
+            status_code=204,
+            operation_id="remove_group_member",
+        )
         async def remove_group_member(group_id: str, user_id: str, _auth=Depends(_require_iam("iam:groups:write"))):
             pool = await db.get_pool()
             await pool.execute(
                 "DELETE FROM hindclaw_group_members WHERE group_id = $1 AND user_id = $2",
-                group_id, user_id,
+                group_id,
+                user_id,
             )
 
         # --- API Keys ---
 
-        @router.get("/users/{user_id}/api-keys", response_model=list[ApiKeyResponse], operation_id="list_api_keys")
+        @router.get(
+            "/users/{user_id}/api-keys",
+            response_model=list[ApiKeyResponse],
+            operation_id="list_api_keys",
+        )
         async def list_api_keys(user_id: str, _auth=Depends(_require_iam("iam:users:read"))):
             """List API keys for a user. Keys are masked after creation."""
             pool = await db.get_pool()
@@ -504,58 +607,125 @@ class HindclawHttp(HttpExtension):
                 user_id,
             )
             return [
-                {"id": r["id"], "api_key_prefix": r["api_key"][:_API_KEY_MASK_LENGTH] + "...", "description": r["description"]}
+                {
+                    "id": r["id"],
+                    "api_key_prefix": r["api_key"][:_API_KEY_MASK_LENGTH] + "...",
+                    "description": r["description"],
+                }
                 for r in rows
             ]
 
-        @router.post("/users/{user_id}/api-keys", status_code=201, response_model=ApiKeyCreateResponse, operation_id="create_api_key")
-        async def create_api_key(user_id: str, req: CreateApiKeyRequest, _auth=Depends(_require_iam("iam:users:write"))):
+        @router.post(
+            "/users/{user_id}/api-keys",
+            status_code=201,
+            response_model=ApiKeyCreateResponse,
+            operation_id="create_api_key",
+        )
+        async def create_api_key(
+            user_id: str,
+            req: CreateApiKeyRequest,
+            _auth=Depends(_require_iam("iam:users:write")),
+        ):
             pool = await db.get_pool()
             key_id = secrets.token_hex(8)
             api_key = f"hc_u_{user_id}_{secrets.token_hex(16)}"
             await pool.execute(
                 "INSERT INTO hindclaw_api_keys (id, api_key, user_id, description) VALUES ($1, $2, $3, $4)",
-                key_id, api_key, user_id, req.description,
+                key_id,
+                api_key,
+                user_id,
+                req.description,
             )
             return {"id": key_id, "api_key": api_key, "description": req.description}
 
-        @router.delete("/users/{user_id}/api-keys/{key_id}", status_code=204, operation_id="delete_api_key")
+        @router.delete(
+            "/users/{user_id}/api-keys/{key_id}",
+            status_code=204,
+            operation_id="delete_api_key",
+        )
         async def delete_api_key(user_id: str, key_id: str, _auth=Depends(_require_iam("iam:users:write"))):
             pool = await db.get_pool()
             await pool.execute(
                 "DELETE FROM hindclaw_api_keys WHERE id = $1 AND user_id = $2",
-                key_id, user_id,
+                key_id,
+                user_id,
             )
 
         # --- Policies ---
 
-        @router.get("/policies", response_model=list[PolicyResponse], operation_id="list_policies")
+        @router.get(
+            "/policies",
+            response_model=list[PolicyResponse],
+            operation_id="list_policies",
+        )
         async def list_policies(_auth=Depends(_require_iam("iam:policies:read"))):
             results = await db.list_policies()
-            return [{"id": r.id, "display_name": r.display_name, "document": r.document_json, "is_builtin": r.is_builtin} for r in results]
+            return [
+                {
+                    "id": r.id,
+                    "display_name": r.display_name,
+                    "document": r.document_json,
+                    "is_builtin": r.is_builtin,
+                }
+                for r in results
+            ]
 
-        @router.post("/policies", status_code=201, response_model=PolicyResponse, operation_id="create_policy")
+        @router.post(
+            "/policies",
+            status_code=201,
+            response_model=PolicyResponse,
+            operation_id="create_policy",
+        )
         async def create_policy(req: CreatePolicyRequest, _auth=Depends(_require_iam("iam:policies:write"))):
             PolicyDocument(**req.document)
             await db.create_policy(req.id, req.display_name, req.document)
-            return {"id": req.id, "display_name": req.display_name, "document": req.document, "is_builtin": False}
+            return {
+                "id": req.id,
+                "display_name": req.display_name,
+                "document": req.document,
+                "is_builtin": False,
+            }
 
-        @router.get("/policies/{policy_id}", response_model=PolicyResponse, operation_id="get_policy")
+        @router.get(
+            "/policies/{policy_id}",
+            response_model=PolicyResponse,
+            operation_id="get_policy",
+        )
         async def get_policy_endpoint(policy_id: str, _auth=Depends(_require_iam("iam:policies:read"))):
             result = await db.get_policy(policy_id)
             if not result:
                 raise HTTPException(404, f"Policy {policy_id} not found")
-            return {"id": result.id, "display_name": result.display_name, "document": result.document_json, "is_builtin": result.is_builtin}
+            return {
+                "id": result.id,
+                "display_name": result.display_name,
+                "document": result.document_json,
+                "is_builtin": result.is_builtin,
+            }
 
-        @router.put("/policies/{policy_id}", response_model=PolicyResponse, operation_id="update_policy")
-        async def update_policy_endpoint(policy_id: str, req: UpdatePolicyRequest, _auth=Depends(_require_iam("iam:policies:write"))):
+        @router.put(
+            "/policies/{policy_id}",
+            response_model=PolicyResponse,
+            operation_id="update_policy",
+        )
+        async def update_policy_endpoint(
+            policy_id: str,
+            req: UpdatePolicyRequest,
+            _auth=Depends(_require_iam("iam:policies:write")),
+        ):
             if req.document:
                 PolicyDocument(**req.document)
             updated = await db.update_policy(policy_id, req.display_name, req.document)
             if not updated:
                 raise HTTPException(404, f"Policy {policy_id} not found or is built-in")
             result = await db.get_policy(policy_id)
-            return {"id": result.id, "display_name": result.display_name, "document": result.document_json, "is_builtin": result.is_builtin}
+            if result is None:
+                raise HTTPException(500, f"Policy {policy_id} disappeared after update")
+            return {
+                "id": result.id,
+                "display_name": result.display_name,
+                "document": result.document_json,
+                "is_builtin": result.is_builtin,
+            }
 
         @router.delete("/policies/{policy_id}", status_code=204, operation_id="delete_policy")
         async def delete_policy_endpoint(policy_id: str, _auth=Depends(_require_iam("iam:policies:write"))):
@@ -566,20 +736,46 @@ class HindclawHttp(HttpExtension):
 
         # --- Policy Attachments ---
 
-        @router.get("/policy-attachments", response_model=list[PolicyAttachmentResponse], operation_id="list_policy_attachments")
-        async def list_attachments(policy_id: str = Query(...), _auth=Depends(_require_iam("iam:policies:read"))):
+        @router.get(
+            "/policy-attachments",
+            response_model=list[PolicyAttachmentResponse],
+            operation_id="list_policy_attachments",
+        )
+        async def list_attachments(
+            policy_id: str = Query(...),
+            _auth=Depends(_require_iam("iam:policies:read")),
+        ):
             return await db.list_policy_attachments(policy_id)
 
-        @router.put("/policy-attachments", response_model=PolicyAttachmentResponse, operation_id="upsert_policy_attachment")
-        async def upsert_attachment(req: CreatePolicyAttachmentRequest, _auth=Depends(_require_iam("iam:attachments:write"))):
+        @router.put(
+            "/policy-attachments",
+            response_model=PolicyAttachmentResponse,
+            operation_id="upsert_policy_attachment",
+        )
+        async def upsert_attachment(
+            req: CreatePolicyAttachmentRequest,
+            _auth=Depends(_require_iam("iam:attachments:write")),
+        ):
             await db.create_policy_attachment(req.policy_id, req.principal_type, req.principal_id, req.priority)
             return req.model_dump()
 
-        @router.delete("/policy-attachments/{policy_id}/{principal_type}/{principal_id}", status_code=204, operation_id="delete_policy_attachment")
-        async def delete_attachment(policy_id: str, principal_type: str, principal_id: str, _auth=Depends(_require_iam("iam:attachments:write"))):
+        @router.delete(
+            "/policy-attachments/{policy_id}/{principal_type}/{principal_id}",
+            status_code=204,
+            operation_id="delete_policy_attachment",
+        )
+        async def delete_attachment(
+            policy_id: str,
+            principal_type: str,
+            principal_id: str,
+            _auth=Depends(_require_iam("iam:attachments:write")),
+        ):
             existing = await db.get_policy_attachment(policy_id, principal_type, principal_id)
             if not existing:
-                raise HTTPException(404, f"Attachment {policy_id}/{principal_type}/{principal_id} not found")
+                raise HTTPException(
+                    404,
+                    f"Attachment {policy_id}/{principal_type}/{principal_id} not found",
+                )
             await db.delete_policy_attachment(policy_id, principal_type, principal_id)
 
         # --- Self-Service SA Helpers ---
@@ -606,22 +802,54 @@ class HindclawHttp(HttpExtension):
 
         # --- Self-Service Service Accounts (/me/service-accounts) ---
 
-        @router.get("/me/service-accounts", response_model=list[ServiceAccountResponse], operation_id="list_my_service_accounts")
-        async def list_my_service_accounts(_auth=Depends(_require_iam("iam:service_accounts:read"))):
+        @router.get(
+            "/me/service-accounts",
+            response_model=list[ServiceAccountResponse],
+            operation_id="list_my_service_accounts",
+        )
+        async def list_my_service_accounts(
+            _auth=Depends(_require_iam("iam:service_accounts:read")),
+        ):
             return await db.list_service_accounts_by_owner(_auth["user_id"])
 
-        @router.post("/me/service-accounts", status_code=201, response_model=ServiceAccountResponse, operation_id="create_my_service_account")
-        async def create_my_service_account(req: CreateSelfServiceAccountRequest, _auth=Depends(_require_iam("iam:service_accounts:write"))):
+        @router.post(
+            "/me/service-accounts",
+            status_code=201,
+            response_model=ServiceAccountResponse,
+            operation_id="create_my_service_account",
+        )
+        async def create_my_service_account(
+            req: CreateSelfServiceAccountRequest,
+            _auth=Depends(_require_iam("iam:service_accounts:write")),
+        ):
             owner_user_id = _auth["user_id"]
             await db.create_service_account(req.id, owner_user_id, req.display_name, req.scoping_policy_id)
-            return {"id": req.id, "owner_user_id": owner_user_id, "display_name": req.display_name, "is_active": True, "scoping_policy_id": req.scoping_policy_id}
+            return {
+                "id": req.id,
+                "owner_user_id": owner_user_id,
+                "display_name": req.display_name,
+                "is_active": True,
+                "scoping_policy_id": req.scoping_policy_id,
+            }
 
-        @router.get("/me/service-accounts/{sa_id}", response_model=ServiceAccountResponse, operation_id="get_my_service_account")
+        @router.get(
+            "/me/service-accounts/{sa_id}",
+            response_model=ServiceAccountResponse,
+            operation_id="get_my_service_account",
+        )
         async def get_my_service_account(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:read"))):
             return await _get_owned_sa(sa_id, _auth["user_id"])
 
-        @router.put("/me/service-accounts/{sa_id}", response_model=ServiceAccountResponse, operation_id="update_my_service_account")
-        async def update_my_service_account(sa_id: str, req: UpdateSelfServiceAccountRequest, _auth=Depends(_require_iam("iam:service_accounts:write"))):
+        @router.put(
+            "/me/service-accounts/{sa_id}",
+            response_model=ServiceAccountResponse,
+            operation_id="update_my_service_account",
+        )
+        async def update_my_service_account(
+            sa_id: str,
+            req: UpdateSelfServiceAccountRequest,
+            _auth=Depends(_require_iam("iam:service_accounts:write")),
+        ):
             await _get_owned_sa(sa_id, _auth["user_id"])
             await db.update_service_account(sa_id, display_name=req.display_name)
             result = await db.get_service_account(sa_id)
@@ -629,27 +857,59 @@ class HindclawHttp(HttpExtension):
                 raise HTTPException(404, f"Service account {sa_id} not found")
             return result
 
-        @router.delete("/me/service-accounts/{sa_id}", status_code=204, operation_id="delete_my_service_account")
+        @router.delete(
+            "/me/service-accounts/{sa_id}",
+            status_code=204,
+            operation_id="delete_my_service_account",
+        )
         async def delete_my_service_account(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:write"))):
             await _get_owned_sa(sa_id, _auth["user_id"])
             await db.delete_service_account(sa_id)
 
-        @router.get("/me/service-accounts/{sa_id}/keys", response_model=list[SAKeyResponse], operation_id="list_my_sa_keys")
+        @router.get(
+            "/me/service-accounts/{sa_id}/keys",
+            response_model=list[SAKeyResponse],
+            operation_id="list_my_sa_keys",
+        )
         async def list_my_sa_keys(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:read"))):
             await _get_owned_sa(sa_id, _auth["user_id"])
             keys = await db.list_sa_keys(sa_id)
-            return [{"id": k.id, "api_key_prefix": k.api_key[:_API_KEY_MASK_LENGTH], "description": k.description} for k in keys]
+            return [
+                {
+                    "id": k.id,
+                    "api_key_prefix": k.api_key[:_API_KEY_MASK_LENGTH],
+                    "description": k.description,
+                }
+                for k in keys
+            ]
 
-        @router.post("/me/service-accounts/{sa_id}/keys", status_code=201, response_model=SAKeyCreateResponse, operation_id="create_my_sa_key")
-        async def create_my_sa_key(sa_id: str, req: CreateSAKeyRequest, _auth=Depends(_require_iam("iam:service_account_keys:write"))):
+        @router.post(
+            "/me/service-accounts/{sa_id}/keys",
+            status_code=201,
+            response_model=SAKeyCreateResponse,
+            operation_id="create_my_sa_key",
+        )
+        async def create_my_sa_key(
+            sa_id: str,
+            req: CreateSAKeyRequest,
+            _auth=Depends(_require_iam("iam:service_account_keys:write")),
+        ):
             await _get_owned_sa(sa_id, _auth["user_id"])
             key_id = secrets.token_hex(8)
             api_key = f"hc_sa_{sa_id}_{secrets.token_hex(16)}"
             await db.create_sa_key(key_id, sa_id, api_key, req.description)
             return {"id": key_id, "api_key": api_key, "description": req.description}
 
-        @router.delete("/me/service-accounts/{sa_id}/keys/{key_id}", status_code=204, operation_id="delete_my_sa_key")
-        async def delete_my_sa_key(sa_id: str, key_id: str, _auth=Depends(_require_iam("iam:service_account_keys:write"))):
+        @router.delete(
+            "/me/service-accounts/{sa_id}/keys/{key_id}",
+            status_code=204,
+            operation_id="delete_my_sa_key",
+        )
+        async def delete_my_sa_key(
+            sa_id: str,
+            key_id: str,
+            _auth=Depends(_require_iam("iam:service_account_keys:write")),
+        ):
             await _get_owned_sa(sa_id, _auth["user_id"])
             existing = await db.get_sa_key(key_id, sa_id)
             if not existing:
@@ -669,6 +929,8 @@ class HindclawHttp(HttpExtension):
                 MeProfileResponse with user record and channel list.
             """
             user = await db.get_user(_auth["user_id"])
+            if user is None:
+                raise HTTPException(404, f"User {_auth['user_id']} not found")
             pool = await db.get_pool()
             channel_rows = await pool.fetch(
                 "SELECT provider, sender_id FROM hindclaw_user_channels WHERE user_id = $1",
@@ -684,8 +946,14 @@ class HindclawHttp(HttpExtension):
 
         # --- Self-Service API Keys (/me/api-keys) ---
 
-        @router.get("/me/api-keys", response_model=list[ApiKeyResponse], operation_id="list_my_api_keys")
-        async def list_my_api_keys(_auth=Depends(_require_iam_user_only("iam:api_keys:read"))):
+        @router.get(
+            "/me/api-keys",
+            response_model=list[ApiKeyResponse],
+            operation_id="list_my_api_keys",
+        )
+        async def list_my_api_keys(
+            _auth=Depends(_require_iam_user_only("iam:api_keys:read")),
+        ):
             """List the caller's own API keys (masked).
 
             Args:
@@ -700,12 +968,24 @@ class HindclawHttp(HttpExtension):
                 _auth["user_id"],
             )
             return [
-                {"id": r["id"], "api_key_prefix": r["api_key"][:_API_KEY_MASK_LENGTH] + "...", "description": r["description"]}
+                {
+                    "id": r["id"],
+                    "api_key_prefix": r["api_key"][:_API_KEY_MASK_LENGTH] + "...",
+                    "description": r["description"],
+                }
                 for r in rows
             ]
 
-        @router.post("/me/api-keys", status_code=201, response_model=ApiKeyCreateResponse, operation_id="create_my_api_key")
-        async def create_my_api_key(req: CreateApiKeyRequest, _auth=Depends(_require_iam_user_only("iam:api_keys:write"))):
+        @router.post(
+            "/me/api-keys",
+            status_code=201,
+            response_model=ApiKeyCreateResponse,
+            operation_id="create_my_api_key",
+        )
+        async def create_my_api_key(
+            req: CreateApiKeyRequest,
+            _auth=Depends(_require_iam_user_only("iam:api_keys:write")),
+        ):
             """Create a new API key for the caller.
 
             Args:
@@ -721,7 +1001,10 @@ class HindclawHttp(HttpExtension):
             api_key = f"hc_u_{user_id}_{secrets.token_hex(16)}"
             await pool.execute(
                 "INSERT INTO hindclaw_api_keys (id, api_key, user_id, description) VALUES ($1, $2, $3, $4)",
-                key_id, api_key, user_id, req.description,
+                key_id,
+                api_key,
+                user_id,
+                req.description,
             )
             return {"id": key_id, "api_key": api_key, "description": req.description}
 
@@ -738,7 +1021,8 @@ class HindclawHttp(HttpExtension):
             pool = await db.get_pool()
             await pool.execute(
                 "DELETE FROM hindclaw_api_keys WHERE id = $1 AND user_id = $2",
-                key_id, _auth["user_id"],
+                key_id,
+                _auth["user_id"],
             )
 
         # --- Self-Service Template Sources (/me/template-sources) ---
@@ -767,8 +1051,12 @@ class HindclawHttp(HttpExtension):
                 SourceResponse(
                     name=s.name,
                     url=s.url,
+                    scope=TemplateScope(s.scope),
+                    owner=s.owner,
                     has_auth=s.auth_token is not None,
-                    created_at=str(s.created_at),
+                    description=s.description,
+                    created_at=str(s.created_at) if s.created_at else None,
+                    updated_at=str(s.updated_at) if s.updated_at else None,
                 )
                 for s in sources
             ]
@@ -817,8 +1105,12 @@ class HindclawHttp(HttpExtension):
             return SourceResponse(
                 name=rec.name,
                 url=rec.url,
+                scope=TemplateScope(rec.scope),
+                owner=rec.owner,
                 has_auth=rec.auth_token is not None,
-                created_at=str(rec.created_at),
+                description=rec.description,
+                created_at=str(rec.created_at) if rec.created_at else None,
+                updated_at=str(rec.updated_at) if rec.updated_at else None,
             )
 
         @router.delete(
@@ -847,309 +1139,58 @@ class HindclawHttp(HttpExtension):
             if not deleted:
                 raise HTTPException(404, f"Source '{name}' not found in your personal sources")
 
-        # --- Self-Service Templates (/me/templates) ---
-
-        @router.get(
-            "/me/templates",
-            response_model=list[TemplateSummaryResponse],
-            operation_id="list_my_templates",
-        )
-        async def list_my_templates(_auth=Depends(_require_iam("template:list"))):
-            """List the caller's personal templates.
-
-            Scoped to the caller's user_id — only returns templates with
-            scope='personal' owned by the authenticated principal.
-
-            Args:
-                _auth: Authenticated principal (users and SAs allowed).
-
-            Returns:
-                List of TemplateSummaryResponse for the caller's personal templates.
-            """
-            rows = await db.list_templates(scope="personal", owner=_auth["user_id"])
-            return [r.model_dump() for r in rows]
-
-        @router.post(
-            "/me/templates",
-            response_model=TemplateResponse,
-            status_code=201,
-            operation_id="create_my_template",
-        )
-        async def create_my_template(
-            request: CreateTemplateRequest,
-            _auth=Depends(_require_iam("template:create")),
-        ):
-            """Create a personal template for the caller.
-
-            Template is created with scope='personal' and owner set to the
-            caller's user_id. The scope field in the request body is ignored —
-            personal scope is always used.
-
-            Args:
-                request: CreateTemplateRequest with template fields.
-                _auth: Authenticated principal (users and SAs allowed).
-
-            Returns:
-                TemplateResponse for the newly created personal template.
-
-            Raises:
-                HTTPException: 409 if a personal template with that id already exists.
-            """
-            owner = _auth["user_id"]
-            try:
-                rec = await db.create_template(
-                    id=request.id,
-                    scope="personal",
-                    owner=owner,
-                    source_name=None,
-                    schema_version=1,
-                    min_hindclaw_version=request.min_hindclaw_version,
-                    min_hindsight_version=request.min_hindsight_version,
-                    description=request.description,
-                    author=request.author,
-                    tags=request.tags,
-                    retain_mission=request.retain_mission,
-                    reflect_mission=request.reflect_mission,
-                    observations_mission=request.observations_mission,
-                    retain_extraction_mode=request.retain_extraction_mode,
-                    retain_custom_instructions=request.retain_custom_instructions,
-                    retain_chunk_size=request.retain_chunk_size,
-                    retain_default_strategy=request.retain_default_strategy,
-                    retain_strategies=request.retain_strategies,
-                    entity_labels=[l.model_dump() for l in request.entity_labels],
-                    entities_allow_free_form=request.entities_allow_free_form,
-                    enable_observations=request.enable_observations,
-                    consolidation_llm_batch_size=request.consolidation_llm_batch_size,
-                    consolidation_source_facts_max_tokens=request.consolidation_source_facts_max_tokens,
-                    consolidation_source_facts_max_tokens_per_observation=request.consolidation_source_facts_max_tokens_per_observation,
-                    disposition_skepticism=request.disposition_skepticism,
-                    disposition_literalism=request.disposition_literalism,
-                    disposition_empathy=request.disposition_empathy,
-                    directive_seeds=[s.model_dump() for s in request.directive_seeds],
-                    mental_model_seeds=[s.model_dump() for s in request.mental_model_seeds],
-                )
-            except asyncpg.UniqueViolationError:
-                raise HTTPException(409, f"Template '{request.id}' already exists")
-            return rec.model_dump()
-
-        @router.post(
-            "/me/templates/install",
-            response_model=TemplateResponse,
-            status_code=201,
-            operation_id="install_my_template",
-        )
-        async def install_my_template(
-            request: InstallTemplateRequest,
-            _auth=Depends(_require_iam("template:install")),
-        ):
-            """Install a template from a visible source to personal scope.
-
-            Resolves the named source (visible to the caller), fetches the
-            template from the marketplace, validates it, and upserts it into
-            the caller's personal scope.
-
-            Args:
-                request: InstallTemplateRequest with source_name and template name.
-                _auth: Authenticated principal (users and SAs allowed).
-
-            Returns:
-                TemplateResponse for the installed template.
-
-            Raises:
-                HTTPException: 404 if the source or template is not found.
-                HTTPException: 409 if the source name is ambiguous or template already installed.
-                HTTPException: 422 if template validation fails or name mismatches.
-            """
-            try:
-                source = await db.resolve_source(
-                    request.source_name,
-                    caller=_auth["user_id"],
-                    source_scope=request.source_scope,
-                )
-            except KeyError as e:
-                raise HTTPException(404, str(e))
-            except ValueError as e:
-                raise HTTPException(409, str(e))
-
-            template = await marketplace.fetch_template(source, request.name)
-            if not template:
-                raise HTTPException(404, f"Template '{request.name}' not found in source '{source.name}'")
-
-            if template.name != request.name:
-                raise HTTPException(422, f"Template name mismatch: requested '{request.name}' but file contains '{template.name}'")
-
-            errors = marketplace.validate_template(template)
-            if errors:
-                raise HTTPException(422, "; ".join(errors))
-
-            owner = _auth["user_id"]
-            try:
-                rec = await db.upsert_template_from_marketplace(
-                    id=template.name,
-                    scope="personal",
-                    owner=owner,
-                    source_name=source.name,
-                    source_url=source.url,
-                    source_revision=None,
-                    schema_version=template.schema_version,
-                    min_hindclaw_version=template.min_hindclaw_version,
-                    min_hindsight_version=template.min_hindsight_version,
-                    version=template.version,
-                    description=template.description,
-                    author=template.author,
-                    tags=template.tags,
-                    retain_mission=template.retain_mission,
-                    reflect_mission=template.reflect_mission,
-                    observations_mission=template.observations_mission,
-                    retain_extraction_mode=template.retain_extraction_mode,
-                    retain_custom_instructions=template.retain_custom_instructions,
-                    retain_chunk_size=template.retain_chunk_size,
-                    retain_default_strategy=template.retain_default_strategy,
-                    retain_strategies=template.retain_strategies,
-                    entity_labels=[l.model_dump() for l in template.entity_labels],
-                    entities_allow_free_form=template.entities_allow_free_form,
-                    enable_observations=template.enable_observations,
-                    consolidation_llm_batch_size=template.consolidation_llm_batch_size,
-                    consolidation_source_facts_max_tokens=template.consolidation_source_facts_max_tokens,
-                    consolidation_source_facts_max_tokens_per_observation=template.consolidation_source_facts_max_tokens_per_observation,
-                    disposition_skepticism=template.disposition_skepticism,
-                    disposition_literalism=template.disposition_literalism,
-                    disposition_empathy=template.disposition_empathy,
-                    directive_seeds=[s.model_dump() for s in template.directive_seeds],
-                    mental_model_seeds=[s.model_dump() for s in template.mental_model_seeds],
-                )
-            except asyncpg.UniqueViolationError:
-                raise HTTPException(409, f"Template '{template.name}' already installed")
-            return rec.model_dump()
-
-        @router.get(
-            "/me/templates/{name}",
-            response_model=TemplateResponse,
-            operation_id="get_my_template",
-        )
-        async def get_my_template(
-            name: str,
-            source: str | None = Query(default=None),
-            _auth=Depends(_require_iam("template:list")),
-        ):
-            """Get a single personal template by name.
-
-            When multiple personal templates share the same name (installed from
-            different sources), use the ``source`` query parameter to disambiguate.
-            Pass an empty string to select a custom (non-marketplace) template.
-
-            Args:
-                name: Template name (id).
-                source: Optional source name to disambiguate. Empty string selects
-                    custom templates (source_name=None).
-                _auth: Authenticated principal (users and SAs allowed).
-
-            Returns:
-                TemplateResponse for the matched template.
-
-            Raises:
-                HTTPException: 404 if no matching template is found.
-                HTTPException: 409 if multiple templates match and source is not provided.
-            """
-            template = await _resolve_my_template(name, _auth["user_id"], source)
-            return template.model_dump()
-
-        @router.put(
-            "/me/templates/{name}",
-            response_model=TemplateResponse,
-            operation_id="update_my_template",
-        )
-        async def update_my_template(
-            name: str,
-            request: UpdateTemplateRequest,
-            source: str | None = Query(default=None),
-            _auth=Depends(_require_iam("template:manage")),
-        ):
-            """Update a personal template.
-
-            Resolves the template by name (with optional source disambiguation),
-            then applies the partial update.
-
-            Args:
-                name: Template name (id).
-                request: UpdateTemplateRequest with fields to update.
-                source: Optional source name to disambiguate.
-                _auth: Authenticated principal (users and SAs allowed).
-
-            Returns:
-                TemplateResponse for the updated template.
-
-            Raises:
-                HTTPException: 404 if no matching template is found.
-                HTTPException: 409 if multiple templates match and source is not provided.
-            """
-            template = await _resolve_my_template(name, _auth["user_id"], source)
-            updates = request.model_dump(exclude_unset=True)
-            rec = await db.update_template(
-                template.id,
-                "personal",
-                owner=_auth["user_id"],
-                source_name=template.source_name,
-                updates=updates,
-            )
-            if rec is None:
-                raise HTTPException(404, "Template not found")
-            return rec.model_dump()
-
-        @router.delete(
-            "/me/templates/{name}",
-            status_code=204,
-            operation_id="delete_my_template",
-        )
-        async def delete_my_template(
-            name: str,
-            source: str | None = Query(default=None),
-            _auth=Depends(_require_iam("template:manage")),
-        ):
-            """Delete a personal template.
-
-            Resolves the template by name (with optional source disambiguation),
-            then deletes it.
-
-            Args:
-                name: Template name (id).
-                source: Optional source name to disambiguate.
-                _auth: Authenticated principal (users and SAs allowed).
-
-            Raises:
-                HTTPException: 404 if no matching template is found.
-                HTTPException: 409 if multiple templates match and source is not provided.
-            """
-            template = await _resolve_my_template(name, _auth["user_id"], source)
-            deleted = await db.delete_template(
-                template.id,
-                "personal",
-                owner=_auth["user_id"],
-                source_name=template.source_name,
-            )
-            if not deleted:
-                raise HTTPException(404, "Template not found")
-
         # --- Service Accounts ---
 
-        @router.get("/service-accounts", response_model=list[ServiceAccountResponse], operation_id="list_service_accounts")
-        async def list_service_accounts(_auth=Depends(_require_iam("iam:service_accounts:manage"))):
+        @router.get(
+            "/service-accounts",
+            response_model=list[ServiceAccountResponse],
+            operation_id="list_service_accounts",
+        )
+        async def list_service_accounts(
+            _auth=Depends(_require_iam("iam:service_accounts:manage")),
+        ):
             return await db.list_service_accounts()
 
-        @router.post("/service-accounts", status_code=201, response_model=ServiceAccountResponse, operation_id="create_service_account")
-        async def create_service_account(req: CreateServiceAccountRequest, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
+        @router.post(
+            "/service-accounts",
+            status_code=201,
+            response_model=ServiceAccountResponse,
+            operation_id="create_service_account",
+        )
+        async def create_service_account(
+            req: CreateServiceAccountRequest,
+            _auth=Depends(_require_iam("iam:service_accounts:manage")),
+        ):
             await db.create_service_account(req.id, req.owner_user_id, req.display_name, req.scoping_policy_id)
-            return {"id": req.id, "owner_user_id": req.owner_user_id, "display_name": req.display_name, "is_active": True, "scoping_policy_id": req.scoping_policy_id}
+            return {
+                "id": req.id,
+                "owner_user_id": req.owner_user_id,
+                "display_name": req.display_name,
+                "is_active": True,
+                "scoping_policy_id": req.scoping_policy_id,
+            }
 
-        @router.get("/service-accounts/{sa_id}", response_model=ServiceAccountResponse, operation_id="get_service_account")
+        @router.get(
+            "/service-accounts/{sa_id}",
+            response_model=ServiceAccountResponse,
+            operation_id="get_service_account",
+        )
         async def get_service_account_endpoint(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
             result = await db.get_service_account(sa_id)
             if not result:
                 raise HTTPException(404, f"Service account {sa_id} not found")
             return result
 
-        @router.put("/service-accounts/{sa_id}", response_model=ServiceAccountResponse, operation_id="update_service_account")
-        async def update_service_account_endpoint(sa_id: str, req: UpdateServiceAccountRequest, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
+        @router.put(
+            "/service-accounts/{sa_id}",
+            response_model=ServiceAccountResponse,
+            operation_id="update_service_account",
+        )
+        async def update_service_account_endpoint(
+            sa_id: str,
+            req: UpdateServiceAccountRequest,
+            _auth=Depends(_require_iam("iam:service_accounts:manage")),
+        ):
             updates = req.model_dump(exclude_unset=True)
             if not updates:
                 raise HTTPException(status_code=400, detail="No fields to update")
@@ -1168,8 +1209,14 @@ class HindclawHttp(HttpExtension):
                 raise HTTPException(404, f"Service account {sa_id} not found")
             return result
 
-        @router.delete("/service-accounts/{sa_id}", status_code=204, operation_id="delete_service_account")
-        async def delete_service_account_endpoint(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
+        @router.delete(
+            "/service-accounts/{sa_id}",
+            status_code=204,
+            operation_id="delete_service_account",
+        )
+        async def delete_service_account_endpoint(
+            sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:manage"))
+        ):
             existing = await db.get_service_account(sa_id)
             if not existing:
                 raise HTTPException(404, f"Service account {sa_id} not found")
@@ -1177,20 +1224,48 @@ class HindclawHttp(HttpExtension):
 
         # --- SA Keys ---
 
-        @router.get("/service-accounts/{sa_id}/keys", response_model=list[SAKeyResponse], operation_id="list_sa_keys")
+        @router.get(
+            "/service-accounts/{sa_id}/keys",
+            response_model=list[SAKeyResponse],
+            operation_id="list_sa_keys",
+        )
         async def list_sa_keys(sa_id: str, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
             keys = await db.list_sa_keys(sa_id)
-            return [{"id": k.id, "api_key_prefix": k.api_key[:_API_KEY_MASK_LENGTH], "description": k.description} for k in keys]
+            return [
+                {
+                    "id": k.id,
+                    "api_key_prefix": k.api_key[:_API_KEY_MASK_LENGTH],
+                    "description": k.description,
+                }
+                for k in keys
+            ]
 
-        @router.post("/service-accounts/{sa_id}/keys", status_code=201, response_model=SAKeyCreateResponse, operation_id="create_sa_key")
-        async def create_sa_key(sa_id: str, req: CreateSAKeyRequest, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
+        @router.post(
+            "/service-accounts/{sa_id}/keys",
+            status_code=201,
+            response_model=SAKeyCreateResponse,
+            operation_id="create_sa_key",
+        )
+        async def create_sa_key(
+            sa_id: str,
+            req: CreateSAKeyRequest,
+            _auth=Depends(_require_iam("iam:service_accounts:manage")),
+        ):
             key_id = secrets.token_hex(8)
             api_key = f"hc_sa_{sa_id}_{secrets.token_hex(16)}"
             await db.create_sa_key(key_id, sa_id, api_key, req.description)
             return {"id": key_id, "api_key": api_key, "description": req.description}
 
-        @router.delete("/service-accounts/{sa_id}/keys/{key_id}", status_code=204, operation_id="delete_sa_key")
-        async def delete_sa_key(sa_id: str, key_id: str, _auth=Depends(_require_iam("iam:service_accounts:manage"))):
+        @router.delete(
+            "/service-accounts/{sa_id}/keys/{key_id}",
+            status_code=204,
+            operation_id="delete_sa_key",
+        )
+        async def delete_sa_key(
+            sa_id: str,
+            key_id: str,
+            _auth=Depends(_require_iam("iam:service_accounts:manage")),
+        ):
             existing = await db.get_sa_key(key_id, sa_id)
             if not existing:
                 raise HTTPException(404, f"SA key {key_id} not found")
@@ -1198,20 +1273,36 @@ class HindclawHttp(HttpExtension):
 
         # --- Bank Policies ---
 
-        @router.get("/banks/{bank_id}/policy", response_model=BankPolicyResponse, operation_id="get_bank_policy")
+        @router.get(
+            "/banks/{bank_id}/policy",
+            response_model=BankPolicyResponse,
+            operation_id="get_bank_policy",
+        )
         async def get_bank_policy_endpoint(bank_id: str, _auth=Depends(_require_iam("iam:banks:read"))):
             result = await db.get_bank_policy(bank_id)
             if not result:
                 raise HTTPException(404, f"Bank policy for {bank_id} not found")
             return {"bank_id": result.bank_id, "document": result.document_json}
 
-        @router.put("/banks/{bank_id}/policy", response_model=BankPolicyResponse, operation_id="upsert_bank_policy")
-        async def upsert_bank_policy_endpoint(bank_id: str, req: UpsertBankPolicyRequest, _auth=Depends(_require_iam("iam:banks:write"))):
+        @router.put(
+            "/banks/{bank_id}/policy",
+            response_model=BankPolicyResponse,
+            operation_id="upsert_bank_policy",
+        )
+        async def upsert_bank_policy_endpoint(
+            bank_id: str,
+            req: UpsertBankPolicyRequest,
+            _auth=Depends(_require_iam("iam:banks:write")),
+        ):
             BankPolicyDocument(**req.document)
             await db.upsert_bank_policy(bank_id, req.document)
             return {"bank_id": bank_id, "document": req.document}
 
-        @router.delete("/banks/{bank_id}/policy", status_code=204, operation_id="delete_bank_policy")
+        @router.delete(
+            "/banks/{bank_id}/policy",
+            status_code=204,
+            operation_id="delete_bank_policy",
+        )
         async def delete_bank_policy_endpoint(bank_id: str, _auth=Depends(_require_iam("iam:banks:write"))):
             existing = await db.get_bank_policy(bank_id)
             if not existing:
@@ -1230,7 +1321,11 @@ class HindclawHttp(HttpExtension):
             _auth=Depends(_require_iam("iam:users:read")),
         ):
             """Resolve and return effective access policy + bank policy for a context."""
-            from hindclaw_ext.validator import _resolve_user_access, _resolve_sa_access, _resolve_public_access
+            from hindclaw_ext.validator import (
+                _resolve_public_access,
+                _resolve_sa_access,
+                _resolve_user_access,
+            )
 
             if sa_id:
                 tenant_id = f"sa:{sa_id}"
@@ -1270,260 +1365,6 @@ class HindclawHttp(HttpExtension):
                 "bank_policy": bank_policy_dict,
             }
 
-        # --- Templates ---
-
-        @router.get("/templates", response_model=list[TemplateSummaryResponse], operation_id="list_templates")
-        async def list_templates(
-            scope: str | None = None,
-            principal=Depends(_require_iam("template:list")),
-        ):
-            """List installed templates filtered by access.
-
-            When scope is None, returns all server templates plus the caller's
-            personal templates. When scope is specified, returns only that scope.
-
-            Args:
-                scope: Optional scope filter ('server' or 'personal').
-                principal: Authenticated principal from IAM.
-
-            Returns:
-                List of template summaries.
-            """
-            user_id = principal["user_id"]
-            if scope == "server":
-                rows = await db.list_templates(scope="server")
-            elif scope == "personal":
-                rows = await db.list_templates(scope="personal", owner=user_id)
-            else:
-                server = await db.list_templates(scope="server")
-                personal = await db.list_templates(scope="personal", owner=user_id)
-                rows = server + personal
-            return [r.model_dump() for r in rows]
-
-        @router.post("/templates", response_model=TemplateResponse, status_code=201, operation_id="create_template")
-        async def create_template(
-            request: CreateTemplateRequest,
-            principal=Depends(_require_iam("template:create")),
-        ):
-            """Create a custom template (no marketplace source).
-
-            Args:
-                request: Template creation payload.
-                principal: Authenticated principal from IAM.
-
-            Returns:
-                The created template.
-
-            Raises:
-                HTTPException: 409 if template already exists.
-                HTTPException: 403 if scope is server and user lacks template:admin.
-            """
-            if request.scope == "server":
-                await _require_action(principal["user_id"], "template:admin")
-            owner = principal["user_id"] if request.scope == "personal" else None
-            try:
-                rec = await db.create_template(
-                    id=request.id,
-                    scope=request.scope,
-                    owner=owner,
-                    source_name=None,
-                    schema_version=1,
-                    min_hindclaw_version=request.min_hindclaw_version,
-                    min_hindsight_version=request.min_hindsight_version,
-                    description=request.description,
-                    author=request.author,
-                    tags=request.tags,
-                    retain_mission=request.retain_mission,
-                    reflect_mission=request.reflect_mission,
-                    observations_mission=request.observations_mission,
-                    retain_extraction_mode=request.retain_extraction_mode,
-                    retain_custom_instructions=request.retain_custom_instructions,
-                    retain_chunk_size=request.retain_chunk_size,
-                    retain_default_strategy=request.retain_default_strategy,
-                    retain_strategies=request.retain_strategies,
-                    entity_labels=[l.model_dump() for l in request.entity_labels],
-                    entities_allow_free_form=request.entities_allow_free_form,
-                    enable_observations=request.enable_observations,
-                    consolidation_llm_batch_size=request.consolidation_llm_batch_size,
-                    consolidation_source_facts_max_tokens=request.consolidation_source_facts_max_tokens,
-                    consolidation_source_facts_max_tokens_per_observation=request.consolidation_source_facts_max_tokens_per_observation,
-                    disposition_skepticism=request.disposition_skepticism,
-                    disposition_literalism=request.disposition_literalism,
-                    disposition_empathy=request.disposition_empathy,
-                    directive_seeds=[s.model_dump() for s in request.directive_seeds],
-                    mental_model_seeds=[s.model_dump() for s in request.mental_model_seeds],
-                )
-            except asyncpg.UniqueViolationError:
-                raise HTTPException(status_code=409, detail="Template already exists")
-            return rec.model_dump()
-
-        @router.get("/templates/{scope}/{name}", response_model=TemplateResponse, operation_id="get_template")
-        async def get_template_endpoint(
-            scope: str,
-            name: str,
-            principal=Depends(_require_iam("template:list")),
-        ):
-            """Get a template by scope and name.
-
-            Finds any template matching (scope, name) regardless of source.
-            This covers both custom templates and marketplace-installed ones.
-
-            Args:
-                scope: Template scope ('server' or 'personal').
-                name: Template name.
-                principal: Authenticated principal from IAM.
-
-            Returns:
-                Full template details.
-
-            Raises:
-                HTTPException: 404 if template not found.
-            """
-            owner = principal["user_id"] if scope == "personal" else None
-            rec = await db.get_template(name, scope, owner=owner)
-            if rec is None:
-                raise HTTPException(status_code=404, detail="Template not found")
-            return rec.model_dump()
-
-        @router.put("/templates/{scope}/{name}", response_model=TemplateResponse, operation_id="update_template")
-        async def update_template_endpoint(
-            scope: str,
-            name: str,
-            request: UpdateTemplateRequest,
-            principal=Depends(_require_iam("template:manage")),
-        ):
-            """Update a custom template.
-
-            Performs cross-field validation when extraction mode or custom
-            instructions are part of the update by merging with the existing
-            record before applying.
-
-            Args:
-                scope: Template scope ('server' or 'personal').
-                name: Template name.
-                request: Partial update payload.
-                principal: Authenticated principal from IAM.
-
-            Returns:
-                The updated template.
-
-            Raises:
-                HTTPException: 404 if template not found, 422 if cross-field
-                    validation fails.
-                HTTPException: 403 if scope is server and user lacks template:admin.
-            """
-            if scope == "server":
-                await _require_action(principal["user_id"], "template:admin")
-            owner = principal["user_id"] if scope == "personal" else None
-            updates = request.model_dump(exclude_unset=True)
-            if "directive_seeds" in updates:
-                updates["directive_seeds"] = [
-                    s.model_dump() if hasattr(s, "model_dump") else s
-                    for s in updates["directive_seeds"]
-                ]
-            if "mental_model_seeds" in updates:
-                updates["mental_model_seeds"] = [
-                    s.model_dump() if hasattr(s, "model_dump") else s
-                    for s in updates["mental_model_seeds"]
-                ]
-            if "entity_labels" in updates:
-                updates["entity_labels"] = [
-                    l.model_dump() if hasattr(l, "model_dump") else l
-                    for l in updates["entity_labels"]
-                ]
-
-            # Cross-field validation: merge with existing record to check final state.
-            if "retain_extraction_mode" in updates or "retain_custom_instructions" in updates:
-                existing = await db.get_template(name, scope, owner=owner)
-                if existing is None:
-                    raise HTTPException(status_code=404, detail="Template not found")
-                merged_mode = updates.get("retain_extraction_mode", existing.retain_extraction_mode)
-                merged_instructions = updates.get("retain_custom_instructions", existing.retain_custom_instructions)
-                if merged_mode == "custom" and not merged_instructions:
-                    raise HTTPException(
-                        status_code=422,
-                        detail="retain_custom_instructions required when retain_extraction_mode is 'custom'",
-                    )
-                if merged_mode != "custom" and merged_instructions is not None:
-                    raise HTTPException(
-                        status_code=422,
-                        detail="retain_custom_instructions only valid when retain_extraction_mode is 'custom'",
-                    )
-
-            rec = await db.update_template(name, scope, owner=owner, updates=updates)
-            if rec is None:
-                raise HTTPException(status_code=404, detail="Template not found")
-            return rec.model_dump()
-
-        @router.delete("/templates/{scope}/{name}", status_code=204, operation_id="delete_template")
-        async def delete_template_endpoint(
-            scope: str,
-            name: str,
-            principal=Depends(_require_iam("template:manage")),
-        ):
-            """Delete a custom template.
-
-            Args:
-                scope: Template scope ('server' or 'personal').
-                name: Template name.
-                principal: Authenticated principal from IAM.
-
-            Raises:
-                HTTPException: 404 if template not found.
-                HTTPException: 403 if scope is server and user lacks template:admin.
-            """
-            if scope == "server":
-                await _require_action(principal["user_id"], "template:admin")
-            owner = principal["user_id"] if scope == "personal" else None
-            deleted = await db.delete_template(name, scope, owner=owner)
-            if not deleted:
-                raise HTTPException(status_code=404, detail="Template not found")
-
-        # --- Bank Creation from Template ---
-
-        @router.post("/banks", response_model=BankCreationResponse, status_code=201, operation_id="create_bank_from_template")
-        async def create_bank_from_template(
-            request: CreateBankFromTemplateRequest,
-            principal=Depends(_require_iam("bank:create")),
-        ):
-            """Create a bank from an installed template."""
-            try:
-                ref = parse_template_ref(request.template)
-            except ValueError as e:
-                raise HTTPException(status_code=422, detail=str(e))
-            owner = principal["user_id"] if ref.scope == "personal" else None
-            template = await db.get_template(
-                ref.name, ref.scope, source_name=ref.source, owner=owner,
-            )
-            if template is None:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Template not installed. Install with: "
-                    f"hindclaw template install {ref.source}/{ref.name}" if ref.source
-                    else f"Template '{ref.name}' not found in {ref.scope} scope",
-                )
-
-            try:
-                result = await bootstrap_bank_from_template(
-                    memory=_memory,
-                    bank_id=request.bank_id,
-                    template=template,
-                    requesting_user_id=principal["user_id"],
-                    bank_name=request.name,
-                )
-            except Exception as e:
-                raise HTTPException(status_code=502, detail=f"Bank creation failed: {e}")
-
-            return BankCreationResponse(
-                bank_id=request.bank_id,
-                template=request.template,
-                bank_created=result.bank_created,
-                config_applied=result.config_applied,
-                directives=result.directives,
-                mental_models=result.mental_models,
-                errors=result.errors,
-            )
-
         # --- Template Source Admin ---
 
         @router.post(
@@ -1552,8 +1393,12 @@ class HindclawHttp(HttpExtension):
             return SourceResponse(
                 name=rec.name,
                 url=rec.url,
+                scope=TemplateScope(rec.scope),
+                owner=rec.owner,
                 has_auth=rec.auth_token is not None,
-                created_at=str(rec.created_at),
+                description=rec.description,
+                created_at=str(rec.created_at) if rec.created_at else None,
+                updated_at=str(rec.updated_at) if rec.updated_at else None,
             )
 
         @router.get(
@@ -1570,8 +1415,12 @@ class HindclawHttp(HttpExtension):
                 SourceResponse(
                     name=s.name,
                     url=s.url,
+                    scope=TemplateScope(s.scope),
+                    owner=s.owner,
                     has_auth=s.auth_token is not None,
-                    created_at=str(s.created_at),
+                    description=s.description,
+                    created_at=str(s.created_at) if s.created_at else None,
+                    updated_at=str(s.updated_at) if s.updated_at else None,
                 )
                 for s in sources
             ]
@@ -1590,277 +1439,641 @@ class HindclawHttp(HttpExtension):
             if not deleted:
                 raise HTTPException(404, f"Source '{name}' not found")
 
-        # --- Marketplace Search ---
+        # --- Templates (post-convergence) ----------------------------- #
+        # Identity tuple: (id, scope, owner). Manifest is opaque upstream JSONB.
+        # See spec docs/rkstack/specs/hindclaw/2026-04-13-template-upstream-convergence-design.md.
 
-        @router.get(
-            "/marketplace/search",
-            response_model=MarketplaceSearchResponse,
-            operation_id="marketplace_search",
-        )
-        async def marketplace_search(
-            q: str | None = Query(None, description="Search query"),
-            source: str | None = Query(None, description="Filter by source name"),
-            tag: str | None = Query(None, description="Filter by tag"),
-            principal=Depends(_require_iam("template:list")),
-        ):
-            """Search marketplace templates across configured sources."""
-            user_id = principal.get("user_id")
-            # Only visible sources: all server + caller's personal
-            server_sources = await db.list_template_sources(scope="server")
-            personal_sources = (
-                await db.list_template_sources(scope="personal", owner=user_id)
-                if user_id else []
-            )
-            sources = server_sources + personal_sources
-            if source:
-                sources = [s for s in sources if s.name == source]
+        def _now_utc() -> datetime:
+            return datetime.now(timezone.utc)
 
-            if not sources:
-                return MarketplaceSearchResponse(results=[], total=0)
-
-            # Fetch installed templates for "installed" flag.
-            server_installed = await db.list_templates(scope="server")
-            personal_installed = (
-                await db.list_templates(scope="personal", owner=user_id)
-                if user_id
-                else []
-            )
-            # Build installed map keyed by (source_name, source_scope, template_id)
-            # to prevent conflation when same source name exists in both scopes.
-            installed_map: dict[tuple[str, str, str], set[str]] = {}
-            for t in server_installed:
-                if t.source_name:
-                    key = (t.source_name, "server", t.id)
-                    installed_map.setdefault(key, set()).add("server")
-            for t in personal_installed:
-                if t.source_name:
-                    for src in sources:
-                        if src.name == t.source_name:
-                            key = (t.source_name, src.scope, t.id)
-                            installed_map.setdefault(key, set()).add("personal")
-
-            all_results = []
-            for src in sources:
-                index = await marketplace.fetch_index(src)
-                if not index:
-                    continue
-                results = marketplace.search_marketplace(
-                    index,
-                    source_name=src.name,
-                    source_scope=src.scope,
-                    query=q,
-                    tag=tag,
-                )
-                # Populate installed_in from the installed map
-                for r in results:
-                    key = (r.source, r.source_scope, r.name)
-                    if key in installed_map:
-                        r.installed_in = sorted(installed_map[key])
-                all_results.extend(results)
-
-            return MarketplaceSearchResponse(
-                results=all_results,
-                total=len(all_results),
+        def _record_to_response(record: TemplateRecord) -> TemplateResponse:
+            """Convert a stored TemplateRecord to its API response shape."""
+            return TemplateResponse(
+                id=record.id,
+                name=record.name,
+                description=record.description,
+                category=record.category,
+                integrations=record.integrations,
+                tags=record.tags,
+                scope=record.scope,
+                owner=record.owner,
+                source_name=record.source_name,
+                source_scope=record.source_scope,
+                source_revision=record.source_revision,
+                installed_at=record.installed_at,
+                updated_at=record.updated_at,
+                manifest=record.manifest,
             )
 
-        # --- Template Install / Update ---
-
-        @router.post(
-            "/templates/install",
-            response_model=TemplateResponse,
-            status_code=201,
-            operation_id="install_template",
-        )
-        async def install_template(
-            request: InstallTemplateRequest,
-            principal=Depends(_require_iam("template:install")),
-        ):
-            """Install a template from a registered marketplace source."""
-            if request.scope == "server":
-                await _require_action(principal["user_id"], "template:admin")
-            # 1. Resolve source with ambiguity detection
-            try:
-                source = await db.resolve_source(
-                    request.source_name,
-                    caller=principal["user_id"],
-                    source_scope=request.source_scope,
-                )
-            except KeyError as e:
-                raise HTTPException(404, str(e))
-            except ValueError as e:
-                raise HTTPException(409, str(e))
-
-            # 2. Fetch template from marketplace
-            template = await marketplace.fetch_template(source, request.name)
-            if not template:
-                raise HTTPException(
-                    404,
-                    f"Template '{request.name}' not found in source '{request.source_name}'",
-                )
-
-            # 3. Verify name matches request
-            if template.name != request.name:
-                raise HTTPException(
-                    422,
-                    f"Template name mismatch: requested '{request.name}' "
-                    f"but file contains '{template.name}'",
-                )
-
-            # 4. Validate compatibility
-            errors = marketplace.validate_template(template)
+        def _validate_manifest_or_422(manifest: BankTemplateManifest) -> None:
+            errors = validate_bank_template(manifest)
             if errors:
-                raise HTTPException(422, "; ".join(errors))
+                raise HTTPException(status_code=422, detail={"manifest_errors": errors})
 
-            # 5. Determine owner
-            owner = principal["user_id"] if request.scope == "personal" else None
-
-            # 6. Upsert into bank_templates
-            try:
-                rec = await db.upsert_template_from_marketplace(
-                    id=template.name,
-                    scope=request.scope,
-                    owner=owner,
-                    source_name=request.source_name,
-                    source_url=source.url,
-                    source_revision=None,
-                    schema_version=template.schema_version,
-                    min_hindclaw_version=template.min_hindclaw_version,
-                    min_hindsight_version=template.min_hindsight_version,
-                    version=template.version,
-                    description=template.description,
-                    author=template.author,
-                    tags=template.tags,
-                    retain_mission=template.retain_mission,
-                    reflect_mission=template.reflect_mission,
-                    observations_mission=template.observations_mission,
-                    retain_extraction_mode=template.retain_extraction_mode,
-                    retain_custom_instructions=template.retain_custom_instructions,
-                    retain_chunk_size=template.retain_chunk_size,
-                    retain_default_strategy=template.retain_default_strategy,
-                    retain_strategies=template.retain_strategies,
-                    entity_labels=[l.model_dump() for l in template.entity_labels],
-                    entities_allow_free_form=template.entities_allow_free_form,
-                    enable_observations=template.enable_observations,
-                    consolidation_llm_batch_size=template.consolidation_llm_batch_size,
-                    consolidation_source_facts_max_tokens=template.consolidation_source_facts_max_tokens,
-                    consolidation_source_facts_max_tokens_per_observation=template.consolidation_source_facts_max_tokens_per_observation,
-                    disposition_skepticism=template.disposition_skepticism,
-                    disposition_literalism=template.disposition_literalism,
-                    disposition_empathy=template.disposition_empathy,
-                    directive_seeds=[s.model_dump() for s in template.directive_seeds],
-                    mental_model_seeds=[s.model_dump() for s in template.mental_model_seeds],
-                )
-            except asyncpg.UniqueViolationError:
-                raise HTTPException(
-                    409,
-                    f"Template '{template.name}' already exists in {request.scope} scope",
-                )
-            return rec.model_dump()
-
-        @router.post(
-            "/templates/{scope}/{source}/{name}/update",
-            response_model=TemplateUpdateResponse,
-            operation_id="update_template_from_marketplace",
-        )
-        async def update_template_from_marketplace(
-            scope: str,
-            source: str,
-            name: str,
-            principal=Depends(_require_iam("template:manage")),
-        ):
-            """Update an installed template from its marketplace source."""
-            if scope == "server":
-                await _require_action(principal["user_id"], "template:admin")
-            # 1. Look up installed template
-            owner = principal["user_id"] if scope == "personal" else None
-            installed = await db.get_template(
-                name, scope, source_name=source, owner=owner,
-            )
-            if not installed:
-                raise HTTPException(
-                    404,
-                    f"Template '{source}/{name}' not installed in {scope} scope",
-                )
-
-            # 2. Look up the source
-            src = await db.get_template_source(source)
-            if not src:
-                raise HTTPException(
-                    404,
-                    f"Source '{source}' not found. Was it removed?",
-                )
-
-            # 3. Fetch latest from marketplace
-            latest = await marketplace.fetch_template(src, name)
-            if not latest:
-                raise HTTPException(
-                    404,
-                    f"Template '{name}' no longer available in source '{source}'",
-                )
-
-            # 4. Verify name matches
-            if latest.name != name:
-                raise HTTPException(
-                    422,
-                    f"Template name mismatch: requested '{name}' "
-                    f"but file contains '{latest.name}'",
-                )
-
-            # 5. Validate compatibility
-            errors = marketplace.validate_template(latest)
-            if errors:
-                raise HTTPException(422, "; ".join(errors))
-
-            # 6. Check if newer
-            if installed.version and latest.version:
-                if is_version_compatible(installed.version, latest.version):
-                    # installed >= latest — no update needed
-                    return TemplateUpdateResponse(
-                        updated=False,
-                        previous_version=installed.version,
-                        new_version=latest.version,
-                    )
-
-            # 7. Apply update
-            rec = await db.upsert_template_from_marketplace(
-                id=latest.name,
+        def _build_hand_authored_record(
+            request: CreateTemplateRequest,
+            *,
+            scope: TemplateScope,
+            owner: str | None,
+        ) -> TemplateRecord:
+            """Build a TemplateRecord for a POST /me|/admin/templates body."""
+            now = _now_utc()
+            return TemplateRecord(
+                id=request.id,
                 scope=scope,
                 owner=owner,
-                source_name=source,
-                source_url=src.url,
+                source_name=None,
+                source_scope=None,
+                source_template_id=None,
+                source_url=None,
                 source_revision=None,
-                schema_version=latest.schema_version,
-                min_hindclaw_version=latest.min_hindclaw_version,
-                min_hindsight_version=latest.min_hindsight_version,
-                version=latest.version,
-                description=latest.description,
-                author=latest.author,
-                tags=latest.tags,
-                retain_mission=latest.retain_mission,
-                reflect_mission=latest.reflect_mission,
-                observations_mission=latest.observations_mission,
-                retain_extraction_mode=latest.retain_extraction_mode,
-                retain_custom_instructions=latest.retain_custom_instructions,
-                retain_chunk_size=latest.retain_chunk_size,
-                retain_default_strategy=latest.retain_default_strategy,
-                retain_strategies=latest.retain_strategies,
-                entity_labels=[l.model_dump() for l in latest.entity_labels],
-                entities_allow_free_form=latest.entities_allow_free_form,
-                enable_observations=latest.enable_observations,
-                consolidation_llm_batch_size=latest.consolidation_llm_batch_size,
-                consolidation_source_facts_max_tokens=latest.consolidation_source_facts_max_tokens,
-                consolidation_source_facts_max_tokens_per_observation=latest.consolidation_source_facts_max_tokens_per_observation,
-                disposition_skepticism=latest.disposition_skepticism,
-                disposition_literalism=latest.disposition_literalism,
-                disposition_empathy=latest.disposition_empathy,
-                directive_seeds=[s.model_dump() for s in latest.directive_seeds],
-                mental_model_seeds=[s.model_dump() for s in latest.mental_model_seeds],
+                name=request.name,
+                description=request.description,
+                category=request.category,
+                integrations=request.integrations,
+                tags=request.tags,
+                manifest=request.manifest.model_dump(exclude_none=True),
+                installed_at=now,
+                updated_at=now,
             )
-            return TemplateUpdateResponse(
+
+        def _apply_patch(
+            existing: TemplateRecord,
+            patch: PatchTemplateRequest,
+        ) -> TemplateRecord:
+            """Return a new TemplateRecord with PATCH fields layered over existing."""
+            return TemplateRecord(
+                id=existing.id,
+                scope=existing.scope,
+                owner=existing.owner,
+                source_name=existing.source_name,
+                source_scope=existing.source_scope,
+                source_template_id=existing.source_template_id,
+                source_url=existing.source_url,
+                source_revision=existing.source_revision,
+                name=patch.name if patch.name is not None else existing.name,
+                description=patch.description if patch.description is not None else existing.description,
+                category=patch.category if patch.category is not None else existing.category,
+                integrations=patch.integrations if patch.integrations is not None else existing.integrations,
+                tags=patch.tags if patch.tags is not None else existing.tags,
+                manifest=(
+                    patch.manifest.model_dump(exclude_none=True) if patch.manifest is not None else existing.manifest
+                ),
+                installed_at=existing.installed_at,
+                updated_at=_now_utc(),
+            )
+
+        def _build_installed_record(
+            *,
+            installed_id: str,
+            scope: TemplateScope,
+            owner: str | None,
+            request: InstallTemplateRequest,
+            template_id: str,
+            entry: CatalogEntry,
+            manifest: BankTemplateManifest,
+            revision: str,
+        ) -> TemplateRecord:
+            """Build a TemplateRecord for a POST /install body."""
+            now = _now_utc()
+            return TemplateRecord(
+                id=installed_id,
+                scope=scope,
+                owner=owner,
+                source_name=request.source_name,
+                source_scope=request.source_scope,
+                source_template_id=template_id,
+                source_url=None,
+                source_revision=revision,
+                name=entry.name,
+                description=entry.description,
+                category=entry.category,
+                integrations=entry.integrations,
+                tags=entry.tags,
+                manifest=manifest.model_dump(exclude_none=True),
+                installed_at=now,
+                updated_at=now,
+            )
+
+        def _build_refreshed_record(
+            existing: TemplateRecord,
+            entry: CatalogEntry,
+            manifest: BankTemplateManifest,
+            new_revision: str,
+        ) -> TemplateRecord:
+            """Build a TemplateRecord for the /update flow (refresh from source)."""
+            return TemplateRecord(
+                id=existing.id,
+                scope=existing.scope,
+                owner=existing.owner,
+                source_name=existing.source_name,
+                source_scope=existing.source_scope,
+                source_template_id=existing.source_template_id,
+                source_url=existing.source_url,
+                source_revision=new_revision,
+                name=entry.name,
+                description=entry.description,
+                category=entry.category,
+                integrations=entry.integrations,
+                tags=entry.tags,
+                manifest=manifest.model_dump(exclude_none=True),
+                installed_at=existing.installed_at,
+                updated_at=_now_utc(),
+            )
+
+        def _resolve_source_owner(
+            source_scope: TemplateScope,
+            *,
+            installed_scope: TemplateScope,
+            user_id: str,
+        ) -> str | None:
+            """Return the owner to query when resolving a source.
+
+            For a personal install, a personal source belongs to the caller;
+            a server source has owner=None. For a server install, the same
+            logic still applies — admin can install from either source scope.
+            """
+            del installed_scope  # currently unused, kept for symmetry
+            return user_id if source_scope is TemplateScope.PERSONAL else None
+
+        async def _check_collision_or_409(
+            pool,
+            *,
+            installed_id: str,
+            scope: TemplateScope,
+            owner: str | None,
+        ) -> None:
+            existing = await db.get_template(pool, id=installed_id, scope=scope, owner=owner)
+            if existing is not None:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "error": "Template id already installed; pass alias_id to coexist",
+                        "existing": _record_to_response(existing).model_dump(mode="json"),
+                    },
+                )
+
+        async def _do_install(
+            *,
+            template_id: str,
+            request: InstallTemplateRequest,
+            scope: TemplateScope,
+            owner: str | None,
+            user_id: str,
+        ) -> TemplateRecord:
+            """Shared body for /me/install and /admin/install."""
+            pool = await db.get_pool()
+            source_owner = _resolve_source_owner(request.source_scope, installed_scope=scope, user_id=user_id)
+            entry, manifest, revision = await marketplace.fetch_and_resolve_template(
+                source_name=request.source_name,
+                source_scope=request.source_scope,
+                source_owner=source_owner,
+                template_id=template_id,
+            )
+            installed_id = request.alias_id or template_id
+            await _check_collision_or_409(pool, installed_id=installed_id, scope=scope, owner=owner)
+            record = _build_installed_record(
+                installed_id=installed_id,
+                scope=scope,
+                owner=owner,
+                request=request,
+                template_id=template_id,
+                entry=entry,
+                manifest=manifest,
+                revision=revision,
+            )
+            await db.create_template(pool, record)
+            return record
+
+        async def _do_update_from_source(
+            *,
+            template_id: str,
+            scope: TemplateScope,
+            owner: str | None,
+            user_id: str,
+        ) -> UpdateTemplateResponse:
+            """Shared body for /me/update and /admin/update."""
+            pool = await db.get_pool()
+            existing = await db.get_template(pool, id=template_id, scope=scope, owner=owner)
+            if existing is None:
+                raise HTTPException(status_code=404, detail="template not found")
+            if existing.source_name is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Template was not installed from a source; use PATCH for hand-edited templates",
+                )
+            assert existing.source_scope is not None
+            source_owner = _resolve_source_owner(existing.source_scope, installed_scope=scope, user_id=user_id)
+            entry, manifest, new_revision = await marketplace.fetch_and_resolve_template(
+                source_name=existing.source_name,
+                source_scope=existing.source_scope,
+                source_owner=source_owner,
+                template_id=existing.source_template_id or existing.id,
+            )
+            previous_revision = existing.source_revision
+            if new_revision == previous_revision:
+                return UpdateTemplateResponse(
+                    updated=False,
+                    previous_revision=previous_revision,
+                    new_revision=new_revision,
+                    template=_record_to_response(existing),
+                )
+            updated = _build_refreshed_record(existing, entry, manifest, new_revision)
+            await db.update_template(pool, updated)
+            return UpdateTemplateResponse(
                 updated=True,
-                previous_version=installed.version,
-                new_version=latest.version,
-                template=rec.model_dump(),
+                previous_revision=previous_revision,
+                new_revision=new_revision,
+                template=_record_to_response(updated),
+            )
+
+        async def _do_check_update(
+            *,
+            template_id: str,
+            scope: TemplateScope,
+            owner: str | None,
+            user_id: str,
+        ) -> CheckUpdateResponse:
+            """Shared body for /me/check-update and /admin/check-update."""
+            pool = await db.get_pool()
+            existing = await db.get_template(pool, id=template_id, scope=scope, owner=owner)
+            if existing is None:
+                raise HTTPException(status_code=404, detail="template not found")
+            if existing.source_name is None:
+                return CheckUpdateResponse(
+                    has_update=False,
+                    current_revision=None,
+                    latest_revision=None,
+                    source_name=None,
+                    source_scope=None,
+                )
+            assert existing.source_scope is not None
+            source_owner = _resolve_source_owner(existing.source_scope, installed_scope=scope, user_id=user_id)
+            _, _, new_revision = await marketplace.fetch_and_resolve_template(
+                source_name=existing.source_name,
+                source_scope=existing.source_scope,
+                source_owner=source_owner,
+                template_id=existing.source_template_id or existing.id,
+            )
+            return CheckUpdateResponse(
+                has_update=new_revision != existing.source_revision,
+                current_revision=existing.source_revision,
+                latest_revision=new_revision,
+                source_name=existing.source_name,
+                source_scope=existing.source_scope,
+            )
+
+        # /me/templates --------------------------------------------------- #
+
+        @router.get(
+            "/me/templates",
+            response_model=ListTemplatesResponse,
+            operation_id="list_my_templates",
+            summary="List installed personal templates",
+            tags=["Templates"],
+        )
+        async def list_me_templates(
+            category: str | None = None,
+            tag: str | None = None,
+            _auth=Depends(_require_iam("template:list")),
+        ):
+            pool = await db.get_pool()
+            records = await db.list_templates(
+                pool,
+                scope=TemplateScope.PERSONAL,
+                owner=_auth["user_id"],
+                category=category,
+                tag=tag,
+            )
+            return ListTemplatesResponse(templates=[_record_to_response(r) for r in records])
+
+        @router.post(
+            "/me/templates",
+            response_model=TemplateResponse,
+            operation_id="create_my_template",
+            summary="Create a hand-authored personal template",
+            tags=["Templates"],
+        )
+        async def create_me_template(
+            request: CreateTemplateRequest,
+            _auth=Depends(_require_iam("template:create")),
+        ):
+            _validate_manifest_or_422(request.manifest)
+            record = _build_hand_authored_record(request, scope=TemplateScope.PERSONAL, owner=_auth["user_id"])
+            await db.create_template(await db.get_pool(), record)
+            return _record_to_response(record)
+
+        @router.get(
+            "/me/templates/{template_id}",
+            response_model=TemplateResponse,
+            operation_id="get_my_template",
+            summary="Get an installed personal template",
+            tags=["Templates"],
+        )
+        async def get_me_template(
+            template_id: str,
+            _auth=Depends(_require_iam("template:list")),
+        ):
+            record = await db.get_template(
+                await db.get_pool(),
+                id=template_id,
+                scope=TemplateScope.PERSONAL,
+                owner=_auth["user_id"],
+            )
+            if record is None:
+                raise HTTPException(status_code=404, detail="template not found")
+            return _record_to_response(record)
+
+        @router.patch(
+            "/me/templates/{template_id}",
+            response_model=TemplateResponse,
+            operation_id="patch_my_template",
+            summary="Update a hand-authored personal template",
+            tags=["Templates"],
+        )
+        async def patch_me_template(
+            template_id: str,
+            request: PatchTemplateRequest,
+            _auth=Depends(_require_iam("template:manage")),
+        ):
+            pool = await db.get_pool()
+            existing = await db.get_template(pool, id=template_id, scope=TemplateScope.PERSONAL, owner=_auth["user_id"])
+            if existing is None:
+                raise HTTPException(status_code=404, detail="template not found")
+            if request.manifest is not None:
+                _validate_manifest_or_422(request.manifest)
+            updated = _apply_patch(existing, request)
+            await db.update_template(pool, updated)
+            return _record_to_response(updated)
+
+        @router.delete(
+            "/me/templates/{template_id}",
+            status_code=204,
+            operation_id="delete_my_template",
+            summary="Delete an installed personal template",
+            tags=["Templates"],
+        )
+        async def delete_me_template(
+            template_id: str,
+            _auth=Depends(_require_iam("template:manage")),
+        ):
+            deleted = await db.delete_template(
+                await db.get_pool(),
+                id=template_id,
+                scope=TemplateScope.PERSONAL,
+                owner=_auth["user_id"],
+            )
+            if not deleted:
+                raise HTTPException(status_code=404, detail="template not found")
+
+        @router.post(
+            "/me/templates/{template_id}/install",
+            response_model=TemplateResponse,
+            operation_id="install_my_template",
+            summary="Install a marketplace template into the personal scope",
+            tags=["Templates"],
+        )
+        async def install_me_template(
+            template_id: str,
+            request: InstallTemplateRequest,
+            _auth=Depends(_require_iam("template:install")),
+        ):
+            record = await _do_install(
+                template_id=template_id,
+                request=request,
+                scope=TemplateScope.PERSONAL,
+                owner=_auth["user_id"],
+                user_id=_auth["user_id"],
+            )
+            return _record_to_response(record)
+
+        @router.post(
+            "/me/templates/{template_id}/update",
+            response_model=UpdateTemplateResponse,
+            operation_id="update_my_template_from_source",
+            summary="Re-fetch an installed personal template from its source",
+            tags=["Templates"],
+        )
+        async def update_me_template_from_source(
+            template_id: str,
+            _auth=Depends(_require_iam("template:install")),
+        ):
+            return await _do_update_from_source(
+                template_id=template_id,
+                scope=TemplateScope.PERSONAL,
+                owner=_auth["user_id"],
+                user_id=_auth["user_id"],
+            )
+
+        @router.get(
+            "/me/templates/{template_id}/check-update",
+            response_model=CheckUpdateResponse,
+            operation_id="check_my_template_update",
+            summary="Check whether the source has a newer revision",
+            tags=["Templates"],
+        )
+        async def check_me_template_update(
+            template_id: str,
+            _auth=Depends(_require_iam("template:list")),
+        ):
+            return await _do_check_update(
+                template_id=template_id,
+                scope=TemplateScope.PERSONAL,
+                owner=_auth["user_id"],
+                user_id=_auth["user_id"],
+            )
+
+        # /admin/templates ------------------------------------------------ #
+        # Server-scope mirror of /me/templates. Identical bodies aside from
+        # scope=SERVER, owner=None, and the IAM gate at template:admin.
+
+        @router.get(
+            "/admin/templates",
+            response_model=ListTemplatesResponse,
+            operation_id="list_admin_templates",
+            summary="List installed server-scope templates",
+            tags=["Templates", "Admin"],
+        )
+        async def list_admin_templates(
+            category: str | None = None,
+            tag: str | None = None,
+            _auth=Depends(_require_iam("template:admin")),
+        ):
+            records = await db.list_templates(
+                await db.get_pool(),
+                scope=TemplateScope.SERVER,
+                owner=None,
+                category=category,
+                tag=tag,
+            )
+            return ListTemplatesResponse(templates=[_record_to_response(r) for r in records])
+
+        @router.post(
+            "/admin/templates",
+            response_model=TemplateResponse,
+            operation_id="create_admin_template",
+            summary="Create a hand-authored server-scope template",
+            tags=["Templates", "Admin"],
+        )
+        async def create_admin_template(
+            request: CreateTemplateRequest,
+            _auth=Depends(_require_iam("template:admin")),
+        ):
+            _validate_manifest_or_422(request.manifest)
+            record = _build_hand_authored_record(request, scope=TemplateScope.SERVER, owner=None)
+            await db.create_template(await db.get_pool(), record)
+            return _record_to_response(record)
+
+        @router.get(
+            "/admin/templates/{template_id}",
+            response_model=TemplateResponse,
+            operation_id="get_admin_template",
+            summary="Get an installed server-scope template",
+            tags=["Templates", "Admin"],
+        )
+        async def get_admin_template(
+            template_id: str,
+            _auth=Depends(_require_iam("template:admin")),
+        ):
+            record = await db.get_template(
+                await db.get_pool(),
+                id=template_id,
+                scope=TemplateScope.SERVER,
+                owner=None,
+            )
+            if record is None:
+                raise HTTPException(status_code=404, detail="template not found")
+            return _record_to_response(record)
+
+        @router.patch(
+            "/admin/templates/{template_id}",
+            response_model=TemplateResponse,
+            operation_id="patch_admin_template",
+            summary="Update a hand-authored server-scope template",
+            tags=["Templates", "Admin"],
+        )
+        async def patch_admin_template(
+            template_id: str,
+            request: PatchTemplateRequest,
+            _auth=Depends(_require_iam("template:admin")),
+        ):
+            pool = await db.get_pool()
+            existing = await db.get_template(pool, id=template_id, scope=TemplateScope.SERVER, owner=None)
+            if existing is None:
+                raise HTTPException(status_code=404, detail="template not found")
+            if request.manifest is not None:
+                _validate_manifest_or_422(request.manifest)
+            updated = _apply_patch(existing, request)
+            await db.update_template(pool, updated)
+            return _record_to_response(updated)
+
+        @router.delete(
+            "/admin/templates/{template_id}",
+            status_code=204,
+            operation_id="delete_admin_template",
+            summary="Delete an installed server-scope template",
+            tags=["Templates", "Admin"],
+        )
+        async def delete_admin_template(
+            template_id: str,
+            _auth=Depends(_require_iam("template:admin")),
+        ):
+            deleted = await db.delete_template(
+                await db.get_pool(),
+                id=template_id,
+                scope=TemplateScope.SERVER,
+                owner=None,
+            )
+            if not deleted:
+                raise HTTPException(status_code=404, detail="template not found")
+
+        @router.post(
+            "/admin/templates/{template_id}/install",
+            response_model=TemplateResponse,
+            operation_id="install_admin_template",
+            summary="Install a marketplace template into the server scope",
+            tags=["Templates", "Admin"],
+        )
+        async def install_admin_template(
+            template_id: str,
+            request: InstallTemplateRequest,
+            _auth=Depends(_require_iam("template:admin")),
+        ):
+            record = await _do_install(
+                template_id=template_id,
+                request=request,
+                scope=TemplateScope.SERVER,
+                owner=None,
+                user_id=_auth["user_id"],
+            )
+            return _record_to_response(record)
+
+        @router.post(
+            "/admin/templates/{template_id}/update",
+            response_model=UpdateTemplateResponse,
+            operation_id="update_admin_template_from_source",
+            summary="Re-fetch an installed server-scope template from its source",
+            tags=["Templates", "Admin"],
+        )
+        async def update_admin_template_from_source(
+            template_id: str,
+            _auth=Depends(_require_iam("template:admin")),
+        ):
+            return await _do_update_from_source(
+                template_id=template_id,
+                scope=TemplateScope.SERVER,
+                owner=None,
+                user_id=_auth["user_id"],
+            )
+
+        @router.get(
+            "/admin/templates/{template_id}/check-update",
+            response_model=CheckUpdateResponse,
+            operation_id="check_admin_template_update",
+            summary="Check whether the source has a newer revision",
+            tags=["Templates", "Admin"],
+        )
+        async def check_admin_template_update(
+            template_id: str,
+            _auth=Depends(_require_iam("template:admin")),
+        ):
+            return await _do_check_update(
+                template_id=template_id,
+                scope=TemplateScope.SERVER,
+                owner=None,
+                user_id=_auth["user_id"],
+            )
+
+        # POST /banks ----------------------------------------------------- #
+
+        @router.post(
+            "/banks",
+            operation_id="create_bank_from_template",
+            summary="Apply an installed template to a new or existing bank",
+            tags=["Banks"],
+        )
+        async def create_bank_from_template(
+            request: CreateBankFromTemplateRequest,
+            _auth=Depends(_require_iam("bank:create")),
+        ):
+            await _require_action(_auth["user_id"], "template:list")
+            record = await db.fetch_installed_template_for_apply(
+                await db.get_pool(),
+                template=request.template,
+                current_user=_auth["user_id"],
+            )
+            if record is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"template not found for ref {request.template!r}",
+                )
+            ctx = RequestContext(internal=True)  # type: ignore[call-arg]
+            return await bootstrap_bank_from_template(
+                memory,
+                bank_id=request.bank_id,
+                template=record,
+                request_context=ctx,
+                bank_name=request.name,
             )
 
         return router

@@ -13,7 +13,6 @@ import logging
 
 from hindsight_api.extensions import AuthenticationError, TenantContext, TenantExtension
 from hindsight_api.extensions.tenant import Tenant
-
 from hindsight_api.models import RequestContext
 
 from hindclaw_ext import db

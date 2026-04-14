@@ -1,4 +1,5 @@
 """Tests for policy document models."""
+
 import pytest
 from pydantic import ValidationError
 
@@ -49,7 +50,9 @@ def test_policy_statement_invalid_budget():
 
     with pytest.raises(ValidationError):
         PolicyStatement(
-            effect="allow", actions=["bank:recall"], banks=["*"],
+            effect="allow",
+            actions=["bank:recall"],
+            banks=["*"],
             recall_budget="ultra",
         )
 
@@ -111,7 +114,12 @@ def test_bank_policy_with_overrides():
         public_access={
             "default": None,
             "overrides": [
-                {"scope": "provider", "value": "telegram", "actions": ["bank:recall"], "recall_budget": "low"},
+                {
+                    "scope": "provider",
+                    "value": "telegram",
+                    "actions": ["bank:recall"],
+                    "recall_budget": "low",
+                },
             ],
         },
     )
@@ -128,7 +136,11 @@ def test_bank_policy_public_access_default():
     doc = BankPolicyDocument(
         version="2026-03-24",
         public_access={
-            "default": {"actions": ["bank:recall"], "recall_budget": "low", "recall_max_tokens": 256},
+            "default": {
+                "actions": ["bank:recall"],
+                "recall_budget": "low",
+                "recall_max_tokens": 256,
+            },
             "overrides": [],
         },
     )
@@ -148,7 +160,12 @@ class TestTemplateActions:
             statements=[
                 PolicyStatement(
                     effect="allow",
-                    actions=["template:list", "template:create", "template:install", "template:manage"],
+                    actions=[
+                        "template:list",
+                        "template:create",
+                        "template:install",
+                        "template:manage",
+                    ],
                     banks=["*"],
                 )
             ],
