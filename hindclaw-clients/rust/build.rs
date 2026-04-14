@@ -1,13 +1,33 @@
+// PERMANENT WORKAROUND: progenitor generates all types inline into a single
+// .rs file in OUT_DIR, so HindClaw's Rust client cannot import upstream
+// types from a separate crate the way the TS/Python/Go clients do.
+// Long-term resolution: none — would require upstream to publish a
+// Hindsight Rust crate to crates.io.
+
+// PERMANENT WORKAROUND: progenitor consumes OpenAPI 3.0.x but HindClaw
+// emits 3.1.0 from FastAPI + Pydantic v2. This build script downgrades
+// the version string, anyOf-null patterns, and numeric exclusiveMinimum/
+// exclusiveMaximum bounds in memory at build time so progenitor can parse
+// the spec. The conversion is Rust-only; the on-disk spec that Python,
+// TypeScript, and Go consume stays 3.1.0 and unmangled.
+// Long-term resolution: none — would require progenitor to add native
+// OpenAPI 3.1.0 support.
+
 use std::env;
 use std::fs;
 use std::path::PathBuf;
 
-/// Convert OpenAPI 3.1 spec to 3.0 for progenitor compatibility
+/// Convert OpenAPI 3.1 spec to 3.0 for progenitor compatibility.
+///
+/// Runs three passes: version string, anyOf-null flattening, and numeric
+/// exclusive-bound rewriting. All three are needed because Pydantic v2 emits
+/// 3.1.0 output that progenitor does not consume.
 fn convert_31_to_30(spec: &mut serde_json::Value) {
     if let Some(obj) = spec.as_object_mut() {
         obj.insert("openapi".to_string(), serde_json::json!("3.0.3"));
     }
     convert_anyof_to_nullable(spec);
+    convert_exclusive_bounds(spec);
 }
 
 /// Remove paths with multipart/form-data content type (not supported by progenitor)
@@ -97,6 +117,41 @@ fn convert_anyof_to_nullable(value: &mut serde_json::Value) {
         serde_json::Value::Array(arr) => {
             for item in arr.iter_mut() {
                 convert_anyof_to_nullable(item);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Convert OpenAPI 3.1.0 numeric exclusiveMinimum/Maximum to 3.0.x booleans.
+///
+/// Pydantic v2's `Field(gt=0)` emits `{"exclusiveMinimum": 0}` (3.1.0 style,
+/// numeric value). OpenAPI 3.0.x and progenitor expect a boolean, with the
+/// numeric value moved into a sibling `minimum` field. Convert
+/// `{"exclusiveMinimum": N}` to `{"minimum": N, "exclusiveMinimum": true}`,
+/// and likewise for `exclusiveMaximum`/`maximum`. Walks the spec recursively
+/// so nested schemas inside component definitions are covered.
+fn convert_exclusive_bounds(value: &mut serde_json::Value) {
+    match value {
+        serde_json::Value::Object(obj) => {
+            for (bound, opposite) in [
+                ("exclusiveMinimum", "minimum"),
+                ("exclusiveMaximum", "maximum"),
+            ] {
+                if let Some(existing) = obj.get(bound).cloned() {
+                    if !existing.is_boolean() {
+                        obj.insert(opposite.to_string(), existing);
+                        obj.insert(bound.to_string(), serde_json::json!(true));
+                    }
+                }
+            }
+            for (_key, val) in obj.iter_mut() {
+                convert_exclusive_bounds(val);
+            }
+        }
+        serde_json::Value::Array(arr) => {
+            for item in arr.iter_mut() {
+                convert_exclusive_bounds(item);
             }
         }
         _ => {}
