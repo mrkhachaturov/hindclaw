@@ -4,13 +4,14 @@ Generated typed API clients for the Hindclaw access control extension (`/ext/hin
 
 ## Structure
 
+The OpenAPI spec itself lives at `hindclaw-docs/static/openapi.json` (served by
+the docs site and consumed by every client generator). It is no longer duplicated
+under `hindclaw-clients/`.
+
 ```
 hindclaw-clients/
-├── openapi.json                    # OpenAPI spec (generated, committed)
-├── openapi-generator-config/
-│   ├── go.yaml                     # Go generator config
-│   └── python.yaml                 # Python generator config
 ├── go/                             # Go client (OpenAPI Generator v7.10.0)
+│   ├── openapi-generator-config.yaml # MAINTAINED: Go generator config
 │   ├── hindclaw_client.go          # MAINTAINED: convenience constructors
 │   ├── README.md                   # MAINTAINED
 │   ├── api_default.go              # GENERATED
@@ -18,11 +19,13 @@ hindclaw-clients/
 │   ├── configuration.go            # GENERATED
 │   └── model_*.go                  # GENERATED: one per request/response model
 ├── python/                         # Python client (OpenAPI Generator v7.10.0)
+│   ├── openapi-generator-config.yaml # MAINTAINED: Python generator config
 │   ├── hindclaw_client.py          # MAINTAINED: HindclawClient wrapper
 │   ├── pyproject.toml              # MAINTAINED
 │   ├── README.md                   # MAINTAINED
 │   └── hindclaw_client_api/        # GENERATED (auto-patched for deferred aiohttp init)
 ├── typescript/                     # TypeScript client (@hey-api/openapi-ts 0.88.0)
+│   ├── openapi-ts.config.ts        # MAINTAINED: @hey-api/openapi-ts config
 │   ├── src/index.ts                # MAINTAINED: re-exports
 │   ├── package.json                # MAINTAINED
 │   ├── tsconfig.json               # MAINTAINED
@@ -43,13 +46,19 @@ hindclaw-clients/
 From the hindclaw repo root:
 
 ```bash
-python scripts/extract-openapi.py > hindclaw-clients/openapi.json
+python scripts/extract-openapi.py
 bash scripts/generate-clients.sh
 ```
 
 This is fully automated:
-- `extract-openapi.py` builds a FastAPI app from HindclawHttp and dumps the OpenAPI spec (no running server needed)
-- `generate-clients.sh` runs OpenAPI Generator (Docker) for Go/Python, `@hey-api/openapi-ts` for TypeScript
+- `extract-openapi.py` builds a FastAPI app from HindclawHttp and writes the
+  spec directly to `hindclaw-docs/static/openapi.json` (no running server
+  needed, no stdout redirect)
+- `generate-clients.sh` runs OpenAPI Generator (Docker) for Go/Python using
+  each language's co-located `openapi-generator-config.yaml`, and
+  `@hey-api/openapi-ts` for TypeScript using `typescript/openapi-ts.config.ts`
+  (the TS generator auto-discovers the config when run from the `typescript/`
+  directory, so no CLI flags are passed)
 - Python `rest.py` is auto-patched for deferred aiohttp initialization (same fix as upstream Hindsight)
 - Maintained files are preserved via temp dir backup/restore
 
