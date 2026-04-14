@@ -37,6 +37,11 @@ dev = [
     "httpx>=0.27.0",
     "ruff>=0.8.0",
     "ty>=0.0.1",
+    # TEMPORARY: unpinned editable install of hindsight-api-slim.
+    # Tracked: https://github.com/vectorize-io/hindsight/pull/1044 (merged 2026-04-14)
+    # Replace with: "hindsight-api-slim==<post-#1044-release>" (exact pin,
+    #               non-editable) once UPSTREAM_HINDSIGHT_VERSION points
+    #               to a release containing the merged patch.
     "hindsight-api-slim",
 ]
 

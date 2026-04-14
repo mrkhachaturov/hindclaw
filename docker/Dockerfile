@@ -31,6 +31,26 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir uv
 
+# === STEADY STATE (replace the TEMPORARY block below when PR #1044 ships in a release) ==
+# WORKDIR /app/api
+# RUN apt-get update && apt-get install -y curl \
+#     && rm -rf /var/lib/apt/lists/* \
+#     && pip install --no-cache-dir uv \
+#     && uv venv .venv
+# RUN uv pip install --python /app/api/.venv/bin/python \
+#     "hindsight-api-slim==<post-#1044-release>" \
+#     "flashrank>=0.2.0" \
+#     "hindclaw-extension==0.5.0"
+# =============================================================================
+
+# TEMPORARY: editable install of patched hindsight-api-slim
+# Tracked: https://github.com/vectorize-io/hindsight/pull/1044 (merged 2026-04-14)
+# Replace with: the steady-state block above, once UPSTREAM_HINDSIGHT_VERSION
+#               points to a release containing the merged patch. The
+#               steady-state block preserves /app/api/.venv/ which the final
+#               prod stage assumes via ENV PATH and explicit
+#               /app/api/.venv/bin/python invocations — do not flatten the
+#               venv out.
 COPY hindsight-api-slim/pyproject.toml ./api/
 COPY hindsight-api-slim/README.md ./api/
 
@@ -50,33 +70,32 @@ COPY hindsight-api-slim/hindsight_api ./hindsight_api
 RUN uv pip install -e .
 
 # =============================================================================
-# Stage: SDK Builder (TypeScript client for Control Plane)
-# =============================================================================
-FROM node:20-slim AS sdk-builder
-
-WORKDIR /app
-
-COPY package.json package-lock.json ./
-COPY hindsight-clients/typescript/ ./hindsight-clients/typescript/
-
-RUN npm ci --ignore-scripts -w @vectorize-io/hindsight-client
-RUN npm run build -w @vectorize-io/hindsight-client
-
-# =============================================================================
 # Stage: Control Plane Builder (Next.js UI)
 # =============================================================================
 FROM node:20-slim AS cp-builder
 
 WORKDIR /app/memory-poc/hindsight-control-plane
+ARG HINDSIGHT_CLIENT_VERSION
 
+# TEMPORARY: rewrite hindsight-control-plane's local-path @vectorize-io/hindsight-client
+# dep to the npm-published version. Upstream's control-plane package.json still uses
+# "file:../hindsight-clients/typescript" because their monorepo build resolves that
+# through npm workspaces; we are not building from that workspace, so we need a real
+# version pin. Two passes required because the second COPY below clobbers package.json
+# with the upstream-shipped version.
+# Tracked: no upstream PR (upstream's monorepo-workspace layout is intentional)
+# Replace with: DELETE both rewrite lines if upstream ever ships a hindsight-control-plane/
+#               package.json with a published-version pin instead of file:...
+
+# Pass 1: package.json-only layer so the npm install layer cache stays stable.
 COPY hindsight-control-plane/package.json ./
-RUN sed -i '/"@vectorize-io\/hindsight-client":/d' package.json
+RUN sed -i "s|\"@vectorize-io/hindsight-client\": \"file:[^\"]*\"|\"@vectorize-io/hindsight-client\": \"${HINDSIGHT_CLIENT_VERSION}\"|" package.json
 RUN npm install
 
+# Pass 2: full source copy re-overwrites package.json — re-apply the rewrite.
 COPY hindsight-control-plane/ ./
-RUN rm -f package-lock.json && sed -i '/"@vectorize-io\/hindsight-client":/d' package.json
-
-COPY --from=sdk-builder /app/hindsight-clients/typescript ./node_modules/@vectorize-io/hindsight-client
+RUN rm -f package-lock.json \
+    && sed -i "s|\"@vectorize-io/hindsight-client\": \"file:[^\"]*\"|\"@vectorize-io/hindsight-client\": \"${HINDSIGHT_CLIENT_VERSION}\"|" package.json
 
 RUN npm exec -- next build
 
@@ -113,9 +132,6 @@ RUN useradd -m -s /bin/bash hindsight
 
 # Copy API with venv from builder
 COPY --from=api-builder /app/api /app/api
-
-# Copy built SDK
-COPY --from=sdk-builder /app/hindsight-clients/typescript /app/sdk
 
 # Copy Control Plane standalone build
 WORKDIR /app/control-plane
