@@ -69,6 +69,24 @@ uv pip install -e ".[dev]"
 .venv/bin/python -m ty check hindclaw_ext/    # type check
 ```
 
+### Client test suites
+
+The four generated clients have their own smoke-test scaffolds. Run each from the HindClaw repo root.
+
+```bash
+# TypeScript (jest + ts-jest + @hey-api/openapi-ts)
+cd hindclaw-clients/typescript && npm test
+
+# Python (pytest + pytest-asyncio with uvicorn in-process fixture)
+cd hindclaw-clients/python && .venv/bin/python -m pytest tests/ -v
+
+# Go (httptest + httptrace)
+cd hindclaw-clients/go && go test ./...
+
+# Rust (mockito + serde_json round-trip)
+cd hindclaw-clients/rust && cargo test
+```
+
 ## Scripts
 
 Repo-level automation under `scripts/`. Each script is idempotent and runnable from the HindClaw repo root.
@@ -148,6 +166,40 @@ The `pyproject.toml` ruff + ty + pytest config is kept in lockstep with upstream
 
 **Independent components**: publish from their own repositories and changelogs, not from this repo.
 
+## Release flow
+
+HindClaw's core repo releases on tag push. The full sequence when cutting a new version:
+
+1. **Bump the pin file** — if tracking a released upstream:
+   ```bash
+   echo "X.Y.Z" > UPSTREAM_HINDSIGHT_VERSION
+   rm -f UPSTREAM_HINDSIGHT_COMMIT  # if it was set
+   ```
+2. **Sync the downstream manifests:**
+   ```bash
+   bash scripts/sync-upstream-pins.sh
+   ```
+3. **Regenerate the OpenAPI spec and clients:**
+   ```bash
+   bash scripts/generate-openapi.sh
+   bash scripts/generate-clients.sh
+   ```
+4. **Regenerate the docs skill (optional but recommended when docs changed):**
+   ```bash
+   bash scripts/generate-docs-skill.sh
+   ```
+5. **Run all client test suites + extension regression:**
+   ```bash
+   cd hindclaw-clients/typescript && npm test && cd ../..
+   cd hindclaw-clients/python && .venv/bin/python -m pytest tests/ -v && cd ../..
+   cd hindclaw-clients/go && go test ./... && cd ../..
+   cd hindclaw-clients/rust && cargo test && cd ../..
+   cd hindclaw-extension && .venv/bin/python -m pytest tests/ -v && cd ..
+   ```
+6. **Bump the version in `hindclaw-extension/pyproject.toml`** and update `CHANGELOG.md`.
+7. **Commit everything in one release commit**, push to main.
+8. **Tag and push**: `git tag -a ext-v<version> -m "..."` then `git push origin ext-v<version>`. GitHub Actions publishes to PyPI via the `ext-v*` trigger on `.github/workflows/publish-extension.yml`.
+
 ## Commit Style
 
 Conventional commits in the core repo: `feat(hindclaw-ext):`, `fix(hindclaw-cli):`, `chore:`, `docs:`
@@ -226,7 +278,7 @@ Must carry:
 # TEMPORARY: editable install of patched hindsight-api-slim
 # Tracked: build/hindsight/patches/0001-fix-bank-template-align-with-configurable-fields.patch
 #          (filed as upstream PR — link when opened)
-# Replace with: the steady-state line above, once build/hindsight/UPSTREAM_VERSION
+# Replace with: the steady-state line above, once UPSTREAM_HINDSIGHT_VERSION
 #               points to a release containing the merged patch.
 COPY hindsight-api-slim/pyproject.toml ./api/
 COPY hindsight-api-slim/hindsight_api ./hindsight_api

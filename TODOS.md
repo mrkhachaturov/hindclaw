@@ -1,104 +1,79 @@
 # HindClaw TODOs
 
-## CLI: Command naming inconsistency
+Deferred upstream-facing follow-ups, tracked for future sessions.
 
-The CLI uses different verbs for the same operations across subcommands. Standard CLIs (git, docker, kubectl) pick one style and stick with it.
+## Upstream proposals
 
-**Current state:**
+### 1. Regenerate `hindsight-docs/static/bank-template-schema.json`
 
-| Subcommand | List | Create | Delete |
-|------------|------|--------|--------|
-| `alias` | `ls` | `set` | `rm` |
-| `admin sa` | `list` | `add` | `remove` |
-| `admin sa key` | `ls` | `add` | `rm` |
-| `admin user` | `list` | `add` | `remove` |
-| `admin user key` | ? | ? | ? |
-| `admin group` | `list` | `add` | `remove` |
-| `admin policy` | `list` | `create` | `remove` |
-| `template` | `list` | `create` | `remove` |
+The static schema file in upstream Hindsight's docs has drifted from the
+live Pydantic model on `entity_labels` (static says `list[str]`, live says
+`list[dict[str, Any]]`). Discovered during the Plan D audit. Should be a
+small upstream PR or an upstream CI job that regenerates the file on every
+release. Tracked separately from PR #1044 to avoid scope expansion.
 
-Three different create verbs (`set`, `add`, `create`), two different list verbs (`ls`, `list`), two different delete verbs (`rm`, `remove`).
+### 2. Propose `manifest_file` reference to upstream `templates.json`
 
-**Proposal:** Support both short and long forms everywhere as aliases:
-- `ls` / `list` — both work everywhere
-- `rm` / `remove` — both work everywhere
-- `add` / `create` — both work everywhere
+HindClaw's Plan B added a catalog format where each entry is either an
+inline `manifest` or an external `manifest_file` reference, enforced by a
+Pydantic `model_validator`. The same pattern would benefit upstream's hub.
+File after Plan C Tier 2 lands so HindClaw's `templates.json` can serve
+as the worked example.
 
-Or pick one convention and alias the other. Most CLIs support `ls` as an alias for `list`.
+### 3. Upstream TypeScript re-export PR for BankTemplate types
 
----
+Filed as a follow-up PR to vectorize-io/hindsight from branch
+`fix/ts-sdk-export-bank-template-types` on the mrkhachaturov/hindsight
+fork. See local patch at
+`build/hindsight/patches/0003-fix-ts-sdk-export-bank-template-types.patch`
+(inside astromech's build tree) and the PR body draft at
+`/tmp/pr-ts-sdk-export-bank-template-types.md`. When merged and released,
+delete:
+- `hindclaw-clients/typescript/src/vendor-hindsight-client.d.ts` (ambient shim)
+- The TEMPORARY marker in `hindclaw-clients/typescript/src/index.ts`
+- Patch `0003-fix-ts-sdk-export-bank-template-types.patch`
 
-## CLI: Self-service SA commands (`hindclaw sa`)
+## CI enhancements
 
-**Server-side done (v0.3.0):** `/me/service-accounts` endpoints exist with full ownership enforcement. Clients regenerated with `list_my_service_accounts`, `create_my_service_account`, etc.
+### 4. CI availability check for pinned upstream package versions
 
-**CLI not done:** The Rust CLI needs `hindclaw sa` subcommands targeting the `/me/` endpoints. Mapping is defined in the spec (`docs/rkstack/specs/hindclaw/2026-03-28-sa-self-service-design.md` Section 4):
-- `hindclaw sa list` → `GET /me/service-accounts`
-- `hindclaw sa add <id>` → `POST /me/service-accounts`
-- `hindclaw sa info <id>` → `GET /me/service-accounts/{id}`
-- `hindclaw sa key add <sa-id>` → `POST /me/service-accounts/{id}/keys`
-- etc.
+Plan D's `version-coherence.yml` only verifies local manifest text matches
+`UPSTREAM_HINDSIGHT_VERSION`. A secondary job that actually calls
+`npm view @vectorize-io/hindsight-client@<version>`, `pip index versions
+hindsight-client`, and (when relevant) `GOPROXY=direct go list -m
+github.com/mrkhachaturov/hindsight/hindsight-clients/go@<version>` would
+catch the "version bumped but packages not yet published" window.
+Nice-to-have, deferred.
 
-This is v2 scope per the CLI spec.
+### 5. Deno runtime verification of the generated TypeScript client
 
----
+Task 3 of Plan D re-forked `generate-clients.sh` from upstream and
+preserves upstream's Deno-compat patch (destructures `client` out of
+`RequestInit` because Deno reserves that field name). The patch is
+applied at regen time, but Plan D does not exercise it — the TypeScript
+test suite runs under Node (Jest), not Deno. Adding a `tests/deno_setup.ts`
+smoke test plus a `test:deno` script and wiring a Deno runtime into CI
+would close the parity gap with upstream Hindsight's test suite.
+Nice-to-have, deferred.
 
-## CLI: Missing `hindclaw bank` commands
+## Release unblocking
 
-There's no way to list or inspect banks from the CLI. The `template apply` command creates banks, but there's no:
-- `hindclaw bank list` — see what banks exist
-- `hindclaw bank info <id>` — inspect a bank's config
-- `hindclaw bank stats <id>` — fact count, last retain, etc.
+### 6. When upstream publishes hindsight-client 0.5.2+ containing PR #1044
 
-These are useful for debugging plugin issues ("is my bank there? does it have facts?").
+Current state is pre-release: `UPSTREAM_HINDSIGHT_COMMIT` at the repo root
+holds `099f4c925a920009c90692760b0ec1007cf0d977` (the #1044 merge commit)
+and `scripts/sync-upstream-pins.sh` produces a git-ref pin in
+`hindclaw-clients/python/pyproject.toml`. When upstream cuts the next
+release containing that commit:
 
----
+```bash
+rm UPSTREAM_HINDSIGHT_COMMIT
+echo "0.5.2" > UPSTREAM_HINDSIGHT_VERSION   # or whatever the release tag is
+bash scripts/sync-upstream-pins.sh
+bash scripts/generate-clients.sh
+# verify all four client suites pass, commit, push
+```
 
-## CLI: `hindclaw claude` subcommand (future)
-
-From the multi-bank design spec — the interactive setup wizard:
-- `hindclaw claude init` — create project config, pick bank + template + domain banks
-- `hindclaw claude configure` — change settings
-- `hindclaw claude status` — show bank stats, config, domain connections
-
-Not started. Separate spec needed.
-
----
-
-## Plugin: Server-side budget enforcement not yet implemented
-
-The plugin handles `warnings` in recall responses (cap-and-warn), but the server (`HindclawValidator.validate_recall()`) doesn't actually enforce `recall_budget` and `recall_max_tokens` from policies yet. The infrastructure is in `AccessResult` and `intersect_sa_policy`, but the validator passes client values through unchecked.
-
-Spec: `docs/rkstack/specs/hindclaw/2026-03-28-claude-hindclaw-plugin-v2-design.md` section 6.
-
----
-
-## Upstream Hindsight v0.4.21 / v0.4.22 — features relevant to HindClaw
-
-Tracked after bumping from v0.4.20 to v0.4.22 (2026-04-03).
-
-### High priority
-
-- [ ] **Audit log integration** (#717, #758) — every retain/recall/reflect is now logged with bank ID, operation metadata, and `duration_ms`. HindClaw should expose tenant-scoped audit queries via `/ext/hindclaw/` HTTP extension. Enables per-tenant usage dashboards and billing.
-
-- [ ] **`tags_match` / `tag_groups` in mental model triggers** (#804) — mental models can now trigger based on tag patterns. HindClaw injects tags per tenant via `HindclawValidator` — test that mental models can be scoped per-tenant using these tag-based triggers. Could allow tenant-specific consolidation and mental model behavior.
-
-- [ ] **`max_observations_per_scope` bank config** (#729) — per-bank limit on stored observations. HindClaw should expose this as a tenant quota setting in bank management / templates. Prevents runaway memory growth per tenant.
-
-### Medium priority
-
-- [ ] **Client-side `strategy` on MCP retain** (#684) — clients can now pass `verbose`/`fast` per retain call. `HindclawValidator.validate_retain()` already injects strategy server-side — verify interaction when both client and server set strategy (server should win for policy enforcement).
-
-- [ ] **Recall metadata fix** (#680, #803) — recall responses now correctly include metadata in both engine and HTTP layers. If HindClaw stores access control metadata on memories/documents, it's now queryable in recall results. Verify `HindclawValidator.validate_recall()` passes metadata through.
-
-- [ ] **`document_metadata` in API** (#798) — document metadata exposed in API and control plane. If HindClaw stores ACL or tenant info in document metadata, it's now surfaced. Consider using this for document-level access control.
-
-### Low priority / watch
-
-- [ ] **`HINDSIGHT_API_LLM_EXTRA_BODY`** (#781) — custom model params per deployment. Useful if tenant-specific LLM configs are needed (e.g., different temperature per bank).
-
-- [ ] **`X-Ignored-Params` warning header** (#802) — API warns on unknown request params. Helpful for debugging HindClaw client/extension calls.
-
-- [ ] **Delta retain** (#701) — skip LLM processing for unchanged chunks on document upsert. Relevant for bulk ingestion pipelines. No HindClaw action needed, but good to know it exists.
-
-- [ ] **`none` LLM provider** (#691) — chunk-only storage without LLM extraction. Could be useful for raw document ingestion tenants that only need retrieval, not memory extraction.
+The `TEMPORARY:` marker in `hindclaw-clients/python/pyproject.toml` and
+the hatch `allow-direct-references` escape hatch disappear automatically
+once the git-ref pin is replaced with a release pin.
