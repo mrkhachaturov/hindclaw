@@ -4,34 +4,59 @@ Deferred upstream-facing follow-ups, tracked for future sessions.
 
 ## Upstream proposals
 
-### 1. Regenerate `hindsight-docs/static/bank-template-schema.json`
+### 1. Regenerate `hindsight-docs/static/bank-template-schema.json` — FILED
 
-The static schema file in upstream Hindsight's docs has drifted from the
-live Pydantic model on `entity_labels` (static says `list[str]`, live says
-`list[dict[str, Any]]`). Discovered during the Plan D audit. Should be a
-small upstream PR or an upstream CI job that regenerates the file on every
-release. Tracked separately from PR #1044 to avoid scope expansion.
+Filed as **[vectorize-io/hindsight#1065](https://github.com/vectorize-io/hindsight/pull/1065)**
+`fix(docs): regenerate bank-template-schema.json and guard drift`.
+Status as of 2026-04-15: OPEN, MERGEABLE, CLEAN — all CI checks passing
+(build-api across Python 3.11-3.14, build-typescript-client,
+build-hindsight-all-npm, build-control-plane, build-docs,
+check-openapi-compatibility, check-cli-coverage,
+smoke-openclaw-install, every integration test). Awaiting Nicolò's
+review.
 
-### 2. Propose `manifest_file` reference to upstream `templates.json`
+Original rationale: the static schema file in upstream Hindsight's
+docs had drifted from the live Pydantic model on `entity_labels`
+(static said `list[str]`, live said `list[dict[str, Any]]`). The PR
+also adds a drift guard so future regressions fail CI.
 
-HindClaw's Plan B added a catalog format where each entry is either an
-inline `manifest` or an external `manifest_file` reference, enforced by a
-Pydantic `model_validator`. The same pattern would benefit upstream's hub.
-File after Plan C Tier 2 lands so HindClaw's `templates.json` can serve
-as the worked example.
+### 2. Propose `manifest_file` reference to upstream `templates.json` — FILED
 
-### 3. Upstream TypeScript re-export PR for BankTemplate types
+Filed as **[vectorize-io/hindsight#1066](https://github.com/vectorize-io/hindsight/pull/1066)**
+`feat(docs): split template manifests into per-file manifest_file references`.
+Status as of 2026-04-15: OPEN, MERGEABLE, CLEAN — detect-changes +
+verify-generated-files + build-docs all passing. Awaiting review.
 
-Filed as a follow-up PR to vectorize-io/hindsight from branch
-`fix/ts-sdk-export-bank-template-types` on the mrkhachaturov/hindsight
-fork. See local patch at
-`build/hindsight/patches/0003-fix-ts-sdk-export-bank-template-types.patch`
-(inside astromech's build tree) and the PR body draft at
-`/tmp/pr-ts-sdk-export-bank-template-types.md`. When merged and released,
-delete:
+Original rationale: HindClaw's Plan B added a catalog format where
+each entry is either an inline `manifest` or an external `manifest_file`
+reference, enforced by a Pydantic `model_validator`. This PR applies
+the same pattern to upstream's hub. **Side effect:** resolves the
+pre-existing test failure in `tests/test_template_models.py::
+test_catalog_accepts_upstream_templates_json_verbatim` flagged during
+Plan D Task 9 — when #1066 merges and we rebuild the skills tree
+against the new upstream format, the test will start passing again
+without local changes.
+
+### 3. Upstream TypeScript re-export PR for BankTemplate types — FILED
+
+Filed as **[vectorize-io/hindsight#1063](https://github.com/vectorize-io/hindsight/pull/1063)**
+`fix(ts-sdk): re-export BankTemplate types from package root`.
+Status as of 2026-04-15: OPEN, MERGEABLE, CLEAN — detect-changes,
+verify-generated-files, build-typescript-client, build-openclaw-integration,
+build-control-plane, smoke-openclaw-install all SUCCESS. Awaiting review.
+
+Local mirror patch: `build/hindsight/patches/0003-fix-ts-sdk-export-bank-template-types.patch`
+(inside astromech's build tree, applies cleanly on v0.5.1 + 0001 + 0002).
+Source branch: `fix/ts-sdk-export-bank-template-types` on
+mrkhachaturov/hindsight fork. PR body draft still at
+`/tmp/pr-ts-sdk-export-bank-template-types.md` (ephemeral — delete
+after merge).
+
+**When #1063 merges and upstream releases a version containing it, delete:**
 - `hindclaw-clients/typescript/src/vendor-hindsight-client.d.ts` (ambient shim)
-- The TEMPORARY marker in `hindclaw-clients/typescript/src/index.ts`
-- Patch `0003-fix-ts-sdk-export-bank-template-types.patch`
+- The TEMPORARY marker block in `hindclaw-clients/typescript/src/index.ts`
+- Patch `build/hindsight/patches/0003-fix-ts-sdk-export-bank-template-types.patch`
+- The PR draft at `/tmp/pr-ts-sdk-export-bank-template-types.md`
 
 ## CI enhancements
 
