@@ -9,65 +9,34 @@
 #   - Claude Code LLM provider — via claude-agent-sdk (core dep)
 #   - hindclaw-extension — server-side access control
 #
-# Build context must be the patched hindsight monorepo:
+# Build context must contain the upstream hindsight-control-plane/ source
+# (consumed by the cp-builder stage below). The api stage now installs
+# everything from PyPI, so no patched sources are required.
 #
 #   docker build -t hindsight-astromech \
 #     -f build/hindclaw/docker/Dockerfile \
 #     build/hindsight/.upstream
-#
-# Requires .upstream checked out at the pinned tag (build/hindsight/UPSTREAM_VERSION).
 
 # =============================================================================
 # Stage: API Builder
 # =============================================================================
 FROM python:3.11-slim AS api-builder
 
-WORKDIR /app
-
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir uv
-
-# === STEADY STATE (replace the TEMPORARY block below when PR #1044 ships in a release) ==
-# WORKDIR /app/api
-# RUN apt-get update && apt-get install -y curl \
-#     && rm -rf /var/lib/apt/lists/* \
-#     && pip install --no-cache-dir uv \
-#     && uv venv .venv
-# RUN uv pip install --python /app/api/.venv/bin/python \
-#     "hindsight-api-slim==<post-#1044-release>" \
-#     "flashrank>=0.2.0" \
-#     "hindclaw-extension==0.5.0"
-# =============================================================================
-
-# TEMPORARY: editable install of patched hindsight-api-slim
-# Tracked: https://github.com/vectorize-io/hindsight/pull/1044 (merged 2026-04-14)
-# Replace with: the steady-state block above, once UPSTREAM_HINDSIGHT_VERSION
-#               points to a release containing the merged patch. The
-#               steady-state block preserves /app/api/.venv/ which the final
-#               prod stage assumes via ENV PATH and explicit
-#               /app/api/.venv/bin/python invocations — do not flatten the
-#               venv out.
-COPY hindsight-api-slim/pyproject.toml ./api/
-COPY hindsight-api-slim/README.md ./api/
-
 WORKDIR /app/api
 
-# Core deps only — no local-ml (torch/sentence-transformers), no embedded-db (pg0)
-RUN uv sync
+RUN apt-get update && apt-get install -y curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir uv \
+    && uv venv .venv
 
-# FlashRank reranker (~50MB, no torch dependency)
-RUN uv pip install "flashrank>=0.2.0"
-
-# Hindclaw server-side access control extensions
-RUN uv pip install "hindclaw-extension==0.5.0"
-
-# Copy source and install package
-COPY hindsight-api-slim/hindsight_api ./hindsight_api
-RUN uv pip install -e .
+# Install hindsight-api-slim from PyPI plus the FlashRank reranker and the
+# HindClaw extension. Pinned explicitly so the final image is reproducible.
+# No local-ml (torch/sentence-transformers) and no embedded-db (pg0) extras —
+# this image runs against external Postgres+pgvector and external rerankers.
+RUN uv pip install --python /app/api/.venv/bin/python \
+    "hindsight-api-slim==0.5.2" \
+    "flashrank>=0.2.0" \
+    "hindclaw-extension==0.5.0"
 
 # =============================================================================
 # Stage: Control Plane Builder (Next.js UI)

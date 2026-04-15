@@ -10,14 +10,7 @@ dependencies = [
     "python-dateutil",
     "typing-extensions",
     "pydantic>=2.0.0",
-    # TEMPORARY: PyPI hindsight-client==0.5.1 predates upstream PR #1044
-    # (merged 2026-04-14 as commit 099f4c9) which added 10 fields to
-    # BankTemplateConfig. Pinning to the merge commit until upstream cuts
-    # a 0.5.2 release that includes it.
-    # Tracked: https://github.com/vectorize-io/hindsight/pull/1044 (merged)
-    # Replace with: "hindsight-client==0.5.2" (or whatever the post-#1044
-    #               release tag becomes) once upstream publishes it to PyPI.
-    "hindsight-client @ git+https://github.com/vectorize-io/hindsight.git@099f4c925a920009c90692760b0ec1007cf0d977#subdirectory=hindsight-clients/python",
+    "hindsight-client==0.5.2",
 ]
 
 [project.optional-dependencies]
@@ -32,11 +25,6 @@ test = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.hatch.metadata]
-# TEMPORARY: required by the direct-reference git pin of hindsight-client
-# above. Remove together with that pin once upstream ships 0.5.2 to PyPI.
-allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["hindclaw_client", "hindclaw_client_api"]

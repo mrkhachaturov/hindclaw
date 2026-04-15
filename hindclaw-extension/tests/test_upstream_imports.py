@@ -12,32 +12,7 @@ from __future__ import annotations
 import inspect
 from dataclasses import is_dataclass
 
-import pytest
 from pydantic import BaseModel
-
-_REQUIRED_PATCH_FIELDS = frozenset(
-    {
-        "retain_default_strategy",
-        "retain_strategies",
-        "retain_chunk_batch_size",
-        "mcp_enabled_tools",
-        "consolidation_llm_batch_size",
-        "consolidation_source_facts_max_tokens",
-        "consolidation_source_facts_max_tokens_per_observation",
-        "max_observations_per_scope",
-        "reflect_source_facts_max_tokens",
-        "llm_gemini_safety_settings",
-    }
-)
-
-
-def _installed_upstream_has_plan_a_patch() -> bool:
-    """Whether the installed ``hindsight-api-slim`` already carries the PR #1044
-    fields on ``BankTemplateConfig``. Returns ``True`` for the patched fork used
-    in local dev and for any released upstream containing the merged patch."""
-    from hindsight_api.api.http import BankTemplateConfig
-
-    return _REQUIRED_PATCH_FIELDS <= set(BankTemplateConfig.model_fields)
 
 
 def test_bank_template_manifest_classes_are_importable_pydantic_models():
@@ -107,27 +82,23 @@ def test_entity_labels_symbols_are_importable():
     assert callable(parse_entity_labels), "parse_entity_labels is not callable"
 
 
-# TEMPORARY: Plan A's patch adds 10 fields to BankTemplateConfig. The patch
-# is merged upstream as PR #1044 (merge SHA 099f4c9, 2026-04-14) but is not
-# yet in a released hindsight-api-slim — CI installs the PyPI release
-# (currently 0.5.1), which predates it. Skip the assertion until upstream
-# ships 0.5.2+ containing the merged patch. Local dev installs the patched
-# fork editable, so the skip condition is False locally and the drift guard
-# still fires if upstream regresses.
-# Tracked: https://github.com/vectorize-io/hindsight/pull/1044 (merged)
-# Replace with: drop the skipif decorator, _installed_upstream_has_plan_a_patch
-#               helper, and the _REQUIRED_PATCH_FIELDS constant once
-#               UPSTREAM_HINDSIGHT_VERSION points to a release containing the
-#               merged patch.
-@pytest.mark.skipif(
-    not _installed_upstream_has_plan_a_patch(),
-    reason="installed hindsight-api-slim predates PR #1044; re-enable on 0.5.2+",
-)
 def test_bank_template_config_has_configurable_fields_patch():
-    """Plan A's patch must be present in the running interpreter — every
-    subsequent refactor relies on these fields being on BankTemplateConfig."""
+    """PR #1044's fields must be present — every subsequent refactor relies
+    on these being on BankTemplateConfig. Released in upstream 0.5.2."""
     from hindsight_api.api.http import BankTemplateConfig
 
+    required = {
+        "retain_default_strategy",
+        "retain_strategies",
+        "retain_chunk_batch_size",
+        "mcp_enabled_tools",
+        "consolidation_llm_batch_size",
+        "consolidation_source_facts_max_tokens",
+        "consolidation_source_facts_max_tokens_per_observation",
+        "max_observations_per_scope",
+        "reflect_source_facts_max_tokens",
+        "llm_gemini_safety_settings",
+    }
     declared = set(BankTemplateConfig.model_fields.keys())
-    missing = _REQUIRED_PATCH_FIELDS - declared
-    assert not missing, f"Plan A patch missing fields in BankTemplateConfig: {sorted(missing)}"
+    missing = required - declared
+    assert not missing, f"missing fields in BankTemplateConfig: {sorted(missing)}"
