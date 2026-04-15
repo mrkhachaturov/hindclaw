@@ -22,7 +22,7 @@
   "author": "Hindclaw",
   "license": "MIT",
   "dependencies": {
-    "@vectorize-io/hindsight-client": "0.5.1"
+    "@vectorize-io/hindsight-client": "0.5.2"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "0.88.0",

@@ -37,7 +37,6 @@ from hindclaw_ext.models import TemplateRecord
 from hindclaw_ext.policy_engine import AccessResult
 from hindclaw_ext.template_models import CatalogEntry, TemplateScope
 
-
 # --- Fixtures ---------------------------------------------------------- #
 
 
