@@ -1,0 +1,28 @@
+{
+  "integrations": [
+    {
+      "id": "claude-code",
+      "name": "Claude Code",
+      "description": "Anthropic's official CLI for Claude. Banks remember project decisions, conventions, and architecture across sessions.",
+      "icon": "/img/icons/claudecode.svg"
+    },
+    {
+      "id": "codex",
+      "name": "OpenAI Codex",
+      "description": "OpenAI's coding agent. Templates seed per-project memory — patterns, tooling conventions, and directives stay sticky.",
+      "icon": "/img/icons/openai.png"
+    },
+    {
+      "id": "hindclaw",
+      "name": "HindClaw",
+      "description": "Server-side access control for Hindsight. Banks inherit user and group permissions automatically.",
+      "icon": "/img/icons/hindclaw.png"
+    },
+    {
+      "id": "openclaw",
+      "name": "OpenClaw",
+      "description": "Multi-agent gateway. Each agent gets its own bank with scoped permissions, named retain strategies, and per-channel context.",
+      "icon": "/img/icons/openclaw.png"
+    }
+  ]
+}

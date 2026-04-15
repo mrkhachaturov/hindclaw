@@ -1,0 +1,411 @@
+{
+  "catalog_version": "1",
+  "name": "hindclaw-official",
+  "description": "Official HindClaw bank templates",
+  "templates": [
+    {
+      "id": "backend-python",
+      "name": "Backend Python",
+      "description": "Backend patterns for Python projects — API design, error handling, testing, database access",
+      "category": "coding",
+      "integrations": [
+        "claude-code",
+        "codex",
+        "hindclaw",
+        "openclaw"
+      ],
+      "tags": [
+        "python",
+        "backend",
+        "api",
+        "testing"
+      ],
+      "manifest": {
+        "version": "1",
+        "bank": {
+          "reflect_mission": "You are a senior backend engineer synthesizing proven patterns from real Python projects. Be specific and actionable — cite concrete examples over abstract principles.",
+          "retain_mission": "Extract reusable backend patterns: API design decisions, error handling approaches, testing strategies, database access patterns, authentication and authorization approaches, code organization conventions.",
+          "retain_extraction_mode": "verbose",
+          "observations_mission": "Identify recurring backend patterns: preferred frameworks, testing approaches, error handling conventions, API design choices. Flag contradictions between projects.",
+          "enable_observations": true,
+          "disposition_skepticism": 3,
+          "disposition_literalism": 3,
+          "disposition_empathy": 3,
+          "entity_labels": [
+            {
+              "key": "domain",
+              "description": "Backend domain area",
+              "type": "value",
+              "optional": false,
+              "tag": false,
+              "values": [
+                {
+                  "value": "api-design",
+                  "description": "API routing, request/response, middleware, versioning"
+                },
+                {
+                  "value": "error-handling",
+                  "description": "Exception hierarchy, error responses, recovery patterns"
+                },
+                {
+                  "value": "testing",
+                  "description": "Test structure, fixtures, mocking strategies, coverage"
+                },
+                {
+                  "value": "data-access",
+                  "description": "ORM patterns, query builders, migrations, connection management"
+                },
+                {
+                  "value": "auth",
+                  "description": "Authentication and authorization patterns"
+                }
+              ]
+            },
+            {
+              "key": "concerns",
+              "description": "Technical concerns this fact addresses",
+              "type": "multi-values",
+              "optional": true,
+              "tag": true,
+              "values": [
+                {
+                  "value": "security",
+                  "description": "Auth, validation, secrets handling"
+                },
+                {
+                  "value": "performance",
+                  "description": "Latency, throughput, resource usage"
+                },
+                {
+                  "value": "reliability",
+                  "description": "Error handling, retries, timeouts, failures"
+                },
+                {
+                  "value": "maintainability",
+                  "description": "Code organization, naming, readability"
+                }
+              ]
+            }
+          ],
+          "entities_allow_free_form": true
+        },
+        "directives": [
+          {
+            "name": "no-pii-storage",
+            "content": "Never extract or store personally identifiable information such as SSNs, credit card numbers, or passwords.",
+            "priority": 10,
+            "is_active": true,
+            "tags": [
+              "privacy",
+              "security"
+            ]
+          },
+          {
+            "name": "cite-sources",
+            "content": "When referencing a past decision, always include when it was made and in what context.",
+            "priority": 5,
+            "is_active": true,
+            "tags": [
+              "provenance"
+            ]
+          }
+        ],
+        "mental_models": [
+          {
+            "id": "python-best-practices",
+            "name": "Python Best Practices",
+            "source_query": "What Python patterns and conventions are established across projects?",
+            "tags": [
+              "python",
+              "conventions"
+            ],
+            "max_tokens": 2048,
+            "trigger": {
+              "refresh_after_consolidation": true
+            }
+          },
+          {
+            "id": "api-design-patterns",
+            "name": "API Design Patterns",
+            "source_query": "What API design patterns and conventions are consistently used?",
+            "tags": [
+              "api",
+              "architecture"
+            ],
+            "max_tokens": 2048,
+            "trigger": {
+              "refresh_after_consolidation": true
+            }
+          },
+          {
+            "id": "testing-strategies",
+            "name": "Testing Strategies",
+            "source_query": "What testing approaches, fixtures, and patterns are proven?",
+            "tags": [
+              "testing"
+            ],
+            "max_tokens": 1024,
+            "trigger": {
+              "refresh_after_consolidation": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "fullstack-typescript",
+      "name": "Fullstack TypeScript",
+      "description": "Fullstack patterns for TypeScript projects — React, Node.js, API, state management, testing",
+      "category": "coding",
+      "integrations": [
+        "claude-code",
+        "codex",
+        "hindclaw",
+        "openclaw"
+      ],
+      "tags": [
+        "typescript",
+        "react",
+        "nodejs",
+        "fullstack"
+      ],
+      "manifest": {
+        "version": "1",
+        "bank": {
+          "reflect_mission": "You are a senior full-stack TypeScript engineer. Synthesize proven patterns across React UI work, Node.js APIs, and shared state management.",
+          "retain_mission": "Extract reusable fullstack TypeScript patterns: component architecture, state management, API client design, form handling, testing strategies, build configuration.",
+          "retain_extraction_mode": "verbose",
+          "observations_mission": "Identify recurring TypeScript patterns across projects: preferred React hooks patterns, state libraries, data-fetching approaches, form libraries, test runners.",
+          "enable_observations": true,
+          "disposition_skepticism": 3,
+          "disposition_literalism": 3,
+          "disposition_empathy": 3,
+          "entity_labels": [
+            {
+              "key": "layer",
+              "description": "Part of the TypeScript stack this fact concerns",
+              "type": "value",
+              "optional": false,
+              "tag": true,
+              "values": [
+                {
+                  "value": "frontend",
+                  "description": "React / UI components and client state"
+                },
+                {
+                  "value": "backend",
+                  "description": "Node.js APIs and server middleware"
+                },
+                {
+                  "value": "shared",
+                  "description": "Types, utilities, validation schemas shared across layers"
+                }
+              ]
+            },
+            {
+              "key": "libraries",
+              "description": "Third-party libraries referenced",
+              "type": "multi-values",
+              "optional": true,
+              "tag": true,
+              "values": [
+                {
+                  "value": "react-query",
+                  "description": "Server-state caching"
+                },
+                {
+                  "value": "zustand",
+                  "description": "Client-state store"
+                },
+                {
+                  "value": "zod",
+                  "description": "Runtime schema validation"
+                },
+                {
+                  "value": "vitest",
+                  "description": "Test runner"
+                },
+                {
+                  "value": "playwright",
+                  "description": "E2E browser tests"
+                }
+              ]
+            },
+            {
+              "key": "notes",
+              "description": "Free-form notes captured verbatim from source material",
+              "type": "text",
+              "optional": true,
+              "tag": false
+            }
+          ],
+          "entities_allow_free_form": true
+        },
+        "directives": [
+          {
+            "name": "prefer-type-over-interface",
+            "content": "Prefer `type` aliases over `interface` unless extending an interface from a third-party library.",
+            "priority": 3,
+            "is_active": true,
+            "tags": [
+              "style"
+            ]
+          },
+          {
+            "name": "no-any",
+            "content": "Avoid `any` in extracted facts. Flag it as a code smell when it appears in source material.",
+            "priority": 8,
+            "is_active": true,
+            "tags": [
+              "type-safety"
+            ]
+          }
+        ],
+        "mental_models": [
+          {
+            "id": "react-patterns",
+            "name": "React Patterns",
+            "source_query": "Which React patterns, hooks, and component shapes recur across projects?",
+            "tags": [
+              "react",
+              "frontend"
+            ],
+            "max_tokens": 2048,
+            "trigger": {
+              "refresh_after_consolidation": true
+            }
+          },
+          {
+            "id": "state-management",
+            "name": "State Management",
+            "source_query": "How is client state and server state split? Which libraries and patterns win?",
+            "tags": [
+              "state",
+              "architecture"
+            ],
+            "max_tokens": 1536,
+            "trigger": {
+              "refresh_after_consolidation": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "astromech-test",
+      "name": "Astromech Test",
+      "description": "OpenClaw multi-agent platform — agent fleet, Telegram channels, voice, iOS build, Docker services",
+      "category": "assistant",
+      "integrations": [
+        "openclaw",
+        "hindclaw"
+      ],
+      "tags": [
+        "openclaw",
+        "multi-agent",
+        "telegram",
+        "docker"
+      ],
+      "manifest": {
+        "version": "1",
+        "bank": {
+          "reflect_mission": "You know the Astromech/OpenClaw multi-agent platform deeply. Synthesize agent fleet operation, Telegram channel routing, voice (Yandex/OpenAI TTS), iOS build patches, and Docker service orchestration.",
+          "retain_mission": "Extract Astromech operational patterns: agent configurations, channel bindings, voice provider decisions, iOS patch workflows, Docker compose layouts, gateway config conventions.",
+          "retain_extraction_mode": "concise",
+          "observations_mission": "Identify recurring decisions in the Astromech deployment: which agent handles what, how channels map, how TTS providers swap, how the patch-based build system is used.",
+          "enable_observations": true,
+          "disposition_skepticism": 4,
+          "disposition_literalism": 4,
+          "disposition_empathy": 2,
+          "entity_labels": [
+            {
+              "key": "droid",
+              "description": "Which agent in the fleet",
+              "type": "value",
+              "optional": true,
+              "tag": true,
+              "values": [
+                {
+                  "value": "yoda",
+                  "description": "Strategic mentor, default agent"
+                },
+                {
+                  "value": "c3po",
+                  "description": "Knowledge librarian (Confluence, NotebookLM)"
+                },
+                {
+                  "value": "k2so",
+                  "description": "Jira, Tana"
+                },
+                {
+                  "value": "l3-37",
+                  "description": "Health agent (WHOOP + hvault)"
+                },
+                {
+                  "value": "other",
+                  "description": "Any other droid in the fleet"
+                }
+              ]
+            },
+            {
+              "key": "subsystem",
+              "description": "Which Astromech subsystem is touched",
+              "type": "multi-values",
+              "optional": true,
+              "tag": true,
+              "values": [
+                {
+                  "value": "gateway",
+                  "description": "OpenClaw gateway systemd service"
+                },
+                {
+                  "value": "build-ios",
+                  "description": "iOS patch-based build"
+                },
+                {
+                  "value": "docker",
+                  "description": "Docker compose stack"
+                },
+                {
+                  "value": "telegram",
+                  "description": "Telegram channel routing"
+                },
+                {
+                  "value": "voice",
+                  "description": "Talk Mode TTS (Yandex / OpenAI)"
+                }
+              ]
+            }
+          ],
+          "entities_allow_free_form": true
+        },
+        "directives": [
+          {
+            "name": "prefer-concrete-commands",
+            "content": "Favor concrete `just` / `docker compose` / `systemctl` commands over abstract descriptions. Astromech is operated via its task runner.",
+            "priority": 6,
+            "is_active": true,
+            "tags": [
+              "operations"
+            ]
+          }
+        ],
+        "mental_models": [
+          {
+            "id": "astromech-architecture",
+            "name": "Astromech Architecture",
+            "source_query": "How are services laid out across host processes, systemd units, and the Docker compose stack?",
+            "tags": [
+              "architecture",
+              "ops"
+            ],
+            "max_tokens": 2048,
+            "trigger": {
+              "refresh_after_consolidation": true
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

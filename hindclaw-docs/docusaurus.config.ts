@@ -175,6 +175,7 @@ const config: Config = {
           position: 'left',
           label: 'API',
         },
+        {to: '/templates', label: 'Templates', position: 'left'},
         {to: '/blog', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/mrkhachaturov/hindclaw',
