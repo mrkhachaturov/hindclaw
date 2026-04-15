@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Subcommand;
 
 use crate::commands::common::{map_api_error, require_confirmation};
@@ -7,83 +7,85 @@ use crate::output::OutputFormat;
 use crate::template_ref::TemplateRef;
 use crate::ui;
 use hindclaw_client::Client;
+use hindclaw_client::types::{
+    CreateTemplateRequest, InstallTemplateRequest, PatchTemplateRequest, TemplateResponse,
+    TemplateScope,
+};
 
 #[derive(Subcommand)]
 pub enum TemplateCommands {
     /// List installed templates
     #[command(visible_alias = "ls")]
     List {
-        /// Filter by scope (server or personal)
-        #[arg(long)]
-        scope: Option<String>,
+        /// Filter by scope (server or personal, default: personal)
+        #[arg(long, default_value = "personal")]
+        scope: String,
     },
     /// Show template details
     #[command(visible_alias = "show")]
     Info {
-        /// Template reference (scope/name) — custom templates only
+        /// Template reference (scope/name)
         template: String,
     },
-    /// Search marketplace for templates
-    Search {
-        /// Search query
-        query: Option<String>,
-        /// Filter by marketplace source
-        #[arg(long)]
-        source: Option<String>,
-        /// Filter by tag
-        #[arg(long)]
-        tag: Option<String>,
-    },
-    /// Install a template from a marketplace source
+    /// Install a template from a template source
     Install {
-        /// Source and template name (source/name)
+        /// Source and template id (source_name/template_id)
         template: String,
-        /// Install scope (server or personal, default: personal)
+        /// Destination scope (server requires admin, default: personal)
         #[arg(long, default_value = "personal")]
         scope: String,
+        /// Optional alias to install the template under
+        #[arg(long)]
+        alias: Option<String>,
     },
-    /// Update an installed marketplace template
+    /// Update an installed template from its source
     Upgrade {
-        /// Template reference (scope/source/name)
+        /// Template reference (scope/name)
         template: String,
+        /// Force update even if already at latest revision
+        #[arg(long)]
+        force: bool,
     },
-    /// Create a custom template from a JSON file
+    /// Create a hand-authored template from a JSON file
     Create {
-        /// Path to template JSON file
+        /// Path to template JSON file (CreateTemplateRequest shape)
         file: String,
-        /// Template scope (server or personal, default: personal)
+        /// Destination scope (server requires admin, default: personal)
         #[arg(long, default_value = "personal")]
         scope: String,
     },
-    /// Update a custom template from a JSON file
+    /// Patch fields on an existing template from a JSON file
+    ///
+    /// Partial update: only fields present in the JSON body are applied. id,
+    /// scope, and owner stay pinned to the existing row.
     Update {
-        /// Template reference (scope/name) — custom templates only
+        /// Template reference (scope/name)
         template: String,
-        /// Path to template JSON file with updated fields
+        /// Path to JSON file with PatchTemplateRequest fields
         file: String,
     },
     /// Remove a template
     #[command(visible_alias = "rm")]
     Remove {
-        /// Template reference (scope/name) — custom templates only
+        /// Template reference (scope/name)
         template: String,
     },
     /// Export a template as JSON to stdout
     Export {
-        /// Template reference (scope/name) — custom templates only
+        /// Template reference (scope/name)
         template: String,
     },
-    /// Import a template from a JSON file
+    /// Import a template from a JSON file (alias for create, supports stdin as `-`)
     Import {
-        /// Path to template JSON file (or - for stdin)
+        /// Path to template JSON file, or `-` for stdin
         file: String,
-        /// Install scope (server or personal, default: personal)
+        /// Destination scope (server requires admin, default: personal)
         #[arg(long, default_value = "personal")]
         scope: String,
     },
     /// Create a memory bank from a template
     Apply {
-        /// Template reference (scope/name or scope/source/name)
+        /// Template reference (scope/name)
         template: String,
         /// Bank ID for the new bank
         #[arg(long)]
@@ -94,35 +96,65 @@ pub enum TemplateCommands {
     },
 }
 
-pub async fn run(cmd: TemplateCommands, conn: ResolvedConnection, format: OutputFormat, yes: bool) -> Result<()> {
+pub async fn run(
+    cmd: TemplateCommands,
+    conn: ResolvedConnection,
+    format: OutputFormat,
+    yes: bool,
+) -> Result<()> {
     let client = crate::api::build_client(&conn)?;
 
     match cmd {
-        TemplateCommands::List { scope } => template_list(&client, scope.as_deref(), format).await,
+        TemplateCommands::List { scope } => template_list(&client, &scope, format).await,
         TemplateCommands::Info { template } => template_info(&client, &template, format).await,
-        TemplateCommands::Search { query, source, tag } => {
-            template_search(&client, query.as_deref(), source.as_deref(), tag.as_deref(), format).await
+        TemplateCommands::Install { template, scope, alias } => {
+            template_install(&client, &template, &scope, alias.as_deref(), format).await
         }
-        TemplateCommands::Install { template, scope } => template_install(&client, &template, &scope, format).await,
-        TemplateCommands::Upgrade { template } => template_upgrade(&client, &template, format).await,
-        TemplateCommands::Create { file, scope } => template_create(&client, &file, &scope, format).await,
-        TemplateCommands::Update { template, file } => template_update(&client, &template, &file, format).await,
+        TemplateCommands::Upgrade { template, force } => {
+            template_upgrade(&client, &template, force, format).await
+        }
+        TemplateCommands::Create { file, scope } => {
+            template_create(&client, &file, &scope, format).await
+        }
+        TemplateCommands::Update { template, file } => {
+            template_update(&client, &template, &file, format).await
+        }
         TemplateCommands::Remove { template } => template_remove(&client, &template, yes).await,
         TemplateCommands::Export { template } => template_export(&client, &template).await,
-        TemplateCommands::Import { file, scope } => template_import(&client, &file, &scope, format).await,
+        TemplateCommands::Import { file, scope } => {
+            template_import(&client, &file, &scope, format).await
+        }
         TemplateCommands::Apply { template, bank_id, bank_name } => {
             template_apply(&client, &template, &bank_id, bank_name.as_deref(), format).await
         }
     }
 }
 
-// --- list ---
+// --- scope helpers ----------------------------------------------------- //
 
-async fn template_list(client: &Client, scope: Option<&str>, format: OutputFormat) -> Result<()> {
-    let templates = client.list_templates(scope)
-        .await
-        .map_err(|e| map_api_error(e, "list templates"))?
-        .into_inner();
+/// Parse a CLI --scope flag into the TemplateScope enum the API uses to
+/// populate response fields. The string also chooses which endpoint family
+/// (admin vs my) every call dispatches to.
+fn parse_scope(scope: &str) -> Result<TemplateScope> {
+    match scope {
+        "server" => Ok(TemplateScope::Server),
+        "personal" => Ok(TemplateScope::Personal),
+        other => bail!("invalid --scope '{}', must be 'server' or 'personal'", other),
+    }
+}
+
+// --- list -------------------------------------------------------------- //
+
+async fn template_list(client: &Client, scope: &str, format: OutputFormat) -> Result<()> {
+    let scope_enum = parse_scope(scope)?;
+    let response = match scope_enum {
+        TemplateScope::Server => client.list_admin_templates(None, None).await,
+        TemplateScope::Personal => client.list_my_templates(None, None).await,
+    }
+    .map_err(|e| map_api_error(e, "list templates"))?
+    .into_inner();
+
+    let templates = response.templates;
 
     match format {
         OutputFormat::Pretty => {
@@ -130,16 +162,19 @@ async fn template_list(client: &Client, scope: Option<&str>, format: OutputForma
                 println!("  No templates found.");
                 return Ok(());
             }
-            let headers = &["NAME", "SCOPE", "SOURCE", "VERSION", "DESCRIPTION"];
-            let rows: Vec<Vec<String>> = templates.iter().map(|t| {
-                vec![
-                    t.id.clone(),
-                    t.scope.clone(),
-                    t.source_name.clone().unwrap_or_else(|| "(custom)".into()),
-                    t.version.clone().unwrap_or_else(|| "-".into()),
-                    truncate(&t.description, 40),
-                ]
-            }).collect();
+            let headers = &["NAME", "SCOPE", "SOURCE", "REVISION", "DESCRIPTION"];
+            let rows: Vec<Vec<String>> = templates
+                .iter()
+                .map(|t| {
+                    vec![
+                        t.id.clone(),
+                        t.scope.to_string(),
+                        t.source_name.clone().unwrap_or_else(|| "(custom)".into()),
+                        t.source_revision.clone().unwrap_or_else(|| "-".into()),
+                        truncate(t.description.as_deref().unwrap_or(""), 40),
+                    ]
+                })
+                .collect();
             ui::print_table(headers, &rows);
         }
         _ => crate::output::print_output(&templates, format)?,
@@ -147,49 +182,50 @@ async fn template_list(client: &Client, scope: Option<&str>, format: OutputForma
     Ok(())
 }
 
-// --- info ---
+// --- info -------------------------------------------------------------- //
 
 async fn template_info(client: &Client, template: &str, format: OutputFormat) -> Result<()> {
     let tref = TemplateRef::parse(template)?;
-    if tref.source.is_some() {
-        anyhow::bail!("'info' only supports custom templates (scope/name). For marketplace templates, use 'template list'.");
-    }
-
-    let resp = client.get_template(&tref.scope, &tref.name)
-        .await
-        .map_err(|e| map_api_error(e, "get template"))?
-        .into_inner();
+    let resp = fetch_template(client, &tref).await?;
 
     match format {
         OutputFormat::Pretty => {
             ui::print_section_header(&format!("Template: {}", resp.id));
-            ui::print_kv("Scope", &resp.scope);
-            ui::print_kv("Source", resp.source_name.as_deref().unwrap_or("(custom)"));
-            if let Some(v) = &resp.version {
-                ui::print_kv("Version", v);
+            ui::print_kv("Name", &resp.name);
+            ui::print_kv("Scope", &resp.scope.to_string());
+            if let Some(cat) = &resp.category {
+                ui::print_kv("Category", cat);
             }
-            ui::print_kv("Author", &resp.author);
-            ui::print_kv("Description", &resp.description);
+            if let Some(desc) = &resp.description {
+                ui::print_kv("Description", desc);
+            }
             if !resp.tags.is_empty() {
                 ui::print_kv("Tags", &resp.tags.join(", "));
             }
-            println!();
-            ui::print_kv("Retain Mode", &resp.retain_extraction_mode);
-            ui::print_kv("Skepticism", &resp.disposition_skepticism.to_string());
-            ui::print_kv("Literalism", &resp.disposition_literalism.to_string());
-            ui::print_kv("Empathy", &resp.disposition_empathy.to_string());
-            println!();
-            ui::print_kv("Retain Mission", &resp.retain_mission);
-            ui::print_kv("Reflect Mission", &resp.reflect_mission);
-            if let Some(obs) = &resp.observations_mission {
-                ui::print_kv("Observations", obs);
+            if !resp.integrations.is_empty() {
+                ui::print_kv("Integrations", &resp.integrations.join(", "));
             }
-            if !resp.directive_seeds.is_empty() {
-                println!();
-                println!("  {} directive seed(s)", resp.directive_seeds.len());
+            if let Some(src) = &resp.source_name {
+                ui::print_kv("Source", src);
+                ui::print_kv("Source Scope", &resp.source_scope.to_string());
+                if let Some(rev) = &resp.source_revision {
+                    ui::print_kv("Source Revision", rev);
+                }
+            } else {
+                ui::print_kv("Source", "(hand-authored)");
             }
-            if !resp.mental_model_seeds.is_empty() {
-                println!("  {} mental model seed(s)", resp.mental_model_seeds.len());
+            ui::print_kv("Installed At", &resp.installed_at.to_rfc3339());
+            ui::print_kv("Updated At", &resp.updated_at.to_rfc3339());
+            println!();
+            println!("  Manifest:");
+            // Manifest is typed as serde_json::Map<String, Value> on the wire
+            // (the server stores it as opaque JSONB). Pretty-print the raw
+            // object rather than hand-picking fields so new BankTemplateConfig
+            // fields from upstream flow through without CLI changes.
+            let manifest_value = serde_json::Value::Object(resp.manifest.clone());
+            let rendered = serde_json::to_string_pretty(&manifest_value)?;
+            for line in rendered.lines() {
+                println!("    {}", line);
             }
         }
         _ => crate::output::print_output(&resp, format)?,
@@ -197,79 +233,48 @@ async fn template_info(client: &Client, template: &str, format: OutputFormat) ->
     Ok(())
 }
 
-// --- search ---
+// --- install ----------------------------------------------------------- //
 
-async fn template_search(
+async fn template_install(
     client: &Client,
-    query: Option<&str>,
-    source: Option<&str>,
-    tag: Option<&str>,
+    template: &str,
+    scope: &str,
+    alias: Option<&str>,
     format: OutputFormat,
 ) -> Result<()> {
-    let resp = client.marketplace_search(query, source, tag)
-        .await
-        .map_err(|e| map_api_error(e, "marketplace search"))?
-        .into_inner();
+    let scope_enum = parse_scope(scope)?;
 
-    match format {
-        OutputFormat::Pretty => {
-            if resp.results.is_empty() {
-                println!("  No templates found.");
-                return Ok(());
-            }
-            println!("  {} result(s)\n", resp.total);
-            let headers = &["SOURCE", "NAME", "VERSION", "INSTALLED", "DESCRIPTION"];
-            let rows: Vec<Vec<String>> = resp.results.iter().map(|r| {
-                let installed = if r.installed {
-                    match &r.installed_version {
-                        Some(v) => format!("✓ ({})", v),
-                        None => "✓".into(),
-                    }
-                } else {
-                    String::new()
-                };
-                vec![
-                    r.source.clone(),
-                    r.name.clone(),
-                    r.version.clone(),
-                    installed,
-                    truncate(&r.description, 35),
-                ]
-            }).collect();
-            ui::print_table(headers, &rows);
-        }
-        _ => crate::output::print_output(&resp, format)?,
-    }
-    Ok(())
-}
-
-// --- install ---
-
-async fn template_install(client: &Client, template: &str, scope: &str, format: OutputFormat) -> Result<()> {
     let parts: Vec<&str> = template.splitn(2, '/').collect();
     if parts.len() != 2 {
-        anyhow::bail!("Expected 'source/name' format (e.g., 'hindclaw/backend-python')");
+        bail!("Expected 'source_name/template_id' (e.g., 'hindclaw/backend-python')");
     }
-    let (source_name, template_name) = (parts[0], parts[1]);
+    let (source_name, template_id) = (parts[0], parts[1]);
 
-    let body = hindclaw_client::types::InstallTemplateRequest {
-        source: source_name.try_into().map_err(|e| anyhow::anyhow!("Invalid source: {}", e))?,
-        name: template_name.try_into().map_err(|e| anyhow::anyhow!("Invalid name: {}", e))?,
-        scope: scope.try_into().map_err(|e| anyhow::anyhow!("Invalid scope: {}", e))?,
+    // Sources default to server scope. A --source-scope flag can be added
+    // later when we wire per-user sources into the CLI.
+    let body = InstallTemplateRequest {
+        source_name: source_name
+            .try_into()
+            .map_err(|e| anyhow::anyhow!("invalid source_name '{}': {}", source_name, e))?,
+        source_scope: Some(TemplateScope::Server),
+        alias_id: alias.map(|s| s.to_string()),
     };
-    let resp = client.install_template(&body)
-        .await
-        .map_err(|e| map_api_error(e, "install template"))?
-        .into_inner();
+
+    let resp = match scope_enum {
+        TemplateScope::Server => client.install_admin_template(template_id, &body).await,
+        TemplateScope::Personal => client.install_my_template(template_id, &body).await,
+    }
+    .map_err(|e| map_api_error(e, "install template"))?
+    .into_inner();
 
     match format {
         OutputFormat::Pretty => {
             ui::print_success(&format!(
                 "Installed '{}/{}' as {}/{}",
-                source_name, template_name, resp.scope, resp.id
+                source_name, template_id, resp.scope, resp.id
             ));
-            if let Some(v) = &resp.version {
-                println!("  Version: {}", v);
+            if let Some(rev) = &resp.source_revision {
+                println!("  Revision: {}", rev);
             }
         }
         _ => crate::output::print_output(&resp, format)?,
@@ -277,28 +282,40 @@ async fn template_install(client: &Client, template: &str, scope: &str, format: 
     Ok(())
 }
 
-// --- upgrade ---
+// --- upgrade ----------------------------------------------------------- //
 
-async fn template_upgrade(client: &Client, template: &str, format: OutputFormat) -> Result<()> {
+async fn template_upgrade(
+    client: &Client,
+    template: &str,
+    force: bool,
+    format: OutputFormat,
+) -> Result<()> {
     let tref = TemplateRef::parse(template)?;
-    let source = tref.source.as_deref()
-        .ok_or_else(|| anyhow::anyhow!(
-            "Upgrade requires a marketplace template reference: scope/source/name"
-        ))?;
+    let scope_enum = scope_from_ref(&tref)?;
 
-    let resp = client.update_template_from_marketplace(&tref.scope, source, &tref.name)
-        .await
-        .map_err(|e| map_api_error(e, "upgrade template"))?
-        .into_inner();
+    let resp = match scope_enum {
+        TemplateScope::Server => {
+            client
+                .update_admin_template_from_source(&tref.name, Some(force))
+                .await
+        }
+        TemplateScope::Personal => {
+            client
+                .update_my_template_from_source(&tref.name, Some(force))
+                .await
+        }
+    }
+    .map_err(|e| map_api_error(e, "upgrade template"))?
+    .into_inner();
 
     match format {
         OutputFormat::Pretty => {
             if resp.updated {
                 ui::print_success(&format!(
                     "Upgraded '{}' from {} to {}",
-                    template,
-                    resp.previous_version.as_deref().unwrap_or("?"),
-                    resp.new_version.as_deref().unwrap_or("?"),
+                    tref,
+                    resp.previous_revision.as_deref().unwrap_or("?"),
+                    resp.new_revision.as_deref().unwrap_or("?"),
                 ));
             } else {
                 println!("  Already up to date.");
@@ -309,28 +326,23 @@ async fn template_upgrade(client: &Client, template: &str, format: OutputFormat)
     Ok(())
 }
 
-// --- create ---
+// --- create ------------------------------------------------------------ //
 
-async fn template_create(client: &Client, file: &str, scope: &str, format: OutputFormat) -> Result<()> {
-    let content = std::fs::read_to_string(file)
-        .map_err(|e| anyhow::anyhow!("Failed to read '{}': {}", file, e))?;
-    let mut value: serde_json::Value = serde_json::from_str(&content)
-        .map_err(|e| anyhow::anyhow!("Invalid template JSON in '{}': {}", file, e))?;
+async fn template_create(
+    client: &Client,
+    file: &str,
+    scope: &str,
+    format: OutputFormat,
+) -> Result<()> {
+    let scope_enum = parse_scope(scope)?;
+    let body = read_create_request(file)?;
 
-    // Inject --scope into the JSON body (CreateTemplateRequest requires scope)
-    if let Some(obj) = value.as_object_mut() {
-        obj.insert("scope".to_string(), serde_json::Value::String(scope.to_string()));
-    } else {
-        anyhow::bail!("Template JSON must be an object: {}", file);
+    let resp = match scope_enum {
+        TemplateScope::Server => client.create_admin_template(&body).await,
+        TemplateScope::Personal => client.create_my_template(&body).await,
     }
-
-    let body: hindclaw_client::types::CreateTemplateRequest = serde_json::from_value(value)
-        .map_err(|e| anyhow::anyhow!("Invalid template structure in '{}': {}", file, e))?;
-
-    let resp = client.create_template(&body)
-        .await
-        .map_err(|e| map_api_error(e, "create template"))?
-        .into_inner();
+    .map_err(|e| map_api_error(e, "create template"))?
+    .into_inner();
 
     match format {
         OutputFormat::Pretty => {
@@ -341,23 +353,28 @@ async fn template_create(client: &Client, file: &str, scope: &str, format: Outpu
     Ok(())
 }
 
-// --- update ---
+// --- update (PATCH) ---------------------------------------------------- //
 
-async fn template_update(client: &Client, template: &str, file: &str, format: OutputFormat) -> Result<()> {
+async fn template_update(
+    client: &Client,
+    template: &str,
+    file: &str,
+    format: OutputFormat,
+) -> Result<()> {
     let tref = TemplateRef::parse(template)?;
-    if tref.source.is_some() {
-        anyhow::bail!("'update' only supports custom templates (scope/name). For marketplace templates, use 'template upgrade'.");
-    }
+    let scope_enum = scope_from_ref(&tref)?;
 
     let content = std::fs::read_to_string(file)
         .map_err(|e| anyhow::anyhow!("Failed to read '{}': {}", file, e))?;
-    let body: hindclaw_client::types::UpdateTemplateRequest = serde_json::from_str(&content)
-        .map_err(|e| anyhow::anyhow!("Invalid template JSON in '{}': {}", file, e))?;
+    let body: PatchTemplateRequest = serde_json::from_str(&content)
+        .map_err(|e| anyhow::anyhow!("Invalid patch JSON in '{}': {}", file, e))?;
 
-    let resp = client.update_template(&tref.scope, &tref.name, &body)
-        .await
-        .map_err(|e| map_api_error(e, "update template"))?
-        .into_inner();
+    let resp = match scope_enum {
+        TemplateScope::Server => client.patch_admin_template(&tref.name, &body).await,
+        TemplateScope::Personal => client.patch_my_template(&tref.name, &body).await,
+    }
+    .map_err(|e| map_api_error(e, "update template"))?
+    .into_inner();
 
     match format {
         OutputFormat::Pretty => {
@@ -368,48 +385,45 @@ async fn template_update(client: &Client, template: &str, file: &str, format: Ou
     Ok(())
 }
 
-// --- remove ---
+// --- remove ------------------------------------------------------------ //
 
 async fn template_remove(client: &Client, template: &str, yes: bool) -> Result<()> {
     let tref = TemplateRef::parse(template)?;
-    if tref.source.is_some() {
-        anyhow::bail!("'remove' only supports custom templates (scope/name).");
-    }
+    let scope_enum = scope_from_ref(&tref)?;
 
     if !require_confirmation(&format!("Remove template '{}'", template), yes)? {
         println!("  Cancelled.");
         return Ok(());
     }
 
-    client.delete_template(&tref.scope, &tref.name)
-        .await
-        .map_err(|e| map_api_error(e, "remove template"))?;
+    match scope_enum {
+        TemplateScope::Server => client.delete_admin_template(&tref.name).await,
+        TemplateScope::Personal => client.delete_my_template(&tref.name).await,
+    }
+    .map_err(|e| map_api_error(e, "remove template"))?;
 
     ui::print_success(&format!("Removed template '{}'", template));
     Ok(())
 }
 
-// --- export ---
+// --- export ------------------------------------------------------------ //
 
 async fn template_export(client: &Client, template: &str) -> Result<()> {
     let tref = TemplateRef::parse(template)?;
-    if tref.source.is_some() {
-        anyhow::bail!("'export' only supports custom templates (scope/name).");
-    }
-
-    let resp = client.get_template(&tref.scope, &tref.name)
-        .await
-        .map_err(|e| map_api_error(e, "get template"))?
-        .into_inner();
-
-    // Always output as JSON regardless of -o flag (export is for piping)
+    let resp = fetch_template(client, &tref).await?;
     println!("{}", serde_json::to_string_pretty(&resp)?);
     Ok(())
 }
 
-// --- import ---
+// --- import ------------------------------------------------------------ //
 
-async fn template_import(client: &Client, file: &str, scope: &str, format: OutputFormat) -> Result<()> {
+async fn template_import(
+    client: &Client,
+    file: &str,
+    scope: &str,
+    format: OutputFormat,
+) -> Result<()> {
+    let scope_enum = parse_scope(scope)?;
     let content = if file == "-" {
         use std::io::Read;
         let mut buf = String::new();
@@ -420,23 +434,15 @@ async fn template_import(client: &Client, file: &str, scope: &str, format: Outpu
             .map_err(|e| anyhow::anyhow!("Failed to read '{}': {}", file, e))?
     };
 
-    let mut value: serde_json::Value = serde_json::from_str(&content)
+    let body: CreateTemplateRequest = serde_json::from_str(&content)
         .map_err(|e| anyhow::anyhow!("Invalid template JSON: {}", e))?;
 
-    // Inject --scope into the JSON body
-    if let Some(obj) = value.as_object_mut() {
-        obj.insert("scope".to_string(), serde_json::Value::String(scope.to_string()));
-    } else {
-        anyhow::bail!("Template JSON must be an object");
+    let resp = match scope_enum {
+        TemplateScope::Server => client.create_admin_template(&body).await,
+        TemplateScope::Personal => client.create_my_template(&body).await,
     }
-
-    let body: hindclaw_client::types::CreateTemplateRequest = serde_json::from_value(value)
-        .map_err(|e| anyhow::anyhow!("Invalid template structure: {}", e))?;
-
-    let resp = client.create_template(&body)
-        .await
-        .map_err(|e| map_api_error(e, "import template"))?
-        .into_inner();
+    .map_err(|e| map_api_error(e, "import template"))?
+    .into_inner();
 
     match format {
         OutputFormat::Pretty => {
@@ -447,15 +453,26 @@ async fn template_import(client: &Client, file: &str, scope: &str, format: Outpu
     Ok(())
 }
 
-// --- apply ---
+// --- apply ------------------------------------------------------------- //
 
-async fn template_apply(client: &Client, template: &str, bank_id: &str, bank_name: Option<&str>, format: OutputFormat) -> Result<()> {
+async fn template_apply(
+    client: &Client,
+    template: &str,
+    bank_id: &str,
+    bank_name: Option<&str>,
+    format: OutputFormat,
+) -> Result<()> {
     let body = hindclaw_client::types::CreateBankFromTemplateRequest {
-        bank_id: bank_id.try_into().map_err(|e| anyhow::anyhow!("Invalid bank ID: {}", e))?,
-        template: template.try_into().map_err(|e| anyhow::anyhow!("Invalid template ref: {}", e))?,
-        name: bank_name.map(|n| n.to_string()),
+        bank_id: bank_id
+            .try_into()
+            .map_err(|e| anyhow::anyhow!("invalid bank_id: {}", e))?,
+        template: template
+            .try_into()
+            .map_err(|e| anyhow::anyhow!("invalid template ref: {}", e))?,
+        name: bank_name.map(|s| s.to_string()),
     };
-    let resp = client.create_bank_from_template(&body)
+    let resp = client
+        .create_bank_from_template(&body)
         .await
         .map_err(|e| map_api_error(e, "create bank from template"))?
         .into_inner();
@@ -463,40 +480,33 @@ async fn template_apply(client: &Client, template: &str, bank_id: &str, bank_nam
     match format {
         OutputFormat::Pretty => {
             ui::print_section_header(&format!("Bank: {}", resp.bank_id));
-            ui::print_kv("Template", &resp.template.to_string());
+            ui::print_kv("Template", &resp.template);
             ui::print_kv("Bank Created", &format!("{}", resp.bank_created));
-            ui::print_kv("Config Applied", &format!("{}", resp.config_applied));
+            ui::print_kv("Config Applied", &format!("{}", resp.import_result.config_applied));
 
-            if !resp.directives.is_empty() {
+            let import = &resp.import_result;
+            let total_directives = import.directives_created.len() + import.directives_updated.len();
+            if total_directives > 0 {
                 println!();
-                println!("  Seeded {} directive(s):", resp.directives.len());
-                for d in &resp.directives {
-                    let status = if d.created { "✓" } else { "✗" };
-                    let id = d.directive_id.as_deref().unwrap_or("-");
-                    print!("    {} {} ({})", status, d.name, id);
-                    if let Some(err) = &d.error {
-                        print!(" — {}", err);
-                    }
-                    println!();
-                }
+                println!(
+                    "  Seeded {} directive(s): {} created, {} updated",
+                    total_directives,
+                    import.directives_created.len(),
+                    import.directives_updated.len()
+                );
             }
-            if !resp.mental_models.is_empty() {
-                println!("  Seeded {} mental model(s):", resp.mental_models.len());
-                for m in &resp.mental_models {
-                    let status = if m.created { "✓" } else { "✗" };
-                    let id = m.mental_model_id.as_deref().unwrap_or("-");
-                    print!("    {} {} ({})", status, m.name, id);
-                    if let Some(err) = &m.error {
-                        print!(" — {}", err);
-                    }
-                    println!();
-                }
+            let total_models = import.mental_models_created.len() + import.mental_models_updated.len();
+            if total_models > 0 {
+                println!(
+                    "  Seeded {} mental model(s): {} created, {} updated",
+                    total_models,
+                    import.mental_models_created.len(),
+                    import.mental_models_updated.len()
+                );
             }
-            if !resp.errors.is_empty() {
+            if import.dry_run {
                 println!();
-                for err in &resp.errors {
-                    ui::print_warning(err);
-                }
+                ui::print_warning("Dry run — no changes were persisted.");
             } else {
                 println!();
                 ui::print_success("Bank ready");
@@ -505,6 +515,34 @@ async fn template_apply(client: &Client, template: &str, bank_id: &str, bank_nam
         _ => crate::output::print_output(&resp, format)?,
     }
     Ok(())
+}
+
+// --- helpers ----------------------------------------------------------- //
+
+/// Fetch a template by scope-prefixed reference, dispatching to the
+/// appropriate admin/my endpoint family.
+async fn fetch_template(client: &Client, tref: &TemplateRef) -> Result<TemplateResponse> {
+    let scope_enum = scope_from_ref(tref)?;
+    let resp = match scope_enum {
+        TemplateScope::Server => client.get_admin_template(&tref.name).await,
+        TemplateScope::Personal => client.get_my_template(&tref.name).await,
+    }
+    .map_err(|e| map_api_error(e, "get template"))?
+    .into_inner();
+    Ok(resp)
+}
+
+/// Extract the TemplateScope from a TemplateRef's scope component.
+fn scope_from_ref(tref: &TemplateRef) -> Result<TemplateScope> {
+    parse_scope(&tref.scope)
+}
+
+/// Read a CreateTemplateRequest from a JSON file.
+fn read_create_request(file: &str) -> Result<CreateTemplateRequest> {
+    let content = std::fs::read_to_string(file)
+        .map_err(|e| anyhow::anyhow!("Failed to read '{}': {}", file, e))?;
+    serde_json::from_str(&content)
+        .map_err(|e| anyhow::anyhow!("Invalid template JSON in '{}': {}", file, e))
 }
 
 fn truncate(s: &str, max_len: usize) -> String {

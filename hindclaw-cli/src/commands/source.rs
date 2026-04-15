@@ -62,7 +62,7 @@ async fn source_list(client: &Client, format: OutputFormat) -> Result<()> {
                     s.name.clone(),
                     s.url.clone(),
                     if s.has_auth { "✓".into() } else { String::new() },
-                    s.created_at.clone(),
+                    s.created_at.clone().unwrap_or_else(|| "-".into()),
                 ]
             }).collect();
             ui::print_table(headers, &rows);
@@ -76,7 +76,8 @@ async fn source_add(client: &Client, url: &str, alias: Option<&str>, auth_token:
     let body = hindclaw_client::types::CreateSourceRequest {
         url: url.try_into().map_err(|e| anyhow::anyhow!("Invalid URL: {}", e))?,
         alias: alias.map(|a| a.try_into()).transpose().map_err(|e| anyhow::anyhow!("Invalid alias: {}", e))?,
-        auth_token: auth_token.map(|t| t.try_into()).transpose().map_err(|e| anyhow::anyhow!("Invalid token: {}", e))?,
+        auth_token: auth_token.map(|t| t.to_string()),
+        description: None,
     };
     let resp = client.create_template_source(&body)
         .await
