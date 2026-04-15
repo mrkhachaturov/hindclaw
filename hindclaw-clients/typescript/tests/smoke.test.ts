@@ -8,8 +8,8 @@
 // 10 new fields added upstream). Mental models and directives are empty
 // so the test does not need to pick a MentalModelTriggerInput/Output
 // variant on the request side.
-import * as http from 'http';
-import type { AddressInfo } from 'net';
+import * as http from 'node:http';
+import type { AddressInfo } from 'node:net';
 
 import { createClient, createConfig } from '../generated/client';
 import {

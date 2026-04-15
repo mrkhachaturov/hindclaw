@@ -1,0 +1,301 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      extension: ${{ steps.filter.outputs.extension }}
+      clients-ts: ${{ steps.filter.outputs.clients-ts }}
+      clients-python: ${{ steps.filter.outputs.clients-python }}
+      clients-rust: ${{ steps.filter.outputs.clients-rust }}
+      clients-go: ${{ steps.filter.outputs.clients-go }}
+      docs: ${{ steps.filter.outputs.docs }}
+      scripts: ${{ steps.filter.outputs.scripts }}
+      ci: ${{ steps.filter.outputs.ci }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            extension:
+              - 'hindclaw-extension/**'
+            clients-ts:
+              - 'hindclaw-clients/typescript/**'
+              - 'hindclaw-docs/static/openapi.json'
+            clients-python:
+              - 'hindclaw-clients/python/**'
+              - 'hindclaw-docs/static/openapi.json'
+            clients-rust:
+              - 'hindclaw-clients/rust/**'
+              - 'hindclaw-docs/static/openapi.json'
+            clients-go:
+              - 'hindclaw-clients/go/**'
+              - 'hindclaw-docs/static/openapi.json'
+            docs:
+              - 'hindclaw-docs/**'
+            scripts:
+              - 'scripts/**'
+            ci:
+              - '.github/workflows/ci.yml'
+
+  build-extension-python-versions:
+    needs: [detect-changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.detect-changes.outputs.extension == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Build extension
+        working-directory: hindclaw-extension
+        run: uv build
+
+  test-extension:
+    needs: [detect-changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.detect-changes.outputs.extension == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install extension with dev extras
+        working-directory: hindclaw-extension
+        run: |
+          uv venv --python 3.12 .venv
+          uv pip install -e ".[dev]"
+      - name: Ruff lint
+        working-directory: hindclaw-extension
+        run: .venv/bin/python -m ruff check hindclaw_ext/
+      - name: Ruff format check
+        working-directory: hindclaw-extension
+        run: .venv/bin/python -m ruff format --check hindclaw_ext/ tests/
+      - name: Type check (ty)
+        working-directory: hindclaw-extension
+        run: .venv/bin/python -m ty check hindclaw_ext/
+      - name: Pytest
+        working-directory: hindclaw-extension
+        run: .venv/bin/python -m pytest tests/ -v
+
+  build-typescript-client:
+    needs: [detect-changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.detect-changes.outputs.clients-ts == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: hindclaw-clients/typescript/package-lock.json
+      - name: Install dependencies
+        working-directory: hindclaw-clients/typescript
+        run: npm ci
+      - name: Build
+        working-directory: hindclaw-clients/typescript
+        run: npm run build
+
+  test-typescript-client:
+    needs: [detect-changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.detect-changes.outputs.clients-ts == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: hindclaw-clients/typescript/package-lock.json
+      - name: Install dependencies
+        working-directory: hindclaw-clients/typescript
+        run: npm ci
+      - name: Jest
+        working-directory: hindclaw-clients/typescript
+        run: npm test
+
+  test-typescript-client-deno:
+    needs: [detect-changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.detect-changes.outputs.clients-ts == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: hindclaw-clients/typescript/package-lock.json
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Install dependencies
+        working-directory: hindclaw-clients/typescript
+        run: npm ci
+      - name: Deno smoke tests
+        working-directory: hindclaw-clients/typescript
+        run: npm run test:deno
+
+  test-python-client:
+    needs: [detect-changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.detect-changes.outputs.clients-python == 'true' ||
+      needs.detect-changes.outputs.extension == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install client with test extras
+        working-directory: hindclaw-clients/python
+        run: |
+          uv venv --python 3.12 .venv
+          uv pip install ".[test]"
+      - name: Pytest
+        working-directory: hindclaw-clients/python
+        run: .venv/bin/python -m pytest tests/ -v
+
+  test-rust-client:
+    needs: [detect-changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.detect-changes.outputs.clients-rust == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            hindclaw-clients/rust/target
+          key: ${{ runner.os }}-cargo-rust-client-${{ hashFiles('hindclaw-clients/rust/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-rust-client-
+      - name: Build
+        working-directory: hindclaw-clients/rust
+        run: cargo build --locked
+      - name: Test
+        working-directory: hindclaw-clients/rust
+        run: cargo test --locked
+
+  test-go-client:
+    needs: [detect-changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.detect-changes.outputs.clients-go == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: hindclaw-clients/go/go.sum
+      - name: Go test
+        working-directory: hindclaw-clients/go
+        run: go test ./... -v
+
+  verify-openapi-spec:
+    needs: [detect-changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.detect-changes.outputs.extension == 'true' ||
+      needs.detect-changes.outputs.docs == 'true' ||
+      needs.detect-changes.outputs.scripts == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install extension
+        working-directory: hindclaw-extension
+        run: |
+          uv venv --python 3.12 .venv
+          uv pip install -e ".[dev]"
+      - name: Regenerate OpenAPI spec
+        run: bash scripts/generate-openapi.sh
+      - name: Verify no drift
+        run: |
+          if [ -n "$(git status --porcelain hindclaw-docs/static/openapi.json)" ]; then
+            echo "hindclaw-docs/static/openapi.json is out of sync."
+            echo ""
+            git --no-pager diff hindclaw-docs/static/openapi.json | head -200
+            echo ""
+            echo "Run locally and commit:"
+            echo "  bash scripts/generate-openapi.sh"
+            echo "  bash scripts/generate-clients.sh"
+            echo "  bash scripts/generate-docs-skill.sh"
+            exit 1
+          fi
+          echo "OpenAPI spec is up to date."
+
+  build-docs:
+    needs: [detect-changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.detect-changes.outputs.docs == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: hindclaw-docs/package-lock.json
+      - name: Install and build
+        working-directory: hindclaw-docs
+        run: |
+          npm ci
+          npm run build
