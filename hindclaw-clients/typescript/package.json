@@ -16,7 +16,8 @@
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "clean": "rm -rf dist",
     "generate": "npx @hey-api/openapi-ts",
-    "test": "jest"
+    "test": "jest",
+    "test:deno": "deno test --no-check --allow-env --allow-net --unstable-sloppy-imports --preload=tests/deno_setup.ts tests/smoke.test.ts"
   },
   "author": "Hindclaw",
   "license": "MIT",
