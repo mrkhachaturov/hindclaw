@@ -173,6 +173,10 @@ def test_catalog_accepts_upstream_templates_json_verbatim():
     the upstream data file is not present in the current checkout
     (e.g. shallow-submodule environments) so the test doesn't break a
     minimal clone.
+
+    Each entry must carry EXACTLY ONE of inline manifest or manifest_file —
+    upstream's PR #1066 converted their catalog to manifest_file references,
+    but the assertion is framed as the invariant either side of the line.
     """
     upstream_catalog = (
         Path(__file__).resolve().parents[3]
@@ -188,7 +192,12 @@ def test_catalog_accepts_upstream_templates_json_verbatim():
     catalog = Catalog.model_validate_json(upstream_catalog.read_text())
     assert len(catalog.templates) >= 1
     for entry in catalog.templates:
-        assert entry.manifest is not None, f"upstream catalog entry {entry.id!r} missing inline manifest"
+        has_inline = entry.manifest is not None
+        has_ref = entry.manifest_file is not None
+        assert has_inline != has_ref, (
+            f"upstream catalog entry {entry.id!r} must carry exactly one of "
+            f"'manifest' or 'manifest_file' (inline={has_inline}, ref={has_ref})"
+        )
 
 
 def test_mental_model_id_regex_matches_upstream():
