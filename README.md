@@ -110,8 +110,8 @@ graph TD
 
 ```mermaid
 graph LR
-    SENDER["telegram:276243527"] --> LOOKUP["Channel mapping<br/>hindclaw_user_channel"]
-    LOOKUP --> USER["user: ceo@astrateam.net"]
+    SENDER["telegram:258252582526"] --> LOOKUP["Channel mapping<br/>hindclaw_user_channel"]
+    LOOKUP --> USER["user: ceo@domain.net"]
     USER --> GROUPS["Groups: default, executive"]
     GROUPS --> PERMS["Permission cascade"]
     PERMS --> RESOLVED["recall: true<br/>retain: true<br/>budget: high"]
