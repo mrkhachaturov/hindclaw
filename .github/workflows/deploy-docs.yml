@@ -23,6 +23,9 @@ jobs:
           cache: npm
           cache-dependency-path: hindclaw-docs/package-lock.json
       - run: cd hindclaw-docs && npm ci && npm run build
+        env:
+          TYPESENSE_HOST: ${{ vars.TYPESENSE_HOST }}
+          TYPESENSE_SEARCH_API_KEY: ${{ vars.TYPESENSE_SEARCH_API_KEY }}
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

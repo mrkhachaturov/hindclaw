@@ -23,3 +23,9 @@ hindclaw-cli/target/
 
 # Misc
 .worktrees/
+
+# Upstream reference checkouts (local only, not for commit)
+/.upstream/
+
+# Onboarding scratch (temp, not for commit)
+/onboarding/
