@@ -149,11 +149,20 @@ const config: Config = {
               nodes: [{host: typesenseHost, port: 443, protocol: 'https'}],
               apiKey: typesenseSearchApiKey,
             },
-            // Parity with the previous Algolia index: hitsPerPage 20,
-            // minWordSizefor1Typo 3 (Typesense defaults to 4).
+            // per_page/min_len_1typo mirror the previous Algolia index
+            // (hitsPerPage 20, minWordSizefor1Typo 3; Typesense defaults to 4).
             typesenseSearchParameters: {
               per_page: 20,
               min_len_1typo: 3,
+              query_by:
+                'hierarchy.lvl0,hierarchy.lvl1,hierarchy.lvl2,hierarchy.lvl3,' +
+                'hierarchy.lvl4,hierarchy.lvl5,hierarchy.lvl6,content,embedding',
+              // One value per query_by field. Prefix search is rejected on the
+              // remote-embedder field only, so just the last entry is false.
+              prefix: 'true,true,true,true,true,true,true,true,false',
+              vector_query: 'embedding:([], k: 20, distance_threshold: 1.0, alpha: 0.8)',
+              // Otherwise every hit carries 1536 floats (~20 KB of JSON).
+              exclude_fields: 'embedding',
             },
             contextualSearch: true,
           },
