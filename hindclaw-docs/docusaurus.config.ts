@@ -1,6 +1,15 @@
+import 'dotenv/config';
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+
+// Set in .env locally, as GitHub repository variables in CI.
+const typesenseHost = process.env.TYPESENSE_HOST ?? 'ts.astrateam.net';
+const typesenseSearchApiKey = process.env.TYPESENSE_SEARCH_API_KEY;
+
+if (!typesenseSearchApiKey) {
+  console.warn('[typesense] TYPESENSE_SEARCH_API_KEY not set — building without search.');
+}
 
 const config: Config = {
   title: 'HindClaw',
@@ -126,19 +135,25 @@ const config: Config = {
     'docusaurus-theme-ask-ai',
     'docusaurus-theme-openapi-docs',
     '@docusaurus/theme-mermaid',
-    [
-      '@easyops-cn/docusaurus-search-local',
-      {
-        hashed: true,
-        docsRouteBasePath: '/docs',
-        indexBlog: true,
-        blogRouteBasePath: '/blog',
-        highlightSearchTermsOnTargetPage: false,
-      },
-    ],
+    ...(typesenseSearchApiKey ? ['docusaurus-theme-search-typesense'] : []),
   ],
 
   themeConfig: {
+    // Alias maintained by the scraper over its timestamped collections;
+    // must match the scraper's `name:` in the TypesenseCluster CR.
+    ...(typesenseSearchApiKey
+      ? {
+          typesense: {
+            typesenseCollectionName: 'hindclaw',
+            typesenseServerConfig: {
+              nodes: [{host: typesenseHost, port: 443, protocol: 'https'}],
+              apiKey: typesenseSearchApiKey,
+            },
+            typesenseSearchParameters: {},
+            contextualSearch: true,
+          },
+        }
+      : {}),
     askAi: {
       position: 'breadcrumb',
       providers: [
