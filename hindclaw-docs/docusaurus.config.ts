@@ -149,7 +149,12 @@ const config: Config = {
               nodes: [{host: typesenseHost, port: 443, protocol: 'https'}],
               apiKey: typesenseSearchApiKey,
             },
-            typesenseSearchParameters: {},
+            // Parity with the previous Algolia index: hitsPerPage 20,
+            // minWordSizefor1Typo 3 (Typesense defaults to 4).
+            typesenseSearchParameters: {
+              per_page: 20,
+              min_len_1typo: 3,
+            },
             contextualSearch: true,
           },
         }
