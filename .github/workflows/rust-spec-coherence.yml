@@ -9,7 +9,7 @@ jobs:
   check-rust-spec:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: cmp hindclaw-docs/static/openapi.json vs hindclaw-clients/rust/openapi.json
         run: |
           if ! cmp hindclaw-docs/static/openapi.json hindclaw-clients/rust/openapi.json; then

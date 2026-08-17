@@ -9,7 +9,7 @@ jobs:
   check-pins:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Read UPSTREAM_HINDSIGHT_VERSION
         id: version
         run: |
