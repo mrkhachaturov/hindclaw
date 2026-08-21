@@ -1,6 +1,6 @@
 "use client";
 
-import { type ComponentPropsWithRef, forwardRef } from "react";
+import { type ComponentPropsWithRef, forwardRef, type ReactNode } from "react";
 
 import {
   Tooltip,
@@ -12,14 +12,17 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export type TooltipIconButtonProps = ComponentPropsWithRef<typeof Button> & {
-  tooltip: string;
+  tooltip: ReactNode;
+  label?: string;
+  tooltipClassName?: string;
   side?: "top" | "bottom" | "left" | "right";
 };
 
 export const TooltipIconButton = forwardRef<
   HTMLButtonElement,
   TooltipIconButtonProps
->(({ children, tooltip, side = "bottom", className, ...rest }, ref) => {
+>(({ children, tooltip, label, tooltipClassName, side = "bottom", className, ...rest }, ref) => {
+  const accessibleName = label ?? (typeof tooltip === "string" ? tooltip : undefined);
   return (
     <TooltipProvider>
       <Tooltip>
@@ -38,9 +41,11 @@ export const TooltipIconButton = forwardRef<
           }
         >
           {children}
-          <span className="aui-sr-only sr-only">{tooltip}</span>
+          <span className="aui-sr-only sr-only">{accessibleName}</span>
         </TooltipTrigger>
-        <TooltipContent side={side}>{tooltip}</TooltipContent>
+        <TooltipContent side={side} className={tooltipClassName}>
+          {tooltip}
+        </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

@@ -7,7 +7,7 @@ export function DocsToc({ toc, pathname }: { toc: TOCItemType[]; pathname: strin
   return (
     <RootProvider pathname={pathname} theme={{ enabled: false }} search={{ enabled: false }}>
       <TOCProvider toc={toc}>
-        <TOC style="clerk" />
+        <TOC />
       </TOCProvider>
     </RootProvider>
   );

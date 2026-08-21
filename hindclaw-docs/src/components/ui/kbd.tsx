@@ -1,11 +1,5 @@
 import { cn } from '@/lib/utils';
 
-/**
- * Keyboard hint chips. Ported from assistant-ui's Base UI registry
- * (`packages/ui/src/components/ui/base/kbd.tsx` in `.upstream/assistant-ui`),
- * which is what makes their ⌘K / ⌘I hints legible instead of microscopic.
- */
-
 function Kbd({ className, ...props }: React.ComponentProps<'kbd'>) {
   return (
     <kbd
