@@ -1,0 +1,74 @@
+---
+interface Props {
+  command: string;
+}
+
+const { command } = Astro.props;
+---
+
+<button
+  type="button"
+  class="group inline-flex w-fit items-center gap-1.5 rounded-md border border-fd-border/60 bg-fd-muted/30 px-3 py-1.5 font-mono text-sm transition-all hover:border-fd-border hover:bg-fd-muted/50"
+  data-copy-command={command}
+>
+  <span class="text-fd-muted-foreground/70">$</span>
+  <span>{command}</span>
+  <span class="relative ml-1 flex size-4 items-center justify-center text-fd-muted-foreground">
+    <svg
+      class="absolute size-3.5 scale-50 text-green-500 opacity-0 transition-all duration-100 group-data-[copied]:scale-100 group-data-[copied]:opacity-100"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M20 6 9 17l-5-5"></path>
+    </svg>
+    <svg
+      class="absolute size-3.5 opacity-50 transition-all duration-100 group-hover:opacity-100 group-data-[copied]:scale-50 group-data-[copied]:opacity-0"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+    </svg>
+  </span>
+  <span class="sr-only">Copy command</span>
+</button>
+
+<script>
+function bindCopyCommands() {
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy-command]')) {
+    if (button.dataset.ready) continue;
+    button.dataset.ready = 'true';
+
+    button.addEventListener('click', async () => {
+      const command = button.dataset.copyCommand;
+      if (!command) return;
+
+      try {
+        await navigator.clipboard.writeText(command);
+      } catch {
+        return;
+      }
+
+      button.dataset.copied = 'true';
+      window.setTimeout(() => {
+        delete button.dataset.copied;
+      }, 2000);
+    });
+  }
+}
+
+bindCopyCommands();
+document.addEventListener('astro:page-load', bindCopyCommands);
+</script>
