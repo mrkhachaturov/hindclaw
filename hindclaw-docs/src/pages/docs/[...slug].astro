@@ -36,11 +36,7 @@ const toc: TOCItemType[] = headings.map((heading) => ({
 const neighbours = findNeighbour(source.getPageTree(), page.url);
 ---
 
-<DocsShell
-  title={page.data.title}
-  description={page.data.description}
-  image={docsOgImage(slugs)}
->
+<DocsShell title={page.data.title} description={page.data.description} image={docsOgImage(slugs)}>
   <Docs
     tree={source.getPageTree()}
     pathname={Astro.url.pathname}

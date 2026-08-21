@@ -17,8 +17,8 @@
   "files": {
     "includes": [
       "**",
-      "!src/components/ui/**",
-      "!src/components/assistant-ui/**",
+      "!src/components/ui",
+      "!src/components/assistant-ui",
       "!src/components/ask-ai/surfaces.tsx"
     ]
   }

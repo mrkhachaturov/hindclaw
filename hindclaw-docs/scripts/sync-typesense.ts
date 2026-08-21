@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { Client } from 'typesense';
-import { sync, type DocumentRecord } from 'typesense-fumadocs-adapter';
+import { type DocumentRecord, sync } from 'typesense-fumadocs-adapter';
 
 const host = process.env.PUBLIC_TYPESENSE_HOST;
 const collection = process.env.PUBLIC_TYPESENSE_COLLECTION ?? 'hindclaw_fuma';

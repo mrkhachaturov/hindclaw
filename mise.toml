@@ -30,6 +30,11 @@ description = "Typecheck hindclaw-docs"
 dir = "{{config_root}}/hindclaw-docs"
 run = "npx astro sync && npx astro check"
 
+[tasks."docs:test"]
+description = "Run hindclaw-docs unit tests"
+dir = "{{config_root}}/hindclaw-docs"
+run = "npm test"
+
 [tasks."docs:check"]
-description = "Lint and typecheck hindclaw-docs"
-depends = ["docs:lint", "docs:typecheck"]
+description = "Lint, typecheck and test hindclaw-docs"
+depends = ["docs:lint", "docs:typecheck", "docs:test"]

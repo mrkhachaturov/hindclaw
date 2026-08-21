@@ -1,6 +1,6 @@
 import { navigate } from 'astro:transitions/client';
 import type { AstroProviderProps } from 'fumadocs-core/framework/astro';
-import type { Node, Root } from 'fumadocs-core/page-tree';
+import type { Root } from 'fumadocs-core/page-tree';
 import type { TOCItemType } from 'fumadocs-core/toc';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { DocsBody, DocsPage, DocsTitle } from 'fumadocs-ui/layouts/docs/page';

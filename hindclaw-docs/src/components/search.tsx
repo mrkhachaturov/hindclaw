@@ -1,4 +1,9 @@
 import {
+  PUBLIC_TYPESENSE_COLLECTION,
+  PUBLIC_TYPESENSE_HOST,
+  PUBLIC_TYPESENSE_SEARCH_API_KEY,
+} from 'astro:env/client';
+import {
   SearchDialog,
   SearchDialogClose,
   SearchDialogContent,
@@ -10,11 +15,6 @@ import {
   SearchDialogOverlay,
   type SharedProps,
 } from 'fumadocs-ui/components/dialog/search';
-import {
-  PUBLIC_TYPESENSE_COLLECTION,
-  PUBLIC_TYPESENSE_HOST,
-  PUBLIC_TYPESENSE_SEARCH_API_KEY,
-} from 'astro:env/client';
 import { Sparkles } from 'lucide-react';
 import { type ReactNode, useCallback } from 'react';
 import { Client } from 'typesense';
