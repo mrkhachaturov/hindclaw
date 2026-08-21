@@ -1,0 +1,40 @@
+---
+import { Docs } from '@/components/docs';
+import { OpenAPIPage } from '@/components/openapi';
+import DocsShell from '@/layouts/DocsShell.astro';
+import { apiSource } from '@/lib/api';
+
+interface Props {
+  slugs: string[];
+}
+
+export async function getStaticPaths() {
+  return apiSource.getPages().map((page) => ({
+    params: { slug: page.slugs.length > 0 ? page.slugs.join('/') : undefined },
+    props: { slugs: page.slugs },
+  }));
+}
+
+const { slugs } = Astro.props;
+const page = apiSource.getPage(slugs);
+if (!page) {
+  throw new Error(`No API page for /${slugs.join('/')}`);
+}
+
+const title = page.data.title ?? 'API Reference';
+---
+
+<DocsShell title={title} description={page.data.description}>
+  <Docs
+    tree={apiSource.getPageTree()}
+    pathname={Astro.url.pathname}
+    params={Astro.params}
+    title={title}
+    description={page.data.description}
+    toc={page.data.toc}
+    full
+    client:load
+  >
+    <OpenAPIPage {...page.data.getOpenAPIPageProps()} client:visible />
+  </Docs>
+</DocsShell>

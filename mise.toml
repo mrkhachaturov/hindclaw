@@ -1,0 +1,35 @@
+min_version = "2026.6.1"
+redactions = ["*_TOKEN", "*_SECRET*", "*PASSWORD*", "*_KEY", "*_KEY_ID"]
+
+[settings]
+lockfile = true
+jobs = 4
+
+[env]
+HINDCLAW_ROOT = "{{config_root}}"
+DOCS_DIR = "{{config_root}}/hindclaw-docs"
+HK_MISE = 1
+
+[tools]
+"aqua:grafana/flint" = "0.22.10"
+biome = "2.5.8"
+node = "22"
+
+[tasks."docs:fmt"]
+description = "Format hindclaw-docs sources"
+dir = "{{config_root}}/hindclaw-docs"
+run = "flint run --fix --allow-fixed biome"
+
+[tasks."docs:lint"]
+description = "Lint hindclaw-docs sources"
+dir = "{{config_root}}/hindclaw-docs"
+run = "flint run biome"
+
+[tasks."docs:typecheck"]
+description = "Typecheck hindclaw-docs"
+dir = "{{config_root}}/hindclaw-docs"
+run = "npx astro sync && npx astro check"
+
+[tasks."docs:check"]
+description = "Lint and typecheck hindclaw-docs"
+depends = ["docs:lint", "docs:typecheck"]

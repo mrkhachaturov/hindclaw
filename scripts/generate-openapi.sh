@@ -18,7 +18,7 @@ done
 echo "Extracting OpenAPI specification..."
 hindclaw-extension/.venv/bin/python scripts/extract-openapi.py
 
-SPEC_PATH="$ROOT_DIR/hindclaw-docs/static/openapi.json"
+SPEC_PATH="$ROOT_DIR/hindclaw-docs/public/openapi.json"
 if [ -f "$SPEC_PATH" ]; then
     SIZE=$(du -h "$SPEC_PATH" | cut -f1)
     echo "  wrote $SPEC_PATH ($SIZE)"

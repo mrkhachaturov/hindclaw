@@ -1,0 +1,13 @@
+{
+  "title": "Guides",
+  "icon": "BookOpen",
+  "pages": [
+    "access-control",
+    "terraform",
+    "multi-bank-recall",
+    "session-context",
+    "reflect",
+    "multi-server",
+    "..."
+  ]
+}

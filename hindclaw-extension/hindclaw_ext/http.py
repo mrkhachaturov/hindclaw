@@ -319,7 +319,7 @@ class HindclawHttp(HttpExtension):
 
         # --- Users ---
 
-        @router.get("/users", response_model=list[UserResponse], operation_id="list_users")
+        @router.get("/users", tags=["Users"], response_model=list[UserResponse], operation_id="list_users")
         async def list_users(_auth=Depends(_require_iam("iam:users:read"))):
             pool = await db.get_pool()
             rows = await pool.fetch("SELECT id, display_name, email, is_active FROM hindclaw_users ORDER BY id")
@@ -334,7 +334,7 @@ class HindclawHttp(HttpExtension):
             ]
 
         @router.post(
-            "/users",
+            "/users", tags=["Users"],
             status_code=201,
             response_model=UserResponse,
             operation_id="create_user",
@@ -358,7 +358,7 @@ class HindclawHttp(HttpExtension):
                 "is_active": req.is_active,
             }
 
-        @router.get("/users/{user_id}", response_model=UserResponse, operation_id="get_user")
+        @router.get("/users/{user_id}", tags=["Users"], response_model=UserResponse, operation_id="get_user")
         async def get_user(user_id: str, _auth=Depends(_require_iam("iam:users:read"))):
             pool = await db.get_pool()
             row = await pool.fetchrow(
@@ -374,7 +374,7 @@ class HindclawHttp(HttpExtension):
                 "is_active": row["is_active"],
             }
 
-        @router.put("/users/{user_id}", response_model=UserResponse, operation_id="update_user")
+        @router.put("/users/{user_id}", tags=["Users"], response_model=UserResponse, operation_id="update_user")
         async def update_user(
             user_id: str,
             req: UpdateUserRequest,
@@ -401,7 +401,7 @@ class HindclawHttp(HttpExtension):
                 "is_active": row["is_active"],
             }
 
-        @router.delete("/users/{user_id}", status_code=204, operation_id="delete_user")
+        @router.delete("/users/{user_id}", tags=["Users"], status_code=204, operation_id="delete_user")
         async def delete_user(user_id: str, _auth=Depends(_require_iam("iam:users:write"))):
             pool = await db.get_pool()
             existing = await pool.fetchval("SELECT id FROM hindclaw_users WHERE id = $1", user_id)
@@ -413,7 +413,7 @@ class HindclawHttp(HttpExtension):
         # --- User Channels ---
 
         @router.get(
-            "/users/{user_id}/channels",
+            "/users/{user_id}/channels", tags=["Users"],
             response_model=list[ChannelResponse],
             operation_id="list_user_channels",
         )
@@ -426,7 +426,7 @@ class HindclawHttp(HttpExtension):
             return [{"provider": r["provider"], "sender_id": r["sender_id"]} for r in rows]
 
         @router.post(
-            "/users/{user_id}/channels",
+            "/users/{user_id}/channels", tags=["Users"],
             status_code=201,
             response_model=ChannelResponse,
             operation_id="add_user_channel",
@@ -449,7 +449,7 @@ class HindclawHttp(HttpExtension):
             return {"provider": req.provider, "sender_id": req.sender_id}
 
         @router.delete(
-            "/users/{user_id}/channels/{provider}/{sender_id}",
+            "/users/{user_id}/channels/{provider}/{sender_id}", tags=["Users"],
             status_code=204,
             operation_id="remove_user_channel",
         )
@@ -470,7 +470,7 @@ class HindclawHttp(HttpExtension):
         # --- Groups ---
 
         @router.get(
-            "/groups",
+            "/groups", tags=["Groups"],
             response_model=list[GroupSummaryResponse],
             operation_id="list_groups",
         )
@@ -480,7 +480,7 @@ class HindclawHttp(HttpExtension):
             return [{"id": r["id"], "display_name": r["display_name"]} for r in rows]
 
         @router.post(
-            "/groups",
+            "/groups", tags=["Groups"],
             status_code=201,
             response_model=GroupSummaryResponse,
             operation_id="create_group",
@@ -498,7 +498,7 @@ class HindclawHttp(HttpExtension):
             return {"id": req.id, "display_name": req.display_name}
 
         @router.get(
-            "/groups/{group_id}",
+            "/groups/{group_id}", tags=["Groups"],
             response_model=GroupSummaryResponse,
             operation_id="get_group",
         )
@@ -513,7 +513,7 @@ class HindclawHttp(HttpExtension):
             return {"id": row["id"], "display_name": row["display_name"]}
 
         @router.put(
-            "/groups/{group_id}",
+            "/groups/{group_id}", tags=["Groups"],
             response_model=GroupSummaryResponse,
             operation_id="update_group",
         )
@@ -537,7 +537,7 @@ class HindclawHttp(HttpExtension):
                 raise HTTPException(404, f"Group {group_id} not found")
             return {"id": row["id"], "display_name": row["display_name"]}
 
-        @router.delete("/groups/{group_id}", status_code=204, operation_id="delete_group")
+        @router.delete("/groups/{group_id}", tags=["Groups"], status_code=204, operation_id="delete_group")
         async def delete_group(group_id: str, _auth=Depends(_require_iam("iam:groups:write"))):
             pool = await db.get_pool()
             existing = await pool.fetchval("SELECT id FROM hindclaw_groups WHERE id = $1", group_id)
@@ -549,7 +549,7 @@ class HindclawHttp(HttpExtension):
         # --- Group Members ---
 
         @router.get(
-            "/groups/{group_id}/members",
+            "/groups/{group_id}/members", tags=["Groups"],
             response_model=list[GroupMemberResponse],
             operation_id="list_group_members",
         )
@@ -562,7 +562,7 @@ class HindclawHttp(HttpExtension):
             return [{"user_id": r["user_id"]} for r in rows]
 
         @router.post(
-            "/groups/{group_id}/members",
+            "/groups/{group_id}/members", tags=["Groups"],
             status_code=201,
             response_model=GroupMembershipConfirmation,
             operation_id="add_group_member",
@@ -581,7 +581,7 @@ class HindclawHttp(HttpExtension):
             return {"group_id": group_id, "user_id": req.user_id}
 
         @router.delete(
-            "/groups/{group_id}/members/{user_id}",
+            "/groups/{group_id}/members/{user_id}", tags=["Groups"],
             status_code=204,
             operation_id="remove_group_member",
         )
@@ -596,7 +596,7 @@ class HindclawHttp(HttpExtension):
         # --- API Keys ---
 
         @router.get(
-            "/users/{user_id}/api-keys",
+            "/users/{user_id}/api-keys", tags=["API Keys"],
             response_model=list[ApiKeyResponse],
             operation_id="list_api_keys",
         )
@@ -617,7 +617,7 @@ class HindclawHttp(HttpExtension):
             ]
 
         @router.post(
-            "/users/{user_id}/api-keys",
+            "/users/{user_id}/api-keys", tags=["API Keys"],
             status_code=201,
             response_model=ApiKeyCreateResponse,
             operation_id="create_api_key",
@@ -640,7 +640,7 @@ class HindclawHttp(HttpExtension):
             return {"id": key_id, "api_key": api_key, "description": req.description}
 
         @router.delete(
-            "/users/{user_id}/api-keys/{key_id}",
+            "/users/{user_id}/api-keys/{key_id}", tags=["API Keys"],
             status_code=204,
             operation_id="delete_api_key",
         )
@@ -655,7 +655,7 @@ class HindclawHttp(HttpExtension):
         # --- Policies ---
 
         @router.get(
-            "/policies",
+            "/policies", tags=["Policies"],
             response_model=list[PolicyResponse],
             operation_id="list_policies",
         )
@@ -672,7 +672,7 @@ class HindclawHttp(HttpExtension):
             ]
 
         @router.post(
-            "/policies",
+            "/policies", tags=["Policies"],
             status_code=201,
             response_model=PolicyResponse,
             operation_id="create_policy",
@@ -688,7 +688,7 @@ class HindclawHttp(HttpExtension):
             }
 
         @router.get(
-            "/policies/{policy_id}",
+            "/policies/{policy_id}", tags=["Policies"],
             response_model=PolicyResponse,
             operation_id="get_policy",
         )
@@ -704,7 +704,7 @@ class HindclawHttp(HttpExtension):
             }
 
         @router.put(
-            "/policies/{policy_id}",
+            "/policies/{policy_id}", tags=["Policies"],
             response_model=PolicyResponse,
             operation_id="update_policy",
         )
@@ -728,7 +728,7 @@ class HindclawHttp(HttpExtension):
                 "is_builtin": result.is_builtin,
             }
 
-        @router.delete("/policies/{policy_id}", status_code=204, operation_id="delete_policy")
+        @router.delete("/policies/{policy_id}", tags=["Policies"], status_code=204, operation_id="delete_policy")
         async def delete_policy_endpoint(policy_id: str, _auth=Depends(_require_iam("iam:policies:write"))):
             existing = await db.get_policy(policy_id)
             if not existing:
@@ -738,7 +738,7 @@ class HindclawHttp(HttpExtension):
         # --- Policy Attachments ---
 
         @router.get(
-            "/policy-attachments",
+            "/policy-attachments", tags=["Policies"],
             response_model=list[PolicyAttachmentResponse],
             operation_id="list_policy_attachments",
         )
@@ -749,7 +749,7 @@ class HindclawHttp(HttpExtension):
             return await db.list_policy_attachments(policy_id)
 
         @router.put(
-            "/policy-attachments",
+            "/policy-attachments", tags=["Policies"],
             response_model=PolicyAttachmentResponse,
             operation_id="upsert_policy_attachment",
         )
@@ -761,7 +761,7 @@ class HindclawHttp(HttpExtension):
             return req.model_dump()
 
         @router.delete(
-            "/policy-attachments/{policy_id}/{principal_type}/{principal_id}",
+            "/policy-attachments/{policy_id}/{principal_type}/{principal_id}", tags=["Policies"],
             status_code=204,
             operation_id="delete_policy_attachment",
         )
@@ -804,7 +804,7 @@ class HindclawHttp(HttpExtension):
         # --- Self-Service Service Accounts (/me/service-accounts) ---
 
         @router.get(
-            "/me/service-accounts",
+            "/me/service-accounts", tags=["Service Accounts"],
             response_model=list[ServiceAccountResponse],
             operation_id="list_my_service_accounts",
         )
@@ -814,7 +814,7 @@ class HindclawHttp(HttpExtension):
             return await db.list_service_accounts_by_owner(_auth["user_id"])
 
         @router.post(
-            "/me/service-accounts",
+            "/me/service-accounts", tags=["Service Accounts"],
             status_code=201,
             response_model=ServiceAccountResponse,
             operation_id="create_my_service_account",
@@ -834,7 +834,7 @@ class HindclawHttp(HttpExtension):
             }
 
         @router.get(
-            "/me/service-accounts/{sa_id}",
+            "/me/service-accounts/{sa_id}", tags=["Service Accounts"],
             response_model=ServiceAccountResponse,
             operation_id="get_my_service_account",
         )
@@ -842,7 +842,7 @@ class HindclawHttp(HttpExtension):
             return await _get_owned_sa(sa_id, _auth["user_id"])
 
         @router.put(
-            "/me/service-accounts/{sa_id}",
+            "/me/service-accounts/{sa_id}", tags=["Service Accounts"],
             response_model=ServiceAccountResponse,
             operation_id="update_my_service_account",
         )
@@ -859,7 +859,7 @@ class HindclawHttp(HttpExtension):
             return result
 
         @router.delete(
-            "/me/service-accounts/{sa_id}",
+            "/me/service-accounts/{sa_id}", tags=["Service Accounts"],
             status_code=204,
             operation_id="delete_my_service_account",
         )
@@ -868,7 +868,7 @@ class HindclawHttp(HttpExtension):
             await db.delete_service_account(sa_id)
 
         @router.get(
-            "/me/service-accounts/{sa_id}/keys",
+            "/me/service-accounts/{sa_id}/keys", tags=["Service Accounts"],
             response_model=list[SAKeyResponse],
             operation_id="list_my_sa_keys",
         )
@@ -885,7 +885,7 @@ class HindclawHttp(HttpExtension):
             ]
 
         @router.post(
-            "/me/service-accounts/{sa_id}/keys",
+            "/me/service-accounts/{sa_id}/keys", tags=["Service Accounts"],
             status_code=201,
             response_model=SAKeyCreateResponse,
             operation_id="create_my_sa_key",
@@ -902,7 +902,7 @@ class HindclawHttp(HttpExtension):
             return {"id": key_id, "api_key": api_key, "description": req.description}
 
         @router.delete(
-            "/me/service-accounts/{sa_id}/keys/{key_id}",
+            "/me/service-accounts/{sa_id}/keys/{key_id}", tags=["Service Accounts"],
             status_code=204,
             operation_id="delete_my_sa_key",
         )
@@ -919,7 +919,7 @@ class HindclawHttp(HttpExtension):
 
         # --- Self-Service Profile (/me) ---
 
-        @router.get("/me", response_model=MeProfileResponse, operation_id="get_my_profile")
+        @router.get("/me", tags=["Users"], response_model=MeProfileResponse, operation_id="get_my_profile")
         async def get_my_profile(_auth=Depends(_authenticate_user)):
             """Return the caller's own profile including channels.
 
@@ -948,7 +948,7 @@ class HindclawHttp(HttpExtension):
         # --- Self-Service API Keys (/me/api-keys) ---
 
         @router.get(
-            "/me/api-keys",
+            "/me/api-keys", tags=["API Keys"],
             response_model=list[ApiKeyResponse],
             operation_id="list_my_api_keys",
         )
@@ -978,7 +978,7 @@ class HindclawHttp(HttpExtension):
             ]
 
         @router.post(
-            "/me/api-keys",
+            "/me/api-keys", tags=["API Keys"],
             status_code=201,
             response_model=ApiKeyCreateResponse,
             operation_id="create_my_api_key",
@@ -1009,7 +1009,7 @@ class HindclawHttp(HttpExtension):
             )
             return {"id": key_id, "api_key": api_key, "description": req.description}
 
-        @router.delete("/me/api-keys/{key_id}", status_code=204, operation_id="delete_my_api_key")
+        @router.delete("/me/api-keys/{key_id}", tags=["API Keys"], status_code=204, operation_id="delete_my_api_key")
         async def delete_my_api_key(key_id: str, _auth=Depends(_require_iam_user_only("iam:api_keys:write"))):
             """Delete one of the caller's own API keys.
 
@@ -1029,7 +1029,7 @@ class HindclawHttp(HttpExtension):
         # --- Self-Service Template Sources (/me/template-sources) ---
 
         @router.get(
-            "/me/template-sources",
+            "/me/template-sources", tags=["Templates"],
             response_model=list[SourceResponse],
             operation_id="list_my_template_sources",
         )
@@ -1063,7 +1063,7 @@ class HindclawHttp(HttpExtension):
             ]
 
         @router.post(
-            "/me/template-sources",
+            "/me/template-sources", tags=["Templates"],
             response_model=SourceResponse,
             status_code=201,
             operation_id="create_my_template_source",
@@ -1115,7 +1115,7 @@ class HindclawHttp(HttpExtension):
             )
 
         @router.delete(
-            "/me/template-sources/{name}",
+            "/me/template-sources/{name}", tags=["Templates"],
             status_code=204,
             operation_id="delete_my_template_source",
         )
@@ -1143,7 +1143,7 @@ class HindclawHttp(HttpExtension):
         # --- Service Accounts ---
 
         @router.get(
-            "/service-accounts",
+            "/service-accounts", tags=["Service Accounts"],
             response_model=list[ServiceAccountResponse],
             operation_id="list_service_accounts",
         )
@@ -1153,7 +1153,7 @@ class HindclawHttp(HttpExtension):
             return await db.list_service_accounts()
 
         @router.post(
-            "/service-accounts",
+            "/service-accounts", tags=["Service Accounts"],
             status_code=201,
             response_model=ServiceAccountResponse,
             operation_id="create_service_account",
@@ -1172,7 +1172,7 @@ class HindclawHttp(HttpExtension):
             }
 
         @router.get(
-            "/service-accounts/{sa_id}",
+            "/service-accounts/{sa_id}", tags=["Service Accounts"],
             response_model=ServiceAccountResponse,
             operation_id="get_service_account",
         )
@@ -1183,7 +1183,7 @@ class HindclawHttp(HttpExtension):
             return result
 
         @router.put(
-            "/service-accounts/{sa_id}",
+            "/service-accounts/{sa_id}", tags=["Service Accounts"],
             response_model=ServiceAccountResponse,
             operation_id="update_service_account",
         )
@@ -1211,7 +1211,7 @@ class HindclawHttp(HttpExtension):
             return result
 
         @router.delete(
-            "/service-accounts/{sa_id}",
+            "/service-accounts/{sa_id}", tags=["Service Accounts"],
             status_code=204,
             operation_id="delete_service_account",
         )
@@ -1226,7 +1226,7 @@ class HindclawHttp(HttpExtension):
         # --- SA Keys ---
 
         @router.get(
-            "/service-accounts/{sa_id}/keys",
+            "/service-accounts/{sa_id}/keys", tags=["Service Accounts"],
             response_model=list[SAKeyResponse],
             operation_id="list_sa_keys",
         )
@@ -1242,7 +1242,7 @@ class HindclawHttp(HttpExtension):
             ]
 
         @router.post(
-            "/service-accounts/{sa_id}/keys",
+            "/service-accounts/{sa_id}/keys", tags=["Service Accounts"],
             status_code=201,
             response_model=SAKeyCreateResponse,
             operation_id="create_sa_key",
@@ -1258,7 +1258,7 @@ class HindclawHttp(HttpExtension):
             return {"id": key_id, "api_key": api_key, "description": req.description}
 
         @router.delete(
-            "/service-accounts/{sa_id}/keys/{key_id}",
+            "/service-accounts/{sa_id}/keys/{key_id}", tags=["Service Accounts"],
             status_code=204,
             operation_id="delete_sa_key",
         )
@@ -1275,7 +1275,7 @@ class HindclawHttp(HttpExtension):
         # --- Bank Policies ---
 
         @router.get(
-            "/banks/{bank_id}/policy",
+            "/banks/{bank_id}/policy", tags=["Banks"],
             response_model=BankPolicyResponse,
             operation_id="get_bank_policy",
         )
@@ -1286,7 +1286,7 @@ class HindclawHttp(HttpExtension):
             return {"bank_id": result.bank_id, "document": result.document_json}
 
         @router.put(
-            "/banks/{bank_id}/policy",
+            "/banks/{bank_id}/policy", tags=["Banks"],
             response_model=BankPolicyResponse,
             operation_id="upsert_bank_policy",
         )
@@ -1300,7 +1300,7 @@ class HindclawHttp(HttpExtension):
             return {"bank_id": bank_id, "document": req.document}
 
         @router.delete(
-            "/banks/{bank_id}/policy",
+            "/banks/{bank_id}/policy", tags=["Banks"],
             status_code=204,
             operation_id="delete_bank_policy",
         )
@@ -1312,7 +1312,7 @@ class HindclawHttp(HttpExtension):
 
         # --- Debug ---
 
-        @router.get("/debug/resolve", operation_id="debug_resolve")
+        @router.get("/debug/resolve", tags=["Admin"], operation_id="debug_resolve")
         async def debug_resolve(
             bank: str = Query(...),
             action: str = Query(default="bank:recall"),
@@ -1369,7 +1369,7 @@ class HindclawHttp(HttpExtension):
         # --- Template Source Admin ---
 
         @router.post(
-            "/admin/template-sources",
+            "/admin/template-sources", tags=["Admin"],
             response_model=SourceResponse,
             status_code=201,
             operation_id="create_template_source",
@@ -1403,7 +1403,7 @@ class HindclawHttp(HttpExtension):
             )
 
         @router.get(
-            "/admin/template-sources",
+            "/admin/template-sources", tags=["Admin"],
             response_model=list[SourceResponse],
             operation_id="list_template_sources",
         )
@@ -1427,7 +1427,7 @@ class HindclawHttp(HttpExtension):
             ]
 
         @router.delete(
-            "/admin/template-sources/{name}",
+            "/admin/template-sources/{name}", tags=["Admin"],
             status_code=204,
             operation_id="delete_template_source",
         )

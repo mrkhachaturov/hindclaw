@@ -8,18 +8,8 @@
       "name": "Backend Python",
       "description": "Backend patterns for Python projects — API design, error handling, testing, database access",
       "category": "coding",
-      "integrations": [
-        "claude-code",
-        "codex",
-        "hindclaw",
-        "openclaw"
-      ],
-      "tags": [
-        "python",
-        "backend",
-        "api",
-        "testing"
-      ],
+      "integrations": ["claude-code", "codex", "hindclaw", "openclaw"],
+      "tags": ["python", "backend", "api", "testing"],
       "manifest": {
         "version": "1",
         "bank": {
@@ -95,19 +85,14 @@
             "content": "Never extract or store personally identifiable information such as SSNs, credit card numbers, or passwords.",
             "priority": 10,
             "is_active": true,
-            "tags": [
-              "privacy",
-              "security"
-            ]
+            "tags": ["privacy", "security"]
           },
           {
             "name": "cite-sources",
             "content": "When referencing a past decision, always include when it was made and in what context.",
             "priority": 5,
             "is_active": true,
-            "tags": [
-              "provenance"
-            ]
+            "tags": ["provenance"]
           }
         ],
         "mental_models": [
@@ -115,10 +100,7 @@
             "id": "python-best-practices",
             "name": "Python Best Practices",
             "source_query": "What Python patterns and conventions are established across projects?",
-            "tags": [
-              "python",
-              "conventions"
-            ],
+            "tags": ["python", "conventions"],
             "max_tokens": 2048,
             "trigger": {
               "refresh_after_consolidation": true
@@ -128,10 +110,7 @@
             "id": "api-design-patterns",
             "name": "API Design Patterns",
             "source_query": "What API design patterns and conventions are consistently used?",
-            "tags": [
-              "api",
-              "architecture"
-            ],
+            "tags": ["api", "architecture"],
             "max_tokens": 2048,
             "trigger": {
               "refresh_after_consolidation": true
@@ -141,9 +120,7 @@
             "id": "testing-strategies",
             "name": "Testing Strategies",
             "source_query": "What testing approaches, fixtures, and patterns are proven?",
-            "tags": [
-              "testing"
-            ],
+            "tags": ["testing"],
             "max_tokens": 1024,
             "trigger": {
               "refresh_after_consolidation": true
@@ -157,18 +134,8 @@
       "name": "Fullstack TypeScript",
       "description": "Fullstack patterns for TypeScript projects — React, Node.js, API, state management, testing",
       "category": "coding",
-      "integrations": [
-        "claude-code",
-        "codex",
-        "hindclaw",
-        "openclaw"
-      ],
-      "tags": [
-        "typescript",
-        "react",
-        "nodejs",
-        "fullstack"
-      ],
+      "integrations": ["claude-code", "codex", "hindclaw", "openclaw"],
+      "tags": ["typescript", "react", "nodejs", "fullstack"],
       "manifest": {
         "version": "1",
         "bank": {
@@ -247,18 +214,14 @@
             "content": "Prefer `type` aliases over `interface` unless extending an interface from a third-party library.",
             "priority": 3,
             "is_active": true,
-            "tags": [
-              "style"
-            ]
+            "tags": ["style"]
           },
           {
             "name": "no-any",
             "content": "Avoid `any` in extracted facts. Flag it as a code smell when it appears in source material.",
             "priority": 8,
             "is_active": true,
-            "tags": [
-              "type-safety"
-            ]
+            "tags": ["type-safety"]
           }
         ],
         "mental_models": [
@@ -266,10 +229,7 @@
             "id": "react-patterns",
             "name": "React Patterns",
             "source_query": "Which React patterns, hooks, and component shapes recur across projects?",
-            "tags": [
-              "react",
-              "frontend"
-            ],
+            "tags": ["react", "frontend"],
             "max_tokens": 2048,
             "trigger": {
               "refresh_after_consolidation": true
@@ -279,10 +239,7 @@
             "id": "state-management",
             "name": "State Management",
             "source_query": "How is client state and server state split? Which libraries and patterns win?",
-            "tags": [
-              "state",
-              "architecture"
-            ],
+            "tags": ["state", "architecture"],
             "max_tokens": 1536,
             "trigger": {
               "refresh_after_consolidation": true
@@ -296,16 +253,8 @@
       "name": "Astromech Test",
       "description": "OpenClaw multi-agent platform — agent fleet, Telegram channels, voice, iOS build, Docker services",
       "category": "assistant",
-      "integrations": [
-        "openclaw",
-        "hindclaw"
-      ],
-      "tags": [
-        "openclaw",
-        "multi-agent",
-        "telegram",
-        "docker"
-      ],
+      "integrations": ["openclaw", "hindclaw"],
+      "tags": ["openclaw", "multi-agent", "telegram", "docker"],
       "manifest": {
         "version": "1",
         "bank": {
@@ -385,9 +334,7 @@
             "content": "Favor concrete `just` / `docker compose` / `systemctl` commands over abstract descriptions. Astromech is operated via its task runner.",
             "priority": 6,
             "is_active": true,
-            "tags": [
-              "operations"
-            ]
+            "tags": ["operations"]
           }
         ],
         "mental_models": [
@@ -395,10 +342,7 @@
             "id": "astromech-architecture",
             "name": "Astromech Architecture",
             "source_query": "How are services laid out across host processes, systemd units, and the Docker compose stack?",
-            "tags": [
-              "architecture",
-              "ops"
-            ],
+            "tags": ["architecture", "ops"],
             "max_tokens": 2048,
             "trigger": {
               "refresh_after_consolidation": true

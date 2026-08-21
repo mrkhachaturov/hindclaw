@@ -1,0 +1,60 @@
+---
+import { render } from 'astro:content';
+import { findNeighbour } from 'fumadocs-core/page-tree';
+import type { TOCItemType } from 'fumadocs-core/toc';
+import { Docs } from '@/components/docs';
+import { mdxComponents } from '@/components/mdx';
+import DocsShell from '@/layouts/DocsShell.astro';
+import { docsOgImage, docsSourceUrl } from '@/lib/site';
+import { source } from '@/lib/source';
+
+interface Props {
+  slugs: string[];
+}
+
+export async function getStaticPaths() {
+  return source.getPages().map((page) => ({
+    params: { slug: page.slugs.length > 0 ? page.slugs.join('/') : undefined },
+    props: { slugs: page.slugs },
+    cacheKey: page.data._raw.digest,
+  }));
+}
+
+const { slugs } = Astro.props;
+const page = source.getPage(slugs);
+if (!page) {
+  throw new Error(`No docs page for /${slugs.join('/')}`);
+}
+
+const { Content, headings } = await render(page.data._raw);
+const toc: TOCItemType[] = headings.map((heading) => ({
+  depth: heading.depth,
+  title: heading.text,
+  url: `#${heading.slug}`,
+}));
+
+const neighbours = findNeighbour(source.getPageTree(), page.url);
+---
+
+<DocsShell
+  title={page.data.title}
+  description={page.data.description}
+  image={docsOgImage(slugs)}
+>
+  <Docs
+    tree={source.getPageTree()}
+    pathname={Astro.url.pathname}
+    params={Astro.params}
+    title={page.data.title}
+    description={page.data.description}
+    toc={toc}
+    full={page.data.full}
+    markdownUrl={`${page.url}.mdx`}
+    githubUrl={docsSourceUrl(page.path)}
+    previous={neighbours.previous}
+    next={neighbours.next}
+    client:load
+  >
+    <Content components={mdxComponents} />
+  </Docs>
+</DocsShell>

@@ -184,7 +184,7 @@ if [ ! -d "$EXAMPLES_DIR" ]; then
 fi
 
 # Copy OpenAPI spec into the skill
-OPENAPI_SRC="$ROOT_DIR/hindclaw-docs/static/openapi.json"
+OPENAPI_SRC="$ROOT_DIR/hindclaw-docs/public/openapi.json"
 if [ -f "$OPENAPI_SRC" ]; then
     cp "$OPENAPI_SRC" "$REFS_DIR/openapi.json"
     print_info "Included: openapi.json"

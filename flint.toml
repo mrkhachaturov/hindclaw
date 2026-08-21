@@ -1,0 +1,15 @@
+[settings]
+exclude = [
+  ".claude/**",
+  ".upstream/**",
+  "CLAUDE.md",
+  "AGENTS.md",
+  "**/node_modules/**",
+  "**/dist/**",
+  "**/.astro/**",
+  "hindclaw-docs/.wip/**",
+  "hindclaw-docs/package-lock.json",
+  "hindclaw-clients/**",
+  "hindclaw-integrations/**",
+  "hindclaw-terraform/**",
+]

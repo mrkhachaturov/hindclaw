@@ -1,0 +1,114 @@
+---
+import {
+  type CodeSample,
+  TemplateCatalog,
+  type TemplateCode,
+} from '@/components/islands/template-catalog';
+import Marquee from '@/components/Marquee.astro';
+import integrationsData from '@/data/integrations.json';
+import catalog from '@/data/templates.json';
+import Site from '@/layouts/Site.astro';
+import { highlight } from '@/lib/highlight';
+
+const { templates, name: sourceName } = catalog;
+const { integrations } = integrationsData;
+
+async function sample(key: CodeSample['key'], label: string, body: string, lang: string) {
+  return { key, label, body, html: await highlight(body, lang) };
+}
+
+const code: Record<string, TemplateCode> = Object.fromEntries(
+  await Promise.all(
+    templates.map(async (template) => {
+      const ref = `${sourceName}/${template.id}`;
+      const bankId = `${template.id}-bank`;
+
+      return [
+        template.id,
+        {
+          install: [
+            await sample('cli', 'CLI', `hindclaw template install ${ref} --scope personal`, 'bash'),
+            await sample(
+              'json',
+              'JSON',
+              `hindclaw template install ${ref} --scope personal -o json`,
+              'bash',
+            ),
+          ],
+          apply: [
+            await sample(
+              'cli',
+              'CLI',
+              `hindclaw template apply ${ref} \\\n  --bank-id ${bankId} \\\n  --bank-name "${template.name}"`,
+              'bash',
+            ),
+            await sample(
+              'curl',
+              'curl',
+              `curl -X POST "$HINDCLAW_URL/ext/hindclaw/banks" \\\n  -H "Authorization: Bearer $HINDCLAW_TOKEN" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "bank_id": "${bankId}",\n    "template": "${ref}",\n    "name": "${template.name}"\n  }'`,
+              'bash',
+            ),
+          ],
+          manifest: await sample(
+            'json',
+            'manifest.json',
+            JSON.stringify(template.manifest, null, 2),
+            'json',
+          ),
+        } satisfies TemplateCode,
+      ];
+    }),
+  ),
+);
+---
+
+<Site
+  title="Bank Templates"
+  description="Ready-made memory bank templates: missions, entity labels, directives, and retain strategies you can install as-is."
+>
+  <div class="mx-auto max-w-6xl px-4 py-16">
+    <h1 class="text-3xl font-semibold tracking-tight">Bank Templates</h1>
+    <p class="mt-3 max-w-2xl text-fd-muted-foreground">
+      Ready-made bank configurations — missions, entity labels, directives, and retain strategies.
+      Click a template for install commands and its full manifest.
+    </p>
+
+    <TemplateCatalog
+      templates={templates}
+      integrations={integrations}
+      sourceName={sourceName}
+      code={code}
+      client:load
+    />
+
+    <section class="mt-16">
+      <h2 class="text-2xl font-semibold tracking-tight">Works with</h2>
+      <p class="mt-2 text-sm text-muted-foreground">
+        Templates install into any of these, and the list keeps scrolling as it grows.
+      </p>
+
+      <div class="mt-6 -mx-4">
+        <Marquee duration="35s" gap="1rem">
+          {integrations.map((integration) => (
+              <div class="flex w-72 shrink-0 flex-col rounded-xl border bg-card p-5">
+                <img src={integration.icon} alt="" class="size-8" />
+                <h3 class="mt-3 text-sm font-medium">{integration.name}</h3>
+                <p class="mt-1.5 text-xs text-muted-foreground">{integration.description}</p>
+              </div>
+            ))}
+        </Marquee>
+      </div>
+    </section>
+  </div>
+</Site>
+
+<style is:global>
+.fd-code pre,
+.fd-code code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  /* biome-ignore lint/complexity/noImportantStyles: beats the Shiki theme background */
+  background: transparent !important;
+  margin: 0;
+}
+</style>

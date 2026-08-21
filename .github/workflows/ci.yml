@@ -35,16 +35,16 @@ jobs:
               - 'hindclaw-extension/**'
             clients-ts:
               - 'hindclaw-clients/typescript/**'
-              - 'hindclaw-docs/static/openapi.json'
+              - 'hindclaw-docs/public/openapi.json'
             clients-python:
               - 'hindclaw-clients/python/**'
-              - 'hindclaw-docs/static/openapi.json'
+              - 'hindclaw-docs/public/openapi.json'
             clients-rust:
               - 'hindclaw-clients/rust/**'
-              - 'hindclaw-docs/static/openapi.json'
+              - 'hindclaw-docs/public/openapi.json'
             clients-go:
               - 'hindclaw-clients/go/**'
-              - 'hindclaw-docs/static/openapi.json'
+              - 'hindclaw-docs/public/openapi.json'
             docs:
               - 'hindclaw-docs/**'
             scripts:
@@ -269,10 +269,10 @@ jobs:
         run: bash scripts/generate-openapi.sh
       - name: Verify no drift
         run: |
-          if [ -n "$(git status --porcelain hindclaw-docs/static/openapi.json)" ]; then
-            echo "hindclaw-docs/static/openapi.json is out of sync."
+          if [ -n "$(git status --porcelain hindclaw-docs/public/openapi.json)" ]; then
+            echo "hindclaw-docs/public/openapi.json is out of sync."
             echo ""
-            git --no-pager diff hindclaw-docs/static/openapi.json | head -200
+            git --no-pager diff hindclaw-docs/public/openapi.json | head -200
             echo ""
             echo "Run locally and commit:"
             echo "  bash scripts/generate-openapi.sh"

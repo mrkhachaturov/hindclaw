@@ -1,0 +1,36 @@
+---
+import { Docs } from '@/components/docs';
+import DocsShell from '@/layouts/DocsShell.astro';
+import { apiSource } from '@/lib/api';
+
+const description =
+  'REST API for managing users, groups, policies, service accounts, banks, and templates.';
+
+const pages = apiSource.getPages();
+---
+
+<DocsShell title="API Reference" description={description}>
+  <Docs
+    tree={apiSource.getPageTree()}
+    pathname={Astro.url.pathname}
+    params={Astro.params}
+    title="API Reference"
+    description="Generated from the OpenAPI schema and grouped by tag. Every operation lists its request and response schemas with ready-made code samples."
+    toc={[]}
+    client:load
+  >
+    <div class="not-prose grid gap-4 sm:grid-cols-2">
+      {pages.map((page) => (
+          <a
+            href={page.url}
+            class="rounded-xl border border-fd-border bg-fd-card p-5 transition-colors hover:border-fd-primary"
+          >
+            <h2 class="font-medium">{page.data.title}</h2>
+            {page.data.description && (
+              <p class="mt-2 text-sm text-fd-muted-foreground">{page.data.description}</p>
+            )}
+          </a>
+        ))}
+    </div>
+  </Docs>
+</DocsShell>

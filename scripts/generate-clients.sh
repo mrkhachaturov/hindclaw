@@ -8,7 +8,7 @@ set -e
 # Re-forked from upstream Hindsight scripts/generate-clients.sh
 # (https://raw.githubusercontent.com/vectorize-io/hindsight/main/scripts/generate-clients.sh).
 # HindClaw-specific substitutions:
-#   - Spec source: hindclaw-docs/static/openapi.json
+#   - Spec source: hindclaw-docs/public/openapi.json
 #   - Go package: --package-name hindclaw via co-located openapi-generator-config.yaml
 #     (HindClaw keeps enumClassPrefix / structPrefix / generateInterfaces set)
 #   - Python package: hindclaw_client_api (co-located openapi-generator-config.yaml)
@@ -20,7 +20,7 @@ set -e
 #     upstream uses)
 #   - Final step: spec is copied to hindclaw-clients/rust/openapi.json so the
 #     crates.io publish tarball retains a byte-for-byte fallback the Rust build.rs
-#     can consume when the top-level hindclaw-docs/static/openapi.json is absent.
+#     can consume when the top-level hindclaw-docs/public/openapi.json is absent.
 
 # Pin openapi-generator version for reproducible builds across local and CI
 OPENAPI_GENERATOR_VERSION="v7.10.0"
@@ -28,7 +28,7 @@ OPENAPI_GENERATOR_VERSION="v7.10.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CLIENTS_DIR="$PROJECT_ROOT/hindclaw-clients"
-OPENAPI_SPEC="$PROJECT_ROOT/hindclaw-docs/static/openapi.json"
+OPENAPI_SPEC="$PROJECT_ROOT/hindclaw-docs/public/openapi.json"
 
 echo "=================================================="
 echo "Hindclaw API Client Generator"
@@ -47,7 +47,7 @@ echo ""
 # Check if OpenAPI spec exists
 if [ ! -f "$OPENAPI_SPEC" ]; then
     echo "Error: OpenAPI spec not found at $OPENAPI_SPEC"
-    echo "Run: python scripts/extract-openapi.py > hindclaw-docs/static/openapi.json"
+    echo "Run: python scripts/extract-openapi.py > hindclaw-docs/public/openapi.json"
     exit 1
 fi
 echo "OpenAPI spec found"
@@ -500,7 +500,7 @@ echo ""
 
 # Copy the OpenAPI spec into the Rust crate directory so the crates.io publish
 # tarball includes a byte-for-byte fallback copy that build.rs can consume when
-# the top-level hindclaw-docs/static/openapi.json is absent (e.g. when the
+# the top-level hindclaw-docs/public/openapi.json is absent (e.g. when the
 # crate is being built from a downloaded tarball rather than from the monorepo).
 # -------------------------------------------------------------------------
 # HINDCLAW-PRESERVED STEP: not present upstream. The Rust build.rs in Task 1

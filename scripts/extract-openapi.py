@@ -17,7 +17,7 @@ Prerequisites:
 
 Usage:
     python scripts/extract-openapi.py
-    # Writes to hindclaw-docs/static/openapi.json
+    # Writes to hindclaw-docs/public/openapi.json
 
 The spec that openapi-generator and @hey-api/openapi-ts consume is the raw
 Pydantic v2 output (OpenAPI 3.1.0), with only a single ValidationError schema
@@ -37,7 +37,28 @@ from hindclaw_ext.http import HindclawHttp
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
-SPEC_PATH = REPO_ROOT / "hindclaw-docs" / "static" / "openapi.json"
+SPEC_PATH = REPO_ROOT / "hindclaw-docs" / "public" / "openapi.json"
+
+# Root-level tag declarations. FastAPI only emits `tags` at the document root
+# when `openapi_tags` is set, and Fumadocs' `per: 'tag'` page mode builds its
+# pages from that list — without it the API reference generates zero pages.
+# Order here is the order the API section appears in the sidebar.
+API_TAGS = [
+    {"name": "Users", "description": "User records, channel identities, and the current user."},
+    {"name": "Groups", "description": "Groups and their membership."},
+    {"name": "API Keys", "description": "Issuing and revoking API keys."},
+    {
+        "name": "Service Accounts",
+        "description": "Service accounts and the keys that authenticate them.",
+    },
+    {
+        "name": "Policies",
+        "description": "Access policies and their attachments to principals.",
+    },
+    {"name": "Banks", "description": "Per-bank policy configuration."},
+    {"name": "Templates", "description": "Bank templates and template sources."},
+    {"name": "Admin", "description": "Administrative and debugging endpoints."},
+]
 
 
 def extract() -> dict:
@@ -51,6 +72,7 @@ def extract() -> dict:
         title="Hindclaw API",
         description="Access control API for Hindsight memory server",
         version="0.1.0",
+        openapi_tags=API_TAGS,
     )
     ext = HindclawHttp({})
     # memory=None is safe — get_router() stores the reference but extraction

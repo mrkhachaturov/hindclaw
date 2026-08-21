@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.astro/
 *.tsbuildinfo
 .env
 .env.*
@@ -12,9 +13,6 @@ __pycache__/
 .venv/
 .pytest_cache/
 
-# Docusaurus
-hindclaw-docs/build/
-hindclaw-docs/.docusaurus/
 hindclaw-docs/node_modules/
 
 # Rust
@@ -29,3 +27,6 @@ hindclaw-cli/target/
 
 # Onboarding scratch (temp, not for commit)
 /onboarding/
+
+# Project-level MCP servers (local only, not for commit)
+/.mcp.json

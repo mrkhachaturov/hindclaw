@@ -1,0 +1,5 @@
+{
+  "title": "Nested Folder",
+  "icon": "FolderTree",
+  "pages": ["first", "second", "deeper", "..."]
+}

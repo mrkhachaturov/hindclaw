@@ -5,14 +5,14 @@ on:
     paths:
       - 'hindclaw-cli/**'
       - 'hindclaw-clients/rust/**'
-      - 'hindclaw-docs/static/openapi.json'
+      - 'hindclaw-docs/public/openapi.json'
       - '.github/workflows/ci-cli.yml'
   push:
     branches: [main]
     paths:
       - 'hindclaw-cli/**'
       - 'hindclaw-clients/rust/**'
-      - 'hindclaw-docs/static/openapi.json'
+      - 'hindclaw-docs/public/openapi.json'
       - '.github/workflows/ci-cli.yml'
 
 jobs:
