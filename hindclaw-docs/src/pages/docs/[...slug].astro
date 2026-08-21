@@ -2,8 +2,11 @@
 import { render } from 'astro:content';
 import { findNeighbour } from 'fumadocs-core/page-tree';
 import type { TOCItemType } from 'fumadocs-core/toc';
-import { Docs } from '@/components/docs';
+import { DocsSidebar } from '@/components/islands/docs-sidebar';
+import { DocsToc } from '@/components/islands/docs-toc';
 import { mdxComponents } from '@/components/mdx';
+import { PageControls } from '@/components/page-controls';
+import DocsGrid from '@/layouts/DocsGrid.astro';
 import DocsShell from '@/layouts/DocsShell.astro';
 import { docsOgImage, docsSourceUrl } from '@/lib/site';
 import { source } from '@/lib/source';
@@ -34,23 +37,45 @@ const toc: TOCItemType[] = headings.map((heading) => ({
 }));
 
 const neighbours = findNeighbour(source.getPageTree(), page.url);
+const { pathname } = Astro.url;
 ---
 
 <DocsShell title={page.data.title} description={page.data.description} image={docsOgImage(slugs)}>
-  <Docs
-    tree={source.getPageTree()}
-    pathname={Astro.url.pathname}
-    params={Astro.params}
-    title={page.data.title}
-    description={page.data.description}
-    toc={toc}
-    full={page.data.full}
-    markdownUrl={`${page.url}.mdx`}
-    githubUrl={docsSourceUrl(page.path)}
-    previous={neighbours.previous}
-    next={neighbours.next}
-    client:load
-  >
-    <Content components={mdxComponents} />
-  </Docs>
+  <DocsGrid>
+    <DocsSidebar
+      slot="sidebar"
+      tree={source.getPageTree()}
+      pathname={pathname}
+      params={Astro.params}
+      client:load
+      transition:persist
+    />
+
+    <article class="mx-auto w-full max-w-3xl px-4 py-8">
+      <div class="flex flex-col gap-2 border-b pb-6">
+        <div class="flex items-center justify-between gap-4 md:items-start">
+          <h1 class="text-3xl font-semibold tracking-tight">{page.data.title}</h1>
+          <PageControls
+            pathname={pathname}
+            previous={neighbours.previous}
+            next={neighbours.next}
+            markdownUrl={`${page.url}.mdx`}
+            githubUrl={docsSourceUrl(page.path)}
+            client:idle
+          />
+        </div>
+        {page.data.description && (
+          <p class="text-lg text-fd-muted-foreground sm:text-balance md:max-w-[80%]">
+            {page.data.description}
+          </p>
+        )}
+      </div>
+
+      <div class="prose prose-gray dark:prose-invert mt-8">
+        <Content components={mdxComponents} />
+      </div>
+    </article>
+
+    <DocsToc slot="toc" toc={toc} pathname={pathname} client:idle />
+  </DocsGrid>
 </DocsShell>
