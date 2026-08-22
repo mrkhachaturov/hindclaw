@@ -55,17 +55,21 @@ function embeddingField(model: string, key: string): CollectionFieldSchema {
   } as CollectionFieldSchema;
 }
 
-let localeSettings: Record<string, CustomSettings> | undefined;
+// The adapter's DocumentRecord types `tag` as a string while the schema it
+// generates declares `string[]`, so every document is rejected with "Field
+// `tag` must be an array" — and the adapter logs those rejections without
+// failing, leaving an empty collection behind a freshly swapped alias.
+const fields: CollectionFieldSchema[] = getDefaultCollectionFields(SEARCH_LOCALE).map((field) =>
+  field.name === 'tag' ? ({ ...field, type: 'string' } as CollectionFieldSchema) : field,
+);
+
 if (embeddingModel && embeddingApiKey) {
-  localeSettings = {
-    [SEARCH_LOCALE]: {
-      field_definitions: [
-        ...getDefaultCollectionFields(SEARCH_LOCALE),
-        embeddingField(embeddingModel, embeddingApiKey),
-      ],
-    },
-  };
+  fields.push(embeddingField(embeddingModel, embeddingApiKey));
 }
+
+const localeSettings: Record<string, CustomSettings> = {
+  [SEARCH_LOCALE]: { field_definitions: fields },
+};
 
 console.log(`Syncing ${documents.length} documents to "${collection}" on ${host}`);
 for (const [tag, count] of Object.entries(byTag)) console.log(`  ${tag}: ${count}`);
