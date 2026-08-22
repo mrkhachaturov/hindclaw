@@ -50,7 +50,7 @@ url = "2.5"
 
 # HindClaw API client (generated from OpenAPI)
 # path is used for local dev; version is required for crates.io publish
-hindclaw-client = { version = "0.2", path = "../packages/clients/rust" }
+hindclaw-client = { version = "0.2", path = "../clients/rust" }
 # Error types for map_api_error (re-exported by hindclaw-client)
 progenitor-client = "0.11"
 
