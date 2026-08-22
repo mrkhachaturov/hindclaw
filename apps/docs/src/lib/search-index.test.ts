@@ -24,6 +24,10 @@ describe('toSearchRecord', () => {
     expect(toSearchRecord(page, 'api').tag).toBe('api');
   });
 
+  it('names a locale, without which the adapter ignores collection settings', () => {
+    expect(toSearchRecord(page, 'docs').locale).toBe('en');
+  });
+
   it('falls back to the url when a page has no title', () => {
     const record = toSearchRecord({ url: '/api/users', structured }, 'api');
 

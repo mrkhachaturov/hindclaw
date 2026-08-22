@@ -42,6 +42,8 @@ run = "flint run --fix --allow-fixed biome"
 [tasks.typecheck]
 description = "Typecheck the astro components and .ts sources"
 depends = [":deps"]
+# astro sync and astro build both write .astro/, so never let them overlap.
+wait_for = [":build"]
 run = ["astro sync", "astro check"]
 
 [tasks.test]

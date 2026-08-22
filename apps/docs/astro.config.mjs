@@ -36,7 +36,7 @@ export default defineConfig({
       PUBLIC_TYPESENSE_COLLECTION: envField.string({
         context: 'client',
         access: 'public',
-        default: 'hindclaw_fuma',
+        default: 'hindclaw',
       }),
     },
   },
