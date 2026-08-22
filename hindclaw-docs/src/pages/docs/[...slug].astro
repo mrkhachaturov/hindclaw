@@ -76,6 +76,13 @@ const { pathname } = Astro.url;
       </div>
     </article>
 
-    <DocsToc slot="toc" toc={toc} pathname={pathname} client:idle />
+    <DocsToc
+      slot="toc"
+      toc={toc}
+      pathname={pathname}
+      markdownUrl={`${page.url}.mdx`}
+      githubUrl={docsSourceUrl(page.path)}
+      client:idle
+    />
   </DocsGrid>
 </DocsShell>

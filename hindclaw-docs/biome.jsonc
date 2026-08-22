@@ -19,7 +19,8 @@
       "**",
       "!src/components/ui",
       "!src/components/assistant-ui",
-      "!src/components/ask-ai/surfaces.tsx"
+      "!src/components/ask-ai/surfaces.tsx",
+      "!src/styles/typeset.css"
     ]
   }
 }
