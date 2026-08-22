@@ -1,40 +1,48 @@
-min_version = "2026.6.1"
+min_version = "2026.8.8"
+monorepo_root = true
 redactions = ["*_TOKEN", "*_SECRET*", "*PASSWORD*", "*_KEY", "*_KEY_ID"]
 
 [settings]
 lockfile = true
 jobs = 4
 
+[monorepo]
+config_roots = ["hindclaw-docs", "hindclaw-extension"]
+lockfile = true
+
 [env]
 HINDCLAW_ROOT = "{{config_root}}"
-DOCS_DIR = "{{config_root}}/hindclaw-docs"
 HK_MISE = 1
 
+[hooks]
+enter = ["mise install"]
+postinstall = "hk install --mise"
+
+# Owned by flint: `flint run --fix flint-setup` rewrites this table.
 [tools]
-"aqua:grafana/flint" = "0.22.10"
-biome = "2.5.8"
+hk = "1.56.0"
+infisical = { version = "0.43.125", asset_pattern = "cli_{{ version }}_{{ os(macos='darwin') }}_{{ arch(x64='amd64') }}.tar.gz" }
 node = "22"
+uv = "0.12.5"
 
-[tasks."docs:fmt"]
-description = "Format hindclaw-docs sources"
-dir = "{{config_root}}/hindclaw-docs"
-run = "flint run --fix --allow-fixed biome"
+# Linters
+actionlint = "1.7.12"
+"aqua:grafana/flint" = "0.22.11"
+"aqua:owenlamont/ryl" = "0.21.0"
+biome = "2.5.9"
+rumdl = "0.2.58"
+shellcheck = "0.11.0"
+taplo = "0.10.0"
+zizmor = "1.29.0"
 
-[tasks."docs:lint"]
-description = "Lint hindclaw-docs sources"
-dir = "{{config_root}}/hindclaw-docs"
-run = "flint run biome"
+[tasks.lint]
+description = "Every generic file type — shell, markdown, yaml, toml, js/ts, workflows"
+run = "flint run --full"
 
-[tasks."docs:typecheck"]
-description = "Typecheck hindclaw-docs"
-dir = "{{config_root}}/hindclaw-docs"
-run = "npx astro sync && npx astro check"
+[tasks.fmt]
+description = "Apply what flint can fix, report the rest"
+run = "flint run --full --fix --allow-fixed"
 
-[tasks."docs:test"]
-description = "Run hindclaw-docs unit tests"
-dir = "{{config_root}}/hindclaw-docs"
-run = "npm test"
-
-[tasks."docs:check"]
-description = "Lint, typecheck and test hindclaw-docs"
-depends = ["docs:lint", "docs:typecheck", "docs:test"]
+[tasks.check]
+description = "Everything that gates a push"
+depends = ["lint", "//hindclaw-docs:check", "//hindclaw-extension:check"]

@@ -21,7 +21,6 @@ describe('toSearchRecord', () => {
 
   it('carries the tag so results can be filtered by section', () => {
     expect(toSearchRecord(page, 'docs').tag).toBe('docs');
-    expect(toSearchRecord(page, 'blog').tag).toBe('blog');
     expect(toSearchRecord(page, 'api').tag).toBe('api');
   });
 

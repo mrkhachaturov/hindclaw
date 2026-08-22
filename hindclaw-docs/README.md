@@ -1,41 +1,43 @@
-# Website
+# hindclaw-docs
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+The [hindclaw.pro](https://hindclaw.pro) documentation site: Astro with fumadocs, built
+to static HTML and published to Cloudflare Pages.
 
-## Installation
+## Tasks
 
-```bash
-yarn
-```
-
-## Local Development
+Tools and tasks come from mise. The repo is a mise monorepo, so tasks are addressed by
+path and run from anywhere in the tree.
 
 ```bash
-yarn start
+mise run //hindclaw-docs:dev        # dev server on :4321
+mise run //hindclaw-docs:build      # static build into dist/
+mise run //hindclaw-docs:preview    # serve the built dist/
+mise run //hindclaw-docs:check      # lint, typecheck, test, build
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+From inside `hindclaw-docs/` the `//hindclaw-docs` prefix collapses to `:` —
+`mise run :dev`.
 
-## Build
+## Search
 
-```bash
-yarn build
-```
+`astro build` writes `dist/search-index.json` from the fumadocs page structure, covering
+docs and API reference pages. `mise run //hindclaw-docs:sync-search` pushes that index
+into Typesense, which is how the search box is fed — there is no crawler.
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+The sync creates `<collection>_<timestamp>`, imports into it, repoints the collection
+alias and drops the previous one. It needs `TYPESENSE_ADMIN_API_KEY`; the deploy workflow
+runs it after a successful publish.
 
-## Deployment
+## Environment
 
-Using SSH:
+`astro.config.mjs` declares these through `envField`, so a build without them fails
+rather than shipping a dead search box.
 
-```bash
-USE_SSH=true yarn deploy
-```
+| Variable | Where |
+|---|---|
+| `PUBLIC_TYPESENSE_HOST` | build and sync |
+| `PUBLIC_TYPESENSE_COLLECTION` | build and sync |
+| `PUBLIC_TYPESENSE_SEARCH_API_KEY` | build only — compiled into the client bundle |
+| `TYPESENSE_ADMIN_API_KEY` | sync only — never reaches the build |
 
-Not using SSH:
-
-```bash
-GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+Copy `.env.example` to `.env` for local work.

@@ -1,23 +1,16 @@
-<p align="center">
-  <img src=".github/assets/hindclaw.png" alt="HindClaw">
-</p>
+![HindClaw](hindclaw-docs/public/img/hindclaw-mark.svg)
 
-<p align="center">
-  Self-hosted Hindsight management platform — multi-tenant access control, user/group permissions, Terraform-managed infrastructure, and client integrations for AI agent memory.
-</p>
+# HindClaw
 
-<p align="center">
-  <a href="https://www.npmjs.com/package/hindclaw-openclaw"><img src="https://img.shields.io/npm/v/hindclaw-openclaw?style=flat-square&color=0f766e" alt="npm"></a>
-  <a href="https://pypi.org/project/hindclaw-extension/"><img src="https://img.shields.io/pypi/v/hindclaw-extension?style=flat-square&color=0f766e" alt="PyPI"></a>
-  <a href="https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest"><img src="https://img.shields.io/badge/terraform-registry-844FBA?style=flat-square" alt="Terraform"></a>
-  <img src="https://img.shields.io/badge/license-MIT-10b981?style=flat-square" alt="License">
-</p>
+Self-hosted Hindsight management platform — multi-tenant access control, user/group
+permissions, Terraform-managed infrastructure, and client integrations for AI agent memory.
 
-<p align="center">
-  <a href="https://hindclaw.pro">Documentation</a> &middot;
-  <a href="https://hindsight.vectorize.io">Hindsight</a> &middot;
-  <a href="https://openclaw.ai">OpenClaw</a>
-</p>
+[![npm](https://img.shields.io/npm/v/hindclaw-openclaw?style=flat-square&color=0f766e)](https://www.npmjs.com/package/hindclaw-openclaw)
+[![PyPI](https://img.shields.io/pypi/v/hindclaw-extension?style=flat-square&color=0f766e)](https://pypi.org/project/hindclaw-extension/)
+[![Terraform](https://img.shields.io/badge/terraform-registry-844FBA?style=flat-square)](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest)
+![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)
+
+[Documentation](https://hindclaw.pro) · [Hindsight](https://hindsight.vectorize.io) · [OpenClaw](https://openclaw.ai)
 
 ---
 
@@ -25,7 +18,8 @@
 
 Built on [Hindsight](https://hindsight.vectorize.io) — the highest-scoring agent memory system on the [LongMemEval benchmark](https://vectorize.io/#:~:text=The%20New%20Leader%20in%20Agent%20Memory).
 
-The official Hindsight plugin gives you auto-capture and auto-recall. HindClaw adds what you need to run it in production with multiple users and agents:
+The official Hindsight plugin gives you auto-capture and auto-recall. HindClaw adds what
+you need to run it in production with multiple users and agents:
 
 - **Server-side access control** — permissions enforced by Hindsight extensions, not the client
 - **Infrastructure as Code** — Terraform provider for users, groups, banks, permissions, directives, mental models
@@ -76,7 +70,8 @@ graph TB
     style PG fill:#c2410c,color:#fff,stroke:#c2410c
 ```
 
-**Key principle:** Access control lives on the server. Clients just deliver context (sender, agent, topic) — the server decides what's allowed.
+**Key principle:** Access control lives on the server. Clients just deliver context
+(sender, agent, topic) — the server decides what's allowed.
 
 ---
 
@@ -130,11 +125,13 @@ Unmapped senders resolve as `_anonymous` — denied by default unless the `_defa
 
 Most specific wins. Every parameter is overridable at each level.
 
-```
+```text
 Global defaults → Group merge → Bank group override → Bank user override
 ```
 
-**Configurable at every level:** `recall`, `retain`, `retainRoles`, `retainTags`, `retainEveryNTurns`, `recallBudget`, `recallMaxTokens`, `recallTagGroups`, `llmModel`, `llmProvider`, `excludeProviders`
+**Configurable at every level:** `recall`, `retain`, `retainRoles`, `retainTags`,
+`retainEveryNTurns`, `recallBudget`, `recallMaxTokens`, `recallTagGroups`, `llmModel`,
+`llmProvider`, `excludeProviders`
 
 **Same user, different agents:**
 
@@ -280,7 +277,8 @@ Define users, groups, permissions, bank configs, directives, and mental models a
 Three Hindsight extensions handle all access control on the server:
 
 - **HindclawTenant** — authenticates JWT and API key tokens, resolves sender identity to a known user via channel mappings
-- **HindclawValidator** — enforces recall/retain/reflect permissions per user per bank, injects tag filters and retain strategies via `accept_with()` enrichment
+- **HindclawValidator** — enforces recall/retain/reflect permissions per user per bank,
+  injects tag filters and retain strategies via `accept_with()` enrichment
 - **HindclawHttp** — REST API at `/ext/hindclaw/` for managing users, groups, permissions, strategies, and API keys
 
 ### Entity Labels

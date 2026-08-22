@@ -1,7 +1,7 @@
 import type { StructuredData } from 'fumadocs-core/mdx-plugins';
 import type { DocumentRecord } from 'typesense-fumadocs-adapter';
 
-export type SearchTag = 'docs' | 'blog' | 'api';
+export type SearchTag = 'docs' | 'api';
 
 export interface IndexedPage {
   url: string;

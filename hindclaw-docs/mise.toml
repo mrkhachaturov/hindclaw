@@ -1,0 +1,54 @@
+[env]
+_.path = ["{{config_root}}/node_modules/.bin"]
+
+[tasks.deps]
+description = "Install node_modules from the lockfile"
+run = "npm ci"
+sources = ["package.json", "package-lock.json"]
+outputs = ["node_modules/.package-lock.json"]
+
+[tasks.dev]
+description = "Serve the docs with HMR on :4321"
+depends = [":deps"]
+run = "astro dev --port 4321"
+
+[tasks.build]
+description = "Build the static site into dist/"
+depends = [":deps"]
+run = "astro build"
+sources = [
+  "astro.config.mjs",
+  "tsconfig.json",
+  "package-lock.json",
+  "content/**/*",
+  "public/**/*",
+  "src/**/*",
+]
+outputs = ["dist/**/*"]
+
+[tasks.preview]
+description = "Serve the built dist/ on :4321"
+depends = [":build"]
+run = "astro preview --port 4321"
+
+[tasks.lint]
+description = "Lint the docs sources with biome"
+run = "flint run biome"
+
+[tasks.fmt]
+description = "Format the docs sources with biome"
+run = "flint run --fix --allow-fixed biome"
+
+[tasks.typecheck]
+description = "Typecheck the astro components and .ts sources"
+depends = [":deps"]
+run = ["astro sync", "astro check"]
+
+[tasks.test]
+description = "Run the vitest unit suite"
+depends = [":deps"]
+run = "vitest run"
+
+[tasks.check]
+description = "Lint, typecheck, test and build the docs"
+depends = [":lint", ":typecheck", ":test", ":build"]

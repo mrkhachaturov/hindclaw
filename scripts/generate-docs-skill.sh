@@ -99,7 +99,7 @@ PYTHON
 # Process a single markdown file: convert or copy into references/
 process_file() {
     local src_file="$1"
-    local rel_path="${src_file#$DOCS_DIR/}"
+    local rel_path="${src_file#"$DOCS_DIR"/}"
     local dest_file="$REFS_DIR/$rel_path"
 
     mkdir -p "$(dirname "$dest_file")"
@@ -160,7 +160,7 @@ if [ -d "$PAGES_DIR" ]; then
         done
     elif [ -d "$PAGES_DIR/changelog" ]; then
         find "$PAGES_DIR/changelog" -type f \( -name "*.md" -o -name "*.mdx" \) | while read -r file; do
-            rel="${file#$PAGES_DIR/}"
+            rel="${file#"$PAGES_DIR"/}"
             dest="$REFS_DIR/$rel"
             if [[ "$file" == *.mdx ]]; then
                 dest="${dest%.mdx}.md"
@@ -171,7 +171,7 @@ if [ -d "$PAGES_DIR" ]; then
             else
                 cp "$file" "$dest"
             fi
-            print_info "Included changelog: ${file#$PAGES_DIR/changelog/}"
+            print_info "Included changelog: ${file#"$PAGES_DIR"/changelog/}"
         done
     fi
 else

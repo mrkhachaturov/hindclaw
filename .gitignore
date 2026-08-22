@@ -21,6 +21,7 @@ hindclaw-cli/target/
 
 # Misc
 .worktrees/
+.rumdl_cache/
 
 # Upstream reference checkouts (local only, not for commit)
 /.upstream/
@@ -30,3 +31,7 @@ hindclaw-cli/target/
 
 # Project-level MCP servers (local only, not for commit)
 /.mcp.json
+
+# Agent tooling (local only, not for commit)
+/.claude/
+/.agents/
