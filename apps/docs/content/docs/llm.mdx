@@ -1,0 +1,67 @@
+---
+title: 'Docs for AI Agents'
+description: 'Give your AI tools access to the HindClaw documentation: an index, the full corpus, and raw markdown for any page.'
+icon: Bot
+---
+
+Every page on this site is available in a form an AI assistant can read directly.
+No scraping, no HTML parsing — point your tool at one of the URLs below.
+
+## AI accessible documentation
+
+<Cards>
+  <Card icon="FileText" iconClass="text-blue-300" title="/llms.txt" href="/llms.txt" external>
+    Structured index of every documentation page with its description. Start here for an overview.
+  </Card>
+
+  <Card icon="FileText" iconClass="text-green-300" title="/llms-full.txt" href="/llms-full.txt" external>
+    The complete documentation in a single file. Use it when you want full context in one request.
+  </Card>
+
+  <Card icon="FileText" iconClass="text-purple-300" title=".mdx suffix">
+    Add `.mdx` to any page URL for its raw markdown, e.g. `/docs/guides/access-control.mdx`.
+  </Card>
+</Cards>
+
+The same markdown is behind the **Copy page** and **View as Markdown** actions in the
+right-hand column of every docs page.
+
+## Context files
+
+Add HindClaw context to your project's `CLAUDE.md`, `AGENTS.md` or `.cursorrules`:
+
+```md
+## HindClaw
+
+This project uses HindClaw for access control over Hindsight agent memory.
+
+Documentation: https://hindclaw.pro/llms-full.txt
+
+Key concepts:
+- Policies are JSON documents with allow/deny statements; deny always wins
+- Permissions attach to users or groups and are evaluated per endpoint
+- Service accounts carry `hc_sa_` API keys scoped to banks and actions
+- The server extension enforces every recall, retain and reflect call
+- Users, groups, policies and banks are managed as code via the Terraform provider
+```
+
+## Reading a single page
+
+Any documentation URL serves markdown when you append `.mdx`:
+
+```bash
+curl https://hindclaw.pro/docs/guides/access-control.mdx
+```
+
+That is the whole page: frontmatter, prose and code blocks, exactly as written.
+Agents that need to answer questions about one topic should fetch that page rather
+than the full corpus.
+
+## Which file to use
+
+| Your case | Use |
+|---|---|
+| Agent needs to know what exists before choosing | `/llms.txt` |
+| One-shot answer with no follow-up requests | `/llms-full.txt` |
+| Agent already knows the page it needs | `/docs/<slug>.mdx` |
+| Building a search index over the docs | `/search-index.json` |

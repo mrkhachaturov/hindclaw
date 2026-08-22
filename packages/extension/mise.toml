@@ -1,0 +1,39 @@
+[tasks.deps]
+description = "Sync .venv from uv.lock with the dev extra"
+run = "uv sync --extra dev"
+sources = ["pyproject.toml", "uv.lock"]
+outputs = [".venv/pyvenv.cfg"]
+
+[tasks.lint]
+description = "Ruff lint and format check"
+depends = [":deps"]
+run = [
+  "uv run ruff check hindclaw_ext/",
+  "uv run ruff format --check hindclaw_ext/ tests/",
+]
+
+[tasks.fmt]
+description = "Apply ruff lint fixes and formatting"
+depends = [":deps"]
+run = [
+  "uv run ruff check --fix hindclaw_ext/ tests/",
+  "uv run ruff format hindclaw_ext/ tests/",
+]
+
+[tasks.typecheck]
+description = "Type check with ty"
+depends = [":deps"]
+run = "uv run ty check hindclaw_ext/"
+
+[tasks.test]
+description = "Run the pytest suite"
+depends = [":deps"]
+run = "uv run pytest tests/ -v"
+
+[tasks.build]
+description = "Build the wheel and sdist"
+run = "uv build"
+
+[tasks.check]
+description = "Lint, typecheck and test the extension"
+depends = [":lint", ":typecheck", ":test"]

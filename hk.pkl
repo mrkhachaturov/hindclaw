@@ -1,0 +1,120 @@
+amends "package://github.com/jdx/hk/releases/download/v1.56.0/hk@1.56.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.56.0/hk@1.56.0#/Builtins.pkl"
+
+local artifacts = List(
+  "packages/clients/**",
+  "integrations/**",
+  "terraform/**"
+)
+
+local lockfiles = List(
+  "**/package-lock.json",
+  "**/uv.lock",
+  "**/Cargo.lock",
+  "mise.lock"
+)
+
+local hygiene = new Mapping<String, Step> {
+  ["detect-private-key"] = Builtins.detect_private_key
+  ["check-merge-conflict"] = (Builtins.check_merge_conflict) { exclude = artifacts }
+  ["check-added-large-files"] = (Builtins.check_added_large_files) { exclude = artifacts + lockfiles }
+  ["check-case-conflict"] = Builtins.check_case_conflict
+  ["check-symlinks"] = Builtins.check_symlinks
+  ["check-executables-have-shebangs"] = Builtins.check_executables_have_shebangs
+  ["trailing-whitespace"] = (Builtins.trailing_whitespace) { exclude = artifacts }
+  ["end-of-file"] = (Builtins.newlines) { exclude = artifacts }
+  ["mixed-line-ending"] = (Builtins.mixed_line_ending) { exclude = artifacts }
+}
+
+hooks {
+  ["pre-commit"] {
+    fix = true
+    stash = "git"
+    steps {
+      ["no-commit-to-main"] = Builtins.no_commit_to_branch
+      ...hygiene
+      ["infisical-scan"] = new Step { check = "mise run scan:staged" }
+      ["shellcheck"] = new Step {
+        glob = List("**/*.sh", "**/*.bash")
+        check = "flint run shellcheck"
+      }
+      ["rumdl"] = new Step {
+        glob = List("**/*.md")
+        fix = "flint run --fix --allow-fixed rumdl"
+      }
+      ["ryl"] = new Step {
+        glob = List("**/*.yml", "**/*.yaml")
+        fix = "flint run --fix --allow-fixed ryl"
+      }
+      ["taplo"] = new Step {
+        glob = List("**/*.toml")
+        fix = "flint run --fix --allow-fixed taplo"
+      }
+      ["biome"] = new Step {
+        glob = List("**/*.js", "**/*.ts", "**/*.jsx", "**/*.tsx", "**/*.json", "**/*.jsonc")
+        fix = "flint run --fix --allow-fixed biome"
+      }
+      ["actionlint"] = new Step {
+        glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml")
+        check = "flint run actionlint"
+      }
+      ["zizmor"] = new Step {
+        glob = List(".github/workflows/*.yml", ".github/workflows/*.yaml")
+        check = "flint run zizmor"
+      }
+      ["flint-setup"] = new Step {
+        glob = List("mise.toml")
+        fix = "flint run --fix --allow-fixed flint-setup"
+      }
+      ["hindclaw-extension"] = new Step {
+        glob = List("packages/extension/**/*.py")
+        fix = "mise run //packages/extension:fmt"
+      }
+    }
+  }
+
+  ["commit-msg"] {
+    steps {
+      ["conventional-commit"] = Builtins.check_conventional_commit
+    }
+  }
+
+  ["pre-push"] {
+    steps {
+      ["docs"] = new Step {
+        glob = List("apps/docs/**")
+        check = "mise run //apps/docs:check"
+      }
+      ["extension"] = new Step {
+        glob = List("packages/extension/**")
+        check = "mise run //packages/extension:check"
+      }
+    }
+  }
+
+  ["check"] {
+    steps {
+      ...hygiene
+      ["gates"] = new Step {
+        check = "mise run check"
+        exclusive = true
+      }
+      ["infisical-scan-full"] = new Step { check = "mise run scan:full" }
+    }
+  }
+
+  ["fix"] {
+    fix = true
+    steps {
+      ...hygiene
+      ["flint"] = new Step {
+        fix = "flint run --fix --allow-fixed"
+        exclusive = true
+      }
+      ["hindclaw-extension"] = new Step {
+        glob = List("packages/extension/**/*.py")
+        fix = "mise run //packages/extension:fmt"
+      }
+    }
+  }
+}

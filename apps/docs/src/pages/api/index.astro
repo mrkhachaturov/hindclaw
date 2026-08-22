@@ -1,0 +1,50 @@
+---
+import { DocsSidebar } from '@/components/islands/docs-sidebar';
+import DocsGrid from '@/layouts/DocsGrid.astro';
+import DocsShell from '@/layouts/DocsShell.astro';
+import { apiSource } from '@/lib/api';
+import { typeDeck, typePage } from '@/lib/type';
+
+const description =
+  'REST API for managing users, groups, policies, service accounts, banks, and templates.';
+
+const pages = apiSource.getPages();
+const { pathname } = Astro.url;
+---
+
+<DocsShell title="API Reference" description={description}>
+  <DocsGrid>
+    <DocsSidebar
+      slot="sidebar"
+      tree={apiSource.getPageTree()}
+      pathname={pathname}
+      params={Astro.params}
+      client:load
+      transition:persist
+    />
+
+    <article class="mx-auto w-full max-w-5xl px-4 py-8">
+      <div class="flex flex-col gap-2 border-b pb-6">
+        <h1 class={typePage}>API Reference</h1>
+        <p class={typeDeck}>
+          Generated from the OpenAPI schema and grouped by tag. Every operation lists its request
+          and response schemas with ready-made code samples.
+        </p>
+      </div>
+
+      <div class="mt-8 grid gap-4 sm:grid-cols-2">
+        {pages.map((page) => (
+            <a
+              href={page.url}
+              class="rounded-xl border border-fd-border bg-fd-card p-5 transition-colors hover:border-fd-primary"
+            >
+              <h2 class="font-medium">{page.data.title}</h2>
+              {page.data.description && (
+                <p class="mt-2 text-sm text-fd-muted-foreground">{page.data.description}</p>
+              )}
+            </a>
+          ))}
+      </div>
+    </article>
+  </DocsGrid>
+</DocsShell>

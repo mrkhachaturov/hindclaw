@@ -1,0 +1,64 @@
+---
+interface Props {
+  duration?: string;
+  gap?: string;
+}
+
+const { duration = '40s', gap = '1rem' } = Astro.props;
+---
+
+<div class="marquee" style={`--marquee-duration: ${duration}; --marquee-gap: ${gap}`}>
+  <div class="marquee-track">
+    <div class="marquee-group"><slot /></div>
+    <div class="marquee-group" aria-hidden="true"><slot /></div>
+  </div>
+</div>
+
+<style>
+.marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 6rem,
+    black calc(100% - 6rem),
+    transparent
+  );
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  gap: var(--marquee-gap);
+  animation: marquee var(--marquee-duration) linear infinite;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+.marquee-group {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--marquee-gap);
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-50% - var(--marquee-gap) / 2));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+  .marquee {
+    overflow-x: auto;
+    mask-image: none;
+  }
+}
+</style>

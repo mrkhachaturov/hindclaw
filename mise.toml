@@ -1,0 +1,48 @@
+min_version = "2026.8.8"
+monorepo_root = true
+redactions = ["*_TOKEN", "*_SECRET*", "*PASSWORD*", "*_KEY", "*_KEY_ID"]
+
+[settings]
+lockfile = true
+jobs = 4
+
+[monorepo]
+config_roots = ["apps/docs", "packages/extension"]
+lockfile = true
+
+[env]
+HINDCLAW_ROOT = "{{config_root}}"
+HK_MISE = 1
+
+[hooks]
+enter = ["mise install"]
+postinstall = "hk install --mise"
+
+# Owned by flint: `flint run --fix flint-setup` rewrites this table.
+[tools]
+hk = "1.56.0"
+infisical = "0.43.125"
+node = "22"
+uv = "0.12.5"
+
+# Linters
+actionlint = "1.7.12"
+"aqua:grafana/flint" = "0.22.11"
+"aqua:owenlamont/ryl" = "0.21.0"
+biome = "2.5.9"
+rumdl = "0.2.58"
+shellcheck = "0.11.0"
+taplo = "0.10.0"
+zizmor = "1.29.0"
+
+[tasks.lint]
+description = "Every generic file type — shell, markdown, yaml, toml, js/ts, workflows"
+run = "flint run --full"
+
+[tasks.fmt]
+description = "Apply what flint can fix, report the rest"
+run = "flint run --full --fix --allow-fixed"
+
+[tasks.check]
+description = "Everything that gates a push"
+depends = ["lint", "//apps/docs:check", "//packages/extension:check"]

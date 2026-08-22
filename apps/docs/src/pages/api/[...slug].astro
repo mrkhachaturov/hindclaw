@@ -1,0 +1,52 @@
+---
+import { DocsSidebar } from '@/components/islands/docs-sidebar';
+import { OpenAPIPage } from '@/components/openapi';
+import DocsGrid from '@/layouts/DocsGrid.astro';
+import DocsShell from '@/layouts/DocsShell.astro';
+import { apiSource } from '@/lib/api';
+import { typeDeck, typePage } from '@/lib/type';
+
+interface Props {
+  slugs: string[];
+}
+
+export async function getStaticPaths() {
+  return apiSource.getPages().map((page) => ({
+    params: { slug: page.slugs.length > 0 ? page.slugs.join('/') : undefined },
+    props: { slugs: page.slugs },
+  }));
+}
+
+const { slugs } = Astro.props;
+const page = apiSource.getPage(slugs);
+if (!page) {
+  throw new Error(`No API page for /${slugs.join('/')}`);
+}
+
+const title = page.data.title ?? 'API Reference';
+const { pathname } = Astro.url;
+---
+
+<DocsShell title={title} description={page.data.description}>
+  <DocsGrid>
+    <DocsSidebar
+      slot="sidebar"
+      tree={apiSource.getPageTree()}
+      pathname={pathname}
+      params={Astro.params}
+      client:load
+      transition:persist
+    />
+
+    <article class="mx-auto w-full max-w-5xl px-4 py-8">
+      <div class="flex flex-col gap-2 border-b pb-6">
+        <h1 class={typePage}>{title}</h1>
+        {page.data.description && <p class={typeDeck}>{page.data.description}</p>}
+      </div>
+
+      <div class="prose prose-gray dark:prose-invert mt-8 max-w-none">
+        <OpenAPIPage {...page.data.getOpenAPIPageProps()} client:visible />
+      </div>
+    </article>
+  </DocsGrid>
+</DocsShell>

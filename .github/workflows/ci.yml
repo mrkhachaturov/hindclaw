@@ -1,3 +1,5 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: CI
 
 on:
@@ -7,15 +9,20 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
+    # A job block replaces the workflow's, so contents is repeated.
     permissions:
-      pull-requests: read
+      contents: read # actions/checkout
+      pull-requests: read # paths-filter reads the PR file list over the API
     outputs:
       extension: ${{ steps.filter.outputs.extension }}
       clients-ts: ${{ steps.filter.outputs.clients-ts }}
@@ -26,89 +33,166 @@ jobs:
       scripts: ${{ steps.filter.outputs.scripts }}
       ci: ${{ steps.filter.outputs.ci }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: dorny/paths-filter@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         with:
           filters: |
             extension:
-              - 'hindclaw-extension/**'
+              - 'packages/extension/**'
             clients-ts:
-              - 'hindclaw-clients/typescript/**'
-              - 'hindclaw-docs/static/openapi.json'
+              - 'packages/clients/typescript/**'
+              - 'apps/docs/public/openapi.json'
             clients-python:
-              - 'hindclaw-clients/python/**'
-              - 'hindclaw-docs/static/openapi.json'
+              - 'packages/clients/python/**'
+              - 'apps/docs/public/openapi.json'
             clients-rust:
-              - 'hindclaw-clients/rust/**'
-              - 'hindclaw-docs/static/openapi.json'
+              - 'packages/clients/rust/**'
+              - 'apps/docs/public/openapi.json'
             clients-go:
-              - 'hindclaw-clients/go/**'
-              - 'hindclaw-docs/static/openapi.json'
+              - 'packages/clients/go/**'
+              - 'apps/docs/public/openapi.json'
             docs:
-              - 'hindclaw-docs/**'
+              - 'apps/docs/**'
             scripts:
               - 'scripts/**'
             ci:
               - '.github/workflows/ci.yml'
+              - 'mise.toml'
+              - 'mise.lock'
+              - 'flint.toml'
+              - 'hk.pkl'
 
-  build-extension-python-versions:
+  # Squash merges take the PR title as the commit subject, so it is the only
+  # message that reaches main — and no git hook ever sees it.
+  title:
+    name: PR title
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518 # v4.2.5
+      # The title is attacker-controlled: it reaches the shell as an env var,
+      # never as `${{ }}` inside the run block.
+      - env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          printf '%s\n' "$TITLE" > "$RUNNER_TEMP/pr-title"
+          hk run commit-msg "$RUNNER_TEMP/pr-title"
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    # No filter: flint's scope is every tracked file, so any path list here
+    # would silently shrink it.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518 # v4.2.5
+      - run: mise run lint
+
+  check-docs:
+    name: Docs
+    needs: [detect-changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.detect-changes.outputs.docs == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518 # v4.2.5
+      - run: mise run //apps/docs:check
+        env:
+          PUBLIC_TYPESENSE_HOST: ${{ vars.PUBLIC_TYPESENSE_HOST }}
+          PUBLIC_TYPESENSE_COLLECTION: ${{ vars.PUBLIC_TYPESENSE_COLLECTION }}
+          PUBLIC_TYPESENSE_SEARCH_API_KEY: ${{ vars.PUBLIC_TYPESENSE_SEARCH_API_KEY }}
+
+  check-extension:
+    name: Extension
     needs: [detect-changes]
     if: >-
       github.event_name == 'workflow_dispatch' ||
       needs.detect-changes.outputs.extension == 'true' ||
       needs.detect-changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518 # v4.2.5
+      - run: mise run //packages/extension:check
+
+  build-extension-python-versions:
+    name: Extension wheel (py${{ matrix.python-version }})
+    needs: [detect-changes]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      needs.detect-changes.outputs.extension == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         python-version: ['3.11', '3.12', '3.13']
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          enable-cache: true
-      - uses: actions/setup-python@v7
+          persist-credentials: false
+      - uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518 # v4.2.5
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Build extension
-        working-directory: hindclaw-extension
-        run: uv build
+      - run: mise run //packages/extension:build
 
-  test-extension:
+  verify-openapi-spec:
+    name: OpenAPI drift
     needs: [detect-changes]
     if: >-
       github.event_name == 'workflow_dispatch' ||
       needs.detect-changes.outputs.extension == 'true' ||
+      needs.detect-changes.outputs.docs == 'true' ||
+      needs.detect-changes.outputs.scripts == 'true' ||
       needs.detect-changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          submodules: recursive
-      - uses: astral-sh/setup-uv@v10.0.1
-        with:
-          enable-cache: true
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
-      - name: Install extension with dev extras
-        working-directory: hindclaw-extension
+          persist-credentials: false
+      - uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518 # v4.2.5
+      - run: mise run //packages/extension:deps
+      - name: Regenerate OpenAPI spec
+        run: bash scripts/generate-openapi.sh
+      - name: Verify no drift
         run: |
-          uv venv --python 3.12 .venv
-          uv pip install -e ".[dev]"
-      - name: Ruff lint
-        working-directory: hindclaw-extension
-        run: .venv/bin/python -m ruff check hindclaw_ext/
-      - name: Ruff format check
-        working-directory: hindclaw-extension
-        run: .venv/bin/python -m ruff format --check hindclaw_ext/ tests/
-      - name: Type check (ty)
-        working-directory: hindclaw-extension
-        run: .venv/bin/python -m ty check hindclaw_ext/
-      - name: Pytest
-        working-directory: hindclaw-extension
-        run: .venv/bin/python -m pytest tests/ -v
+          if [ -n "$(git status --porcelain apps/docs/public/openapi.json)" ]; then
+            echo "apps/docs/public/openapi.json is out of sync."
+            echo ""
+            git --no-pager diff apps/docs/public/openapi.json | head -200
+            echo ""
+            echo "Run locally and commit:"
+            echo "  bash scripts/generate-openapi.sh"
+            echo "  bash scripts/generate-clients.sh"
+            echo "  bash scripts/generate-docs-skill.sh"
+            exit 1
+          fi
+          echo "OpenAPI spec is up to date."
 
   build-typescript-client:
     needs: [detect-changes]
@@ -117,18 +201,22 @@ jobs:
       needs.detect-changes.outputs.clients-ts == 'true' ||
       needs.detect-changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: hindclaw-clients/typescript/package-lock.json
+          cache-dependency-path: packages/clients/typescript/package-lock.json
       - name: Install dependencies
-        working-directory: hindclaw-clients/typescript
+        working-directory: packages/clients/typescript
         run: npm ci
       - name: Build
-        working-directory: hindclaw-clients/typescript
+        working-directory: packages/clients/typescript
         run: npm run build
 
   test-typescript-client:
@@ -138,18 +226,22 @@ jobs:
       needs.detect-changes.outputs.clients-ts == 'true' ||
       needs.detect-changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: hindclaw-clients/typescript/package-lock.json
+          cache-dependency-path: packages/clients/typescript/package-lock.json
       - name: Install dependencies
-        working-directory: hindclaw-clients/typescript
+        working-directory: packages/clients/typescript
         run: npm ci
       - name: Jest
-        working-directory: hindclaw-clients/typescript
+        working-directory: packages/clients/typescript
         run: npm test
 
   test-typescript-client-deno:
@@ -159,21 +251,25 @@ jobs:
       needs.detect-changes.outputs.clients-ts == 'true' ||
       needs.detect-changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: hindclaw-clients/typescript/package-lock.json
-      - uses: denoland/setup-deno@v2
+          cache-dependency-path: packages/clients/typescript/package-lock.json
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
           deno-version: v2.x
       - name: Install dependencies
-        working-directory: hindclaw-clients/typescript
+        working-directory: packages/clients/typescript
         run: npm ci
       - name: Deno smoke tests
-        working-directory: hindclaw-clients/typescript
+        working-directory: packages/clients/typescript
         run: npm run test:deno
 
   test-python-client:
@@ -184,21 +280,25 @@ jobs:
       needs.detect-changes.outputs.extension == 'true' ||
       needs.detect-changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           enable-cache: true
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
       - name: Install client with test extras
-        working-directory: hindclaw-clients/python
+        working-directory: packages/clients/python
         run: |
           uv venv --python 3.12 .venv
           uv pip install ".[test]"
       - name: Pytest
-        working-directory: hindclaw-clients/python
+        working-directory: packages/clients/python
         run: .venv/bin/python -m pytest tests/ -v
 
   test-rust-client:
@@ -208,22 +308,26 @@ jobs:
       needs.detect-changes.outputs.clients-rust == 'true' ||
       needs.detect-changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/cache@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            hindclaw-clients/rust/target
-          key: ${{ runner.os }}-cargo-rust-client-${{ hashFiles('hindclaw-clients/rust/Cargo.lock') }}
+            packages/clients/rust/target
+          key: ${{ runner.os }}-cargo-rust-client-${{ hashFiles('packages/clients/rust/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-rust-client-
       - name: Build
-        working-directory: hindclaw-clients/rust
+        working-directory: packages/clients/rust
         run: cargo build --locked
       - name: Test
-        working-directory: hindclaw-clients/rust
+        working-directory: packages/clients/rust
         run: cargo test --locked
 
   test-go-client:
@@ -233,71 +337,41 @@ jobs:
       needs.detect-changes.outputs.clients-go == 'true' ||
       needs.detect-changes.outputs.ci == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: '1.22'
-          cache-dependency-path: hindclaw-clients/go/go.sum
+          cache-dependency-path: packages/clients/go/go.sum
       - name: Go test
-        working-directory: hindclaw-clients/go
+        working-directory: packages/clients/go
         run: go test ./... -v
 
-  verify-openapi-spec:
-    needs: [detect-changes]
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      needs.detect-changes.outputs.extension == 'true' ||
-      needs.detect-changes.outputs.docs == 'true' ||
-      needs.detect-changes.outputs.scripts == 'true' ||
-      needs.detect-changes.outputs.ci == 'true'
+  # The only required check. `detect-changes` is in needs on purpose: without
+  # it, a failure there skips the rest and skipped alone would read as green.
+  gate:
+    name: Gate
     runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - title
+      - lint
+      - check-docs
+      - check-extension
+      - build-extension-python-versions
+      - verify-openapi-spec
+      - build-typescript-client
+      - test-typescript-client
+      - test-typescript-client-deno
+      - test-python-client
+      - test-rust-client
+      - test-go-client
+    if: always()
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.0.1
-        with:
-          enable-cache: true
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.12'
-      - name: Install extension
-        working-directory: hindclaw-extension
-        run: |
-          uv venv --python 3.12 .venv
-          uv pip install -e ".[dev]"
-      - name: Regenerate OpenAPI spec
-        run: bash scripts/generate-openapi.sh
-      - name: Verify no drift
-        run: |
-          if [ -n "$(git status --porcelain hindclaw-docs/static/openapi.json)" ]; then
-            echo "hindclaw-docs/static/openapi.json is out of sync."
-            echo ""
-            git --no-pager diff hindclaw-docs/static/openapi.json | head -200
-            echo ""
-            echo "Run locally and commit:"
-            echo "  bash scripts/generate-openapi.sh"
-            echo "  bash scripts/generate-clients.sh"
-            echo "  bash scripts/generate-docs-skill.sh"
-            exit 1
-          fi
-          echo "OpenAPI spec is up to date."
-
-  build-docs:
-    needs: [detect-changes]
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      needs.detect-changes.outputs.docs == 'true' ||
-      needs.detect-changes.outputs.ci == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: hindclaw-docs/package-lock.json
-      - name: Install and build
-        working-directory: hindclaw-docs
-        run: |
-          npm ci
-          npm run build
+      - name: A job failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

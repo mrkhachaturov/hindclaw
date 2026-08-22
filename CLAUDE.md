@@ -8,14 +8,19 @@ Self-hosted [Hindsight](https://hindsight.vectorize.io) management platform. Mul
 
 ```
 hindclaw/
-├── hindclaw-extension/          # Core Hindsight server extensions (Python)
-├── hindclaw-cli/                # CLI tool (Rust)
-├── hindclaw-docs/               # Product docs site
-├── hindclaw-integrations/
+├── packages/extension/          # Core Hindsight server extensions (Python)
+├── packages/cli/                # CLI tool (Rust)
+├── apps/docs/               # Product docs site
+├── integrations/
 │   ├── openclaw/                # Submodule: hindclaw-openclaw-plugin
 │   └── claude-code/             # Submodule: hindclaw-claude-plugin
-├── hindclaw-terraform/          # Submodule: terraform-provider-hindclaw
+├── terraform/          # Submodule: terraform-provider-hindclaw
 ├── .github/workflows/           # Core repo workflows
+├── .mise/tasks/                 # Repo-level file tasks
+├── mise.toml                    # Monorepo root: tools, task DAGs
+├── mise.lock                    # Pinned tools, linux-x64/arm64 + macos-arm64
+├── hk.pkl                       # Git-lifecycle gate
+├── flint.toml                   # Linter scope
 ├── CLAUDE.md
 ├── LICENSE
 └── README.md
@@ -25,7 +30,7 @@ hindclaw/
 
 | Package | Language | Registry | Purpose |
 |---------|----------|----------|---------|
-| `hindclaw-extension` | Python | [PyPI](https://pypi.org/project/hindclaw-extension/) | Server-side access control extensions for Hindsight API |
+| `hindclaw-extension` | Python | [PyPI](https://pypi.org/project/packages/extension/) | Server-side access control extensions for Hindsight API |
 | `hindclaw-cli` | Rust | — | CLI for managing HindClaw access control |
 
 ## Repository Model
@@ -49,7 +54,8 @@ and publish flows are owned in their own repositories.
 
 - **Server extension**: Python 3.12, asyncpg, PyJWT, Pydantic, FastAPI
 - **OpenClaw plugin**: TypeScript (ESM), Node.js 22+, Vitest, JSON5
-- **Docs**: Docusaurus, Cloudflare Pages
+- **Docs**: Astro 7 + fumadocs, Tailwind 4, static build to Cloudflare Pages
+- **Toolchain**: mise (monorepo tasks), hk (git hooks), flint (linters), biome
 
 ## hindclaw-extension (Python)
 
@@ -75,16 +81,16 @@ The four generated clients have their own smoke-test scaffolds. Run each from th
 
 ```bash
 # TypeScript (jest + ts-jest + @hey-api/openapi-ts)
-cd hindclaw-clients/typescript && npm test
+cd packages/clients/typescript && npm test
 
 # Python (pytest + pytest-asyncio with uvicorn in-process fixture)
-cd hindclaw-clients/python && .venv/bin/python -m pytest tests/ -v
+cd packages/clients/python && .venv/bin/python -m pytest tests/ -v
 
 # Go (httptest + httptrace)
-cd hindclaw-clients/go && go test ./...
+cd packages/clients/go && go test ./...
 
 # Rust (mockito + serde_json round-trip)
-cd hindclaw-clients/rust && cargo test
+cd packages/clients/rust && cargo test
 ```
 
 ## Scripts
@@ -93,13 +99,48 @@ Repo-level automation under `scripts/`. Each script is idempotent and runnable f
 
 | Script | Purpose |
 |---|---|
-| `scripts/extract-openapi.py` | Extract FastAPI/Pydantic OpenAPI spec to `hindclaw-docs/static/openapi.json` (no running server needed). |
-| `scripts/generate-openapi.sh` | Shell wrapper around `extract-openapi.py`. Pass `--build-docs` to also run `npm run build` in `hindclaw-docs`. |
-| `scripts/generate-clients.sh` | Regenerate Go/Python/TypeScript clients against the OpenAPI spec. Copies the spec to `hindclaw-clients/rust/openapi.json` for the crates.io publish path. |
-| `scripts/generate-docs-skill.sh` | Regenerate `skills/hindclaw-docs/references/` from `hindclaw-docs/docs/`. Converts `.mdx` to `.md`, copies openapi.json, preserves the hand-written `SKILL.md`. |
+| `scripts/extract-openapi.py` | Extract FastAPI/Pydantic OpenAPI spec to `apps/docs/public/openapi.json` (no running server needed). |
+| `scripts/generate-openapi.sh` | Shell wrapper around `extract-openapi.py`. Pass `--build-docs` to also build the docs site. |
+| `scripts/generate-clients.sh` | Regenerate Go/Python/TypeScript clients against the OpenAPI spec. Copies the spec to `packages/clients/rust/openapi.json` for the crates.io publish path. |
+| `scripts/generate-docs-skill.sh` | Regenerate `skills/hindclaw-docs/references/` from `apps/docs/docs/`. Converts `.mdx` to `.md`, copies openapi.json, preserves the hand-written `SKILL.md`. |
 | `scripts/sync-upstream-pins.sh` | Rewrite Python and TypeScript upstream hindsight pins. Reads `UPSTREAM_HINDSIGHT_VERSION` and optional `UPSTREAM_HINDSIGHT_COMMIT`. See "Upstream version tracking" below. |
-| `scripts/hooks/lint.sh` | Parallel lint runner: `ruff check/format` + `ty check` for hindclaw-extension, `eslint`/`prettier` for hindclaw-docs and hindclaw-clients/typescript (config-gated). Called by the pre-commit hook. |
-| `scripts/setup-hooks.sh` | One-shot: `git config core.hooksPath $REPO_ROOT/.githooks`. Run once after checkout to activate the pre-commit hook that runs `scripts/hooks/lint.sh`. |
+
+## Toolchain
+
+Tools are pinned in `mise.toml` and locked in `mise.lock` for linux-x64, linux-arm64 and
+macos-arm64, so CI installs the same binaries by checksum without hitting any registry API.
+
+```bash
+mise install            # tools; also installs the hk hooks via postinstall
+mise tasks --all        # every task in the monorepo
+```
+
+The repo is a mise monorepo. `hindclaw-docs` and `hindclaw-extension` are config roots with
+their own `mise.toml`, so their tasks are addressed by path:
+
+```bash
+mise run //apps/docs:dev          # docs dev server on :4321
+mise run //apps/docs:build        # static build into apps/docs/dist
+mise run //apps/docs:check        # lint, typecheck, test, build
+mise run //apps/docs:sync-search  # push the search index to Typesense
+mise run //packages/extension:check   # ruff, ty, pytest
+mise run lint                         # flint across the whole tree
+mise run check                        # everything that gates a push
+```
+
+From inside a config root the prefix collapses to `:` — `mise run :build`.
+
+`hk.pkl` is the git gate. `pre-commit` runs hygiene, the secret scan and the fast linters
+through flint; `pre-push` runs the two subproject `check` tasks, which need `node_modules`
+and a synced `.venv`. `hk check` is the manual and CI entrypoint. Bypass one command with
+`HK=0 git commit …`.
+
+`flint.toml` scopes the linters. Generated clients, submodules and vendored UI components
+are excluded — flint hands each path to its linter explicitly, and a run whose every path
+was ignored is an error rather than a no-op.
+
+`.infisicalignore` holds fingerprints of reviewed findings: base64 blobs in the deleted
+Docusaurus `.api.mdx` pages and API-key fixtures in the extension tests.
 
 ## Upstream version tracking
 
@@ -115,7 +156,7 @@ HindClaw depends on upstream Hindsight and often tracks features that are merged
 | Released | missing/empty | `"hindsight-client==X.Y.Z"` | `"@vectorize-io/hindsight-client": "X.Y.Z"` |
 | Pre-release | set to a merge SHA | git-ref install at the SHA | still released version + vendor shim |
 
-Go and Rust are intentionally skipped: Go uses fork+replace directive in `terraform-provider-hindclaw`, Rust has a `PERMANENT WORKAROUND` in `hindclaw-clients/rust/build.rs` (no upstream Rust crate).
+Go and Rust are intentionally skipped: Go uses fork+replace directive in `terraform-provider-hindclaw`, Rust has a `PERMANENT WORKAROUND` in `packages/clients/rust/build.rs` (no upstream Rust crate).
 
 **Flow when upstream merges a PR HindClaw needs:**
 
@@ -135,7 +176,7 @@ bash scripts/sync-upstream-pins.sh
 git add -A && git commit -m "chore(deps): bump upstream to X.Y.Z (released)"
 ```
 
-The `.github/workflows/version-coherence.yml` CI job enforces that the declared state (files at repo root) matches the actual pins in `hindclaw-clients/python/pyproject.toml` and `hindclaw-clients/typescript/package.json` on every PR and push to main. The `.github/workflows/rust-spec-coherence.yml` job enforces `hindclaw-docs/static/openapi.json == hindclaw-clients/rust/openapi.json` so the crates.io fallback stays byte-for-byte identical.
+The `.github/workflows/version-coherence.yml` CI job enforces that the declared state (files at repo root) matches the actual pins in `packages/clients/python/pyproject.toml` and `packages/clients/typescript/package.json` on every PR and push to main. The `.github/workflows/rust-spec-coherence.yml` job enforces `apps/docs/public/openapi.json == packages/clients/rust/openapi.json` so the crates.io fallback stays byte-for-byte identical.
 
 ### Python Style
 
@@ -190,13 +231,13 @@ HindClaw's core repo releases on tag push. The full sequence when cutting a new 
    ```
 5. **Run all client test suites + extension regression:**
    ```bash
-   cd hindclaw-clients/typescript && npm test && cd ../..
-   cd hindclaw-clients/python && .venv/bin/python -m pytest tests/ -v && cd ../..
-   cd hindclaw-clients/go && go test ./... && cd ../..
-   cd hindclaw-clients/rust && cargo test && cd ../..
+   cd packages/clients/typescript && npm test && cd ../..
+   cd packages/clients/python && .venv/bin/python -m pytest tests/ -v && cd ../..
+   cd packages/clients/go && go test ./... && cd ../..
+   cd packages/clients/rust && cargo test && cd ../..
    cd hindclaw-extension && .venv/bin/python -m pytest tests/ -v && cd ..
    ```
-6. **Bump the version in `hindclaw-extension/pyproject.toml`** and update `CHANGELOG.md`.
+6. **Bump the version in `packages/extension/pyproject.toml`** and update `CHANGELOG.md`.
 7. **Commit everything in one release commit**, push to main.
 8. **Tag and push**: `git tag -a ext-v<version> -m "..."` then `git push origin ext-v<version>`. GitHub Actions publishes to PyPI via the `ext-v*` trigger on `.github/workflows/publish-extension.yml`.
 
@@ -294,7 +335,7 @@ RUN uv pip install -e .
 replace github.com/vectorize-io/hindsight/hindsight-clients/go => github.com/mrkhachaturov/hindsight/hindsight-clients/go v0.4.20
 ```
 
-**hindclaw-clients/rust forced duplication of upstream types:**
+**packages/clients/rust forced duplication of upstream types:**
 ```rust
 // PERMANENT WORKAROUND: progenitor generates all types inline into a single
 // .rs file in OUT_DIR, so HindClaw's Rust client cannot import upstream

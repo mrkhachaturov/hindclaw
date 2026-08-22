@@ -13,12 +13,12 @@ set -euo pipefail
 #     → Python pinned to a git-ref at that commit
 #     → TypeScript stays at the released version (npm subpath git-refs
 #       don't round-trip cleanly; the vendor shim at
-#       hindclaw-clients/typescript/src/vendor-hindsight-client.d.ts
+#       packages/clients/typescript/src/vendor-hindsight-client.d.ts
 #       carries the TEMPORARY marker for the upstream export gap)
 #
 # Go and Rust are intentionally NOT touched — Go uses fork+replace
 # directive in terraform-provider-hindclaw, Rust has no upstream
-# client crate (PERMANENT WORKAROUND in hindclaw-clients/rust/build.rs).
+# client crate (PERMANENT WORKAROUND in packages/clients/rust/build.rs).
 #
 # Usage: bash scripts/sync-upstream-pins.sh
 #   Run after editing UPSTREAM_HINDSIGHT_VERSION or UPSTREAM_HINDSIGHT_COMMIT,
@@ -49,8 +49,8 @@ if [ -f "$COMMIT_FILE" ]; then
     COMMIT="$(tr -d '[:space:]' < "$COMMIT_FILE")"
 fi
 
-TS_MANIFEST="$REPO_ROOT/hindclaw-clients/typescript/package.json"
-PY_MANIFEST="$REPO_ROOT/hindclaw-clients/python/pyproject.toml"
+TS_MANIFEST="$REPO_ROOT/packages/clients/typescript/package.json"
+PY_MANIFEST="$REPO_ROOT/packages/clients/python/pyproject.toml"
 
 if [ -n "$COMMIT" ]; then
     echo "Mode: PRE-RELEASE (commit $COMMIT tracking on top of v$VERSION)"
@@ -112,7 +112,7 @@ if [ -n "$COMMIT" ]; then
     echo "Done. Go and Rust clients are intentionally skipped (forced duplication)."
     echo ""
     echo "NEXT STEPS:"
-    echo "  1. Review the diff: git diff hindclaw-clients/"
+    echo "  1. Review the diff: git diff packages/clients/"
     echo "  2. Re-run extract-openapi.py + generate-clients.sh to regenerate"
     echo "     clients against the pinned upstream commit."
     echo "  3. Commit with a message referencing the upstream commit."

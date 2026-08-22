@@ -1,34 +1,75 @@
-name: Deploy Docs to Cloudflare Pages
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Deploy Docs
 
 on:
   push:
     branches: [main]
     paths:
-      - 'hindclaw-docs/**'
-      - '.github/workflows/deploy-docs.yml'
+      - "apps/docs/**"
+      - "mise.toml"
+      - "mise.lock"
+      - ".github/workflows/deploy-docs.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
-  deployments: write
+
+# Never cancelled: a slower run would publish an older dist over a newer one.
+concurrency:
+  group: deploy-docs
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    name: Build and publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+      id-token: write # GitHub issues the OIDC token Infisical verifies
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: hindclaw-docs/package-lock.json
-      - run: cd hindclaw-docs && npm ci && npm run build
+          persist-credentials: false
+
+      # No cache on the publishing job: a poisoned entry would reach the deploy.
+      - uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518 # v4.2.5
+        with:
+          cache: false
+
+      # Variables, not secrets: astro compiles all three into the client bundle,
+      # so they reach every visitor anyway. Keeping them here also leaves the
+      # pull request build in ci.yml independent of Infisical, whose identity is
+      # scoped to refs/heads/main.
+      - run: mise run //apps/docs:build
         env:
-          TYPESENSE_HOST: ${{ vars.TYPESENSE_HOST }}
-          TYPESENSE_SEARCH_API_KEY: ${{ vars.TYPESENSE_SEARCH_API_KEY }}
-      - uses: cloudflare/wrangler-action@v4
+          PUBLIC_TYPESENSE_HOST: ${{ vars.PUBLIC_TYPESENSE_HOST }}
+          PUBLIC_TYPESENSE_COLLECTION: ${{ vars.PUBLIC_TYPESENSE_COLLECTION }}
+          PUBLIC_TYPESENSE_SEARCH_API_KEY: ${{ vars.PUBLIC_TYPESENSE_SEARCH_API_KEY }}
+
+      - uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy hindclaw-docs/build --project-name=hindclaw --commit-dirty=true
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          workingDirectory: apps/docs
+          command: pages deploy dist --project-name=hindclaw --branch=main --commit-dirty=true
+
+      # Fetched after the publish, so the write key exists only for the step
+      # that needs it and never sits in the build's environment.
+      - uses: Infisical/secrets-action@77ab1f4ccd183a543cb5b42435fbd181189f4995 # v1.0.16
+        with:
+          method: "oidc"
+          identity-id: "226d7d0e-3d7f-4f51-a097-d1958aecff6e"
+          domain: ${{ vars.INFISICAL_DOMAIN }}
+          project-slug: "hindclaw"
+          env-slug: "dev"
+          secret-path: "/docs"
+
+      # After the deploy: a failed publish must not re-point the alias at
+      # content that is not live.
+      - run: mise run //apps/docs:sync-search
+        env:
+          PUBLIC_TYPESENSE_HOST: ${{ vars.PUBLIC_TYPESENSE_HOST }}
+          PUBLIC_TYPESENSE_COLLECTION: ${{ vars.PUBLIC_TYPESENSE_COLLECTION }}

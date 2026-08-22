@@ -1,0 +1,42 @@
+<script is:inline>
+(() => {
+  const KEY = 'hindclaw-sidebar-scroll';
+
+  function getScroller() {
+    const sidebar = document.getElementById('nd-sidebar');
+    if (!sidebar) return null;
+    return (
+      Array.from(sidebar.querySelectorAll('*')).find(
+        (el) => el.scrollHeight > el.clientHeight + 4,
+      ) ?? null
+    );
+  }
+
+  function save() {
+    try {
+      const top = getScroller()?.scrollTop;
+      if (typeof top === 'number') sessionStorage.setItem(KEY, String(top));
+    } catch {}
+  }
+
+  function restore() {
+    try {
+      const raw = sessionStorage.getItem(KEY);
+      if (!raw) return;
+      const top = Number.parseInt(raw, 10);
+      if (!top) return;
+      const scroller = getScroller();
+      if (scroller && scroller.scrollTop !== top) scroller.scrollTop = top;
+    } catch {}
+  }
+
+  document.addEventListener('astro:before-swap', save);
+  document.addEventListener('astro:after-swap', restore);
+  document.addEventListener('astro:page-load', () => requestAnimationFrame(restore));
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') save();
+  });
+  window.addEventListener('pagehide', save);
+  restore();
+})();
+</script>

@@ -1,0 +1,27 @@
+---
+import { renderMermaidSVG } from 'beautiful-mermaid';
+
+interface Props {
+  chart: string;
+}
+
+const { chart } = Astro.props;
+
+let svg: string | null = null;
+try {
+  svg = renderMermaidSVG(chart, {
+    bg: 'var(--color-fd-background)',
+    fg: 'var(--color-fd-foreground)',
+    interactive: true,
+    transparent: true,
+  });
+} catch {
+  svg = null;
+}
+---
+
+{svg ? (
+    <div class="fd-mermaid my-6 overflow-x-auto rounded-xl border bg-fd-card p-4" set:html={svg} />
+  ) : (
+    <pre class="fd-mermaid-fallback overflow-x-auto rounded-xl border p-4 text-sm">{chart}</pre>
+  )}

@@ -16,9 +16,9 @@ for arg in "$@"; do
 done
 
 echo "Extracting OpenAPI specification..."
-hindclaw-extension/.venv/bin/python scripts/extract-openapi.py
+packages/extension/.venv/bin/python scripts/extract-openapi.py
 
-SPEC_PATH="$ROOT_DIR/hindclaw-docs/static/openapi.json"
+SPEC_PATH="$ROOT_DIR/apps/docs/public/openapi.json"
 if [ -f "$SPEC_PATH" ]; then
     SIZE=$(du -h "$SPEC_PATH" | cut -f1)
     echo "  wrote $SPEC_PATH ($SIZE)"
@@ -26,8 +26,8 @@ fi
 
 if [ "$BUILD_DOCS" = "true" ]; then
     echo ""
-    echo "Building hindclaw-docs..."
-    cd "$ROOT_DIR/hindclaw-docs"
+    echo "Building the docs site..."
+    cd "$ROOT_DIR/apps/docs"
     npm run build
 fi
 

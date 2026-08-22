@@ -8,27 +8,27 @@ set -e
 # Re-forked from upstream Hindsight scripts/generate-clients.sh
 # (https://raw.githubusercontent.com/vectorize-io/hindsight/main/scripts/generate-clients.sh).
 # HindClaw-specific substitutions:
-#   - Spec source: hindclaw-docs/static/openapi.json
+#   - Spec source: apps/docs/public/openapi.json
 #   - Go package: --package-name hindclaw via co-located openapi-generator-config.yaml
 #     (HindClaw keeps enumClassPrefix / structPrefix / generateInterfaces set)
 #   - Python package: hindclaw_client_api (co-located openapi-generator-config.yaml)
-#   - Go git-user-id: mrkhachaturov, git-repo-id: hindclaw/hindclaw-clients/go
+#   - Go git-user-id: mrkhachaturov, git-repo-id: hindclaw/packages/clients/go
 #   - TypeScript: generated via @hey-api/openapi-ts, configured via
-#     hindclaw-clients/typescript/openapi-ts.config.ts (no inline CLI args)
-#   - Python wrapper: hindclaw-clients/python/hindclaw_client.py is a sibling
+#     packages/clients/typescript/openapi-ts.config.ts (no inline CLI args)
+#   - Python wrapper: packages/clients/python/hindclaw_client.py is a sibling
 #     file (HindClaw's Python package is flat, not the hindsight_client/ subpackage
 #     upstream uses)
-#   - Final step: spec is copied to hindclaw-clients/rust/openapi.json so the
+#   - Final step: spec is copied to packages/clients/rust/openapi.json so the
 #     crates.io publish tarball retains a byte-for-byte fallback the Rust build.rs
-#     can consume when the top-level hindclaw-docs/static/openapi.json is absent.
+#     can consume when the top-level apps/docs/public/openapi.json is absent.
 
 # Pin openapi-generator version for reproducible builds across local and CI
 OPENAPI_GENERATOR_VERSION="v7.10.0"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-CLIENTS_DIR="$PROJECT_ROOT/hindclaw-clients"
-OPENAPI_SPEC="$PROJECT_ROOT/hindclaw-docs/static/openapi.json"
+CLIENTS_DIR="$PROJECT_ROOT/packages/clients"
+OPENAPI_SPEC="$PROJECT_ROOT/apps/docs/public/openapi.json"
 
 echo "=================================================="
 echo "Hindclaw API Client Generator"
@@ -47,7 +47,7 @@ echo ""
 # Check if OpenAPI spec exists
 if [ ! -f "$OPENAPI_SPEC" ]; then
     echo "Error: OpenAPI spec not found at $OPENAPI_SPEC"
-    echo "Run: python scripts/extract-openapi.py > hindclaw-docs/static/openapi.json"
+    echo "Run: python scripts/extract-openapi.py > apps/docs/public/openapi.json"
     exit 1
 fi
 echo "OpenAPI spec found"
@@ -356,7 +356,7 @@ rm -rf "$TYPESCRIPT_CLIENT_DIR/services"
 rm -f "$TYPESCRIPT_CLIENT_DIR/index.ts"
 
 # Generate new client using @hey-api/openapi-ts
-# The openapi-ts config lives at hindclaw-clients/typescript/openapi-ts.config.ts
+# The openapi-ts config lives at packages/clients/typescript/openapi-ts.config.ts
 # and is discovered automatically when we run `npm run generate` from that dir
 # (the package.json script invokes @hey-api/openapi-ts with no CLI args so the
 # config file drives input/output/plugins).
@@ -500,7 +500,7 @@ echo ""
 
 # Copy the OpenAPI spec into the Rust crate directory so the crates.io publish
 # tarball includes a byte-for-byte fallback copy that build.rs can consume when
-# the top-level hindclaw-docs/static/openapi.json is absent (e.g. when the
+# the top-level apps/docs/public/openapi.json is absent (e.g. when the
 # crate is being built from a downloaded tarball rather than from the monorepo).
 # -------------------------------------------------------------------------
 # HINDCLAW-PRESERVED STEP: not present upstream. The Rust build.rs in Task 1
@@ -527,5 +527,5 @@ echo "Next steps:"
 echo "  1. Review the generated clients"
 echo "  2. Update package versions if needed"
 echo "  3. Test the clients"
-echo "  4. Run 'cargo build' in hindclaw-cli to rebuild with new Rust client"
+echo "  4. Run 'cargo build' in packages/cli to rebuild with new Rust client"
 echo ""

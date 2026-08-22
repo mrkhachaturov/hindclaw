@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+.wip/
+
+.env
+.env.*.local
+
+.DS_Store
+*.log

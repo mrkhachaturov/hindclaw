@@ -5,15 +5,20 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   check-rust-spec:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - name: cmp hindclaw-docs/static/openapi.json vs hindclaw-clients/rust/openapi.json
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: cmp apps/docs/public/openapi.json vs packages/clients/rust/openapi.json
         run: |
-          if ! cmp hindclaw-docs/static/openapi.json hindclaw-clients/rust/openapi.json; then
-            echo "Rust crate-local openapi.json is out of sync with hindclaw-docs/static/openapi.json." >&2
+          if ! cmp apps/docs/public/openapi.json packages/clients/rust/openapi.json; then
+            echo "Rust crate-local openapi.json is out of sync with apps/docs/public/openapi.json." >&2
             echo "Run: bash scripts/generate-clients.sh" >&2
             exit 1
           fi

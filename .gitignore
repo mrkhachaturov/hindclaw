@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.astro/
 *.tsbuildinfo
 .env
 .env.*
@@ -12,20 +13,25 @@ __pycache__/
 .venv/
 .pytest_cache/
 
-# Docusaurus
-hindclaw-docs/build/
-hindclaw-docs/.docusaurus/
-hindclaw-docs/node_modules/
+apps/docs/node_modules/
 
 # Rust
-hindclaw-clients/rust/target/
-hindclaw-cli/target/
+packages/clients/rust/target/
+packages/cli/target/
 
 # Misc
 .worktrees/
+.rumdl_cache/
 
 # Upstream reference checkouts (local only, not for commit)
 /.upstream/
 
 # Onboarding scratch (temp, not for commit)
 /onboarding/
+
+# Project-level MCP servers (local only, not for commit)
+/.mcp.json
+
+# Agent tooling (local only, not for commit)
+/.claude/
+/.agents/

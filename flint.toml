@@ -1,0 +1,20 @@
+[settings]
+exclude = [
+  ".upstream/**",
+  "skills/**",
+  "CLAUDE.md",
+  "AGENTS.md",
+  "**/CHANGELOG.md",
+  "**/node_modules/**",
+  "**/dist/**",
+  "**/.astro/**",
+  "apps/docs/.wip/**",
+  "apps/docs/package-lock.json",
+  "apps/docs/src/components/ui/**",
+  "apps/docs/src/components/assistant-ui/**",
+  "apps/docs/src/components/ask-ai/surfaces.tsx",
+  "apps/docs/src/styles/typeset.css",
+  "packages/clients/**",
+  "integrations/**",
+  "terraform/**",
+]

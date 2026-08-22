@@ -1,0 +1,65 @@
+[package]
+name = "hindclaw-cli"
+version = "0.2.1"
+edition = "2021"
+authors = ["Ruben Khachaturov <mr.kha4a2rov@protonmail.com>"]
+description = "CLI for managing HindClaw access control"
+license = "MIT"
+repository = "https://github.com/mrkhachaturov/hindclaw"
+readme = "README.md"
+keywords = ["cli", "hindsight", "access-control", "hindclaw"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "hindclaw"
+path = "src/main.rs"
+
+[dependencies]
+# CLI framework
+clap = { version = "4.5", features = ["derive", "env"] }
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# HTTP client
+reqwest = { version = "0.12", default-features = false, features = [
+  "json",
+  "rustls-tls",
+] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yml = "0.0.12"
+
+# Colors and styling
+colored = "2.1"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Config directory
+dirs = "5.0"
+
+# Interactive prompts
+dialoguer = "0.11"
+
+# URL handling
+url = "2.5"
+
+# HindClaw API client (generated from OpenAPI)
+# path is used for local dev; version is required for crates.io publish
+hindclaw-client = { version = "0.2", path = "../clients/rust" }
+# Error types for map_api_error (re-exported by hindclaw-client)
+progenitor-client = "0.11"
+
+[dev-dependencies]
+tempfile = "3.10"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

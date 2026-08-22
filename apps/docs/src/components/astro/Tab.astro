@@ -1,0 +1,9 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<div data-tab-title={title} hidden><slot /></div>

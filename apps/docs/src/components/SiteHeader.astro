@@ -1,0 +1,68 @@
+---
+import { AskAi } from '@/components/islands/ask-ai';
+import { AskAiTrigger } from '@/components/islands/ask-ai-trigger';
+import { SearchIsland } from '@/components/islands/search';
+import ModeToggle from '@/components/ModeToggle.astro';
+import SiteLogo from '@/components/SiteLogo.astro';
+import { Separator } from '@/components/ui/separator';
+import { SITE } from '@/lib/site';
+
+const { pathname } = Astro.url;
+
+const links = [
+  { href: '/docs', label: 'Docs' },
+  { href: '/api', label: 'API' },
+  { href: '/templates', label: 'Templates' },
+  { href: '/blog', label: 'Blog' },
+];
+
+const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+---
+
+<header class="sticky top-0 z-30 border-b border-fd-border bg-fd-background/80 backdrop-blur-sm">
+  <nav
+    class="mx-auto flex h-(--fd-banner-height) max-w-6xl items-center gap-6 px-4 **:data-[slot=separator]:h-4"
+  >
+    <a href="/" class="flex shrink-0 items-center gap-2 font-medium tracking-tight">
+      <SiteLogo class="size-[18px] text-fd-foreground" />
+      {SITE.name}
+    </a>
+
+    <div class="flex flex-1 items-center gap-4 text-sm">
+      {links.map((link) => (
+          <a
+            href={link.href}
+            class:list={[
+              'transition-colors hover:text-fd-foreground',
+              isActive(link.href) ? 'text-fd-foreground font-medium' : 'text-fd-muted-foreground',
+            ]}
+          >
+            {link.label}
+          </a>
+        ))}
+    </div>
+
+    <div class="flex items-center gap-3">
+      <SearchIsland pathname={pathname} client:idle />
+
+      <AskAiTrigger client:idle />
+
+      <Separator orientation="vertical" />
+
+      <a
+        href={SITE.repo}
+        rel="noreferrer noopener"
+        target="_blank"
+        class="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
+      >
+        GitHub
+      </a>
+
+      <Separator orientation="vertical" />
+
+      <ModeToggle />
+    </div>
+  </nav>
+</header>
+
+<AskAi client:idle transition:persist />

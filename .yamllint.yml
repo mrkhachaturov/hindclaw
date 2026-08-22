@@ -1,0 +1,13 @@
+---
+extends: default
+ignore-from-file:
+  - .gitignore
+rules:
+  comments:
+    min-spaces-from-content: 1 # `uses: …@sha # v7.0.1` is the action-pinning convention
+  comments-indentation: false
+  document-start: disable
+  line-length:
+    max: 200
+  truthy:
+    check-keys: false # GitHub's `on:` key is not a boolean

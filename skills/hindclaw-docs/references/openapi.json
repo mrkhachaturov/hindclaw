@@ -2467,9 +2467,7 @@
     },
     "/ext/hindclaw/me/templates": {
       "get": {
-        "tags": [
-          "Templates"
-        ],
+        "tags": ["Templates"],
         "summary": "List installed personal templates",
         "operationId": "list_my_templates",
         "security": [
@@ -2535,9 +2533,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Templates"
-        ],
+        "tags": ["Templates"],
         "summary": "Create a hand-authored personal template",
         "operationId": "create_my_template",
         "security": [
@@ -2581,9 +2577,7 @@
     },
     "/ext/hindclaw/me/templates/{template_id}": {
       "get": {
-        "tags": [
-          "Templates"
-        ],
+        "tags": ["Templates"],
         "summary": "Get an installed personal template",
         "operationId": "get_my_template",
         "security": [
@@ -2626,9 +2620,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Templates"
-        ],
+        "tags": ["Templates"],
         "summary": "Update a hand-authored personal template",
         "operationId": "patch_my_template",
         "security": [
@@ -2681,9 +2673,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Templates"
-        ],
+        "tags": ["Templates"],
         "summary": "Delete an installed personal template",
         "operationId": "delete_my_template",
         "security": [
@@ -2721,9 +2711,7 @@
     },
     "/ext/hindclaw/me/templates/{template_id}/install": {
       "post": {
-        "tags": [
-          "Templates"
-        ],
+        "tags": ["Templates"],
         "summary": "Install a marketplace template into the personal scope",
         "operationId": "install_my_template",
         "security": [
@@ -2778,9 +2766,7 @@
     },
     "/ext/hindclaw/me/templates/{template_id}/update": {
       "post": {
-        "tags": [
-          "Templates"
-        ],
+        "tags": ["Templates"],
         "summary": "Re-fetch an installed personal template from its source",
         "operationId": "update_my_template_from_source",
         "security": [
@@ -2835,9 +2821,7 @@
     },
     "/ext/hindclaw/me/templates/{template_id}/check-update": {
       "get": {
-        "tags": [
-          "Templates"
-        ],
+        "tags": ["Templates"],
         "summary": "Check whether the source has a newer revision",
         "operationId": "check_my_template_update",
         "security": [
@@ -2882,10 +2866,7 @@
     },
     "/ext/hindclaw/admin/templates": {
       "get": {
-        "tags": [
-          "Templates",
-          "Admin"
-        ],
+        "tags": ["Templates", "Admin"],
         "summary": "List installed server-scope templates",
         "operationId": "list_admin_templates",
         "security": [
@@ -2951,10 +2932,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Templates",
-          "Admin"
-        ],
+        "tags": ["Templates", "Admin"],
         "summary": "Create a hand-authored server-scope template",
         "operationId": "create_admin_template",
         "security": [
@@ -2998,10 +2976,7 @@
     },
     "/ext/hindclaw/admin/templates/{template_id}": {
       "get": {
-        "tags": [
-          "Templates",
-          "Admin"
-        ],
+        "tags": ["Templates", "Admin"],
         "summary": "Get an installed server-scope template",
         "operationId": "get_admin_template",
         "security": [
@@ -3044,10 +3019,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Templates",
-          "Admin"
-        ],
+        "tags": ["Templates", "Admin"],
         "summary": "Update a hand-authored server-scope template",
         "operationId": "patch_admin_template",
         "security": [
@@ -3100,10 +3072,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Templates",
-          "Admin"
-        ],
+        "tags": ["Templates", "Admin"],
         "summary": "Delete an installed server-scope template",
         "operationId": "delete_admin_template",
         "security": [
@@ -3141,10 +3110,7 @@
     },
     "/ext/hindclaw/admin/templates/{template_id}/install": {
       "post": {
-        "tags": [
-          "Templates",
-          "Admin"
-        ],
+        "tags": ["Templates", "Admin"],
         "summary": "Install a marketplace template into the server scope",
         "operationId": "install_admin_template",
         "security": [
@@ -3199,10 +3165,7 @@
     },
     "/ext/hindclaw/admin/templates/{template_id}/update": {
       "post": {
-        "tags": [
-          "Templates",
-          "Admin"
-        ],
+        "tags": ["Templates", "Admin"],
         "summary": "Re-fetch an installed server-scope template from its source",
         "operationId": "update_admin_template_from_source",
         "security": [
@@ -3257,10 +3220,7 @@
     },
     "/ext/hindclaw/admin/templates/{template_id}/check-update": {
       "get": {
-        "tags": [
-          "Templates",
-          "Admin"
-        ],
+        "tags": ["Templates", "Admin"],
         "summary": "Check whether the source has a newer revision",
         "operationId": "check_admin_template_update",
         "security": [
@@ -3305,9 +3265,7 @@
     },
     "/ext/hindclaw/banks": {
       "post": {
-        "tags": [
-          "Banks"
-        ],
+        "tags": ["Banks"],
         "summary": "Apply an installed template to a new or existing bank",
         "operationId": "create_bank_from_template",
         "requestBody": {
@@ -3364,10 +3322,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "provider",
-          "sender_id"
-        ],
+        "required": ["provider", "sender_id"],
         "title": "AddChannelRequest"
       },
       "AddMemberRequest": {
@@ -3378,9 +3333,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "user_id"
-        ],
+        "required": ["user_id"],
         "title": "AddMemberRequest"
       },
       "ApiKeyCreateResponse": {
@@ -3406,10 +3359,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "api_key"
-        ],
+        "required": ["id", "api_key"],
         "title": "ApiKeyCreateResponse",
         "description": "API key at creation time \u2014 full key shown once."
       },
@@ -3436,10 +3386,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "api_key_prefix"
-        ],
+        "required": ["id", "api_key_prefix"],
         "title": "ApiKeyResponse",
         "description": "API key in list view \u2014 key is masked after creation."
       },
@@ -3462,12 +3409,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "bank_id",
-          "template",
-          "bank_created",
-          "import_result"
-        ],
+        "required": ["bank_id", "template", "bank_created", "import_result"],
         "title": "BankCreationResponse",
         "description": "Response from POST /ext/hindclaw/banks \u2014 bank creation from template.\n\nWraps upstream's ``BankTemplateImportResponse`` so clients see the\nsame counts/errors upstream reports directly."
       },
@@ -3484,10 +3426,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "bank_id",
-          "document"
-        ],
+        "required": ["bank_id", "document"],
         "title": "BankPolicyResponse",
         "description": "Bank policy resource."
       },
@@ -3687,10 +3626,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "content"
-        ],
+        "required": ["name", "content"],
         "title": "BankTemplateDirective",
         "description": "A directive definition within a bank template manifest.\n\nDirectives are matched by name on re-import: existing directives\nwith the same name are updated, new ones are created."
       },
@@ -3759,10 +3695,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "bank_id",
-          "config_applied"
-        ],
+        "required": ["bank_id", "config_applied"],
         "title": "BankTemplateImportResponse",
         "description": "Response model for the bank template import endpoint."
       },
@@ -3816,9 +3749,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "version"
-        ],
+        "required": ["version"],
         "title": "BankTemplateManifest",
         "description": "A bank template manifest for import/export.\n\nVersion field enables forward-compatible schema evolution: the API\nauto-upgrades older manifest versions to the current schema on import.",
         "example": {
@@ -3889,11 +3820,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "source_query"
-        ],
+        "required": ["id", "name", "source_query"],
         "title": "BankTemplateMentalModel",
         "description": "A mental model definition within a bank template manifest."
       },
@@ -3909,10 +3836,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "provider",
-          "sender_id"
-        ],
+        "required": ["provider", "sender_id"],
         "title": "ChannelResponse",
         "description": "Channel mapping returned by GET/POST endpoints."
       },
@@ -3967,11 +3891,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "has_update",
-          "current_revision",
-          "latest_revision"
-        ],
+        "required": ["has_update", "current_revision", "latest_revision"],
         "title": "CheckUpdateResponse"
       },
       "CreateApiKeyRequest": {
@@ -4019,10 +3939,7 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "bank_id",
-          "template"
-        ],
+        "required": ["bank_id", "template"],
         "title": "CreateBankFromTemplateRequest",
         "description": "Body for POST /ext/hindclaw/banks."
       },
@@ -4038,10 +3955,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "display_name"
-        ],
+        "required": ["id", "display_name"],
         "title": "CreateGroupRequest"
       },
       "CreatePolicyAttachmentRequest": {
@@ -4065,11 +3979,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "policy_id",
-          "principal_type",
-          "principal_id"
-        ],
+        "required": ["policy_id", "principal_type", "principal_id"],
         "title": "CreatePolicyAttachmentRequest",
         "description": "Request to attach a policy to a principal."
       },
@@ -4090,11 +4000,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "display_name",
-          "document"
-        ],
+        "required": ["id", "display_name", "document"],
         "title": "CreatePolicyRequest",
         "description": "Request to create an access policy."
       },
@@ -4140,10 +4046,7 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "id",
-          "display_name"
-        ],
+        "required": ["id", "display_name"],
         "title": "CreateSelfServiceAccountRequest",
         "description": "Self-service SA creation \u2014 owner is always the authenticated caller."
       },
@@ -4174,11 +4077,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "owner_user_id",
-          "display_name"
-        ],
+        "required": ["id", "owner_user_id", "display_name"],
         "title": "CreateServiceAccountRequest",
         "description": "Request to create a service account."
       },
@@ -4230,9 +4129,7 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "url"
-        ],
+        "required": ["url"],
         "title": "CreateSourceRequest",
         "description": "Request to register a marketplace source."
       },
@@ -4291,11 +4188,7 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "manifest"
-        ],
+        "required": ["id", "name", "manifest"],
         "title": "CreateTemplateRequest",
         "description": "Request to create a personal template by inlining an upstream manifest."
       },
@@ -4327,10 +4220,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "display_name"
-        ],
+        "required": ["id", "display_name"],
         "title": "CreateUserRequest"
       },
       "GroupMemberResponse": {
@@ -4341,9 +4231,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "user_id"
-        ],
+        "required": ["user_id"],
         "title": "GroupMemberResponse",
         "description": "Group membership entry."
       },
@@ -4359,10 +4247,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "group_id",
-          "user_id"
-        ],
+        "required": ["group_id", "user_id"],
         "title": "GroupMembershipConfirmation",
         "description": "Confirmation returned by POST /groups/:id/members."
       },
@@ -4378,10 +4263,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "display_name"
-        ],
+        "required": ["id", "display_name"],
         "title": "GroupSummaryResponse",
         "description": "Group resource (identity-only)."
       },
@@ -4423,9 +4305,7 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "source_name"
-        ],
+        "required": ["source_name"],
         "title": "InstallTemplateRequest",
         "description": "Request to install a template from a marketplace source.\n\nThe ``{id}`` in the URL path is the template id WITHIN the source.\nThe installed-template id is ``alias_id`` if provided, else the source\ntemplate id. This lets a user install the same source template under a\ndifferent installed name (Section 4.3 identity invariant: at most one\nrow per (id, scope, owner))."
       },
@@ -4440,9 +4320,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "templates"
-        ],
+        "required": ["templates"],
         "title": "ListTemplatesResponse"
       },
       "MeProfileResponse": {
@@ -4479,13 +4357,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "display_name",
-          "email",
-          "is_active",
-          "channels"
-        ],
+        "required": ["id", "display_name", "email", "is_active", "channels"],
         "title": "MeProfileResponse",
         "description": "Response for GET /me \u2014 caller's own profile."
       },
@@ -4502,11 +4374,7 @@
               {
                 "items": {
                   "type": "string",
-                  "enum": [
-                    "world",
-                    "experience",
-                    "observation"
-                  ]
+                  "enum": ["world", "experience", "observation"]
                 },
                 "type": "array"
               },
@@ -4542,12 +4410,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "enum": [
-                  "any",
-                  "all",
-                  "any_strict",
-                  "all_strict"
-                ]
+                "enum": ["any", "all", "any_strict", "all_strict"]
               },
               {
                 "type": "null"
@@ -4688,12 +4551,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "policy_id",
-          "principal_type",
-          "principal_id",
-          "priority"
-        ],
+        "required": ["policy_id", "principal_type", "principal_id", "priority"],
         "title": "PolicyAttachmentResponse",
         "description": "Policy attachment resource."
       },
@@ -4718,12 +4576,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "display_name",
-          "document",
-          "is_builtin"
-        ],
+        "required": ["id", "display_name", "document", "is_builtin"],
         "title": "PolicyResponse",
         "description": "Access policy resource."
       },
@@ -4750,11 +4603,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "api_key",
-          "description"
-        ],
+        "required": ["id", "api_key", "description"],
         "title": "SAKeyCreateResponse",
         "description": "SA API key at creation time \u2014 full key shown once."
       },
@@ -4781,11 +4630,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "api_key_prefix",
-          "description"
-        ],
+        "required": ["id", "api_key_prefix", "description"],
         "title": "SAKeyResponse",
         "description": "SA API key in list view \u2014 key is masked."
       },
@@ -4820,13 +4665,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "owner_user_id",
-          "display_name",
-          "is_active",
-          "scoping_policy_id"
-        ],
+        "required": ["id", "owner_user_id", "display_name", "is_active", "scoping_policy_id"],
         "title": "ServiceAccountResponse",
         "description": "Service account resource."
       },
@@ -4893,12 +4732,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "name",
-          "url",
-          "scope",
-          "has_auth"
-        ],
+        "required": ["name", "url", "scope", "has_auth"],
         "title": "SourceResponse",
         "description": "Response for a registered marketplace source."
       },
@@ -4926,9 +4760,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "and"
-        ],
+        "required": ["and"],
         "title": "TagGroupAnd",
         "description": "Compound AND group: all child filters must match."
       },
@@ -4943,20 +4775,13 @@
           },
           "match": {
             "type": "string",
-            "enum": [
-              "any",
-              "all",
-              "any_strict",
-              "all_strict"
-            ],
+            "enum": ["any", "all", "any_strict", "all_strict"],
             "title": "Match",
             "default": "any_strict"
           }
         },
         "type": "object",
-        "required": [
-          "tags"
-        ],
+        "required": ["tags"],
         "title": "TagGroupLeaf",
         "description": "A leaf tag filter: matches memories by tag list and match mode."
       },
@@ -4981,9 +4806,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "not"
-        ],
+        "required": ["not"],
         "title": "TagGroupNot",
         "description": "Compound NOT group: child filter must NOT match."
       },
@@ -5011,9 +4834,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "or"
-        ],
+        "required": ["or"],
         "title": "TagGroupOr",
         "description": "Compound OR group: at least one child filter must match."
       },
@@ -5159,10 +4980,7 @@
       },
       "TemplateScope": {
         "type": "string",
-        "enum": [
-          "server",
-          "personal"
-        ],
+        "enum": ["server", "personal"],
         "title": "TemplateScope",
         "description": "Template visibility scope."
       },
@@ -5222,9 +5040,7 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": [
-          "display_name"
-        ],
+        "required": ["display_name"],
         "title": "UpdateSelfServiceAccountRequest",
         "description": "Self-service SA update \u2014 only display_name is mutable.\n\nScoping policy and activation state are admin-only operations.\nAn SA authenticates as its owner, so without this restriction an SA\ncould remove its own scoping policy and escalate to the parent user's\nfull permissions."
       },
@@ -5301,12 +5117,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "updated",
-          "previous_revision",
-          "new_revision",
-          "template"
-        ],
+        "required": ["updated", "previous_revision", "new_revision", "template"],
         "title": "UpdateTemplateResponse"
       },
       "UpdateUserRequest": {
@@ -5357,9 +5168,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "document"
-        ],
+        "required": ["document"],
         "title": "UpsertBankPolicyRequest",
         "description": "Request to create/update a bank policy."
       },
@@ -5391,10 +5200,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "id",
-          "display_name"
-        ],
+        "required": ["id", "display_name"],
         "title": "UserResponse",
         "description": "User resource returned by GET/POST/PUT endpoints."
       },
@@ -5435,11 +5241,7 @@
           }
         },
         "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
+        "required": ["loc", "msg", "type"],
         "title": "ValidationError"
       }
     },

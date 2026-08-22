@@ -1,0 +1,35 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import ThemeScript from '@/components/ThemeScript.astro';
+import { SITE } from '@/lib/site';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+}
+
+const { title, description, image = SITE.socialCard } = Astro.props;
+
+const documentTitle = title === SITE.name ? SITE.name : `${title} — ${SITE.name}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(image, Astro.site);
+---
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/img/favicon.ico" sizes="any">
+  <link rel="canonical" href={canonical}>
+  <title>{documentTitle}</title>
+  <meta name="description" content={description}>
+  <meta property="og:type" content="website">
+  <meta property="og:url" content={canonical}>
+  <meta property="og:title" content={documentTitle}>
+  <meta property="og:description" content={description}>
+  <meta property="og:image" content={ogImage}>
+  <meta name="twitter:card" content="summary_large_image">
+  <ClientRouter />
+  <ThemeScript />
+  <slot />
+</head>
