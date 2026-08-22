@@ -80,6 +80,7 @@ const { pathname } = Astro.url;
       slot="toc"
       toc={toc}
       pathname={pathname}
+      title={page.data.title}
       markdownUrl={`${page.url}.mdx`}
       githubUrl={docsSourceUrl(page.path)}
       client:idle

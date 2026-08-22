@@ -11,11 +11,11 @@ const linkClass =
 export function TocPageActions({
   markdownUrl,
   githubUrl,
-  pathname,
+  title,
 }: {
   markdownUrl?: string;
   githubUrl?: string;
-  pathname: string;
+  title: string;
 }): ReactNode {
   return (
     <div className="mt-6 flex shrink-0 flex-col items-start gap-3">
@@ -39,7 +39,7 @@ export function TocPageActions({
           Edit on GitHub
         </a>
       )}
-      <button type="button" onClick={() => askAi(`Explain ${pathname}`)} className={linkClass}>
+      <button type="button" onClick={() => askAi(`Explain ${title}`)} className={linkClass}>
         <SparklesIcon className="size-3" />
         Ask AI
       </button>
