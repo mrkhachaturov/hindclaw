@@ -27,6 +27,7 @@ jobs:
     permissions:
       contents: read
       deployments: write
+      id-token: write # GitHub issues the OIDC token Infisical verifies
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -37,6 +38,10 @@ jobs:
         with:
           cache: false
 
+      # Variables, not secrets: astro compiles all three into the client bundle,
+      # so they reach every visitor anyway. Keeping them here also leaves the
+      # pull request build in ci.yml independent of Infisical, whose identity is
+      # scoped to refs/heads/main.
       - run: mise run //apps/docs:build
         env:
           PUBLIC_TYPESENSE_HOST: ${{ vars.PUBLIC_TYPESENSE_HOST }}
@@ -51,12 +56,20 @@ jobs:
           workingDirectory: apps/docs
           command: pages deploy dist --project-name=hindclaw --branch=main --commit-dirty=true
 
+      # Fetched after the publish, so the write key exists only for the step
+      # that needs it and never sits in the build's environment.
+      - uses: Infisical/secrets-action@77ab1f4ccd183a543cb5b42435fbd181189f4995 # v1.0.16
+        with:
+          method: "oidc"
+          identity-id: "226d7d0e-3d7f-4f51-a097-d1958aecff6e"
+          domain: ${{ vars.INFISICAL_DOMAIN }}
+          project-slug: "hindclaw"
+          env-slug: "dev"
+          secret-path: "/docs"
+
       # After the deploy: a failed publish must not re-point the alias at
       # content that is not live.
       - run: mise run //apps/docs:sync-search
         env:
           PUBLIC_TYPESENSE_HOST: ${{ vars.PUBLIC_TYPESENSE_HOST }}
           PUBLIC_TYPESENSE_COLLECTION: ${{ vars.PUBLIC_TYPESENSE_COLLECTION }}
-          TYPESENSE_ADMIN_API_KEY: ${{ secrets.TYPESENSE_ADMIN_API_KEY }}
-          TYPESENSE_EMBEDDING_MODEL: ${{ vars.TYPESENSE_EMBEDDING_MODEL }}
-          TYPESENSE_EMBEDDING_API_KEY: ${{ secrets.TYPESENSE_EMBEDDING_API_KEY }}

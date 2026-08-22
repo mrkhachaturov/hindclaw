@@ -115,6 +115,66 @@ Two things the proxy must do beyond forwarding:
   metadata and filter on it **server-side**. Never trust a filter the client
   sends. A browser id is forgeable, so it is fairness, not authorisation.
 
+### 4b. How assistant-ui does this in production — reply from the docs side
+
+Read before writing the proxy. assistant-ui ships two versions of this proxy and
+they are nothing alike; the one that turns up first in search results is the one
+not to copy.
+
+**The example is a demo, not a model.**
+`/Volumes/Devops/Git/Github/mrkhachaturov/astromech/build/hindclaw/.upstream/assistant-ui/repo/examples/with-langgraph/app/api/[.._path]/route.ts`
+
+It forwards every path and every method upstream with `x-api-key` from the
+environment, under `Access-Control-Allow-Origin: "*"`. No limit, no session, no
+scoping. It is the five-minute onboarding shim.
+
+**Their own docs site is the production one.** Four files, all under
+`/Volumes/Devops/Git/Github/mrkhachaturov/astromech/build/hindclaw/.upstream/assistant-ui/repo/apps/docs/`:
+
+| file | what it carries |
+| --- | --- |
+| `lib/anonymous-session.ts` | the signed session |
+| `lib/rate-limit.ts` | five limit layers |
+| `app/api/anonymous-session/route.ts` | issuance, origin allowlist |
+| `app/api/doc/chat/route.ts` | the chat route itself |
+
+**The session is issued, not accepted.** `createAnonymousSessionToken` signs
+`randomUUID()` with `createHmac("sha256", secret)`, 24 hour TTL, verified with
+`timingSafeEqual`. It lands in an `httpOnly, secure, sameSite: lax` cookie;
+cross-origin callers get it in the body instead. This is the answer to "a
+browser id is forgeable" — the browser never mints one.
+
+**Five limits, not one:**
+
+| limiter | window |
+| --- | --- |
+| `ipBurst` | 5 / 30s |
+| `ipDaily` | 2 000 / day |
+| `sessionDaily` | 500 / day |
+| `globalDaily` | 20 000 / day |
+| `globalAlert` | 1 / 10min, alerts rather than blocks |
+
+Issuance is limited separately, 30/min. `globalDaily` is the one that bounds the
+bill: IPs are cheap, so per-IP limits alone do not cap spend.
+
+**CORS is an allowlist.** `isAllowedPublicAssistantOrigin` gates it, `Vary:
+Origin` is set, and non-allowed origins get an empty header object rather than a
+wildcard. A separate `isPublicAssistantBrowserRequest` gate answers 403.
+
+**It is not Cloudflare-specific.** `getClientIp` in `lib/rate-limit.ts` reads
+the first entry of `x-forwarded-for` — no `cf-connecting-ip` anywhere. Whatever
+terminates TLS can satisfy this, provided the first hop is the one setting the
+header and it is trusted there.
+
+The store is Upstash Redis via `@upstash/redis` and `@upstash/ratelimit`. Both
+speak the Upstash REST protocol, which `serverless-redis-http` also serves, so
+this code ports without edits to a self-hosted store.
+
+**Open question back to you.** All of the above concerns the browser-to-proxy
+hop. The proxy-to-agent hop is yours: what does the LangGraph deployment accept
+at its edge, and which of those does it want the proxy to use? Answer that here
+and the proxy gets written against it rather than guessed at.
+
 ### 5. The widget — what will silently break
 
 `previewChatModelAdapter` emits `type: 'source'` message parts. **The LangGraph
