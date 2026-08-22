@@ -69,7 +69,10 @@ jobs:
 
       # After the deploy: a failed publish must not re-point the alias at
       # content that is not live.
+      # sync-search depends on build, which mise re-runs if it considers the
+      # output stale, so this step needs the build's variables too.
       - run: mise run //apps/docs:sync-search
         env:
           PUBLIC_TYPESENSE_HOST: ${{ vars.PUBLIC_TYPESENSE_HOST }}
           PUBLIC_TYPESENSE_COLLECTION: ${{ vars.PUBLIC_TYPESENSE_COLLECTION }}
+          PUBLIC_TYPESENSE_SEARCH_API_KEY: ${{ vars.PUBLIC_TYPESENSE_SEARCH_API_KEY }}
