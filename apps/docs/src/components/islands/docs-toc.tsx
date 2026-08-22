@@ -9,19 +9,19 @@ export function DocsToc({
   pathname,
   markdownUrl,
   githubUrl,
+  title,
 }: {
   toc: TOCItemType[];
   pathname: string;
   markdownUrl?: string;
   githubUrl?: string;
+  title: string;
 }): ReactNode {
   return (
     <RootProvider pathname={pathname} theme={{ enabled: false }} search={{ enabled: false }}>
       <TOCProvider toc={toc}>
         <TOC
-          footer={
-            <TocPageActions markdownUrl={markdownUrl} githubUrl={githubUrl} pathname={pathname} />
-          }
+          footer={<TocPageActions markdownUrl={markdownUrl} githubUrl={githubUrl} title={title} />}
         />
       </TOCProvider>
     </RootProvider>
