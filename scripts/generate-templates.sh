@@ -13,7 +13,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-TPL_ROOT="$REPO_ROOT/hindclaw-templates"
+TPL_ROOT="$REPO_ROOT/packages/templates"
 CATALOG="$TPL_ROOT/templates.json"
 OUT="$REPO_ROOT/apps/docs/src/data/templates.json"
 
