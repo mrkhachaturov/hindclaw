@@ -67,6 +67,9 @@ jobs:
           env-slug: "dev"
           secret-path: "/docs"
 
+      - name: Fingerprint the injected key
+        run: printf '%s' "$TYPESENSE_ADMIN_API_KEY" | sha256sum | cut -c1-12
+
       # After the deploy: a failed publish must not re-point the alias at
       # content that is not live.
       # sync-search depends on build, which mise re-runs if it considers the
