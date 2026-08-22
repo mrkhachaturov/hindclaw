@@ -7,7 +7,7 @@ lockfile = true
 jobs = 4
 
 [monorepo]
-config_roots = ["hindclaw-docs", "hindclaw-extension"]
+config_roots = ["apps/docs", "packages/extension"]
 lockfile = true
 
 [env]
@@ -45,4 +45,4 @@ run = "flint run --full --fix --allow-fixed"
 
 [tasks.check]
 description = "Everything that gates a push"
-depends = ["lint", "//hindclaw-docs:check", "//hindclaw-extension:check"]
+depends = ["lint", "//apps/docs:check", "//packages/extension:check"]

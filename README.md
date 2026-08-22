@@ -1,4 +1,4 @@
-![HindClaw](hindclaw-docs/public/img/hindclaw-mark.svg)
+![HindClaw](apps/docs/public/img/hindclaw-mark.svg)
 
 # HindClaw
 
@@ -6,7 +6,7 @@ Self-hosted Hindsight management platform — multi-tenant access control, user/
 permissions, Terraform-managed infrastructure, and client integrations for AI agent memory.
 
 [![npm](https://img.shields.io/npm/v/hindclaw-openclaw?style=flat-square&color=0f766e)](https://www.npmjs.com/package/hindclaw-openclaw)
-[![PyPI](https://img.shields.io/pypi/v/hindclaw-extension?style=flat-square&color=0f766e)](https://pypi.org/project/hindclaw-extension/)
+[![PyPI](https://img.shields.io/pypi/v/hindclaw-extension?style=flat-square&color=0f766e)](https://pypi.org/project/packages/extension/)
 [![Terraform](https://img.shields.io/badge/terraform-registry-844FBA?style=flat-square)](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest)
 ![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)
 
@@ -263,10 +263,10 @@ Define users, groups, permissions, bank configs, directives, and mental models a
 
 | Package | Registry | Purpose |
 |---------|----------|---------|
-| [`hindclaw-extension`](https://pypi.org/project/hindclaw-extension/) | PyPI | Server-side Hindsight extensions (auth, permissions, management API) |
+| [`hindclaw-extension`](https://pypi.org/project/packages/extension/) | PyPI | Server-side Hindsight extensions (auth, permissions, management API) |
 | [`hindclaw-openclaw`](https://www.npmjs.com/package/hindclaw-openclaw) | npm | OpenClaw gateway plugin (JWT signing, lifecycle hooks) |
 | [`terraform-provider-hindclaw`](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest) | Terraform Registry | Infrastructure as Code for all resources |
-| Go client | `go get github.com/mrkhachaturov/hindclaw/hindclaw-clients/go` | Generated API client for the management API |
+| Go client | `go get github.com/mrkhachaturov/hindclaw/packages/clients/go` | Generated API client for the management API |
 
 ---
 
@@ -394,8 +394,8 @@ graph LR
 |-------|-------------|
 | [hindclaw.pro](https://hindclaw.pro) | Full documentation site |
 | [Terraform Provider](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest/docs) | Provider docs on Terraform Registry |
-| [Extension API](hindclaw-extension/) | Server extension source and tests |
-| [Plugin Source](hindclaw-integrations/openclaw/) | OpenClaw plugin source and tests |
+| [Extension API](packages/extension/) | Server extension source and tests |
+| [Plugin Source](integrations/openclaw/) | OpenClaw plugin source and tests |
 
 ---
 

@@ -12,19 +12,19 @@ This works because the entire hindclaw_ext package uses lazy initialization:
 If future changes add import-time side effects, extraction will break.
 
 Prerequisites:
-    pip install -e hindclaw-extension/
+    pip install -e packages/extension/
     pip install hindsight-api-slim==<UPSTREAM_HINDSIGHT_VERSION>
 
 Usage:
     python scripts/extract-openapi.py
-    # Writes to hindclaw-docs/public/openapi.json
+    # Writes to apps/docs/public/openapi.json
 
 The spec that openapi-generator and @hey-api/openapi-ts consume is the raw
 Pydantic v2 output (OpenAPI 3.1.0), with only a single ValidationError schema
 patch. Upstream Hindsight uses the same openapi-generator v7.10.0 against a
 3.1.0 spec with anyOf+null patterns, which proves the older pre-conversion
 that hindclaw did is unnecessary. The 3.1->3.0 down-conversion needed by
-progenitor (Rust client) lives in hindclaw-clients/rust/build.rs instead,
+progenitor (Rust client) lives in packages/clients/rust/build.rs instead,
 where only the Rust client sees it.
 """
 import json
@@ -37,7 +37,7 @@ from hindclaw_ext.http import HindclawHttp
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
-SPEC_PATH = REPO_ROOT / "hindclaw-docs" / "public" / "openapi.json"
+SPEC_PATH = REPO_ROOT / "apps" / "docs" / "public" / "openapi.json"
 
 # Root-level tag declarations. FastAPI only emits `tags` at the document root
 # when `openapi_tags` is set, and Fumadocs' `per: 'tag'` page mode builds its

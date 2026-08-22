@@ -7,10 +7,10 @@ and `hindclaw-cli` — these are versioned together because they depend on each 
 
 Independent components have their own version lines and changelogs:
 
-- `hindclaw-integrations/openclaw/` (hindclaw-openclaw-plugin)
-- `hindclaw-integrations/claude-code/` (hindclaw-claude-plugin)
-- `hindclaw-terraform/` (terraform-provider-hindclaw)
-- `hindclaw-templates/` (hindclaw-templates-official)
+- `integrations/openclaw/` (hindclaw-openclaw-plugin)
+- `integrations/claude-code/` (hindclaw-claude-plugin)
+- `terraform/` (terraform-provider-hindclaw)
+- `packages/templates/` (hindclaw-templates-official)
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -76,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 These are tracked as separate follow-up tasks per the spec's "Out of scope for Spec 1" list:
 
 - `hindclaw-cli` Rust commands (`template install`, `template upgrade`, `template list`) — old route paths and request shapes are gone. Needs a regen against the new OpenAPI spec.
-- Generated TypeScript/Rust SDK clients in `hindclaw-clients/` — regenerate from the new OpenAPI spec.
+- Generated TypeScript/Rust SDK clients in `packages/clients/` — regenerate from the new OpenAPI spec.
 - `hindclaw-openclaw-plugin` — imports of the deleted `MarketplaceTemplate`, `DirectiveSeed`, `MentalModelSeed`, `EntityLabel`, `EntityLabelValue` symbols will fail at extension startup. Needs a separate refactor.
 
 ## [0.4.0] - 2026-03-29

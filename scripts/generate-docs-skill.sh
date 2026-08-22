@@ -2,14 +2,14 @@
 set -e
 
 # Generate agent skill from HindClaw documentation
-# Converts hindclaw-docs/ to skills/hindclaw-docs/ for AI agent consumption.
+# Converts apps/docs/ to skills/hindclaw-docs/ for AI agent consumption.
 #
 # Ported from upstream vectorize-io/hindsight scripts/generate-docs-skill.sh.
 # Differences from upstream:
 #   - Preserves the hand-written skills/hindclaw-docs/SKILL.md (backed up
 #     before the skill dir is wiped, restored afterwards). If no existing
 #     SKILL.md is present, falls back to writing a minimal skeleton.
-#   - hindclaw-docs/src/pages/ and hindclaw-docs/examples/ are optional:
+#   - apps/docs/src/pages/ and apps/docs/examples/ are optional:
 #     they are skipped cleanly with a warning if absent.
 #   - No CodeSnippet inlining — HindClaw docs don't use the upstream
 #     "import raw-loader" pattern, so the conversion only strips MDX
@@ -17,9 +17,9 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-DOCS_DIR="$ROOT_DIR/hindclaw-docs/docs"
-PAGES_DIR="$ROOT_DIR/hindclaw-docs/src/pages"
-EXAMPLES_DIR="$ROOT_DIR/hindclaw-docs/examples"
+DOCS_DIR="$ROOT_DIR/apps/docs/docs"
+PAGES_DIR="$ROOT_DIR/apps/docs/src/pages"
+EXAMPLES_DIR="$ROOT_DIR/apps/docs/examples"
 SKILL_DIR="$ROOT_DIR/skills/hindclaw-docs"
 REFS_DIR="$SKILL_DIR/references"
 SKILL_MD="$SKILL_DIR/SKILL.md"
@@ -184,7 +184,7 @@ if [ ! -d "$EXAMPLES_DIR" ]; then
 fi
 
 # Copy OpenAPI spec into the skill
-OPENAPI_SRC="$ROOT_DIR/hindclaw-docs/public/openapi.json"
+OPENAPI_SRC="$ROOT_DIR/apps/docs/public/openapi.json"
 if [ -f "$OPENAPI_SRC" ]; then
     cp "$OPENAPI_SRC" "$REFS_DIR/openapi.json"
     print_info "Included: openapi.json"

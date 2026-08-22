@@ -20,12 +20,12 @@ jobs:
       - name: Check tag matches Cargo.toml and CHANGELOG.md
         run: |
           TAG_VERSION="${GITHUB_REF#refs/tags/cli-v}"
-          CARGO_VERSION=$(grep '^version' hindclaw-cli/Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          CARGO_VERSION=$(grep '^version' packages/cli/Cargo.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
           if [ "$TAG_VERSION" != "$CARGO_VERSION" ]; then
             echo "::error::Tag version ($TAG_VERSION) does not match Cargo.toml version ($CARGO_VERSION)"
             exit 1
           fi
-          if ! grep -q "## \[$TAG_VERSION\]" hindclaw-cli/CHANGELOG.md; then
+          if ! grep -q "## \[$TAG_VERSION\]" packages/cli/CHANGELOG.md; then
             echo "::error::CHANGELOG.md has no entry for version $TAG_VERSION"
             exit 1
           fi
@@ -98,7 +98,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.asset_name }}
-          path: hindclaw-cli/${{ matrix.asset_name }}
+          path: packages/cli/${{ matrix.asset_name }}
           if-no-files-found: error
 
   release:
@@ -122,7 +122,7 @@ jobs:
         uses: mindsers/changelog-reader-action@1faaf50aa09d5793d9a100819973df801febfb31 # v2.4.0
         with:
           version: ${{ steps.tag.outputs.version }}
-          path: hindclaw-cli/CHANGELOG.md
+          path: packages/cli/CHANGELOG.md
 
       - name: Download all artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1

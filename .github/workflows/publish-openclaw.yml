@@ -15,7 +15,7 @@ jobs:
     environment: npm
     defaults:
       run:
-        working-directory: hindclaw-integrations/openclaw
+        working-directory: integrations/openclaw
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -44,7 +44,7 @@ jobs:
         uses: mindsers/changelog-reader-action@1faaf50aa09d5793d9a100819973df801febfb31 # v2.4.0
         with:
           version: ${{ steps.tag.outputs.version }}
-          path: hindclaw-integrations/openclaw/CHANGELOG.md
+          path: integrations/openclaw/CHANGELOG.md
 
       - name: Publish to npm
         run: npm publish --provenance --access public

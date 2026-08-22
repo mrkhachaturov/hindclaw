@@ -1,0 +1,222 @@
+---
+import CopyCommand from '@/components/CopyCommand.astro';
+import Site from '@/layouts/Site.astro';
+import { SITE } from '@/lib/site';
+import { typeDeck, typeHero, typeSection } from '@/lib/type';
+
+const packages = [
+  {
+    name: 'hindclaw-extension',
+    description:
+      'Server-side Hindsight extensions. JWT auth, permission enforcement, tag injection, management REST API. Install on any Hindsight server.',
+    registry: 'PyPI',
+    href: 'https://pypi.org/project/packages/extension/',
+    badge: 'https://img.shields.io/pypi/v/hindclaw-extension?style=flat-square&color=0f766e',
+  },
+  {
+    name: 'terraform-provider-hindclaw',
+    description:
+      "Manage users, groups, banks, permissions, directives, mental models, and entity labels as code. terraform apply and it's live.",
+    registry: 'Terraform Registry',
+    href: 'https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest',
+    badge: 'https://img.shields.io/badge/terraform-registry-844FBA?style=flat-square',
+  },
+  {
+    name: 'hindclaw-openclaw',
+    description:
+      'OpenClaw gateway plugin. Thin adapter — signs JWTs, auto-starts embed daemon with extensions loaded. Zero manual setup.',
+    registry: 'npm',
+    href: 'https://www.npmjs.com/package/hindclaw-openclaw',
+    badge: 'https://img.shields.io/npm/v/hindclaw-openclaw?style=flat-square&color=0f766e',
+  },
+];
+
+const flow = [
+  {
+    title: 'Message Arrives',
+    body: 'User sends a message via Telegram, Slack, or any channel. The client routes it to the right agent.',
+  },
+  {
+    title: 'Client Signs JWT',
+    body: 'A JWT is generated with sender, agent, channel, and topic context. Sent with every API call. No user config needed.',
+  },
+  {
+    title: 'Server Resolves',
+    body: 'Extension resolves sender to user, checks group memberships, applies the 4-layer permission cascade.',
+  },
+  {
+    title: 'Memory Operates',
+    body: 'Recall returns filtered results with tag groups. Retain stores with injected tags and strategy. All server-side.',
+  },
+];
+
+const features = [
+  {
+    title: 'Server-Side Access Control',
+    description:
+      'JWT auth, user/group permissions, tag-based recall filtering, and retain strategy enrichment — all enforced on the Hindsight server via three extensions.',
+  },
+  {
+    title: 'Infrastructure as Code',
+    description:
+      'Terraform provider for the full stack. Banks, configs, permissions, directives, mental models, entity labels — version-controlled and reviewable.',
+  },
+  {
+    title: 'Per-Agent Memory Banks',
+    description:
+      'Each agent gets its own bank with custom missions, entity labels, dispositions, and directives. 11 agents, 11 different memory behaviors.',
+  },
+  {
+    title: 'Multi-Bank Recall',
+    description:
+      'Agents read from multiple banks in parallel. Permissions checked per-bank — no unauthorized cross-reads.',
+  },
+  {
+    title: 'Named Retain Strategies',
+    description:
+      'Route conversation topics to different extraction profiles. Strategic conversations get deep analysis, daily chats get lightweight extraction.',
+  },
+  {
+    title: 'Entity Labels',
+    description:
+      'Controlled vocabulary for consistent fact classification. Multilingual aliases, tag generation, and graph-traversable entities from a single definition.',
+  },
+];
+---
+
+<Site
+  title="Identity, permissions and provenance for Hindsight"
+  description="Give your Hindsight server identity, permissions and provenance. Declared as code, enforced inside the engine."
+>
+  <section class="border-b border-fd-border">
+    <div class="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-20 lg:py-28">
+      <div class="flex flex-col gap-4">
+        <h1 class={typeHero}>Identity, permissions and provenance for Hindsight</h1>
+        <p class={typeDeck}>Declared as code, enforced inside the engine.</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <CopyCommand command="pip install hindclaw-extension" />
+        <a
+          href="/docs"
+          class="rounded-md bg-fd-primary px-4 py-1.5 text-sm font-medium text-fd-primary-foreground transition-opacity hover:opacity-90"
+        >
+          Get started
+        </a>
+      </div>
+
+      <div
+        class="flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-fd-muted-foreground"
+      >
+        <a href={SITE.repo} rel="noreferrer noopener" target="_blank" class="transition-colors hover:text-fd-foreground">
+          MIT License
+        </a>
+        <span class="hidden size-1 rounded-full bg-fd-muted-foreground/20 sm:block"></span>
+        <a
+          href="https://pypi.org/project/packages/extension/"
+          rel="noreferrer noopener"
+          target="_blank"
+          class="transition-colors hover:text-fd-foreground"
+        >
+          Python extension on PyPI
+        </a>
+        <span class="hidden size-1 rounded-full bg-fd-muted-foreground/20 sm:block"></span>
+        <a
+          href="https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest"
+          rel="noreferrer noopener"
+          target="_blank"
+          class="transition-colors hover:text-fd-foreground"
+        >
+          Terraform Registry
+        </a>
+        <span class="hidden size-1 rounded-full bg-fd-muted-foreground/20 sm:block"></span>
+        <a
+          href="https://hindsight.vectorize.io"
+          rel="noreferrer noopener"
+          target="_blank"
+          class="transition-colors hover:text-fd-foreground"
+        >
+          Built on Hindsight
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-b border-fd-border">
+    <div class="mx-auto max-w-6xl px-4 py-16">
+      <div class="grid gap-4 md:grid-cols-3">
+        {packages.map((pkg) => (
+            <div class="rounded-xl border border-fd-border bg-fd-card p-6">
+              <h3 class="font-mono text-sm font-semibold">{pkg.name}</h3>
+              <p class="mt-2 text-sm text-fd-muted-foreground">{pkg.description}</p>
+              <a
+                href={pkg.href}
+                rel="noreferrer noopener"
+                target="_blank"
+                class="mt-4 inline-block text-sm text-fd-muted-foreground underline transition-colors hover:text-fd-foreground"
+              >
+                {pkg.registry}
+              </a>
+            </div>
+          ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="border-b border-fd-border">
+    <div class="mx-auto max-w-6xl px-4 py-16">
+      <h2 class={typeSection}>How it works</h2>
+      <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {flow.map((step, i) => (
+            <div>
+              <div class="flex size-8 items-center justify-center rounded-full border border-fd-border font-mono text-sm">
+                {i + 1}
+              </div>
+              <h3 class="mt-4 font-medium">{step.title}</h3>
+              <p class="mt-2 text-sm text-fd-muted-foreground">{step.body}</p>
+            </div>
+          ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="border-b border-fd-border">
+    <div class="mx-auto max-w-6xl px-4 py-16">
+      <h2 class={typeSection}>Features</h2>
+      <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {features.map((feature) => (
+            <div class="rounded-xl border border-fd-border bg-fd-card p-6">
+              <h3 class="font-medium">{feature.title}</h3>
+              <p class="mt-2 text-sm text-fd-muted-foreground">{feature.description}</p>
+            </div>
+          ))}
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="mx-auto max-w-6xl px-4 py-16">
+      <h2 class={typeSection}>Powered by Hindsight</h2>
+      <p class="mt-4 max-w-[60ch] text-fd-muted-foreground">
+        HindClaw is built on <a href="https://hindsight.vectorize.io" class="underline">Hindsight</a
+        > by <a href="https://vectorize.io" class="underline">Vectorize</a> — the highest-scoring
+        agent memory system on the LongMemEval benchmark. We build the access control and
+        infrastructure layer. They build the memory engine.
+      </p>
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        <a
+          href="https://ui.hindsight.vectorize.io/signup"
+          class="rounded-md bg-fd-primary px-4 py-1.5 text-sm font-medium text-fd-primary-foreground transition-opacity hover:opacity-90"
+        >
+          Try Hindsight Cloud
+        </a>
+        <a
+          href="https://join.slack.com/t/hindsight-space/shared_invite/zt-3nhbm4w29-LeSJ5Ixi6j8PdiYOCPlOgg"
+          class="rounded-md border border-fd-border px-4 py-1.5 text-sm font-medium transition-colors hover:bg-fd-accent"
+        >
+          Join the Slack community
+        </a>
+      </div>
+    </div>
+  </section>
+</Site>

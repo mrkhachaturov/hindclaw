@@ -1,0 +1,27 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.9/schema.json",
+  "extends": "//",
+  "overrides": [
+    {
+      "includes": ["**/*.astro"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "off",
+            "noUnusedVariables": "off"
+          }
+        }
+      }
+    }
+  ],
+  "files": {
+    "includes": [
+      "**",
+      "!src/components/ui",
+      "!src/components/assistant-ui",
+      "!src/components/ask-ai/surfaces.tsx",
+      "!src/styles/typeset.css",
+      "!public/openapi.json"
+    ]
+  }
+}

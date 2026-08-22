@@ -6,7 +6,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "hindclaw-docs/**"
+      - "apps/docs/**"
       - "mise.toml"
       - "mise.lock"
       - ".github/workflows/deploy-docs.yml"
@@ -37,7 +37,7 @@ jobs:
         with:
           cache: false
 
-      - run: mise run //hindclaw-docs:build
+      - run: mise run //apps/docs:build
         env:
           PUBLIC_TYPESENSE_HOST: ${{ vars.PUBLIC_TYPESENSE_HOST }}
           PUBLIC_TYPESENSE_COLLECTION: ${{ vars.PUBLIC_TYPESENSE_COLLECTION }}
@@ -48,12 +48,12 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          workingDirectory: hindclaw-docs
+          workingDirectory: apps/docs
           command: pages deploy dist --project-name=hindclaw --branch=main --commit-dirty=true
 
       # After the deploy: a failed publish must not re-point the alias at
       # content that is not live.
-      - run: mise run //hindclaw-docs:sync-search
+      - run: mise run //apps/docs:sync-search
         env:
           PUBLIC_TYPESENSE_HOST: ${{ vars.PUBLIC_TYPESENSE_HOST }}
           PUBLIC_TYPESENSE_COLLECTION: ${{ vars.PUBLIC_TYPESENSE_COLLECTION }}

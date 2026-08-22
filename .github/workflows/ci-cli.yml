@@ -3,16 +3,16 @@ name: CI — hindclaw CLI
 on:
   pull_request:
     paths:
-      - 'hindclaw-cli/**'
-      - 'hindclaw-clients/rust/**'
-      - 'hindclaw-docs/public/openapi.json'
+      - 'packages/cli/**'
+      - 'packages/clients/rust/**'
+      - 'apps/docs/public/openapi.json'
       - '.github/workflows/ci-cli.yml'
   push:
     branches: [main]
     paths:
-      - 'hindclaw-cli/**'
-      - 'hindclaw-clients/rust/**'
-      - 'hindclaw-docs/public/openapi.json'
+      - 'packages/cli/**'
+      - 'packages/clients/rust/**'
+      - 'apps/docs/public/openapi.json'
       - '.github/workflows/ci-cli.yml'
 
 permissions:
@@ -45,8 +45,8 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            hindclaw-cli/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('hindclaw-cli/Cargo.lock') }}
+            packages/cli/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('packages/cli/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: Build

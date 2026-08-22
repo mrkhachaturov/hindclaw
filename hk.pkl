@@ -2,15 +2,22 @@ amends "package://github.com/jdx/hk/releases/download/v1.56.0/hk@1.56.0#/Config.
 import "package://github.com/jdx/hk/releases/download/v1.56.0/hk@1.56.0#/Builtins.pkl"
 
 local artifacts = List(
-  "hindclaw-clients/**",
-  "hindclaw-integrations/**",
-  "hindclaw-terraform/**"
+  "packages/clients/**",
+  "integrations/**",
+  "terraform/**"
+)
+
+local lockfiles = List(
+  "**/package-lock.json",
+  "**/uv.lock",
+  "**/Cargo.lock",
+  "mise.lock"
 )
 
 local hygiene = new Mapping<String, Step> {
   ["detect-private-key"] = Builtins.detect_private_key
   ["check-merge-conflict"] = (Builtins.check_merge_conflict) { exclude = artifacts }
-  ["check-added-large-files"] = Builtins.check_added_large_files
+  ["check-added-large-files"] = (Builtins.check_added_large_files) { exclude = artifacts + lockfiles }
   ["check-case-conflict"] = Builtins.check_case_conflict
   ["check-symlinks"] = Builtins.check_symlinks
   ["check-executables-have-shebangs"] = Builtins.check_executables_have_shebangs
@@ -60,8 +67,8 @@ hooks {
         fix = "flint run --fix --allow-fixed flint-setup"
       }
       ["hindclaw-extension"] = new Step {
-        glob = List("hindclaw-extension/**/*.py")
-        fix = "mise run //hindclaw-extension:fmt"
+        glob = List("packages/extension/**/*.py")
+        fix = "mise run //packages/extension:fmt"
       }
     }
   }
@@ -75,12 +82,12 @@ hooks {
   ["pre-push"] {
     steps {
       ["docs"] = new Step {
-        glob = List("hindclaw-docs/**")
-        check = "mise run //hindclaw-docs:check"
+        glob = List("apps/docs/**")
+        check = "mise run //apps/docs:check"
       }
       ["extension"] = new Step {
-        glob = List("hindclaw-extension/**")
-        check = "mise run //hindclaw-extension:check"
+        glob = List("packages/extension/**")
+        check = "mise run //packages/extension:check"
       }
     }
   }
@@ -105,8 +112,8 @@ hooks {
         exclusive = true
       }
       ["hindclaw-extension"] = new Step {
-        glob = List("hindclaw-extension/**/*.py")
-        fix = "mise run //hindclaw-extension:fmt"
+        glob = List("packages/extension/**/*.py")
+        fix = "mise run //packages/extension:fmt"
       }
     }
   }

@@ -13,11 +13,11 @@ __pycache__/
 .venv/
 .pytest_cache/
 
-hindclaw-docs/node_modules/
+apps/docs/node_modules/
 
 # Rust
-hindclaw-clients/rust/target/
-hindclaw-cli/target/
+packages/clients/rust/target/
+packages/cli/target/
 
 # Misc
 .worktrees/
