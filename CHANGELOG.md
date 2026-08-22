@@ -6,6 +6,7 @@ The core repo version line covers `hindclaw-extension`, `hindclaw-clients`, `hin
 and `hindclaw-cli` — these are versioned together because they depend on each other.
 
 Independent components have their own version lines and changelogs:
+
 - `hindclaw-integrations/openclaw/` (hindclaw-openclaw-plugin)
 - `hindclaw-integrations/claude-code/` (hindclaw-claude-plugin)
 - `hindclaw-terraform/` (terraform-provider-hindclaw)
@@ -73,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking changes for downstream consumers
 
 These are tracked as separate follow-up tasks per the spec's "Out of scope for Spec 1" list:
+
 - `hindclaw-cli` Rust commands (`template install`, `template upgrade`, `template list`) — old route paths and request shapes are gone. Needs a regen against the new OpenAPI spec.
 - Generated TypeScript/Rust SDK clients in `hindclaw-clients/` — regenerate from the new OpenAPI spec.
 - `hindclaw-openclaw-plugin` — imports of the deleted `MarketplaceTemplate`, `DirectiveSeed`, `MentalModelSeed`, `EntityLabel`, `EntityLabelValue` symbols will fail at extension startup. Needs a separate refactor.
@@ -80,6 +82,7 @@ These are tracked as separate follow-up tasks per the spec's "Out of scope for S
 ## [0.4.0] - 2026-03-29
 
 ### Added
+
 - **Self-service template endpoints** at `/me/templates` — CRUD for personal templates with ambiguity detection via `?source=` query param, plus `POST /me/templates/install` using `resolve_source()` with 409 on ambiguity
 - **Self-service template source endpoints** at `/me/template-sources` — register, list, and delete personal marketplace sources (scope hardcoded to personal, owner from caller)
 - **Self-service API key endpoints** at `/me/api-keys` — create, list, delete own API keys with SA credential rejection
@@ -101,17 +104,20 @@ These are tracked as separate follow-up tasks per the spec's "Out of scope for S
 - Bank bootstrap tests verifying all config fields (retain_mission, entity_labels, dispositions, etc.) propagate from marketplace templates
 
 ### Changed
+
 - **Admin source endpoints tightened** from `template:source` to `template:admin` — prevents regular users with `template:user` from managing server-scope sources
 - **`template:admin` policy uses `template:*` wildcard** — consistent with `iam:admin` (`iam:*`) and `bank:admin` (`bank:*`), fixes lockout where `template:admin` action wasn't grantable by any policy
 - **Template sources table recreated** with `scope`, `owner`, surrogate PK — migration detect drops old schema on upgrade
 
 ### Security
+
 - **SA credential rejection on /me/api-keys and GET /me** — prevents service accounts from minting user API keys or reading user profiles, which would bypass SA scoping
 - **Server scope write gate** — non-admin users can no longer create, update, or delete server-scope templates even if they have the base action (template:create, etc.)
 
 ## [0.3.0] - 2026-03-28
 
 ### Added
+
 - **Self-service SA endpoints** at `/me/service-accounts` — users create, read, update, delete their own service accounts and keys without admin privileges
 - `CreateSelfServiceAccountRequest` and `UpdateSelfServiceAccountRequest` models with `extra="forbid"` — owner is always the authenticated caller, unknown fields rejected with 422
 - `_get_owned_sa` ownership helper — returns 404 for both "not found" and "not yours" (no information leakage)
@@ -119,15 +125,18 @@ These are tracked as separate follow-up tasks per the spec's "Out of scope for S
 - 20 new tests covering ownership enforcement, cross-user 404, extra field rejection, SA-as-caller identity
 
 ### Changed
+
 - **Admin SA endpoints now require `iam:service_accounts:manage`** — all 8 endpoints at `/service-accounts` switched from `iam:service_accounts:{read,write}` and `iam:service_account_keys:write` to the new `iam:service_accounts:manage` action. The built-in `iam:admin` policy (`iam:*`) already covers it.
 
 ### Security
+
 - **Fix privilege escalation in SA creation** — previously any user with `iam:service_accounts:write` could create SAs for other users by specifying an arbitrary `owner_user_id`. The self-service surface eliminates this by construction (no `owner_user_id` field). The admin surface is now gated by the separate `iam:service_accounts:manage` action.
 - **Block SA self-escalation** — self-service update only allows `display_name` changes. `scoping_policy_id` and `is_active` are admin-only, preventing an SA from removing its own scoping policy.
 
 ## [0.2.7] - 2026-03-28
 
 ### Added
+
 - **MCP tool visibility filtering** — `HindclawValidator.filter_mcp_tools()` hides MCP tools the user's policies don't allow, so the AI never sees tools it can't use
 - `_TOOL_ACTION_MAP` maps 30 MCP tool names to 4 policy actions (`bank:recall`, `bank:retain`, `bank:reflect`, `bank:admin`)
 - Per-action caching keeps policy evaluations to 3-4 per `tools/list` call
@@ -137,20 +146,24 @@ These are tracked as separate follow-up tasks per the spec's "Out of scope for S
 ## [0.2.6] - 2026-03-28
 
 ### Fixed
+
 - **Template get/update/delete now find marketplace-installed templates** — endpoints hardcoded `source_name=None` which only matched custom templates. Now uses `_UNSET` sentinel to match by `(id, scope, owner)` regardless of source.
 
 ## [0.2.5] - 2026-03-28
 
 ### Fixed
+
 - **Partial updates can now clear nullable fields to NULL** — `update_service_account` (and all `Update*Request` endpoints) previously collapsed "not provided" and "set to null" into the same `None`. Added `_UNSET` sentinel in DB layer, fixed HTTP handler to pass only present fields, and fixed Rust client codegen to emit explicit `null` for `Update*Request` structs.
 
 ### Added
+
 - `--clear-scoping-policy` flag on `hindclaw admin sa update` — sets `scoping_policy_id` to NULL
 - 4 new DB tests for `update_service_account` sentinel behavior
 
 ## [0.2.4] - 2026-03-28
 
 ### Changed
+
 - **Bank bootstrap uses in-process engine** — replaced HTTP loopback with direct `MemoryEngine` calls using `RequestContext(internal=True)`, fixing auth wall on internal API calls
 - Validate marketplace JSON content type before parsing — accept `application/json`, `text/plain` (GitHub raw), `application/octet-stream`; reject unexpected types
 - Remove all database migrations (V2, V3, V4) — DDL is the single source of truth
@@ -160,29 +173,35 @@ These are tracked as separate follow-up tasks per the spec's "Out of scope for S
 ## [0.2.3] - 2026-03-28 [yanked]
 
 ### Fixed
+
 - Attempted to fix migration V3 crash but still had broken migration infrastructure
 
 ## [0.2.2] - 2026-03-28 [yanked]
 
 ### Fixed
+
 - Attempted in-process bank bootstrap but shipped with broken migration V3
 
 ## [0.2.2] - 2026-03-28
 
 ### Changed
+
 - **Bank bootstrap uses in-process engine** — replaced HTTP loopback with direct `MemoryEngine` calls using `RequestContext(internal=True)`. Bank creation from templates no longer requires auth tokens for internal API calls.
 - Removed `hindsight_client.py` (HTTP client factory) and vendored `hindsight_client_api` — no longer needed
 - Removed `[banks]` optional extra and vendored client dependencies (`aiohttp-retry`, `python-dateutil`, `urllib3`, `typing-extensions`)
 
 ### Fixed
+
 - Bank creation from template no longer blocked by HindclawTenant authentication on internal HTTP calls
 
 ## [0.2.1] - 2026-03-27 [yanked]
 
 ### Fixed
+
 - Attempted to move `hindsight-client-api` to core deps — broke PyPI installs since the package isn't published
 
 ### Added
+
 - **Template marketplace sources** — register trusted marketplace repos, browse and search templates across sources (`POST/GET/DELETE /admin/template-sources`, `GET /marketplace/search`)
 - **Template install from marketplace** — install templates from registered sources with strict validation and compatibility checking (`POST /templates/install`)
 - **Template update from marketplace** — update installed templates when newer versions are available (`POST /templates/{scope}/{source}/{name}/update`)
@@ -196,28 +215,33 @@ These are tracked as separate follow-up tasks per the spec's "Out of scope for S
 ## [0.2.0] - 2026-03-25
 
 ### Added
+
 - **Bank templates entity** — `bank_templates` table, Pydantic models, CRUD API for local template management
 - **Bank creation from template** — `POST /ext/hindclaw/banks` creates a Hindsight bank from an installed template (missions, config, directives, mental models)
 - Template reference parser (`template_ref.py`) for `scope/source/name` strings
 - Hindsight client factory (`hindsight_client.py`) for calling Hindsight API from the extension
 
 ### Changed
+
 - Client regeneration: all 4 clients (Go, Python, TypeScript, Rust) updated with template endpoints
 
 ## [0.1.3] - 2026-03-25
 
 ### Fixed
+
 - Serialize `update_user` response as dict (was returning Pydantic model directly)
 
 ## [0.1.2] - 2026-03-25
 
 ### Added
+
 - Per-endpoint IAM with fine-grained action strings (`iam:users:read`, `iam:users:write`, etc.)
 - `is_active` field on users for soft-disable
 
 ## [0.1.1] - 2026-03-24
 
 ### Added
+
 - Policy-based access control — `PolicyDocument` with allow/deny statements, wildcard matching, specificity-based resolution
 - Bank policies with context-scoped strategy overrides (provider/channel/topic)
 - Service accounts with scoping policies and API key management

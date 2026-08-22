@@ -33,7 +33,7 @@ hindclaw template apply server/hindclaw/backend-python --bank-id my-project --ba
 
 ## Commands
 
-```
+```text
 hindclaw alias set/ls/rm             Server alias management
 hindclaw template list/info/search   Discover templates
 hindclaw template install/upgrade    Acquire from marketplace
