@@ -15,6 +15,7 @@ const collection = process.env.PUBLIC_TYPESENSE_COLLECTION ?? 'hindclaw';
 const apiKey = process.env.TYPESENSE_ADMIN_API_KEY;
 const embeddingModel = process.env.TYPESENSE_EMBEDDING_MODEL;
 const embeddingApiKey = process.env.TYPESENSE_EMBEDDING_API_KEY;
+const embeddingUrl = process.env.TYPESENSE_EMBEDDING_URL;
 
 if (!host) {
   console.error('PUBLIC_TYPESENSE_HOST is not set.');
@@ -43,14 +44,17 @@ const byTag = documents.reduce<Record<string, number>>((acc, doc) => {
 // Declaring the embedding field on the collection the adapter creates lets
 // Typesense embed each document during the import. Adding it afterwards
 // re-embeds the whole corpus instead, on every deploy.
-function embeddingField(model: string, key: string): CollectionFieldSchema {
+// Typesense calls the endpoint itself, from inside the cluster, so `url` takes
+// a service address rather than anything this script can reach. Left unset it
+// defaults to https://api.openai.com.
+function embeddingField(model: string, key: string, url?: string): CollectionFieldSchema {
   return {
     name: 'embedding',
     type: 'float[]',
     optional: true,
     embed: {
       from: ['content'],
-      model_config: { model_name: model, api_key: key },
+      model_config: { model_name: model, api_key: key, ...(url ? { url } : {}) },
     },
   } as CollectionFieldSchema;
 }
@@ -64,7 +68,7 @@ const fields: CollectionFieldSchema[] = getDefaultCollectionFields(SEARCH_LOCALE
 );
 
 if (embeddingModel && embeddingApiKey) {
-  fields.push(embeddingField(embeddingModel, embeddingApiKey));
+  fields.push(embeddingField(embeddingModel, embeddingApiKey, embeddingUrl));
 }
 
 const localeSettings: Record<string, CustomSettings> = {
