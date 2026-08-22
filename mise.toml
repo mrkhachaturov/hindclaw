@@ -21,7 +21,7 @@ postinstall = "hk install --mise"
 # Owned by flint: `flint run --fix flint-setup` rewrites this table.
 [tools]
 hk = "1.56.0"
-infisical = { version = "0.43.125", asset_pattern = "cli_{{ version }}_{{ os(macos='darwin') }}_{{ arch(x64='amd64') }}.tar.gz" }
+infisical = "0.43.125"
 node = "22"
 uv = "0.12.5"
 
