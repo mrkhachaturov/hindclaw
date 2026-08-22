@@ -7,7 +7,6 @@ import { type ReactNode, useEffect, useMemo } from 'react';
 import { Sidebar, SidebarProvider, useSidebar } from '@/components/docs/sidebar';
 import { TypesenseSearchDialog as SearchDialog } from '@/components/search';
 import { resolveTreeIcons } from '@/lib/page-tree';
-import { SITE } from '@/lib/site';
 
 function CollapsedColumnSync() {
   const { collapsed } = useSidebar();

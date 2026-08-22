@@ -8,7 +8,7 @@ import {
   getDefaultCollectionFields,
   sync,
 } from 'typesense-fumadocs-adapter';
-import { SEARCH_LOCALE } from '../src/lib/search-index';
+import { SEARCH_LOCALE } from '../src/lib/search-index.ts';
 
 const host = process.env.PUBLIC_TYPESENSE_HOST;
 const collection = process.env.PUBLIC_TYPESENSE_COLLECTION ?? 'hindclaw';
