@@ -8,9 +8,10 @@ sources = ["package.json", "package-lock.json"]
 outputs = ["node_modules/.package-lock.json"]
 
 [tasks.dev]
-description = "Serve the docs with HMR on :4321"
+# 3000, not Astro's default: the Typesense cluster only allows this origin.
+description = "Serve the docs with HMR on :3000"
 depends = [":deps"]
-run = "astro dev --port 4321"
+run = "astro dev --port 3000"
 
 [tasks.build]
 description = "Build the static site into dist/"
@@ -27,9 +28,9 @@ sources = [
 outputs = ["dist/**/*"]
 
 [tasks.preview]
-description = "Serve the built dist/ on :4321"
+description = "Serve the built dist/ on :3000"
 depends = [":build"]
-run = "astro preview --port 4321"
+run = "astro preview --port 3000"
 
 [tasks.lint]
 description = "Lint the docs sources with biome"

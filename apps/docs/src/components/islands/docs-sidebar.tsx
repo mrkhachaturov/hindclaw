@@ -5,7 +5,6 @@ import { TreeContextProvider } from 'fumadocs-ui/contexts/tree';
 import { RootProvider } from 'fumadocs-ui/provider/astro';
 import { type ReactNode, useEffect, useMemo } from 'react';
 import { Sidebar, SidebarProvider, useSidebar } from '@/components/docs/sidebar';
-import { TypesenseSearchDialog as SearchDialog } from '@/components/search';
 import { resolveTreeIcons } from '@/lib/page-tree';
 
 function CollapsedColumnSync() {
@@ -43,7 +42,9 @@ export function DocsSidebar({
       params={params}
       navigate={navigate}
       theme={{ enabled: false }}
-      search={{ SearchDialog }}
+      // The header island owns the dialog. A second provider here would
+      // register the hotkey twice and stack one dialog inside the other.
+      search={{ enabled: false }}
     >
       <TreeContextProvider tree={resolvedTree}>
         <SidebarProvider>

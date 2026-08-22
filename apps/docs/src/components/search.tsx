@@ -3,6 +3,7 @@ import {
   PUBLIC_TYPESENSE_HOST,
   PUBLIC_TYPESENSE_SEARCH_API_KEY,
 } from 'astro:env/client';
+import { navigate } from 'astro:transitions/client';
 import {
   SearchDialog,
   SearchDialogClose,
@@ -13,13 +14,22 @@ import {
   SearchDialogInput,
   SearchDialogList,
   SearchDialogOverlay,
+  type SearchItemType,
   type SharedProps,
 } from 'fumadocs-ui/components/dialog/search';
-import { Sparkles } from 'lucide-react';
-import { type ReactNode, useCallback } from 'react';
+import { Clock, Sparkles, X } from 'lucide-react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Client } from 'typesense';
 import { useTypesenseSearch } from 'typesense-fumadocs-adapter/client';
+import { Button } from '@/components/ui/button';
 import { askAi } from '@/lib/ask-ai/store';
+import {
+  addRecentSearch,
+  getRecentSearches,
+  plainText,
+  type RecentSearch,
+  removeRecentSearch,
+} from '@/lib/search-history';
 
 const client = new Client({
   nodes: [{ host: PUBLIC_TYPESENSE_HOST, port: 443, protocol: 'https' }],
@@ -31,16 +41,83 @@ export function TypesenseSearchDialog(props: SharedProps): ReactNode {
     typesenseCollectionName: PUBLIC_TYPESENSE_COLLECTION,
     client,
   });
+  const [recents, setRecents] = useState<RecentSearch[]>([]);
+  const { onOpenChange } = props;
+
+  useEffect(() => {
+    if (props.open) setRecents(getRecentSearches());
+  }, [props.open]);
 
   const showAskAI = search.trim().length > 0;
 
   const handleAskAI = useCallback(() => {
-    props.onOpenChange(false);
+    onOpenChange(false);
     askAi(search);
-  }, [props, search]);
+  }, [onOpenChange, search]);
+
+  const handleSelect = useCallback((item: SearchItemType) => {
+    if (item.type === 'action') return;
+
+    setRecents(
+      addRecentSearch({
+        id: item.id,
+        url: item.url,
+        content: plainText(item.content),
+        breadcrumbs: item.breadcrumbs?.map(plainText),
+      }),
+    );
+  }, []);
+
+  // The list takes any item, not only search results, so the history rides in
+  // the same list rather than needing a screen of its own.
+  const recentItems = useMemo<SearchItemType[]>(
+    () =>
+      recents.map((item) => ({
+        id: `recent:${item.url}`,
+        type: 'action',
+        onSelect: () => {
+          onOpenChange(false);
+          void navigate(item.url);
+        },
+        node: (
+          <div className="flex w-full items-center gap-2">
+            <Clock className="size-4 shrink-0 text-fd-muted-foreground" />
+            <div className="min-w-0 flex-1 text-left">
+              <p className="truncate">{item.content}</p>
+              {item.breadcrumbs && item.breadcrumbs.length > 0 && (
+                <p className="truncate text-xs text-fd-muted-foreground">
+                  {item.breadcrumbs.join(' › ')}
+                </p>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              aria-label={`Forget ${item.content}`}
+              className="shrink-0 text-fd-muted-foreground"
+              onClick={(event) => {
+                event.stopPropagation();
+                setRecents(removeRecentSearch(item.url));
+              }}
+            >
+              <X />
+            </Button>
+          </div>
+        ),
+      })),
+    [recents, onOpenChange],
+  );
+
+  const items = query.data !== 'empty' ? query.data : recentItems.length > 0 ? recentItems : null;
 
   return (
-    <SearchDialog search={search} onSearchChange={setSearch} isLoading={query.isLoading} {...props}>
+    <SearchDialog
+      search={search}
+      onSearchChange={setSearch}
+      onSelect={handleSelect}
+      isLoading={query.isLoading}
+      {...props}
+    >
       <SearchDialogOverlay />
       <SearchDialogContent>
         <SearchDialogHeader>
@@ -58,7 +135,7 @@ export function TypesenseSearchDialog(props: SharedProps): ReactNode {
           )}
           <SearchDialogClose />
         </SearchDialogHeader>
-        <SearchDialogList items={query.data !== 'empty' ? query.data : null} />
+        <SearchDialogList items={items} />
         <SearchDialogFooter>
           <div className="w-full text-right text-xs text-fd-muted-foreground">
             <a href="https://typesense.org" rel="noreferrer noopener" target="_blank">
