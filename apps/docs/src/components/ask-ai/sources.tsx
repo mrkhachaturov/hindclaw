@@ -1,5 +1,6 @@
 import { BookOpenIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { sameOriginHref } from '@/lib/ask-ai/links';
 import type { Source } from '@/lib/ask-ai/protocol';
 
 export function AskAiSources({ data }: { data: { sources?: Source[] } }): ReactNode {

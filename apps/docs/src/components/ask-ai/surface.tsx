@@ -14,9 +14,14 @@ type SurfaceHeaderProps = {
   showHistory: boolean;
   onToggleHistory: () => void;
   onLeaveHistory: () => void;
+  reserveResizeGrip: boolean;
 };
 
-export function AskAiSurface(): ReactNode {
+export function AskAiSurface({
+  reserveResizeGrip = false,
+}: {
+  reserveResizeGrip?: boolean;
+} = {}): ReactNode {
   const [showHistory, setShowHistory] = useState(false);
 
   useAuiEvent('threads.selectionChanged', () => setShowHistory(false));
@@ -27,6 +32,7 @@ export function AskAiSurface(): ReactNode {
         showHistory={showHistory}
         onToggleHistory={() => setShowHistory((shown) => !shown)}
         onLeaveHistory={() => setShowHistory(false)}
+        reserveResizeGrip={reserveResizeGrip}
       />
       <div className="min-h-0 flex-1">
         {showHistory ? (
@@ -45,13 +51,19 @@ function SurfaceHeader({
   showHistory,
   onToggleHistory,
   onLeaveHistory,
+  reserveResizeGrip,
 }: SurfaceHeaderProps): ReactNode {
   const { setOpen } = useAskAiPanel();
   const mode = useStore(askAiMode);
   const aui = useAui();
 
   return (
-    <div className="flex h-12 shrink-0 items-center justify-between px-3">
+    <div
+      className={cn(
+        'flex h-12 shrink-0 items-center justify-between px-3',
+        reserveResizeGrip && 'ps-8',
+      )}
+    >
       <div className="flex items-center gap-2">
         <span className="bg-muted/50 text-muted-foreground flex size-6 items-center justify-center rounded-md">
           <SparklesIcon className="size-3.5" />
