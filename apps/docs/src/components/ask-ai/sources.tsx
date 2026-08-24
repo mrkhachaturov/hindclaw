@@ -15,7 +15,7 @@ export function AskAiSources({ data }: { data: { sources?: Source[] } }): ReactN
         {sources.map((source) => (
           <li key={source.url}>
             <a
-              href={source.url}
+              href={sameOriginHref(source.url)}
               className="border-border/60 hover:bg-muted/50 group flex items-start gap-2 rounded-lg border px-2.5 py-1.5 transition-colors"
             >
               <BookOpenIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
