@@ -1,6 +1,9 @@
 import { atom } from 'nanostores';
+import type { SearchProgress } from '@/lib/ask-ai/protocol';
 
 export type AskAiMode = 'docked' | 'floating';
+
+export const askAiSearch = atom<SearchProgress | null>(null);
 
 const MODE_KEY = 'hindclaw:ask-ai-mode';
 

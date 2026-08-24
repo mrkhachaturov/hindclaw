@@ -9,16 +9,17 @@ import {
   sync,
 } from 'typesense-fumadocs-adapter';
 import { SEARCH_LOCALE } from '../src/lib/search-index.ts';
+import { typesenseNode } from '../src/lib/typesense.ts';
 
-const host = process.env.PUBLIC_TYPESENSE_HOST;
-const collection = process.env.PUBLIC_TYPESENSE_COLLECTION ?? 'hindclaw';
+const host = process.env.TYPESENSE_URL;
+const collection = process.env.TYPESENSE_COLLECTION ?? 'hindclaw';
 const apiKey = process.env.TYPESENSE_ADMIN_API_KEY;
 const embeddingModel = process.env.TYPESENSE_EMBEDDING_MODEL;
 const embeddingApiKey = process.env.TYPESENSE_EMBEDDING_API_KEY;
 const embeddingUrl = process.env.TYPESENSE_EMBEDDING_URL;
 
 if (!host) {
-  console.error('PUBLIC_TYPESENSE_HOST is not set.');
+  console.error('TYPESENSE_URL is not set.');
   process.exit(1);
 }
 
@@ -27,7 +28,7 @@ if (!apiKey) {
   process.exit(1);
 }
 
-const indexPath = path.resolve('dist/search-index.json');
+const indexPath = path.resolve('dist/client/search-index.json');
 if (!fs.existsSync(indexPath)) {
   console.error(`${indexPath} not found — run \`astro build\` first.`);
   process.exit(1);
@@ -84,7 +85,7 @@ console.log(
 );
 
 const client = new Client({
-  nodes: [{ host, port: 443, protocol: 'https' }],
+  nodes: [typesenseNode(host)],
   apiKey,
   connectionTimeoutSeconds: 60 * 15,
 });

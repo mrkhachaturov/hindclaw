@@ -1,5 +1,6 @@
 // @ts-check
-import { defineConfig, envField } from 'astro/config';
+import { defineConfig } from 'astro/config';
+import node from '@astrojs/node';
 import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
@@ -29,17 +30,7 @@ const rehypePlugins = [rehypeCode];
 export default defineConfig({
   site: 'https://hindclaw.pro',
   session: false,
-  env: {
-    schema: {
-      PUBLIC_TYPESENSE_HOST: envField.string({ context: 'client', access: 'public' }),
-      PUBLIC_TYPESENSE_SEARCH_API_KEY: envField.string({ context: 'client', access: 'public' }),
-      PUBLIC_TYPESENSE_COLLECTION: envField.string({
-        context: 'client',
-        access: 'public',
-        default: 'hindclaw',
-      }),
-    },
-  },
+  adapter: node({ mode: 'standalone' }),
   experimental: {
     // Docs routes return a `cacheKey` from getStaticPaths, so only pages whose
     // content changed are re-rendered between builds.

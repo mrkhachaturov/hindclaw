@@ -1,8 +1,8 @@
 import { SparklesIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useAskAiPanel } from '@/components/ask-ai/context';
-import { pressable } from '@/components/ask-ai/surfaces';
 import { TooltipIconButton } from '@/components/assistant-ui/tooltip-icon-button';
+import { pressable } from '@/components/elements/surfaces';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { cn } from '@/lib/utils';
 

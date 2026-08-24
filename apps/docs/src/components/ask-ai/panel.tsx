@@ -50,7 +50,7 @@ function PanelResizeHandle(): ReactNode {
       className={cn(
         'absolute inset-y-2 start-1.5 w-1 cursor-col-resize',
         'after:absolute after:inset-y-0 after:start-1/2 after:w-px after:-translate-x-1/2 after:transition-colors',
-        isResizing ? 'after:bg-primary/40' : 'after:bg-transparent hover:after:bg-primary/20',
+        isResizing ? 'after:bg-primary/40' : 'after:bg-foreground/10 hover:after:bg-primary/20',
       )}
     />
   );

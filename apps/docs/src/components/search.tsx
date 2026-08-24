@@ -1,9 +1,6 @@
-import {
-  PUBLIC_TYPESENSE_COLLECTION,
-  PUBLIC_TYPESENSE_HOST,
-  PUBLIC_TYPESENSE_SEARCH_API_KEY,
-} from 'astro:env/client';
 import { navigate } from 'astro:transitions/client';
+import { useDocsSearch } from 'fumadocs-core/search/client';
+import { fetchClient } from 'fumadocs-core/search/client/fetch';
 import {
   SearchDialog,
   SearchDialogClose,
@@ -19,8 +16,6 @@ import {
 } from 'fumadocs-ui/components/dialog/search';
 import { Clock, Sparkles, X } from 'lucide-react';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { Client } from 'typesense';
-import { useTypesenseSearch } from 'typesense-fumadocs-adapter/client';
 import { Button } from '@/components/ui/button';
 import { askAi } from '@/lib/ask-ai/store';
 import {
@@ -31,16 +26,10 @@ import {
   removeRecentSearch,
 } from '@/lib/search-history';
 
-const client = new Client({
-  nodes: [{ host: PUBLIC_TYPESENSE_HOST, port: 443, protocol: 'https' }],
-  apiKey: PUBLIC_TYPESENSE_SEARCH_API_KEY,
-});
+const client = fetchClient({ api: '/api/search' });
 
-export function TypesenseSearchDialog(props: SharedProps): ReactNode {
-  const { search, setSearch, query } = useTypesenseSearch({
-    typesenseCollectionName: PUBLIC_TYPESENSE_COLLECTION,
-    client,
-  });
+export function DocsSearchDialog(props: SharedProps): ReactNode {
+  const { search, setSearch, query } = useDocsSearch({ client });
   const [recents, setRecents] = useState<RecentSearch[]>([]);
   const { onOpenChange } = props;
 

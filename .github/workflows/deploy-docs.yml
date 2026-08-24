@@ -7,76 +7,29 @@ on:
     branches: [main]
     paths:
       - "apps/docs/**"
-      - "mise.toml"
-      - "mise.lock"
       - ".github/workflows/deploy-docs.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# Never cancelled: a slower run would publish an older dist over a newer one.
 concurrency:
   group: deploy-docs
   cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Build and publish
+    name: Trigger the deploy
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      deployments: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      # No cache on the publishing job: a poisoned entry would reach the deploy.
-      - uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518 # v4.2.5
-        with:
-          cache: false
-
-      # Variables, not secrets: astro compiles all three into the client bundle,
-      # so they reach every visitor anyway. Keeping them here also leaves the
-      # pull request build in ci.yml independent of Infisical, whose identity is
-      # scoped to refs/heads/main.
-      - run: mise run //apps/docs:build
+      - name: Call the deploy webhook
         env:
-          PUBLIC_TYPESENSE_HOST: ${{ vars.PUBLIC_TYPESENSE_HOST }}
-          PUBLIC_TYPESENSE_COLLECTION: ${{ vars.PUBLIC_TYPESENSE_COLLECTION }}
-          PUBLIC_TYPESENSE_SEARCH_API_KEY: ${{ vars.PUBLIC_TYPESENSE_SEARCH_API_KEY }}
-
-      - uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          workingDirectory: apps/docs
-          command: pages deploy dist --project-name=hindclaw --branch=main --commit-dirty=true
-
-      # TEMPORARY: the index is synced by hand from the office network.
-      # Tracked: no issue yet — see the note at the end of ASK-AI-HANDOFF.md.
-      #   Pangolin fronts ts.astrateam.net with bypass rules for the two search
-      #   paths and four office IPs, then blocks 0.0.0.0/0. A GitHub-hosted
-      #   runner matches none of them and is refused at the edge, which arrives
-      #   here as a bodiless 401 that reads like a rejected key.
-      # Replace with: the two steps below, uncommented and unchanged, once a
-      #   runner runs inside the cluster and reaches typesense-svc directly.
-      #   Nothing else has to move — the key, the paths and the task all work.
-      #   Restore `id-token: write` on the job at the same time.
-      #
-      # - uses: Infisical/secrets-action@77ab1f4ccd183a543cb5b42435fbd181189f4995 # v1.0.16
-      #   with:
-      #     method: "oidc"
-      #     identity-id: "226d7d0e-3d7f-4f51-a097-d1958aecff6e"
-      #     domain: ${{ vars.INFISICAL_DOMAIN }}
-      #     project-slug: "hindclaw"
-      #     env-slug: "dev"
-      #     secret-path: "/docs"
-      #
-      # - run: mise run //apps/docs:sync-search
-      #   env:
-      #     PUBLIC_TYPESENSE_HOST: ${{ vars.PUBLIC_TYPESENSE_HOST }}
-      #     PUBLIC_TYPESENSE_COLLECTION: ${{ vars.PUBLIC_TYPESENSE_COLLECTION }}
-      #     PUBLIC_TYPESENSE_SEARCH_API_KEY: ${{ vars.PUBLIC_TYPESENSE_SEARCH_API_KEY }}
+          WEBHOOK_URL: ${{ secrets.DOCS_DEPLOY_WEBHOOK_URL }}
+          WEBHOOK_TOKEN: ${{ secrets.DOCS_DEPLOY_WEBHOOK_TOKEN }}
+        run: |
+          code=$(curl -sS -o /tmp/webhook.out -w '%{http_code}' \
+            -X POST "$WEBHOOK_URL" \
+            -H "Authorization: Bearer $WEBHOOK_TOKEN")
+          echo "webhook responded $code"
+          cat /tmp/webhook.out
+          test "$code" -lt 400

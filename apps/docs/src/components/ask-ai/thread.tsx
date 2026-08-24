@@ -4,6 +4,7 @@ import { type ComponentType, type ReactNode, useEffect, useRef } from 'react';
 import { AskAiComposer } from '@/components/ask-ai/composer';
 import { useAskAiPanel } from '@/components/ask-ai/context';
 import { AssistantMessage, UserMessage } from '@/components/ask-ai/messages';
+import { ThreadFollowupSuggestions } from '@/components/assistant-ui/follow-up-suggestions';
 
 function PendingMessageHandler(): null {
   const { pendingMessage, clearPendingMessage } = useAskAiPanel();
@@ -54,7 +55,8 @@ export function AskAiThread({
           </ThreadPrimitive.Messages>
         </div>
 
-        <ThreadPrimitive.ViewportFooter className="bg-background sticky bottom-0 mt-auto flex flex-col overflow-visible rounded-t-xl">
+        <ThreadPrimitive.ViewportFooter className="bg-background sticky bottom-0 mt-auto flex flex-col gap-2 overflow-visible rounded-t-xl">
+          <ThreadFollowupSuggestions />
           {composer}
         </ThreadPrimitive.ViewportFooter>
       </ThreadPrimitive.Viewport>

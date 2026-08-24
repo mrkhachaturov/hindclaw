@@ -10,7 +10,7 @@ export const apiSource = loader(
     }),
   },
   {
-    baseUrl: '/api',
+    baseUrl: '/docs/api',
     icon: (name) => name,
     plugins: [openapi.loaderPlugin()],
   },

@@ -1,7 +1,7 @@
 import { type PointerEvent, type ReactNode, useRef, useState } from 'react';
 import { useAskAiPanel } from '@/components/ask-ai/context';
 import { AskAiSurface } from '@/components/ask-ai/surface';
-import { floating } from '@/components/ask-ai/surfaces';
+import { floating } from '@/components/elements/surfaces';
 import { useDragResize } from '@/hooks/use-drag-resize';
 import { clamp } from '@/lib/math';
 import { cn } from '@/lib/utils';
@@ -51,7 +51,7 @@ export function AskAiFloating(): ReactNode {
           '[&>*]:bg-inherit',
         )}
       >
-        <AskAiSurface />
+        <AskAiSurface reserveResizeGrip />
         <FloatingResizeGrip onPointerDown={onPointerDown} />
       </div>
     </div>
@@ -66,10 +66,19 @@ function FloatingResizeGrip({
   return (
     <div
       onPointerDown={onPointerDown}
-      className="text-muted-foreground/40 hover:text-muted-foreground/70 absolute start-0 top-0 z-10 size-4 cursor-nwse-resize transition-colors"
+      className={cn(
+        'absolute start-2 top-2 z-10 size-4 cursor-nwse-resize transition-colors',
+        'text-foreground/30 hover:text-foreground/60',
+      )}
     >
       <svg viewBox="0 0 16 16" aria-hidden="true" className="size-full">
-        <path d="M2 7 L7 2 M2 11 L11 2" stroke="currentColor" strokeWidth="1" fill="none" />
+        <path
+          d="M1 8 L8 1 M1 13 L13 1"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          fill="none"
+        />
       </svg>
     </div>
   );
