@@ -16,8 +16,8 @@ import { AskAiPanelProvider } from '@/components/ask-ai/context';
 import { AskAiFloating } from '@/components/ask-ai/floating';
 import { AskAiLauncher } from '@/components/ask-ai/launcher';
 import { AskAiPanel } from '@/components/ask-ai/panel';
-import { AskAiSelectionToolbar } from '@/components/ask-ai/selection-toolbar';
 import { AskAiSources } from '@/components/ask-ai/sources';
+import { SelectionToolbar } from '@/components/assistant-ui/quote';
 import { createGetCheckpointId } from '@/lib/ask-ai/checkpoints';
 import { createAgentClient } from '@/lib/ask-ai/client';
 import { bindFeedbackUrl, feedbackAdapter, rememberFeedbackUrl } from '@/lib/ask-ai/feedback';
@@ -107,7 +107,7 @@ export function AskAi(): ReactNode {
       <AskAiPanelProvider>
         {mode === 'docked' ? <AskAiPanel /> : <AskAiFloating />}
         <AskAiLauncher />
-        <AskAiSelectionToolbar />
+        <SelectionToolbar className="z-50 shadow-md" />
       </AskAiPanelProvider>
     </AssistantRuntimeProvider>
   );

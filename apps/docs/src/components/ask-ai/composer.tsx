@@ -1,6 +1,7 @@
 import { AuiIf, ComposerPrimitive, QueueItemPrimitive } from '@assistant-ui/react';
 import { ArrowUpIcon, MicIcon, SquareIcon, XIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { ComposerQuotePreview } from '@/components/assistant-ui/quote';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -20,14 +21,7 @@ export function AskAiComposer({
       <AskAiComposerQueue />
 
       <div className="bg-muted/55 focus-within:bg-muted/75 rounded-3xl border border-transparent transition-colors">
-        <ComposerPrimitive.Quote className="text-muted-foreground mx-3.5 mt-2.5 flex items-start gap-2 rounded-lg border-s-2 border-current/30 bg-current/[0.04] py-1.5 ps-2 pe-1.5 text-xs">
-          <ComposerPrimitive.QuoteText className="line-clamp-3 flex-1" />
-          <ComposerPrimitive.QuoteDismiss asChild>
-            <Button type="button" variant="ghost" size="icon" className="size-5 shrink-0">
-              <XIcon className="size-3" />
-            </Button>
-          </ComposerPrimitive.QuoteDismiss>
-        </ComposerPrimitive.Quote>
+        <ComposerQuotePreview className="mx-3.5 mt-2.5" />
 
         <ComposerPrimitive.Input asChild>
           <textarea

@@ -1,7 +1,7 @@
 import { type PointerEvent, type ReactNode, useRef, useState } from 'react';
 import { useAskAiPanel } from '@/components/ask-ai/context';
 import { AskAiSurface } from '@/components/ask-ai/surface';
-import { floating } from '@/components/ask-ai/surfaces';
+import { floating } from '@/components/elements/surfaces';
 import { useDragResize } from '@/hooks/use-drag-resize';
 import { clamp } from '@/lib/math';
 import { cn } from '@/lib/utils';

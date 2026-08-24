@@ -22,6 +22,7 @@ import type { ComponentType, ReactNode } from 'react';
 import { AskAiActionBar } from '@/components/ask-ai/action-bar';
 import { DotMatrix } from '@/components/assistant-ui/dot-matrix';
 import { MarkdownText } from '@/components/assistant-ui/markdown-text';
+import { QuoteBlock } from '@/components/assistant-ui/quote';
 import { Reasoning } from '@/components/assistant-ui/reasoning';
 import type { SearchArtifact } from '@/lib/ask-ai/protocol';
 import { askAiSearch } from '@/lib/ask-ai/store';
@@ -32,13 +33,7 @@ const MS_IN_SECOND = 1_000;
 export function UserMessage(): ReactNode {
   return (
     <MessagePrimitive.Root className="flex flex-col items-end py-2" data-role="user">
-      <MessagePrimitive.Quote>
-        {({ text }) => (
-          <div className="text-muted-foreground border-border/60 mb-1 line-clamp-3 max-w-[85%] border-s-2 py-1 ps-2 text-xs italic">
-            {text}
-          </div>
-        )}
-      </MessagePrimitive.Quote>
+      <MessagePrimitive.Quote>{(quote) => <QuoteBlock {...quote} />}</MessagePrimitive.Quote>
       <div className="bg-muted max-w-[85%] rounded-2xl px-3 py-2 text-sm empty:hidden">
         <MessagePrimitive.Parts />
       </div>
