@@ -1,16 +1,213 @@
 @import "tailwindcss";
-@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/shadcn.css";
 @import "fumadocs-ui/css/preset.css";
 @import "fumadocs-openapi/css/preset.css";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "./typeset.css";
+@import "@fontsource-variable/inter/opsz.css";
+@import "@fontsource/ibm-plex-mono";
 @import "tw-shimmer";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --fd-banner-height: 3.5rem;
+  --fd-banner-height: 3rem;
+  --code-surface: color-mix(in oklab, var(--foreground) 4%, var(--background));
+}
+
+@layer components {
+  .typeset-docs {
+    --typeset-size: 0.875rem;
+    --typeset-leading: 1.7;
+    --typeset-flow: 1.4286em;
+  }
+
+  .typeset-blog {
+    --typeset-size: 0.9375rem;
+    --typeset-leading: 1.75;
+    --typeset-flow: 1.3333em;
+  }
+
+  .typeset-docs :is(h1, h2, h3, h4, h5, h6) a {
+    text-decoration: none;
+    font-weight: inherit;
+  }
+
+  .typeset-docs a {
+    font-weight: inherit;
+    text-underline-offset: 2px;
+  }
+
+  .typeset-docs h2 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.4;
+    margin-block-start: 2.5rem;
+  }
+
+  .typeset-docs h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.5;
+    margin-block-start: 2rem;
+  }
+
+  .typeset-docs h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-block-start: 1.5rem;
+  }
+
+  .typeset-docs h2 + * {
+    margin-block-start: 1rem;
+  }
+
+  .typeset-docs h3 + * {
+    margin-block-start: 0.75rem;
+  }
+
+  .typeset-docs h4 + * {
+    margin-block-start: 0.5rem;
+  }
+
+  .typeset-docs :is(ul, ol) {
+    margin-block: 1rem;
+  }
+
+  .typeset-docs li {
+    margin-block: 0.25rem;
+  }
+
+  .typeset-docs :not(pre) > code {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 0.15rem 0.4rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: var(--muted);
+  }
+
+  .typeset-docs pre {
+    margin-block: 1.25rem;
+    border-radius: 0.75rem;
+  }
+
+  .typeset-docs blockquote {
+    font-style: normal;
+    font-weight: 400;
+    color: var(--muted-foreground);
+    margin-block: 1.25rem;
+    padding-inline-start: 1rem;
+    border-inline-start: 2px solid var(--border);
+  }
+
+  .typeset-docs hr {
+    margin-block: 2rem;
+    border-color: var(--border);
+  }
+
+  .typeset-docs img {
+    margin-inline: auto;
+    border-radius: 0.75rem;
+  }
+
+  .typeset-docs table {
+    margin-block: 0;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--muted);
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+
+  .typeset-docs thead {
+    background: transparent;
+  }
+
+  .typeset-docs :is(th, td) {
+    padding: 0.5rem 0.75rem;
+    border: none;
+  }
+
+  .typeset-docs th {
+    text-align: start;
+    font-weight: 500;
+    color: var(--muted-foreground);
+  }
+
+  .typeset-docs td {
+    vertical-align: top;
+  }
+
+  .typeset-docs tr {
+    border: none;
+  }
+
+  .typeset-docs tbody tr {
+    background: var(--background);
+  }
+
+  .typeset-docs tbody tr:first-child td:first-child {
+    border-start-start-radius: 0.5rem;
+  }
+
+  .typeset-docs tbody tr:first-child td:last-child {
+    border-start-end-radius: 0.5rem;
+  }
+
+  .typeset-docs tbody tr:last-child td:first-child {
+    border-end-start-radius: 0.5rem;
+  }
+
+  .typeset-docs tbody tr:last-child td:last-child {
+    border-end-end-radius: 0.5rem;
+  }
+
+  .typeset-docs table code {
+    font-size: 0.75rem;
+    padding: 0.0625rem 0.25rem;
+  }
+
+  .typeset-docs figure.shiki {
+    margin-block: 1.25rem;
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: none;
+    background: var(--code-surface);
+    overflow: hidden;
+  }
+
+  .typeset-docs figure.shiki > div:first-child:has(figcaption) {
+    height: 2.25rem;
+    padding-inline: 0.875rem;
+    border-bottom: none;
+    background: var(--code-surface);
+  }
+
+  .typeset-docs figure.shiki figcaption {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--muted-foreground);
+  }
+
+  .typeset-docs figure.shiki > div[role="region"] {
+    padding-block: 0.875rem;
+    font-size: 0.8125rem;
+    line-height: 1.65;
+    background: var(--code-surface);
+  }
+
+  .typeset-docs figure.shiki pre {
+    --padding-left: 0.875rem;
+    --padding-right: 0.875rem;
+    margin-block: 0;
+  }
 }
 
 html {
@@ -41,7 +238,8 @@ html[data-ask-ai-resizing] body {
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: "Geist Variable", sans-serif;
+  --font-sans: "Inter Variable", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -173,10 +371,86 @@ html[data-ask-ai-resizing] body {
   }
   body {
     @apply bg-background text-foreground;
+    font-optical-sizing: auto;
   }
   html {
     @apply font-sans;
   }
+}
+
+#nd-sidebar {
+  background: transparent;
+  border-inline-end: none;
+}
+
+:is(#nd-sidebar, #nd-sidebar-mobile) :is(a, button):not([data-sidebar-control]) {
+  padding-block: 0.375rem;
+  padding-inline-end: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  background: transparent;
+  color: var(--muted-foreground);
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+:is(#nd-sidebar, #nd-sidebar-mobile) :is(a, button):not([data-sidebar-control]):hover {
+  color: color-mix(in oklab, var(--foreground) 90%, transparent);
+  background: color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+:is(#nd-sidebar, #nd-sidebar-mobile) a[data-active="true"] {
+  color: var(--foreground);
+  font-weight: 500;
+  background: color-mix(in oklab, var(--accent) 20%, transparent);
+}
+
+.dark :is(#nd-sidebar, #nd-sidebar-mobile) :is(a, button):not([data-sidebar-control]):hover {
+  background: color-mix(in oklab, var(--accent) 40%, transparent);
+}
+
+.dark :is(#nd-sidebar, #nd-sidebar-mobile) a[data-active="true"] {
+  background: color-mix(in oklab, var(--accent) 50%, transparent);
+}
+
+:is(#nd-sidebar, #nd-sidebar-mobile) a[data-active="true"]::before {
+  display: none;
+}
+
+:is(#nd-sidebar, #nd-sidebar-mobile) p.inline-flex {
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+}
+
+:is(#nd-sidebar, #nd-sidebar-mobile) p.inline-flex:first-child {
+  margin-top: 0.25rem;
+}
+
+:is(#nd-sidebar, #nd-sidebar-mobile) svg {
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+#nd-sidebar [class*="before:bg-fd-border"] {
+  --tw-border-opacity: 0.4;
+}
+
+#nd-toc a {
+  font-size: 0.8125rem;
+  line-height: 1.375;
+}
+
+#nd-toc #toc-title {
+  font-size: 0.75rem;
+  color: color-mix(in oklab, var(--muted-foreground) 70%, transparent);
 }
 
 @custom-variant data-open (&:where([data-state="open"], [data-open]:not([data-open="false"])));

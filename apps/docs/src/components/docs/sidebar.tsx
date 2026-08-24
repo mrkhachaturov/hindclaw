@@ -69,7 +69,7 @@ function SidebarContent({ ref: refProp, className, children, ...props }: Compone
         <>
           <div
             data-sidebar-placeholder=""
-            className="sticky top-(--fd-docs-row-1) z-20 [grid-area:sidebar] pointer-events-none *:pointer-events-auto h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] md:layout:[--fd-sidebar-width:268px] max-md:hidden"
+            className="sticky top-(--fd-docs-row-1) z-20 [grid-area:sidebar] pointer-events-none *:pointer-events-auto h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] md:layout:[--fd-sidebar-width:260px] max-md:hidden"
           >
             {collapsed && <div className="absolute inset-s-0 inset-y-0 w-4" {...rest} />}
             <aside

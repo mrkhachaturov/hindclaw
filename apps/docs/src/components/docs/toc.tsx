@@ -41,7 +41,7 @@ export function TOC({ container, header, footer, style = 'normal', list }: TOCPr
   const { TOCItems, TOCEmpty, TOCItem } = style === 'clerk' ? TocClerk : TocDefault;
 
   if (items.length === 0 && !header && !footer) {
-    return <div id="nd-toc-placeholder" className="hidden xl:layout:[--fd-toc-width:268px]" />;
+    return <div id="nd-toc-placeholder" className="hidden xl:layout:[--fd-toc-width:14rem]" />;
   }
 
   return (
@@ -49,7 +49,7 @@ export function TOC({ container, header, footer, style = 'normal', list }: TOCPr
       id="nd-toc"
       {...container}
       className={cn(
-        'sticky top-(--fd-docs-row-1) h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] flex flex-col [grid-area:toc] w-(--fd-toc-width) pt-12 pe-4 pb-6 xl:layout:[--fd-toc-width:268px] max-xl:hidden',
+        'sticky top-(--fd-docs-row-1) h-[calc(var(--fd-docs-height)-var(--fd-docs-row-1))] flex flex-col [grid-area:toc] w-(--fd-toc-width) pt-12 pe-4 pb-6 xl:layout:[--fd-toc-width:14rem] max-xl:hidden',
         container?.className,
       )}
     >

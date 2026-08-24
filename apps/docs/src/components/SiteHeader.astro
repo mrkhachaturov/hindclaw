@@ -7,6 +7,11 @@ import SiteLogo from '@/components/SiteLogo.astro';
 import { Separator } from '@/components/ui/separator';
 import { SITE } from '@/lib/site';
 
+interface Props {
+  wide?: boolean;
+}
+
+const { wide = false } = Astro.props;
 const { pathname } = Astro.url;
 
 const links = [
@@ -19,9 +24,15 @@ const links = [
 const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 ---
 
-<header class="sticky top-0 z-30 border-b border-fd-border bg-fd-background/80 backdrop-blur-sm">
+<header
+  id="site-header"
+  class="sticky top-0 z-30 transition-colors duration-200 data-[scrolled]:bg-background/80 data-[scrolled]:backdrop-blur-md"
+>
   <nav
-    class="mx-auto flex h-(--fd-banner-height) max-w-6xl items-center gap-6 px-4 **:data-[slot=separator]:h-4"
+    class:list={[
+      'flex h-(--fd-banner-height) w-full items-center gap-6 px-4 **:data-[slot=separator]:h-4',
+      !wide && 'mx-auto max-w-7xl',
+    ]}
   >
     <a href="/" class="flex shrink-0 items-center gap-2 font-medium tracking-tight">
       <SiteLogo class="size-[18px] text-fd-foreground" />
@@ -66,3 +77,21 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(`${h
 </header>
 
 <AskAi client:idle transition:persist />
+
+<script>
+  const sync = () => {
+    const header = document.getElementById('site-header');
+    if (!header) return;
+    if (window.scrollY > 0) header.setAttribute('data-scrolled', '');
+    else header.removeAttribute('data-scrolled');
+  };
+
+  document.addEventListener('astro:page-load', () => {
+    sync();
+    window.addEventListener('scroll', sync, { passive: true });
+  });
+
+  document.addEventListener('astro:before-swap', () => {
+    window.removeEventListener('scroll', sync);
+  });
+</script>
