@@ -16,9 +16,11 @@ ENV NODE_ENV=production \
     HOST=0.0.0.0 \
     PORT=4321
 
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
+COPY --from=build --chown=node:node /app/package.json ./package.json
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/dist ./dist
+
+RUN chmod -R u=rwX,go=rX dist
 
 USER node
 EXPOSE 4321
