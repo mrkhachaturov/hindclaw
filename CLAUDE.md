@@ -54,7 +54,7 @@ and publish flows are owned in their own repositories.
 
 - **Server extension**: Python 3.12, asyncpg, PyJWT, Pydantic, FastAPI
 - **OpenClaw plugin**: TypeScript (ESM), Node.js 22+, Vitest, JSON5
-- **Docs**: Astro 7 + fumadocs, Tailwind 4, static build to Cloudflare Pages
+- **Docs**: Astro 7 + fumadocs, Tailwind 4, node adapter, shipped as a container image
 - **Toolchain**: mise (monorepo tasks), hk (git hooks), flint (linters), biome
 
 ## hindclaw-extension (Python)
@@ -119,8 +119,8 @@ The repo is a mise monorepo. `hindclaw-docs` and `hindclaw-extension` are config
 their own `mise.toml`, so their tasks are addressed by path:
 
 ```bash
-mise run //apps/docs:dev          # docs dev server on :4321
-mise run //apps/docs:build        # static build into apps/docs/dist
+mise run //apps/docs:dev          # docs dev server on :3000
+mise run //apps/docs:build        # build into apps/docs/dist
 mise run //apps/docs:check        # lint, typecheck, test, build
 mise run //apps/docs:sync-search  # push the search index to Typesense
 mise run //packages/extension:check   # ruff, ty, pytest

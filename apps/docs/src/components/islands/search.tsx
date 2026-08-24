@@ -2,7 +2,7 @@ import { useSearchContext } from 'fumadocs-ui/contexts/search';
 import { RootProvider } from 'fumadocs-ui/provider/astro';
 import { SearchIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { TypesenseSearchDialog as SearchDialog } from '@/components/search';
+import { DocsSearchDialog as SearchDialog } from '@/components/search';
 import { Button } from '@/components/ui/button';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 

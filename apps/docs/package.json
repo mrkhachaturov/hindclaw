@@ -20,9 +20,11 @@
     "@assistant-ui/react-markdown": "^0.14.12",
     "@astrojs/markdown-remark": "^7.2.4",
     "@astrojs/mdx": "^7.0.7",
+    "@astrojs/node": "^11.1.4",
     "@astrojs/react": "^6.0.4",
     "@base-ui/react": "^1.7.0",
     "@fontsource-variable/geist": "^5.3.0",
+    "@infisical/sdk": "^5.0.2",
     "@nanostores/react": "^1.1.0",
     "ai": "^7.0.73",
     "astro": "^7.2.4",
@@ -57,8 +59,7 @@
     "@types/react-dom": "^19.2.4",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.11",
-    "wrangler": "^4.125.0"
+    "vitest": "^4.1.11"
   },
   "engines": {
     "node": ">=22"

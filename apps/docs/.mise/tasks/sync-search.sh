@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#MISE description="Push dist/search-index.json into the Typesense collection"
+#MISE description="Push dist/client/search-index.json into the Typesense collection"
 #MISE dir="{{config_root}}"
 #MISE depends=["build"]
 set -euo pipefail
