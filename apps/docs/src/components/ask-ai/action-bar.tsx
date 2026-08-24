@@ -1,6 +1,15 @@
 import { ActionBarPrimitive, AuiIf, useAuiState } from '@assistant-ui/react';
-import { CheckIcon, CopyIcon, ThumbsDownIcon, ThumbsUpIcon } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import {
+  AudioLinesIcon,
+  CheckIcon,
+  CopyIcon,
+  DownloadIcon,
+  RefreshCwIcon,
+  StopCircleIcon,
+  ThumbsDownIcon,
+  ThumbsUpIcon,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 const NON_WHITESPACE_RE = /\S/;
@@ -12,7 +21,6 @@ const buttonClass = cn(
 );
 
 export function AskAiActionBar(): ReactNode {
-  const [feedback, setFeedback] = useState<'positive' | 'negative' | null>(null);
   const content = useAuiState((s) => s.message.content);
   const isRunning = useAuiState((s) => s.message.status?.type === 'running');
 
@@ -32,25 +40,50 @@ export function AskAiActionBar(): ReactNode {
         </AuiIf>
       </ActionBarPrimitive.Copy>
 
-      <button
-        type="button"
-        onClick={() => setFeedback('positive')}
-        disabled={feedback !== null}
-        aria-label="Good response"
-        className={cn(buttonClass, feedback === 'positive' && 'text-green-600 dark:text-green-400')}
-      >
-        <ThumbsUpIcon className="size-4" />
-      </button>
+      <AuiIf condition={(s) => s.thread.capabilities.reload}>
+        <ActionBarPrimitive.Reload aria-label="Regenerate response" className={buttonClass}>
+          <RefreshCwIcon className="size-4" />
+        </ActionBarPrimitive.Reload>
+      </AuiIf>
 
-      <button
-        type="button"
-        onClick={() => setFeedback('negative')}
-        disabled={feedback !== null}
-        aria-label="Report issue with response"
-        className={cn(buttonClass, feedback === 'negative' && 'text-red-600 dark:text-red-400')}
-      >
-        <ThumbsDownIcon className="size-4" />
-      </button>
+      <AuiIf condition={(s) => s.thread.capabilities.speech}>
+        <AuiIf condition={(s) => s.message.speech == null}>
+          <ActionBarPrimitive.Speak aria-label="Read aloud" className={buttonClass}>
+            <AudioLinesIcon className="size-4" />
+          </ActionBarPrimitive.Speak>
+        </AuiIf>
+        <AuiIf condition={(s) => s.message.speech != null}>
+          <ActionBarPrimitive.StopSpeaking aria-label="Stop reading" className={buttonClass}>
+            <StopCircleIcon className="size-4" />
+          </ActionBarPrimitive.StopSpeaking>
+        </AuiIf>
+      </AuiIf>
+
+      <ActionBarPrimitive.ExportMarkdown aria-label="Download as Markdown" className={buttonClass}>
+        <DownloadIcon className="size-4" />
+      </ActionBarPrimitive.ExportMarkdown>
+
+      <AuiIf condition={(s) => s.thread.capabilities.feedback}>
+        <ActionBarPrimitive.FeedbackPositive
+          aria-label="Good response"
+          className={cn(
+            buttonClass,
+            'data-[submitted]:text-green-600 dark:data-[submitted]:text-green-400',
+          )}
+        >
+          <ThumbsUpIcon className="size-4" />
+        </ActionBarPrimitive.FeedbackPositive>
+
+        <ActionBarPrimitive.FeedbackNegative
+          aria-label="Report issue with response"
+          className={cn(
+            buttonClass,
+            'data-[submitted]:text-red-600 dark:data-[submitted]:text-red-400',
+          )}
+        >
+          <ThumbsDownIcon className="size-4" />
+        </ActionBarPrimitive.FeedbackNegative>
+      </AuiIf>
     </ActionBarPrimitive.Root>
   );
 }
