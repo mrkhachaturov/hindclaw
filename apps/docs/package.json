@@ -51,6 +51,7 @@
     "tw-shimmer": "^0.4.12",
     "typesense": "^3.0.6",
     "typesense-fumadocs-adapter": "^0.4.1",
+    "unist-util-visit": "^5.1.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.15"
   },

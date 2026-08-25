@@ -13,6 +13,15 @@ import {
   remarkNpm,
   remarkStructure,
 } from 'fumadocs-core/mdx-plugins';
+import { visit } from 'unist-util-visit';
+
+function rehypeLineNumbers() {
+  return (/** @type {any} */ tree) => {
+    visit(tree, 'element', (/** @type {any} */ node) => {
+      if (node.tagName === 'pre') node.properties['data-line-numbers'] = true;
+    });
+  };
+}
 
 /** @type {any[]} */
 const remarkPlugins = [
@@ -25,7 +34,7 @@ const remarkPlugins = [
 ];
 
 /** @type {any[]} */
-const rehypePlugins = [rehypeCode];
+const rehypePlugins = [rehypeCode, rehypeLineNumbers];
 
 export default defineConfig({
   site: 'https://hindclaw.pro',
