@@ -44,6 +44,25 @@ That also means fumadocs' `layout:` variant works: it compiles to
 `#nd-docs-layout:has(&) { … }`, so `#nd-subnav` raises `--fd-header-height` on our grid by
 existing inside it.
 
+## `fumadocs-ui` is Base UI, not Radix
+
+The import name lies. `fumadocs-ui` resolves to `@fumadocs/base-ui`, and fumadocs ships a
+second implementation of the same components as `@fumadocs/radix-ui`. They differ where it
+matters: the Radix drawer wraps its `<aside>` in `@radix-ui/react-presence`, the Base UI one
+keeps a local `hidden` flag and clears it from its own `onAnimationEnd`.
+
+So **read `apps/docs/node_modules/fumadocs-ui/dist/` or
+`.upstream/fumadocs/packages/base-ui/`, never `.upstream/fumadocs/packages/radix-ui/`.** An
+afternoon was lost debugging a Presence state machine that is not in the bundle.
+
+Two consequences of the Base UI drawer, both load-bearing:
+
+- It hides itself only when the exit animation ends. If that animation does not run, the
+  drawer stays on screen with `data-state="closed"` — open to the eye, closed to the DOM.
+- `SidebarDrawerOverlay` and `SidebarDrawerContent` spread `{...props}` **after** their own
+  `onAnimationEnd`. Passing that prop from our vendored slot silently replaces theirs and
+  the drawer never hides again.
+
 ## Where state lives
 
 > State we own that crosses a component boundary lives in a nanostores atom.
@@ -55,6 +74,7 @@ existing inside it.
 | active theme | ours | atom in `lib/theme/store.ts` |
 | search dialog open | fumadocs | their `SearchProvider`, reached by a command atom |
 | sidebar `collapsed`, drawer `open` | fumadocs | their `SidebarContext` |
+| whether the drawer was open before a navigation | ours | atoms in `lib/sidebar/store.ts` |
 
 `SidebarContext` is private, so the atom cannot own the sidebar. Mirroring it would create
 a second copy of the truth that fumadocs mutates behind our back — the overlay closes the
@@ -69,6 +89,36 @@ the dialog, so `DocsMobile` calls `openSearch()` from `lib/search/store.ts` and 
 inside the search island turns it into `setOpenSearch(true)`. Use `atom.listen`, not
 `subscribe`, for a command channel — `subscribe` fires immediately on mount and would
 replay the last command.
+
+### The drawer outlives the island that renders it
+
+A section link is meant to leave the drawer standing, so the reader can pick a page in the
+new tree without opening it twice — fumadocs clears `closeOnRedirect` for exactly that. In
+Next their layout is never rebuilt and the ref survives. Here every navigation destroys the
+mobile island together with `useState(false)` and that ref, so the drawer always came back
+closed.
+
+`lib/sidebar/store.ts` closes the gap without becoming the mirror this section warns about.
+While a page lives, fumadocs' context stays the only truth — it opens on the trigger, closes
+on the overlay, on the trigger again and on a path change, and the atom renders nothing.
+`DrawerStateSync` writes `open` to the atom when it changes and reads it exactly once, when
+a fresh island mounts, as the value the previous page left behind. One way out, one read in.
+`keepDrawerOpen` carries `closeOnRedirect` across the same gap: the section link sets it,
+the `astro:before-preparation` handler consumes it, and every other navigation clears
+`drawerOpen`.
+
+The one divergence from fumadocs is in `SidebarDrawer`: the entry animation class is applied
+only from the first open the reader performs. A drawer that arrives already open is not
+opening, and would otherwise slide in on every section switch. The exit class stays exactly
+as upstream writes it, because Base UI needs that animation to fire in order to hide.
+
+**Do not add `transition:persist` to the mobile island.** Then its element is carried into
+the new document, the browser re-applies its styles, and the entry animation replays about
+40ms after `astro:page-load` — measured with the same node, same attributes, no DOM
+mutation. It also delays the close on a page link until after the swap, because `pathname`
+reaches the island as a prop. `slots.sidebar` must stay a module-scope object for the same
+family of reasons: an arrow in JSX is a new component type on every render, React remounts
+on a type change, and the rebuilt drawer re-reads the atom and forces itself back open.
 
 ### The theme is split in two
 

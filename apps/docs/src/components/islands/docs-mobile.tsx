@@ -1,13 +1,14 @@
 import { navigate } from 'astro:transitions/client';
+import { useStore } from '@nanostores/react';
 import type { AstroProviderProps } from 'fumadocs-core/framework/astro';
 import type { Root } from 'fumadocs-core/page-tree';
 import type { TOCItemType } from 'fumadocs-core/toc';
+import { useTreeContext } from 'fumadocs-ui/contexts/tree';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
-import { getLayoutTabs } from 'fumadocs-ui/layouts/shared';
 import { TOCPopover, TOCProvider } from 'fumadocs-ui/layouts/docs/page/slots/toc';
+import { getLayoutTabs } from 'fumadocs-ui/layouts/shared';
 import { RootProvider } from 'fumadocs-ui/provider/astro';
 import { MoonIcon, SearchIcon, SunIcon } from 'lucide-react';
-import { useStore } from '@nanostores/react';
 import { type ComponentProps, type ReactNode, useMemo } from 'react';
 import {
   MobileSidebar,
@@ -71,6 +72,7 @@ function GitHubLink() {
       <svg viewBox="0 0 24 24" fill="currentColor" className="size-4.5" aria-hidden="true">
         <path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.1.9 2.3v3.3c0 .3.1.7.8.6A12 12 0 0 0 12 .3" />
       </svg>
+      <span className="sr-only">GitHub</span>
     </a>
   );
 }
@@ -103,6 +105,20 @@ function SearchTriggerSm({ className }: { className?: string }) {
   );
 }
 
+function MobileSidebarRoot(props: ComponentProps<typeof MobileSidebar>) {
+  const { full } = useTreeContext();
+  const tabs = useMemo(() => getLayoutTabs(full), [full]);
+
+  return <MobileSidebar {...props} tabs={tabs} banner={<GitHubLink />} footer={<ThemeToggle />} />;
+}
+
+const SIDEBAR_SLOT = {
+  provider: SidebarProvider,
+  root: MobileSidebarRoot,
+  trigger: SidebarTrigger,
+  useSidebar,
+};
+
 export function DocsMobile({
   tree,
   toc,
@@ -115,7 +131,6 @@ export function DocsMobile({
   params: AstroProviderProps['params'];
 }): ReactNode {
   const resolvedTree = useMemo(() => resolveTreeIcons(tree), [tree]);
-  const tabs = useMemo(() => getLayoutTabs(resolvedTree), [resolvedTree]);
 
   return (
     <RootProvider
@@ -133,14 +148,7 @@ export function DocsMobile({
           container: PassThroughContainer,
           navTitle: NavTitle,
           searchTrigger: { sm: SearchTriggerSm, full: SearchTriggerSm },
-          sidebar: {
-            provider: SidebarProvider,
-            root: (props) => (
-              <MobileSidebar {...props} tabs={tabs} banner={<GitHubLink />} footer={<ThemeToggle />} />
-            ),
-            trigger: SidebarTrigger,
-            useSidebar,
-          },
+          sidebar: SIDEBAR_SLOT,
         }}
       >
         <TOCProvider toc={toc}>

@@ -10,10 +10,11 @@ import {
 import { useTreePath } from 'fumadocs-ui/contexts/tree';
 import { isLayoutTabActive, type LayoutTab } from 'fumadocs-ui/layouts/shared';
 import { Check, ChevronsUpDown, SidebarIcon } from 'lucide-react';
-import { type ComponentProps, type ReactNode, useMemo, useRef, useState } from 'react';
+import { type ComponentProps, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { buttonVariants } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { mergeRefs } from '@/lib/merge-refs';
+import { drawerOpen, keepDrawerOpen } from '@/lib/sidebar/store';
 import { cn } from '@/lib/utils';
 
 const itemVariants = cva(
@@ -50,8 +51,44 @@ export type SidebarProviderProps = Base.SidebarProviderProps;
 
 export const { useSidebar } = Base;
 
-export function SidebarProvider(props: SidebarProviderProps) {
-  return <Base.SidebarProvider {...props} />;
+function DrawerStateSync() {
+  const { open, setOpen } = useSidebar();
+  const adopted = useRef(false);
+
+  useEffect(() => {
+    if (!adopted.current) {
+      adopted.current = true;
+      if (drawerOpen.get()) setOpen(true);
+      return;
+    }
+
+    drawerOpen.set(open);
+  }, [open, setOpen]);
+
+  useEffect(() => {
+    const onNavigate = () => {
+      if (keepDrawerOpen.get()) {
+        keepDrawerOpen.set(false);
+        return;
+      }
+
+      drawerOpen.set(false);
+    };
+
+    document.addEventListener('astro:before-preparation', onNavigate);
+    return () => document.removeEventListener('astro:before-preparation', onNavigate);
+  }, []);
+
+  return null;
+}
+
+export function SidebarProvider({ children, ...props }: SidebarProviderProps) {
+  return (
+    <Base.SidebarProvider {...props}>
+      <DrawerStateSync />
+      {children}
+    </Base.SidebarProvider>
+  );
 }
 
 function SidebarFolder(props: ComponentProps<typeof Base.SidebarFolder>) {
@@ -127,17 +164,44 @@ function SidebarContent({ ref: refProp, className, children, ...props }: Compone
   );
 }
 
+function useEntersOnOpen(open: boolean, carriedOpen: boolean) {
+  const [enters, setEnters] = useState(false);
+  const previous = useRef(open);
+  const skip = useRef(carriedOpen);
+
+  if (open !== previous.current) {
+    previous.current = open;
+
+    if (open) {
+      if (skip.current) skip.current = false;
+      else setEnters(true);
+    }
+  }
+
+  return enters;
+}
+
 function SidebarDrawer({
   children,
   className,
   ...props
 }: ComponentProps<typeof Base.SidebarDrawerContent>) {
+  const { open } = useSidebar();
+  const carried = useRef(drawerOpen.get()).current;
+  const enters = useEntersOnOpen(open, carried);
+
   return (
     <>
-      <Base.SidebarDrawerOverlay className="fixed z-40 inset-0 backdrop-blur-xs data-[state=open]:animate-fd-fade-in data-[state=closed]:animate-fd-fade-out" />
+      <Base.SidebarDrawerOverlay
+        className={cn(
+          'fixed z-40 inset-0 backdrop-blur-xs data-[state=closed]:animate-fd-fade-out',
+          enters && 'data-[state=open]:animate-fd-fade-in',
+        )}
+      />
       <Base.SidebarDrawerContent
         className={cn(
-          'fixed text-[0.9375rem] flex flex-col shadow-lg border-s inset-e-0 inset-y-0 w-[85%] max-w-[380px] z-40 bg-fd-background data-[state=open]:animate-fd-sidebar-in data-[state=closed]:animate-fd-sidebar-out',
+          'fixed text-[0.9375rem] flex flex-col shadow-lg border-s inset-e-0 inset-y-0 w-[85%] max-w-[380px] z-40 bg-fd-background data-[state=closed]:animate-fd-sidebar-out',
+          enters && 'data-[state=open]:animate-fd-sidebar-in',
           className,
         )}
         {...props}
@@ -282,6 +346,7 @@ function SidebarTabsDropdown({
 
   const onClick = () => {
     closeOnRedirect.current = false;
+    keepDrawerOpen.set(true);
     setOpen(false);
   };
 
@@ -316,7 +381,7 @@ function SidebarTabsDropdown({
       <PopoverContent className="flex flex-col gap-1 w-(--anchor-width) p-1 fd-scroll-container">
         {tabs.map((item) => {
           const isActive = selected && item.url === selected.url;
-          if (!isActive && item.unlisted) return;
+          if (!isActive && item.unlisted) return null;
 
           return (
             <Link
