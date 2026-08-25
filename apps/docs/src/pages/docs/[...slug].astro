@@ -62,7 +62,7 @@ const title = page.data.title ?? 'Documentation';
       pathname={pathname}
       params={Astro.params}
       client:media="(min-width: 768px)"
-      transition:persist
+      transition:persist="docs-sidebar"
     />
 
     <DocsMobile

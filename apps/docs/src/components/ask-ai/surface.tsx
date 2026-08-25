@@ -10,7 +10,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { askAiMode, toggleAskAiMode } from '@/lib/ask-ai/store';
 import { cn } from '@/lib/utils';
 
+type SurfaceLayout = 'panel' | 'sheet';
+
 type SurfaceHeaderProps = {
+  layout: SurfaceLayout;
   showHistory: boolean;
   onToggleHistory: () => void;
   onLeaveHistory: () => void;
@@ -18,9 +21,13 @@ type SurfaceHeaderProps = {
 };
 
 export function AskAiSurface({
+  layout = 'panel',
   reserveResizeGrip = false,
+  children,
 }: {
+  layout?: SurfaceLayout;
   reserveResizeGrip?: boolean;
+  children?: ReactNode;
 } = {}): ReactNode {
   const [showHistory, setShowHistory] = useState(false);
 
@@ -29,6 +36,7 @@ export function AskAiSurface({
   return (
     <div className="bg-background flex h-full min-h-0 flex-col">
       <SurfaceHeader
+        layout={layout}
         showHistory={showHistory}
         onToggleHistory={() => setShowHistory((shown) => !shown)}
         onLeaveHistory={() => setShowHistory(false)}
@@ -43,11 +51,13 @@ export function AskAiSurface({
           <AskAiThread />
         )}
       </div>
+      {children}
     </div>
   );
 }
 
 function SurfaceHeader({
+  layout,
   showHistory,
   onToggleHistory,
   onLeaveHistory,
@@ -57,10 +67,13 @@ function SurfaceHeader({
   const mode = useStore(askAiMode);
   const aui = useAui();
 
+  const sheet = layout === 'sheet';
+
   return (
     <div
       className={cn(
-        'flex h-12 shrink-0 items-center justify-between px-3',
+        'flex shrink-0 items-center justify-between px-3',
+        sheet ? 'h-14' : 'h-12',
         reserveResizeGrip && 'ps-8',
       )}
     >
@@ -71,14 +84,18 @@ function SurfaceHeader({
         <span className="text-sm font-semibold">Ask AI</span>
       </div>
 
-      <div className="flex items-center gap-0.5">
+      <div className={cn('flex items-center', sheet ? 'gap-1' : 'gap-0.5')}>
+        {!sheet && (
+          <HeaderAction
+            layout={layout}
+            tooltip={mode === 'docked' ? 'Detach from sidebar' : 'Dock to sidebar'}
+            onClick={toggleAskAiMode}
+          >
+            <PanelRightIcon className={cn('size-4', mode === 'floating' && 'rotate-180')} />
+          </HeaderAction>
+        )}
         <HeaderAction
-          tooltip={mode === 'docked' ? 'Detach from sidebar' : 'Dock to sidebar'}
-          onClick={toggleAskAiMode}
-        >
-          <PanelRightIcon className={cn('size-4', mode === 'floating' && 'rotate-180')} />
-        </HeaderAction>
-        <HeaderAction
+          layout={layout}
           tooltip={showHistory ? 'Back to chat' : 'History'}
           onClick={onToggleHistory}
           active={showHistory}
@@ -86,6 +103,7 @@ function SurfaceHeader({
           <HistoryIcon className="size-4" />
         </HeaderAction>
         <HeaderAction
+          layout={layout}
           tooltip="New chat"
           onClick={() => {
             aui.threads.switchToNewThread();
@@ -94,7 +112,7 @@ function SurfaceHeader({
         >
           <PlusIcon className="size-4" />
         </HeaderAction>
-        <HeaderAction tooltip="Close chat" onClick={() => setOpen(false)}>
+        <HeaderAction layout={layout} tooltip="Close chat" onClick={() => setOpen(false)}>
           <XIcon className="size-4" />
         </HeaderAction>
       </div>
@@ -103,11 +121,13 @@ function SurfaceHeader({
 }
 
 function HeaderAction({
+  layout,
   tooltip,
   onClick,
   active = false,
   children,
 }: {
+  layout: SurfaceLayout;
   tooltip: string;
   onClick: () => void;
   active?: boolean;
@@ -119,7 +139,7 @@ function HeaderAction({
         render={
           <Button
             variant="ghost"
-            size="icon-sm"
+            size={layout === 'sheet' ? 'icon-lg' : 'icon-sm'}
             onClick={onClick}
             aria-label={tooltip}
             className={cn(active && 'bg-muted text-foreground')}

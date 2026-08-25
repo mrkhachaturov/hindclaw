@@ -26,6 +26,21 @@ carries `transition:persist` so its collapsed state survives client-side navigat
 island that contains page content cannot be persisted, because Astro would keep the
 previous page's text with it. This was the reason the page was split up in the first place.
 
+### Every `transition:persist` carries a name
+
+A bare `transition:persist` gets the name Astro generates, and that name ends in a counter
+incremented once per transition directive in the page render — `astro-<file hash>-1` on a
+page that renders one, `-2` on a page that renders two. `AskAi` sits in `SiteHeader.astro`
+on every page, but on a docs page `DocsSidebar` takes the first number, so the same island
+was `astro-typyj2n2-2` under `/docs` and `astro-typyj2n2-1` on the home page. The names do
+not match, nothing is carried over, and the swap leaves the old React tree alive with its
+DOM detached: the docked panel is replaced by the server's closed markup, while the
+detached tree keeps its `astro:after-swap` listener and re-applies
+`--ask-ai-panel-width`, so the body stays pushed aside with no panel beside it.
+
+So name them — `transition:persist="ask-ai"`, `transition:persist="docs-sidebar"`. The name
+is what makes the island the same island on both sides of a navigation.
+
 Passing content into an island is otherwise free: Astro's React integration turns a slot
 into `memo(StaticHtml, () => true)` with `dangerouslySetInnerHTML` and
 `suppressHydrationWarning`, so React never re-renders or diffs it, and the HTML is read
@@ -129,6 +144,37 @@ hydration, which is a flash of the wrong theme on every load.
 Everything after that is the atom in `lib/theme/store.ts`. Astro toggles are bound by
 `[data-theme-toggle]` on `astro:page-load`; React toggles call `toggleTheme()` directly,
 which matters because an island hydrates long after that event has fired.
+
+## Ask AI is one surface in three shells
+
+`AskAiSurface` is the whole product — header, thread, welcome, suggestions, composer, thread
+list. It never knows where it is. Around it sit three shells that do nothing but place it:
+
+| shell | file | viewport |
+|---|---|---|
+| docked panel | `ask-ai/panel.tsx` | `md` and up, `askAiMode === 'docked'` |
+| floating window | `ask-ai/floating.tsx` | `md` and up, `askAiMode === 'floating'` |
+| full-screen sheet | `ask-ai/mobile.tsx` | below `md` |
+
+A new viewport gets a new shell, never a second copy of the surface. The sheet passes
+`layout="sheet"`, which is the only thing the header branches on: bigger hit targets and no
+dock toggle, because there is nothing to dock to on a phone.
+
+The shell is chosen in the island by `useMediaQuery`, not by CSS. CSS can hide a panel; it
+cannot make one modal. The sheet is `ui/sheet.tsx` — shadcn's Base UI Sheet, added with the
+CLI and left untouched — so it carries the focus trap, the scroll lock, `aria-modal` and Esc
+that a `fixed inset-0` div would have to reinvent one bug at a time. `useMediaQuery` returns
+`false` from `getServerSnapshot`, so the desktop shell is what hydrates and the swap happens
+on the first client render.
+
+Overriding a `side` variant on `SheetContent` needs the same variant prefix —
+`data-[side=right]:w-full`, not `w-full`. The registry's own `data-[side=right]:w-3/4`
+carries a class-plus-attribute selector, so a bare utility loses on specificity and
+tailwind-merge never sees the two as a conflict. A sheet that opens at three quarters width,
+or at `h-auto` when you asked for `h-dvh`, is this and nothing else.
+
+`--ask-ai-panel-width` pushes the body aside only inside a `min-width: 48rem` media query.
+Below that the sheet covers the page and there is nothing to push.
 
 ## Search sits in the header, not the sidebar
 

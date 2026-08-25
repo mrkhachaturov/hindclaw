@@ -15,9 +15,11 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { AskAiPanelProvider } from '@/components/ask-ai/context';
 import { AskAiFloating } from '@/components/ask-ai/floating';
 import { AskAiLauncher } from '@/components/ask-ai/launcher';
+import { AskAiMobileLauncher, AskAiSheet } from '@/components/ask-ai/mobile';
 import { AskAiPanel } from '@/components/ask-ai/panel';
 import { AskAiSources } from '@/components/ask-ai/sources';
 import { SelectionToolbar } from '@/components/assistant-ui/quote';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { createGetCheckpointId } from '@/lib/ask-ai/checkpoints';
 import { createAgentClient } from '@/lib/ask-ai/client';
 import { bindFeedbackUrl, feedbackAdapter, rememberFeedbackUrl } from '@/lib/ask-ai/feedback';
@@ -47,6 +49,7 @@ function dictationAdapter() {
 
 export function AskAi(): ReactNode {
   const mode = useStore(askAiMode);
+  const isMobile = useMediaQuery('(max-width: 767px)');
 
   const client = useMemo(() => createAgentClient(), []);
   const [threadListAdapter] = useState(() => new AskAiThreadListAdapter(client));
@@ -105,8 +108,17 @@ export function AskAi(): ReactNode {
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <AskAiPanelProvider>
-        {mode === 'docked' ? <AskAiPanel /> : <AskAiFloating />}
-        <AskAiLauncher />
+        {isMobile ? (
+          <>
+            <AskAiSheet />
+            <AskAiMobileLauncher />
+          </>
+        ) : (
+          <>
+            {mode === 'docked' ? <AskAiPanel /> : <AskAiFloating />}
+            <AskAiLauncher />
+          </>
+        )}
         <SelectionToolbar className="z-50 shadow-md" />
       </AskAiPanelProvider>
     </AssistantRuntimeProvider>

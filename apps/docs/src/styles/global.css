@@ -223,9 +223,11 @@ html > body[data-scroll-locked] {
   --removed-body-scroll-bar-size: 0px !important;
 }
 
-body {
-  padding-inline-end: var(--ask-ai-panel-width, 0px);
-  transition: padding-inline-end 300ms cubic-bezier(0.32, 0.72, 0, 1);
+@media (width >= 48rem) {
+  body {
+    padding-inline-end: var(--ask-ai-panel-width, 0px);
+    transition: padding-inline-end 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
 }
 
 html[data-ask-ai-resizing] body {
