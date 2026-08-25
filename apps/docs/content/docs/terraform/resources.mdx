@@ -1,0 +1,24 @@
+---
+title: Resources
+description: What each resource maps onto in the server.
+---
+
+Every resource maps onto one object in the management API, so anything you can declare
+here you can also read back over REST.
+
+## Identities
+
+`hindclaw_user` and `hindclaw_service_account` create the two kinds of caller. A user is
+a person and authenticates with a JWT; a service account authenticates with an API key
+and is what an agent should use.
+
+## Grouping
+
+`hindclaw_group` collects users. Policies attach to groups rather than to individuals,
+which is what keeps a fleet of agents manageable once it stops being three of them.
+
+## Memory
+
+`hindclaw_bank` creates a memory bank. `hindclaw_policy` decides who may recall from it
+and who may retain into it. Both are ordinary resources: a plan shows the change, and
+removing a policy from configuration revokes the access on the next apply.

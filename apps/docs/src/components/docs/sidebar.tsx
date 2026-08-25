@@ -1,13 +1,18 @@
 'use client';
 import { cva } from 'class-variance-authority';
+import { usePathname } from 'fumadocs-core/framework';
+import Link from 'fumadocs-core/link';
 import * as Base from 'fumadocs-ui/components/sidebar/base';
 import {
   createPageTreeRenderer,
   type SidebarPageTreeComponents,
 } from 'fumadocs-ui/components/sidebar/page-tree';
-import { SidebarIcon } from 'lucide-react';
-import { type ComponentProps, type ReactNode, useRef } from 'react';
+import { useTreePath } from 'fumadocs-ui/contexts/tree';
+import { isLayoutTabActive, type LayoutTab } from 'fumadocs-ui/layouts/shared';
+import { Check, ChevronsUpDown, SidebarIcon } from 'lucide-react';
+import { type ComponentProps, type ReactNode, useMemo, useRef, useState } from 'react';
 import { buttonVariants } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { mergeRefs } from '@/lib/merge-refs';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +36,7 @@ export interface SidebarProps extends ComponentProps<'aside'> {
   components?: Partial<SidebarPageTreeComponents>;
   banner?: ReactNode;
   footer?: ReactNode;
+  tabs?: LayoutTab[];
 
   /**
    * Support collapsing the sidebar on desktop mode
@@ -257,6 +263,94 @@ function SidebarFolderContent({
   );
 }
 
+function SidebarTabsDropdown({
+  tabs,
+  placeholder,
+  ...props
+}: {
+  placeholder?: ReactNode;
+  tabs: LayoutTab[];
+} & ComponentProps<'button'>) {
+  const [open, setOpen] = useState(false);
+  const { closeOnRedirect } = useSidebar();
+  const pathname = usePathname();
+  const path = useTreePath();
+
+  const selected = useMemo(() => {
+    return tabs.findLast((item) => isLayoutTabActive(item, path, pathname));
+  }, [tabs, path, pathname]);
+
+  const onClick = () => {
+    closeOnRedirect.current = false;
+    setOpen(false);
+  };
+
+  const item = selected ? (
+    <>
+      <div className="size-9 shrink-0 empty:hidden md:size-5">{selected.icon}</div>
+      <div>
+        <p className="text-sm font-medium">{selected.title}</p>
+        <p className="text-sm text-fd-muted-foreground empty:hidden md:hidden">
+          {selected.description}
+        </p>
+      </div>
+    </>
+  ) : (
+    placeholder
+  );
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      {item && (
+        <PopoverTrigger
+          {...props}
+          className={cn(
+            'flex items-center gap-2 rounded-lg p-2 border bg-fd-secondary/50 text-start text-fd-secondary-foreground transition-colors hover:bg-fd-accent data-[popup-open]:bg-fd-accent data-[popup-open]:text-fd-accent-foreground',
+            props.className,
+          )}
+        >
+          {item}
+          <ChevronsUpDown className="shrink-0 ms-auto size-4 text-fd-muted-foreground" />
+        </PopoverTrigger>
+      )}
+      <PopoverContent className="flex flex-col gap-1 w-(--anchor-width) p-1 fd-scroll-container">
+        {tabs.map((item) => {
+          const isActive = selected && item.url === selected.url;
+          if (!isActive && item.unlisted) return;
+
+          return (
+            <Link
+              key={item.url}
+              href={item.url}
+              onClick={onClick}
+              {...item.props}
+              className={cn(
+                'flex items-center gap-2 rounded-lg p-1.5 hover:bg-fd-accent hover:text-fd-accent-foreground',
+                item.props?.className,
+              )}
+            >
+              <div className="shrink-0 size-9 md:mb-auto md:size-5 empty:hidden">{item.icon}</div>
+              <div>
+                <p className="text-sm font-medium leading-none">{item.title}</p>
+                <p className="text-[0.8125rem] text-fd-muted-foreground mt-1 empty:hidden">
+                  {item.description}
+                </p>
+              </div>
+
+              <Check
+                className={cn(
+                  'shrink-0 ms-auto size-3.5 text-fd-primary',
+                  !isActive && 'invisible',
+                )}
+              />
+            </Link>
+          );
+        })}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function getItemOffset(depth: number) {
   return `calc(${2 + 3 * depth} * var(--spacing))`;
 }
@@ -270,7 +364,14 @@ const SidebarPageTree = createPageTreeRenderer({
   SidebarSeparator,
 });
 
-export function Sidebar({ footer, banner, collapsible = true, components, ...rest }: SidebarProps) {
+export function Sidebar({
+  footer,
+  banner,
+  collapsible = true,
+  components,
+  tabs = [],
+  ...rest
+}: SidebarProps) {
   const viewport = (
     <Base.SidebarViewport>
       <div className="flex flex-col gap-0.5">
@@ -299,6 +400,7 @@ export function Sidebar({ footer, banner, collapsible = true, components, ...res
               </SidebarCollapseTrigger>
             )}
           </div>
+          {tabs.length > 0 && <SidebarTabsDropdown tabs={tabs} />}
         </div>
         {viewport}
         {footer && <div className="flex flex-col p-4 pt-2">{footer}</div>}
@@ -306,5 +408,29 @@ export function Sidebar({ footer, banner, collapsible = true, components, ...res
 
       <SidebarDrawer>{viewport}</SidebarDrawer>
     </>
+  );
+}
+
+export function MobileSidebar({ components, banner, footer, tabs = [] }: SidebarProps) {
+  return (
+    <SidebarDrawer>
+      <div className="flex flex-col gap-3 p-4 pb-2">
+        <div className="flex flex-row items-center gap-1.5 text-fd-muted-foreground">
+          <div className="flex flex-1">{banner}</div>
+          {footer}
+          <SidebarTrigger
+            className={cn(buttonVariants({ variant: 'ghost', size: 'icon-sm', className: 'p-2' }))}
+          >
+            <SidebarIcon />
+          </SidebarTrigger>
+        </div>
+        {tabs.length > 0 && <SidebarTabsDropdown tabs={tabs} />}
+      </div>
+      <Base.SidebarViewport>
+        <div className="flex flex-col gap-0.5">
+          <SidebarPageTree {...components} />
+        </div>
+      </Base.SidebarViewport>
+    </SidebarDrawer>
   );
 }

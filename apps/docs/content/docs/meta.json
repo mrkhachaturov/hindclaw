@@ -1,18 +1,3 @@
 {
-  "title": "Documentation",
-  "pages": [
-    "index",
-    "---GETTING STARTED---",
-    "...getting-started",
-    "---GUIDES---",
-    "...guides",
-    "---REFERENCE---",
-    "...reference",
-    "---EXAMPLES---",
-    "examples",
-    "---MORE---",
-    "llm",
-    "development",
-    "..."
-  ]
+  "pages": ["(documentation)", "api", "terraform"]
 }

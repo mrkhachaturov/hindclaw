@@ -1,0 +1,33 @@
+---
+title: Provider
+description: Install the provider, point it at a server and authenticate.
+---
+
+## Installation
+
+```hcl
+terraform {
+  required_providers {
+    hindclaw = {
+      source  = "mrkhachaturov/hindclaw"
+      version = "~> 0.4"
+    }
+  }
+}
+```
+
+## Configuration
+
+The provider needs an address and a credential. The credential decides the identity the
+server resolves you to, exactly as it does over the REST API: an API key is a service
+account, a JWT is a person.
+
+```hcl
+provider "hindclaw" {
+  endpoint = "https://hindsight.example.com"
+  api_key  = var.hindclaw_api_key
+}
+```
+
+Keep the key out of the configuration itself. A variable fed from the environment or a
+secret manager keeps it out of state files and out of version control.

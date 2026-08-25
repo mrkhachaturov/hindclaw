@@ -1,0 +1,20 @@
+---
+title: API Reference
+description: The HindClaw management REST API, served by the extension at /ext/hindclaw/.
+---
+
+The extension mounts a REST API at `/ext/hindclaw/` on the Hindsight server it runs
+inside. Every endpoint on the following pages is generated from the OpenAPI document
+the extension itself publishes, so this reference never drifts from the running code.
+
+## Authentication
+
+Every request carries either a JWT or an API key. Which one you use decides what the
+server resolves you to: a JWT identifies a person, an API key identifies a service
+account. Permissions are evaluated against that identity, not against the token.
+
+## Reading these pages
+
+Endpoints are grouped by tag. Each page lists the request shape, the response shape and
+the permissions the caller needs. Anything marked admin-only is refused for callers
+without the admin role, and the refusal is a 403 rather than a 404.

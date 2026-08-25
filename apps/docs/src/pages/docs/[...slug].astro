@@ -2,9 +2,11 @@
 import { render } from 'astro:content';
 import { findNeighbour } from 'fumadocs-core/page-tree';
 import type { TOCItemType } from 'fumadocs-core/toc';
+import { DocsMobile } from '@/components/islands/docs-mobile';
 import { DocsSidebar } from '@/components/islands/docs-sidebar';
 import { DocsToc } from '@/components/islands/docs-toc';
 import { mdxComponents } from '@/components/mdx';
+import { OpenAPIPage } from '@/components/openapi';
 import { PageControls } from '@/components/page-controls';
 import DocsGrid from '@/layouts/DocsGrid.astro';
 import DocsShell from '@/layouts/DocsShell.astro';
@@ -19,7 +21,7 @@ export async function getStaticPaths() {
   return source.getPages().map((page) => ({
     params: { slug: page.slugs.length > 0 ? page.slugs.join('/') : undefined },
     props: { slugs: page.slugs },
-    cacheKey: page.data._raw.digest,
+    ...(page.type === 'docs' ? { cacheKey: page.data._raw.digest } : {}),
   }));
 }
 
@@ -29,61 +31,93 @@ if (!page) {
   throw new Error(`No docs page for /${slugs.join('/')}`);
 }
 
-const { Content, headings } = await render(page.data._raw);
-const toc: TOCItemType[] = headings.map((heading) => ({
-  depth: heading.depth,
-  title: heading.text,
-  url: `#${heading.slug}`,
-}));
-
-const neighbours = findNeighbour(source.getPageTree(), page.url);
+const tree = source.getPageTree();
+const neighbours = findNeighbour(tree, page.url);
 const { pathname } = Astro.url;
+
+const mdx = page.type === 'docs' ? await render(page.data._raw) : null;
+const toc: TOCItemType[] =
+  page.type === 'openapi'
+    ? page.data.toc
+    : (mdx?.headings ?? []).map((heading) => ({
+        depth: heading.depth,
+        title: heading.text,
+        url: `#${heading.slug}`,
+      }));
+
+const markdownUrl = page.type === 'docs' ? `${page.url}.mdx` : undefined;
+const githubUrl = page.type === 'docs' ? docsSourceUrl(page.path) : undefined;
+const title = page.data.title ?? 'Documentation';
 ---
 
-<DocsShell title={page.data.title} description={page.data.description} image={docsOgImage(slugs)}>
+<DocsShell
+  title={title}
+  description={page.data.description}
+  image={page.type === 'docs' ? docsOgImage(slugs) : undefined}
+>
   <DocsGrid>
     <DocsSidebar
       slot="sidebar"
-      tree={source.getPageTree()}
+      tree={tree}
       pathname={pathname}
       params={Astro.params}
-      client:load
+      client:media="(min-width: 768px)"
       transition:persist
     />
 
+    <DocsMobile
+      slot="mobile"
+      tree={tree}
+      toc={toc}
+      pathname={pathname}
+      params={Astro.params}
+      client:media="(max-width: 767px)"
+    />
+
     <article class="mx-auto w-full max-w-4xl px-4 py-8 md:px-6">
-      <div class="mb-8 flex flex-col gap-2">
-        <div class="flex items-center justify-between gap-4 md:items-start">
-          <h1 class="text-xl font-medium tracking-tight md:text-2xl">{page.data.title}</h1>
-          <PageControls
-            pathname={pathname}
-            previous={neighbours.previous}
-            next={neighbours.next}
-            markdownUrl={`${page.url}.mdx`}
-            githubUrl={docsSourceUrl(page.path)}
-            client:idle
-          />
-        </div>
+      <div class="mb-8 grid gap-2 md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-x-4">
+        <h1 class="text-xl font-medium tracking-tight md:col-start-1 md:row-start-1 md:text-2xl">
+          {title}
+        </h1>
+
         {page.data.description && (
-          <p class="max-w-2xl text-sm text-muted-foreground md:text-base">
+          <p class="max-w-2xl text-sm text-muted-foreground md:col-start-1 md:row-start-2 md:text-base">
             {page.data.description}
           </p>
         )}
+
+        <PageControls
+          className="mt-2 flex-wrap md:col-start-2 md:row-start-1 md:mt-0 md:flex-nowrap"
+          pathname={pathname}
+          previous={neighbours.previous}
+          next={neighbours.next}
+          markdownUrl={markdownUrl}
+          githubUrl={githubUrl}
+          client:idle
+        />
       </div>
 
-      <div class="typeset typeset-docs mt-8">
-        <Content components={mdxComponents} />
-      </div>
+      {mdx && (
+        <div class="typeset typeset-docs mt-8">
+          <mdx.Content components={mdxComponents} />
+        </div>
+      )}
+
+      {page.type === 'openapi' && (
+        <div class="prose prose-gray dark:prose-invert mt-8 max-w-none">
+          <OpenAPIPage {...page.data.getOpenAPIPageProps()} client:visible />
+        </div>
+      )}
     </article>
 
     <DocsToc
       slot="toc"
       toc={toc}
       pathname={pathname}
-      title={page.data.title}
-      markdownUrl={`${page.url}.mdx`}
-      githubUrl={docsSourceUrl(page.path)}
-      client:idle
+      title={title}
+      markdownUrl={markdownUrl}
+      githubUrl={githubUrl}
+      client:media="(min-width: 768px)"
     />
   </DocsGrid>
 </DocsShell>

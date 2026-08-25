@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { MarkdownCopyButton, ViewOptionsPopover } from '@/components/ai/page-actions';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export type PageNeighbour = Pick<PageTree.Item, 'name' | 'url'>;
 
@@ -12,17 +13,19 @@ export function PageControls({
   markdownUrl,
   githubUrl,
   pathname,
+  className,
 }: {
   previous?: PageNeighbour;
   next?: PageNeighbour;
   markdownUrl?: string;
   githubUrl?: string;
   pathname: string;
+  className?: string;
 }): ReactNode {
   return (
-    <div className="not-prose flex shrink-0 items-center gap-2">
+    <div className={cn('not-prose flex shrink-0 items-center gap-2', className)}>
       {markdownUrl && (
-        <div className="relative hidden items-center rounded-lg bg-secondary sm:flex">
+        <div className="relative flex items-center rounded-lg bg-secondary">
           <MarkdownCopyButton
             markdownUrl={markdownUrl}
             className="rounded-none rounded-s-lg bg-transparent shadow-none"

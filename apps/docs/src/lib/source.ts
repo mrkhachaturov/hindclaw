@@ -2,6 +2,7 @@ import { type CollectionEntry, getCollection } from 'astro:content';
 import * as path from 'node:path';
 import { type StructuredData, structure } from 'fumadocs-core/mdx-plugins';
 import { loader, type StaticSource } from 'fumadocs-core/source';
+import { openapi } from './openapi';
 
 const CONTENT_DIR = 'content/docs';
 
@@ -38,11 +39,26 @@ async function createSource() {
   return out;
 }
 
-export const source = loader({
-  baseUrl: '/docs',
-  source: await createSource(),
-  icon: (name) => name,
-});
+export const source = loader(
+  {
+    docs: await createSource(),
+    openapi: await openapi.staticSource({
+      baseDir: 'api/(generated)',
+      meta: {
+        folderStyle: 'separator',
+      },
+      per: 'tag',
+    }),
+  },
+  {
+    baseUrl: '/docs',
+    icon: (name) => name,
+    plugins: [openapi.loaderPlugin()],
+  },
+);
+
+export type Page = (typeof source)['$inferPage'];
+export type Meta = (typeof source)['$inferMeta'];
 
 export function getStructuredData(entry: CollectionEntry<'docs'>): StructuredData {
   return structure(entry.body ?? '');

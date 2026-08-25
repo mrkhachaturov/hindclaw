@@ -1,0 +1,19 @@
+---
+title: Terraform
+description: Declare users, groups, banks and policies as code and let the provider reconcile them.
+icon: Blocks
+---
+
+The [`mrkhachaturov/hindclaw`](https://registry.terraform.io/providers/mrkhachaturov/hindclaw/latest)
+provider manages the whole HindClaw stack as code: users, groups, banks, access
+policies, service accounts, directives, mental models and bank configs.
+
+Everything the REST API can do, the provider can do — with the difference that state
+is reconciled rather than applied blindly, so a plan tells you what will change before
+anything does.
+
+## Where to start
+
+Read [Provider](/docs/terraform/provider) for authentication and the minimal
+configuration block, then [Resources](/docs/terraform/resources) for what each resource
+maps onto in the server.

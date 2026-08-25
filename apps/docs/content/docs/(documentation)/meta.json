@@ -1,0 +1,21 @@
+{
+  "title": "Documentation",
+  "description": "Install, configure and operate HindClaw",
+  "icon": "Book",
+  "root": true,
+  "pages": [
+    "index",
+    "---GETTING STARTED---",
+    "...getting-started",
+    "---GUIDES---",
+    "...guides",
+    "---REFERENCE---",
+    "...reference",
+    "---EXAMPLES---",
+    "examples",
+    "---MORE---",
+    "llm",
+    "development",
+    "..."
+  ]
+}

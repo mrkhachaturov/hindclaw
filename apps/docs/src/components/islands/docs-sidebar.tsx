@@ -2,6 +2,7 @@ import { navigate } from 'astro:transitions/client';
 import type { AstroProviderProps } from 'fumadocs-core/framework/astro';
 import type { Root } from 'fumadocs-core/page-tree';
 import { TreeContextProvider } from 'fumadocs-ui/contexts/tree';
+import { getLayoutTabs } from 'fumadocs-ui/layouts/shared';
 import { RootProvider } from 'fumadocs-ui/provider/astro';
 import { type ReactNode, useEffect, useMemo } from 'react';
 import { Sidebar, SidebarProvider, useSidebar } from '@/components/docs/sidebar';
@@ -35,6 +36,7 @@ export function DocsSidebar({
   params: AstroProviderProps['params'];
 }): ReactNode {
   const resolvedTree = useMemo(() => resolveTreeIcons(tree), [tree]);
+  const tabs = useMemo(() => getLayoutTabs(resolvedTree), [resolvedTree]);
 
   return (
     <RootProvider
@@ -49,7 +51,7 @@ export function DocsSidebar({
       <TreeContextProvider tree={resolvedTree}>
         <SidebarProvider>
           <CollapsedColumnSync />
-          <Sidebar className="bg-fd-background" />
+          <Sidebar className="bg-fd-background" tabs={tabs} />
         </SidebarProvider>
       </TreeContextProvider>
     </RootProvider>

@@ -1,17 +1,33 @@
 import { useSearchContext } from 'fumadocs-ui/contexts/search';
 import { RootProvider } from 'fumadocs-ui/provider/astro';
 import { SearchIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { DocsSearchDialog as SearchDialog } from '@/components/search';
 import { Button } from '@/components/ui/button';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
+import { searchCommand } from '@/lib/search/store';
 
 export function SearchIsland({ pathname }: { pathname: string }): ReactNode {
   return (
     <RootProvider pathname={pathname} theme={{ enabled: false }} search={{ SearchDialog }}>
+      <SearchCommandBridge />
       <SearchTrigger />
     </RootProvider>
   );
+}
+
+function SearchCommandBridge() {
+  const { setOpenSearch } = useSearchContext();
+
+  useEffect(
+    () =>
+      searchCommand.listen((command) => {
+        if (command) setOpenSearch(true);
+      }),
+    [setOpenSearch],
+  );
+
+  return null;
 }
 
 function SearchTrigger() {

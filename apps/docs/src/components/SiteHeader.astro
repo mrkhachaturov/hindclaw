@@ -4,14 +4,16 @@ import { AskAiTrigger } from '@/components/islands/ask-ai-trigger';
 import { SearchIsland } from '@/components/islands/search';
 import ModeToggle from '@/components/ModeToggle.astro';
 import SiteLogo from '@/components/SiteLogo.astro';
+import { buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SITE } from '@/lib/site';
 
 interface Props {
   wide?: boolean;
+  docs?: boolean;
 }
 
-const { wide = false } = Astro.props;
+const { wide = false, docs = false } = Astro.props;
 const { pathname } = Astro.url;
 
 const links = [
@@ -22,11 +24,15 @@ const links = [
 ];
 
 const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+const iconButton = buttonVariants({ variant: 'ghost', size: 'icon' });
 ---
 
 <header
   id="site-header"
-  class="sticky top-0 z-30 transition-colors duration-200 data-[scrolled]:bg-background/80 data-[scrolled]:backdrop-blur-md"
+  class:list={[
+    'sticky top-0 z-30 transition-[background-color,border-radius,box-shadow] duration-200 data-[scrolled]:bg-background/80 data-[scrolled]:backdrop-blur-md data-[menu-open]:bg-background/80 data-[menu-open]:backdrop-blur-md data-[menu-open]:rounded-b-2xl data-[menu-open]:shadow-lg md:data-[menu-open]:rounded-none md:data-[menu-open]:shadow-none',
+    docs && 'max-md:hidden',
+  ]}
 >
   <nav
     class:list={[
@@ -39,7 +45,7 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(`${h
       {SITE.name}
     </a>
 
-    <div class="flex flex-1 items-center gap-4 text-sm">
+    <div class="hidden flex-1 items-center gap-4 text-sm md:flex">
       {links.map((link) => (
           <a
             href={link.href}
@@ -53,27 +59,89 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(`${h
         ))}
     </div>
 
-    <div class="flex items-center gap-3">
+    <div class="ml-auto flex items-center gap-3">
       <SearchIsland pathname={pathname} client:idle />
 
       <AskAiTrigger client:idle />
 
-      <Separator orientation="vertical" />
+      <Separator orientation="vertical" className="hidden md:block" />
 
       <a
         href={SITE.repo}
         rel="noreferrer noopener"
         target="_blank"
-        class="text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground"
+        class="hidden text-sm text-fd-muted-foreground transition-colors hover:text-fd-foreground md:inline"
       >
         GitHub
       </a>
 
-      <Separator orientation="vertical" />
+      <Separator orientation="vertical" className="hidden md:block" />
 
-      <ModeToggle />
+      <ModeToggle class="hidden md:inline-flex" />
+
+      <button
+        type="button"
+        id="menu-trigger"
+        aria-controls="site-menu"
+        aria-expanded="false"
+        aria-label="Toggle menu"
+        class={`${iconButton} [&[aria-expanded=true]_svg]:rotate-180 md:hidden`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="size-4.5 transition-transform duration-200"
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6"></path>
+        </svg>
+      </button>
     </div>
   </nav>
+
+  <div id="site-menu" hidden class:list={['md:hidden', !wide && 'mx-auto max-w-7xl']}>
+    <div class="flex flex-col p-4 pt-2">
+      {links.map((link) => (
+          <a
+            href={link.href}
+            data-menu-link
+            class:list={[
+              'inline-flex items-center gap-2 py-1.5 transition-colors',
+              isActive(link.href) ? 'text-fd-primary font-medium' : 'text-fd-foreground',
+            ]}
+          >
+            {link.label}
+          </a>
+        ))}
+
+      <div class="-ms-1.5 mt-2 flex flex-row items-center gap-2">
+        <a
+          href={SITE.repo}
+          rel="noreferrer noopener"
+          target="_blank"
+          aria-label="GitHub"
+          class={iconButton}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" class="size-4.5" aria-hidden="true">
+            <path
+              d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.1.9 2.3v3.3c0 .3.1.7.8.6A12 12 0 0 0 12 .3"
+            ></path>
+          </svg>
+        </a>
+
+        <div role="separator" class="flex-1"></div>
+
+        <ModeToggle />
+      </div>
+    </div>
+  </div>
 </header>
 
 <AskAi client:idle transition:persist />
@@ -86,12 +154,47 @@ const isActive = (href: string) => pathname === href || pathname.startsWith(`${h
     else header.removeAttribute('data-scrolled');
   };
 
+  const setMenu = (open: boolean) => {
+    const header = document.getElementById('site-header');
+    const menu = document.getElementById('site-menu');
+    const trigger = document.getElementById('menu-trigger');
+    if (!header || !menu || !trigger) return;
+
+    menu.hidden = !open;
+    trigger.setAttribute('aria-expanded', String(open));
+    if (open) header.setAttribute('data-menu-open', '');
+    else header.removeAttribute('data-menu-open');
+  };
+
+  const onDocumentClick = (event: MouseEvent) => {
+    const trigger = document.getElementById('menu-trigger');
+    if (trigger?.getAttribute('aria-expanded') !== 'true') return;
+
+    const header = document.getElementById('site-header');
+    const target = event.target as Node | null;
+    if (header && target && !header.contains(target)) setMenu(false);
+  };
+
+  const bind = () => {
+    const trigger = document.getElementById('menu-trigger');
+    trigger?.addEventListener('click', () =>
+      setMenu(trigger.getAttribute('aria-expanded') !== 'true'),
+    );
+
+    for (const link of document.querySelectorAll('#site-menu [data-menu-link]')) {
+      link.addEventListener('click', () => setMenu(false));
+    }
+  };
+
   document.addEventListener('astro:page-load', () => {
     sync();
+    bind();
     window.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('click', onDocumentClick);
   });
 
   document.addEventListener('astro:before-swap', () => {
     window.removeEventListener('scroll', sync);
+    window.removeEventListener('click', onDocumentClick);
   });
 </script>

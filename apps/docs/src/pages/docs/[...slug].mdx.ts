@@ -6,15 +6,21 @@ interface Props {
 }
 
 export function getStaticPaths() {
-  return source.getPages().map((page) => ({
-    params: { slug: page.slugs.length > 0 ? page.slugs.join('/') : undefined },
-    props: { slugs: page.slugs } satisfies Props,
-  }));
+  return source.getPages().flatMap((page) =>
+    page.type === 'docs'
+      ? [
+          {
+            params: { slug: page.slugs.length > 0 ? page.slugs.join('/') : undefined },
+            props: { slugs: page.slugs } satisfies Props,
+          },
+        ]
+      : [],
+  );
 }
 
 export const GET: APIRoute<Props> = ({ props }) => {
   const page = source.getPage(props.slugs);
-  if (!page) {
+  if (!page || page.type !== 'docs') {
     return new Response(undefined, { status: 404 });
   }
 

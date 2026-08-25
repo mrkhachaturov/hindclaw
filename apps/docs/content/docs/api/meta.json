@@ -1,0 +1,7 @@
+{
+  "title": "API Reference",
+  "description": "The HindClaw management REST API",
+  "icon": "Terminal",
+  "root": true,
+  "pages": ["index", "...(generated)"]
+}

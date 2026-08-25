@@ -1,5 +1,7 @@
 ---
-const gridTemplate = `"sidebar main toc" 1fr / var(--fd-sidebar-col) minmax(0, 1fr) var(--fd-toc-width)`;
+const gridTemplate = `"sidebar header toc"
+"sidebar toc-popover toc"
+"sidebar main toc" 1fr / var(--fd-sidebar-col) minmax(0, 1fr) var(--fd-toc-width)`;
 
 const style = [
   `grid-template: ${gridTemplate}`,
@@ -11,10 +13,11 @@ const style = [
 
 <div
   id="nd-docs-layout"
-  class="grid overflow-x-clip min-h-(--fd-docs-height) [--fd-docs-height:100dvh] [--fd-header-height:0px] [--fd-toc-popover-height:0px] [--fd-sidebar-width:0px] [--fd-toc-width:0px] [--fd-sidebar-col:var(--fd-sidebar-width)] transition-[grid-template-columns]"
+  class="grid overflow-x-clip min-h-(--fd-docs-height) [--fd-docs-height:100dvh] [--fd-header-height:0px] [--fd-toc-popover-height:0px] [--fd-sidebar-width:0px] [--fd-toc-width:0px] [--fd-sidebar-col:var(--fd-sidebar-width)] max-md:[--fd-banner-height:0px] transition-[grid-template-columns]"
   style={style}
 >
   <slot name="sidebar" />
+  <slot name="mobile" />
   <main class="[grid-area:main] min-w-0"><slot /></main>
   <slot name="toc" />
 </div>
