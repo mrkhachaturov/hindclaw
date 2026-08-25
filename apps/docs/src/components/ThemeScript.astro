@@ -1,10 +1,11 @@
+---
+---
+
 <script is:inline>
 (() => {
-  const KEY = 'theme';
-
   const read = () => {
     try {
-      const stored = localStorage.getItem(KEY);
+      const stored = localStorage.getItem('theme');
       return stored === 'light' || stored === 'dark' ? stored : 'dark';
     } catch {
       return 'dark';
@@ -16,19 +17,24 @@
     document.documentElement.style.colorScheme = theme;
   };
 
-  const toggle = () => {
-    const next = read() === 'dark' ? 'light' : 'dark';
-    try {
-      localStorage.setItem(KEY, next);
-    } catch {}
-    apply(next);
-  };
-
   apply(read());
-
-  document.addEventListener('astro:page-load', () => {
-    document.getElementById('theme-toggle')?.addEventListener('click', toggle);
-  });
   document.addEventListener('astro:after-swap', () => apply(read()));
 })();
+</script>
+
+<script>
+  import { theme, toggleTheme } from '@/lib/theme/store';
+
+  const bind = () => {
+    for (const button of document.querySelectorAll('[data-theme-toggle]')) {
+      button.addEventListener('click', () => toggleTheme());
+    }
+  };
+
+  theme.subscribe((value: 'light' | 'dark') => {
+    document.documentElement.classList.toggle('dark', value === 'dark');
+    document.documentElement.style.colorScheme = value;
+  });
+
+  document.addEventListener('astro:page-load', bind);
 </script>

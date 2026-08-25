@@ -1,8 +1,19 @@
 ---
 import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
 ---
 
-<button type="button" id="theme-toggle" class={buttonVariants({ variant: 'ghost', size: 'icon' })}>
+<button
+  type="button"
+  data-theme-toggle
+  class={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), className)}
+>
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
