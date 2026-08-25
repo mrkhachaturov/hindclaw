@@ -34,7 +34,7 @@ export function UserMessage(): ReactNode {
   return (
     <MessagePrimitive.Root className="flex flex-col items-end py-2" data-role="user">
       <MessagePrimitive.Quote>{(quote) => <QuoteBlock {...quote} />}</MessagePrimitive.Quote>
-      <div className="bg-muted max-w-[85%] rounded-2xl px-3 py-2 text-sm empty:hidden">
+      <div className="typeset typeset-chat bg-muted max-w-[85%] rounded-2xl px-3 py-2 empty:hidden">
         <MessagePrimitive.Parts />
       </div>
       <AskAiBranchPicker />
@@ -49,7 +49,7 @@ export function AssistantMessage({
 } = {}): ReactNode {
   return (
     <MessagePrimitive.Root className="py-2" data-role="assistant">
-      <div className="text-sm">
+      <div className="typeset typeset-chat">
         <MessagePrimitive.Parts>
           {({ part }) => {
             if (part.type === 'text') return <MarkdownText />;

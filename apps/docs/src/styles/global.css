@@ -29,6 +29,31 @@
     --typeset-flow: 1.3333em;
   }
 
+  .typeset-chat {
+    --typeset-size: 0.875rem;
+    --typeset-leading: 1.6;
+    --typeset-flow: 0.9286em;
+  }
+
+  .typeset-chat a {
+    color: var(--color-primary, currentColor);
+    font-weight: inherit;
+    text-underline-offset: 2px;
+  }
+
+  .typeset-chat h1 {
+    font-size: 1.25em;
+    line-height: 1.4;
+  }
+
+  .typeset-chat h2 {
+    font-size: 1.125em;
+  }
+
+  .typeset-chat :is(h3, h4) {
+    font-size: 1em;
+  }
+
   .typeset-docs :is(h1, h2, h3, h4, h5, h6) a {
     text-decoration: none;
     font-weight: inherit;
@@ -214,6 +239,17 @@
 
 html {
   scrollbar-gutter: stable;
+}
+
+/*
+ * WebKit zooms the viewport when a field smaller than 16px takes focus, and
+ * every iOS browser is WebKit. Unlayered, so it beats the text-sm a field
+ * carries for the desktop scale.
+ */
+@media (pointer: coarse) and (width < 48rem) {
+  :is(input, textarea, select):not([type="checkbox"], [type="radio"]) {
+    font-size: 1rem;
+  }
 }
 
 html > body[data-scroll-locked] {
