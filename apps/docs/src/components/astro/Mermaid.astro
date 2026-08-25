@@ -10,11 +10,17 @@ const { chart } = Astro.props;
 let svg: string | null = null;
 try {
   svg = renderMermaidSVG(chart, {
-    bg: 'var(--color-fd-background)',
-    fg: 'var(--color-fd-foreground)',
+    bg: 'var(--background)',
+    fg: 'var(--foreground)',
+    muted: 'var(--muted-foreground)',
+    line: 'var(--border)',
+    accent: 'var(--muted-foreground)',
+    surface: 'var(--muted)',
+    border: 'var(--border)',
+    font: 'Inter Variable',
     interactive: true,
     transparent: true,
-  });
+  }).replace(/\s*@import url\([^)]*\);/g, '');
 } catch {
   svg = null;
 }

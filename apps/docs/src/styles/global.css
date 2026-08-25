@@ -173,41 +173,43 @@
     padding: 0.0625rem 0.25rem;
   }
 
-  .typeset-docs figure.shiki {
-    margin-block: 1.25rem;
-    border: none;
-    border-radius: 0.75rem;
-    box-shadow: none;
-    background: var(--code-surface);
-    overflow: hidden;
-  }
-
-  .typeset-docs figure.shiki > div:first-child:has(figcaption) {
-    height: 2.25rem;
-    padding-inline: 0.875rem;
-    border-bottom: none;
-    background: var(--code-surface);
-  }
-
   .typeset-docs figure.shiki figcaption {
     font-family: var(--font-mono);
     font-size: 0.8125rem;
     font-weight: 500;
     color: var(--muted-foreground);
   }
+}
 
-  .typeset-docs figure.shiki > div[role="region"] {
-    padding-block: 0.875rem;
-    font-size: 0.8125rem;
-    line-height: 1.65;
-    background: var(--code-surface);
-  }
+.typeset-docs figure.shiki {
+  margin-block: 1.25rem;
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: none;
+  background: var(--code-surface);
+  overflow: hidden;
+}
 
-  .typeset-docs figure.shiki pre {
-    --padding-left: 0.875rem;
-    --padding-right: 0.875rem;
-    margin-block: 0;
-  }
+.typeset-docs figure.shiki > div:first-child:has(figcaption) {
+  height: 2.25rem;
+  padding-inline: 0.875rem;
+  border-bottom: none;
+  background: transparent;
+}
+
+.typeset-docs figure.shiki > div[role="region"] {
+  padding-block: 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  background: transparent;
+}
+
+.typeset-docs figure.shiki pre {
+  --padding-left: 0.875rem;
+  --padding-right: 0.875rem;
+  margin-block: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 html {
